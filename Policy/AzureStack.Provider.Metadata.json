@@ -1,0 +1,454 @@
+{
+    "value": [
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Storage",
+            "namespace": "Microsoft.Storage",
+            "resourceTypes": [
+                {
+                    "resourceType": "storageaccounts",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-15",
+                        "2015-05-01-preview"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Network",
+            "namespace": "Microsoft.Network",
+            "resourceTypes": [
+                {
+                    "resourceType": "LoadBalancers",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "locations",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "locations/operations",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "NetworkInterfaces",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "NetworkSecurityGroups",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "PublicIpAddresses",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "VirtualNetworks",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-05-01-preview"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Compute",
+            "namespace": "Microsoft.Compute",
+            "resourceTypes": [
+                {
+                    "resourceType": "AvailabilitySets",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-15"
+                    ]
+                },
+                {
+                    "resourceType": "locations",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-15"
+                    ]
+                },
+                {
+                    "resourceType": "locations/operations",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-15"
+                    ]
+                },
+                {
+                    "resourceType": "locations/vmSizes",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-15"
+                    ]
+                },
+                {
+                    "resourceType": "VirtualMachines",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-15"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Resources",
+            "namespace": "Microsoft.Resources",
+            "resourceTypes": [
+                {
+                    "resourceType": "delegatedProviders",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "delegatedProviders/offers",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "delegatedProviders/offers/estimatePrice",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "extensionsMetadata",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "links",
+                    "locations": [],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "offers",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "resourceGroups",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "subscriptions",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "subscriptions/locations",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "subscriptions/operationresults",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "subscriptions/providers",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                },
+                {
+                    "resourceType": "subscriptions/tagnames",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "1.0"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Authorization",
+            "namespace": "Microsoft.Authorization",
+            "resourceTypes": [
+                {
+                    "resourceType": "locks",
+                    "locations": [],
+                    "apiVersions": [
+                        "2015-07-01",
+                        "2015-06-01",
+                        "2015-05-01-preview",
+                        "2014-07-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "operations",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-07-01",
+                        "2015-06-01",
+                        "2015-05-01-preview",
+                        "2014-07-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "permissions",
+                    "locations": [],
+                    "apiVersions": [
+                        "2015-07-01",
+                        "2015-06-01",
+                        "2015-05-01-preview",
+                        "2014-07-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "roleAssignments",
+                    "locations": [],
+                    "apiVersions": [
+                        "2015-07-01",
+                        "2015-06-01",
+                        "2015-05-01-preview",
+                        "2014-07-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "roleDefinitions",
+                    "locations": [],
+                    "apiVersions": [
+                        "2015-07-01",
+                        "2015-06-01",
+                        "2015-05-01-preview",
+                        "2014-07-01-preview"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Insights",
+            "namespace": "Microsoft.Insights",
+            "authorization": {
+                "applicationId": "f17bb18a-5337-4f74-af04-a282b9666ce8",
+                "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c"
+            },
+            "resourceTypes": [
+                {
+                    "resourceType": "eventtypes",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-04-01",
+                        "2014-04-01"
+                    ]
+                },
+                {
+                    "resourceType": "metricDefinitions",
+                    "locations": [],
+                    "apiVersions": [
+                        "2015-07-01"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Gallery",
+            "namespace": "Microsoft.Gallery",
+            "resourceTypes": [
+                {
+                    "resourceType": "curation",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-04-01"
+                    ]
+                },
+                {
+                    "resourceType": "curationcontent",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-04-01"
+                    ]
+                },
+                {
+                    "resourceType": "galleryItems",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-04-01"
+                    ]
+                },
+                {
+                    "resourceType": "myGalleryItems",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-04-01"
+                    ]
+                },
+                {
+                    "resourceType": "myPackages",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-04-01"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        },
+        {
+            "id": "/subscriptions/10816FED-1ECC-445E-A4C6-73B72F459A1B/providers/Microsoft.Commerce",
+            "namespace": "Microsoft.Commerce",
+            "resourceTypes": [
+                {
+                    "resourceType": "delegatedProviderSubscriptions",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "delegatedProviderSubscriptions/delegatedUsageAggregates",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "estimateResourceSpend",
+                    "locations": [],
+                    "apiVersions": [
+                        "2015-06-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "meteredResources",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "subscriberUsageAggregates",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-01-preview"
+                    ]
+                },
+                {
+                    "resourceType": "usageAggregates",
+                    "locations": [
+                        "local"
+                    ],
+                    "apiVersions": [
+                        "2015-06-01-preview"
+                    ]
+                }
+            ],
+            "registrationState": "Registered"
+        }
+    ]
+}
