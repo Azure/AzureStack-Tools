@@ -12,7 +12,8 @@ function Get-AzureStackRmPolicy
     {
         foreach ($r in $p.resourceTypes)
         {
-            $allowResources += @{ field = "type"; equals = $p.namespace + "/" + $r.ResourceType }
+            $allowResources += @{ field = "type"; equals = $p.namespace + "/" + $r.ResourceType}
+            $allowResources += @{ field = "type"; like = $p.namespace + "/" + $r.ResourceType + "/*" }
         }
     }
 
@@ -52,7 +53,7 @@ function Get-AzureStackRmPolicy
                                         @{
                                             not = @{
                                                 field = $storageSkuField;
-                                                in = $vmSkus
+                                                in = $storageSkus
                                             }
                                         }
                                     )
