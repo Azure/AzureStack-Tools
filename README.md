@@ -55,7 +55,7 @@ To connect to Azure Stack One Node via VPN, first locate the NAT address of the 
 ```powershell
 Import-Module .\Connect\AzureStack.Connect.psm1
 
-$Password = (ConvertTo-SecureString <Admin password provided at the time of the Azure Stack deployment> -AsPlainText -Force)
+$Password = (ConvertTo-SecureString "<Admin password provided at the time of the Azure Stack deployment>" -AsPlainText -Force)
 
 # Create VPN connection entry for the current user
 Add-AzureStackVpnConnection -ServerAddress <Azure Stack NAT address> -Password $Password
