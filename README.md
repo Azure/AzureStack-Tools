@@ -27,7 +27,7 @@ $subID = $s.Subscription.SubscriptionId
 
 $policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzureStackRmPolicy)
 
-#Specify the resource group where you like to apply the policy
+#Specify the resource group where you would like to apply the policy
 $rgName = 'AzureStack'
 New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subID/resourceGroups/$rgName
 ```
