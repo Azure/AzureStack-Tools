@@ -1,6 +1,34 @@
+function Get-AzureStackNatServerAddress
+{
+    param (    
+        [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
+	    [string] $HostComputer,
+        [parameter(HelpMessage="Domain FQDN of this Azure Stack Instance")]
+        [string] $Domain = "azurestack.local",
+        [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
+        [string] $natServer = "mas-bgpnat01",
+        [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
+        [string] $User = "administrator",
+        [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
+        [securestring] $Password
+    )
+
+    $UserCred = "$Domain\$User"
+    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
+
+    Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
+        { 
+            Invoke-Command -ComputerName "$using:natServer.$using:Domain" -Credential $using:credential -ScriptBlock `
+                { 
+                    Get-NetIPConfiguration | ? { $_.IPv4DefaultGateway -ne $null } | foreach { $_.IPv4Address.IPAddress }
+                }
+        } 
+}
+
+Export-ModuleMember Get-AzureStackNatServerAddress
+
 function Add-AzureStackVpnConnection
 {
-    [CmdletBinding()]
     param (
 	    [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
 	    [string] $ConnectionName = "azurestack",
@@ -37,9 +65,9 @@ function Connect-AzureStackVpn
         [parameter(HelpMessage="Domain FQDN of this Azure Stack Instance")]
         [string] $Domain = "azurestack.local",
         [parameter(HelpMessage="Certificate Authority computer name in this Azure Stack Instance")]
-        $Remote = "mas-con01",
+        [string] $Remote = "mas-ca01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
-        $User = "administrator",
+        [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
         [securestring] $Password
     )    

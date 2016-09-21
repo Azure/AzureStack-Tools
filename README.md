@@ -40,9 +40,9 @@ Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subID/res
 Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subID
 ```
 
-## Connecting to Azure Stack One Node
+## Connecting to Azure Stack
 
-This tool allows you to connect to an Azure Stack One Node instance from your personal computer/laptop.
+This tool allows you to connect to an Azure Stack instance from your personal computer/laptop.
 
 ### VPN to Azure Stack One Node
 
@@ -50,15 +50,27 @@ You can establish a split tunnel VPN connection to an Azure Stack One Node. This
 
 The tool will wlso download root certificate of the targeted Azure Stack One Node instance locally to your client computer. This will esnure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
 
-To connect to Azure Stack One Node via VPN, first locate the NAT address of the target installation. Then connect your client computer as follows.
+To connect to Azure Stack One Node via VPN, first locate the NAT address of the target installation. 
+If you specified static IP of the NAT when deploying Azure Stack One Node, then use it in the connection example below. 
+If you did not specify static IP then NAT was configured with DHCP. In that case, obtain NAT IP as follows using IP address of the Azure Stack One Node host (which should be known to you after deployment).  
 
 ```powershell
 Import-Module .\Connect\AzureStack.Connect.psm1
 
-$Password = (ConvertTo-SecureString "<Admin password provided at the time of the Azure Stack deployment>" -AsPlainText -Force)
+$Password = (ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force)
+
+Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>"
+```
+
+Then connect your client computer as follows.
+
+```powershell
+Import-Module .\Connect\AzureStack.Connect.psm1
+
+$Password = (ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force)
 
 # Create VPN connection entry for the current user
-Add-AzureStackVpnConnection -ServerAddress <Azure Stack NAT address> -Password $Password
+Add-AzureStackVpnConnection -ServerAddress "<Azure Stack NAT address>" -Password $Password
 
 # Connect to the Azure Stack instance. This command can be used multiple times.
 Connect-AzureStackVpn -Password $Password
