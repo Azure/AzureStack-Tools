@@ -8,7 +8,7 @@ This tool constrains Azure subscription to the capabilities available in the Azu
 Import-Module .\Policy\AzureStack.Policy.psm1
 
 Login-AzureRmAccount
-$s = Select-AzureRmSubscription -SubscriptionName "<your sub name>"
+$s = Select-AzureRmSubscription -SubscriptionName "<sub name>"
 $subID = $s.Subscription.SubscriptionId
 
 $policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzureStackRmPolicy)
@@ -19,7 +19,7 @@ New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /s
 To constrain only a particular resource group in your Azure subscription to match the capabilities of Azure Stack, specify the resource group in the scope as below.
 
 ```powershell
-Import-Module .\AzureStack-Tools\Policy\AzureStack.Policy.psm1
+Import-Module .\Policy\AzureStack.Policy.psm1
 
 Login-AzureRmAccount
 $s = Select-AzureRmSubscription -SubscriptionName "<sub name>"
