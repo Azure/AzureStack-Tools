@@ -19,11 +19,11 @@ Import-Module .\Policy\AzureStack.Policy.psm1
 
 Login-AzureRmAccount
 $s = Select-AzureRmSubscription -SubscriptionName "<sub name>"
-$subID = $s.Subscription.SubscriptionId
+$subId = $s.Subscription.SubscriptionId
 
 $policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzureStackRmPolicy)
 
-New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subID
+New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subId
 ```
 
 To constrain only a particular resource group in your Azure subscription to match the capabilities of Azure Stack, specify the resource group in the scope as below when assigning the policy.
@@ -36,8 +36,8 @@ New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /s
 
 To remove the Azure Stack policy, run this command with the same scope used when the policy was applied:
 ```powershell
-Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subID/resourceGroups/$rgName
-Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subID
+Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId/resourceGroups/$rgName
+Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId
 ```
 
 ## Connecting to Azure Stack
@@ -65,14 +65,14 @@ If you specified static IP of the NAT when deploying Azure Stack One Node, then 
 If you did not specify static IP then NAT was configured with DHCP. In that case, obtain NAT IP as follows using IP address of the Azure Stack One Node host (which should be known to you after deployment).  
 
 ```powershell
-Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>"
+$natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>"
 ```
 
 Then connect your client computer as follows.
 
 ```powershell
 # Create VPN connection entry for the current user
-Add-AzureStackVpnConnection -ServerAddress "<Azure Stack NAT address>" -Password $Password
+Add-AzureStackVpnConnection -ServerAddress $natIp -Password $Password
 
 # Connect to the Azure Stack instance. This command can be used multiple times.
 Connect-AzureStackVpn -Password $Password
