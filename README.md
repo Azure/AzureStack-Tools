@@ -1,5 +1,15 @@
 # Tools for using Azure and Azure Stack
 
+To use these tools, obtain Azure Stack compatible Azure PowerShell module and CLI. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows.
+
+```powershell
+Install-Module -Name AzureRm -RequiredVersion 1.2.6 -Scope CurrentUser
+```
+
+```
+npm install azure-cli@0.9.18
+```
+
 ## Azure Resource Manager policy for Azure Stack
 
 This tool constrains Azure subscription to the capabilities available in the Azure Stack via the [Azure Resource Manager policy](https://azure.microsoft.com/en-us/documentation/articles/resource-manager-policy/).
