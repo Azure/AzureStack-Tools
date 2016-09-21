@@ -1,6 +1,6 @@
 # Tools for using Azure and Azure Stack
 
-To use these tools, obtain Azure Stack compatible Azure PowerShell module and CLI. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows.
+To use these tools, obtain Azure Stack compatible Azure PowerShell module and CLI. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows. Note that both of these could still be used to operate against Azure as well as Azure Stack, but may lack some of the latest Azure features.
 
 ```powershell
 Install-Module -Name AzureRm -RequiredVersion 1.2.6 -Scope CurrentUser
