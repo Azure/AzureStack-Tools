@@ -64,6 +64,19 @@ To connect to Azure Stack One Node via VPN, first locate the NAT address of the 
 If you specified static IP of the NAT when deploying Azure Stack One Node, then use it in the connection example below. 
 If you did not specify static IP then NAT was configured with DHCP. In that case, obtain NAT IP as follows using IP address of the Azure Stack One Node host (which should be known to you after deployment).  
 
+Since the command below needs to access the Azure Stack One Node host computer via its IP address, it needs to be a trusted host in PowerShell. Run PowerShell as administrator and add TrustedHosts as follows.
+
+```powershell
+# Add Azure Stack One Node host to the trusted hosts on your client computer
+$hosts = get-item wsman:\localhost\Client\TrustedHosts
+set-item wsman:\localhost\Client\TrustedHosts -value ("<Azure Stack host address>, " + $hosts.Value)
+
+# Or simply allow all hosts to be trusted for remote calls (less secure)
+set-item wsman:\localhost\Client\TrustedHosts -value *
+```
+
+Then obtain NAT IP.
+
 ```powershell
 $natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>"
 ```
