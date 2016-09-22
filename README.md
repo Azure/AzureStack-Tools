@@ -103,7 +103,7 @@ Note that Azure Stack One Node host needs to be added to TrustedHosts as describ
 Add-AzureStackAzureRmEnvironment -HostComputer "<Azure Stack host address>" -Password $Password
 ``` 
 
-After registering Azure Stack AzureRM environment command-lets can be easily targeted at Azure Stack. For example:
+After registering AzureRM environment command-lets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
 Add-AzureRmAccount -EnvironmentName AzureStack
