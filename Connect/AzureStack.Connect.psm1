@@ -1,3 +1,13 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# See LICENSE.txt in the project root for license information.
+
+#requires -Version 4.0
+#requires -Modules AzureRM.Profile, VpnClient
+
+<#
+    .SYNOPSIS
+    Adds Azure Stack environment to use with AzureRM command-lets when targeting Azure Stack
+#>
 function Add-AzureStackAzureRmEnvironment
 {
     param (
@@ -68,6 +78,10 @@ function Add-AzureStackAzureRmEnvironment
 
 Export-ModuleMember Add-AzureStackAzureRmEnvironment
 
+<#
+    .SYNOPSIS
+    Obtains Azure Stack NAT address from the Azure Stack One Node instance
+#>
 function Get-AzureStackNatServerAddress
 {
     param (    
@@ -102,6 +116,10 @@ function Get-AzureStackNatServerAddress
 
 Export-ModuleMember Get-AzureStackNatServerAddress
 
+<#
+    .SYNOPSIS
+    Add VPN connection to an Azure Stack instance
+#>
 function Add-AzureStackVpnConnection
 {
     param (
@@ -140,6 +158,10 @@ function Add-AzureStackVpnConnection
 
 Export-ModuleMember Add-AzureStackVpnConnection
 
+<#
+    .SYNOPSIS
+    Connects to Azure Stack via VPN
+#>
 function Connect-AzureStackVpn
 {
     param (

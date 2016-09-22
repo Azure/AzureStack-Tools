@@ -1,3 +1,13 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# See LICENSE.txt in the project root for license information.
+
+#requires -Version 4.0
+#requires -Modules AzureRM.Profile
+
+<#
+    .SYNOPSIS
+    Produces Azure Resource Manager Policy document to apply to restrict Azure subscriptions to Azure Stack compatible functionality
+#>
 function Get-AzureStackRmPolicy 
 {
     $defaults = [System.IO.Path]::GetDirectoryName($PSCommandPath)
