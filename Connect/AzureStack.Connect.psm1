@@ -1,3 +1,73 @@
+function Add-AzureStackAzureRmEnvironment
+{
+    param (
+        [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
+	    [string] $HostComputer,        
+        [parameter(HelpMessage="Domain FQDN of this Azure Stack Instance")]
+        [string] $Domain = "azurestack.local",
+        [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
+        [string] $User = "administrator",
+        [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
+        [securestring] $Password,
+        [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
+        [string] $Name = "AzureStack"
+    )
+
+    $UserCred = "$Domain\$User"
+    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
+
+    Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
+    $azureEnvironmentParams = Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
+        {            
+            $stackdomain = $env:USERDNSDOMAIN
+                        
+            Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
+            $config = Get-Content -Path "C:\CloudDeployment\CustomerConfig.xml" -ErrorAction Stop
+            $DirectoryTenantId = ([xml]($config)).SelectSingleNode("//Role[@Id='AAD']").PublicInfo.AADTenant.Id
+
+            $ResourceManagerEndpoint = "https://api." + $stackdomain            
+
+            Write-Verbose "Retrieving endpoints from the $ResourceManagerEndpoint..." -Verbose
+            $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop
+
+            $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
+            $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
+            $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
+
+            @{
+                Name                                     = $using:Name
+                ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+                ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+                AdTenant                                 = $DirectoryTenantId
+                ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+                GalleryEndpoint                          = $endpoints.galleryEndpoint
+                GraphEndpoint                            = $endpoints.graphEndpoint
+                GraphAudience                            = $endpoints.graphEndpoint
+                StorageEndpointSuffix                    = $StorageEndpointSuffix
+                AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
+                AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
+            }
+        }
+
+    if($azureEnvironmentParams -ne $null)
+    {
+        $armEnv = Get-AzureRmEnvironment -Name $Name
+        if($armEnv -ne $null)
+        {
+            Write-Verbose "Updating AzureRm environment $Name" -Verbose
+            Remove-AzureRmEnvironment -Name $Name | Out-Null
+        }
+        else
+        {
+            Write-Verbose "Adding AzureRm environment $Name" -Verbose
+        }
+        
+        return Add-AzureRmEnvironment @azureEnvironmentParams
+    }
+}
+
+Export-ModuleMember Add-AzureStackAzureRmEnvironment
+
 function Get-AzureStackNatServerAddress
 {
     param (    
@@ -16,10 +86,15 @@ function Get-AzureStackNatServerAddress
     $UserCred = "$Domain\$User"
     $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
 
-    Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
+    $nat = "$natServer.$Domain"
+
+    Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
+    return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         { 
-            Invoke-Command -ComputerName "$using:natServer.$using:Domain" -Credential $using:credential -ScriptBlock `
+            Write-Verbose "Remoting to the Azure Stack NAT server $using:nat..." -Verbose
+            Invoke-Command -ComputerName "$using:nat"  -Credential $using:credential -ScriptBlock `
                 { 
+                    Write-Verbose "Obtaining external IP..." -Verbose
                     Get-NetIPConfiguration | ? { $_.IPv4DefaultGateway -ne $null } | foreach { $_.IPv4Address.IPAddress }
                 }
         } 
@@ -40,19 +115,27 @@ function Add-AzureStackVpnConnection
         [securestring] $Password
     )
 
-    "Creating Azure Stack VPN connection named $ConnectionName"
     $existingConnection = Get-VpnConnection -Name $ConnectionName -ErrorAction Ignore
     if ($existingConnection -ne $null) {
+        Write-Verbose "Updating Azure Stack VPN connection named $ConnectionName" -Verbose
         rasdial $ConnectionName /d
         Remove-VpnConnection -name $ConnectionName -Force -ErrorAction Ignore
+    }
+    else
+    {
+        Write-Verbose "Creating Azure Stack VPN connection named $ConnectionName" -Verbose
     }
 
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
     $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
-    Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod MSChapv2 -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
-    Add-VpnConnectionRoute -ConnectionName $ConnectionName -DestinationPrefix 192.168.102.0/27 -RouteMetric 2 -PassThru
-    Add-VpnConnectionRoute -ConnectionName $ConnectionName -DestinationPrefix 192.168.105.0/27 -RouteMetric 2 -PassThru
+    $connection = Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod MSChapv2 -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
+    
+    Write-Verbose "Adding routes to Azure Stack VPN connection named $ConnectionName" -Verbose
+    Add-VpnConnectionRoute -ConnectionName $ConnectionName -DestinationPrefix 192.168.102.0/27 -RouteMetric 2 -PassThru | Out-Null
+    Add-VpnConnectionRoute -ConnectionName $ConnectionName -DestinationPrefix 192.168.105.0/27 -RouteMetric 2 -PassThru | Out-Null
+
+    return $connection
 }
 
 Export-ModuleMember Add-AzureStackVpnConnection
@@ -72,7 +155,7 @@ function Connect-AzureStackVpn
         [securestring] $Password
     )    
 
-    "Connecting to Azure Stack VPN using connection named $ConnectionName..."
+    Write-Verbose "Connecting to Azure Stack VPN using connection named $ConnectionName..." -Verbose
 
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
     $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
@@ -82,15 +165,14 @@ function Connect-AzureStackVpn
 
     $azshome = "$env:USERPROFILE\Documents\$ConnectionName"
 
-    "Connection-specific files will be saved in $azshome"
+    Write-Verbose "Connection-specific files will be saved in $azshome" -Verbose
 
-    New-Item $azshome -ItemType Directory -Force
-
-    "`nRetrieving Azure Stack Root Authority certificate..."
+    New-Item $azshome -ItemType Directory -Force | Out-Null
 
     $UserCred = "$Domain\$User"
     $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
 
+    Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
     $cert = Invoke-Command -ComputerName "$Remote.$Domain" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -eq "CN=AzureStackCertificationAuthority, DC=AzureStack, DC=local"} } -Credential $credential
 
     if($cert -ne $null)
@@ -102,11 +184,11 @@ function Connect-AzureStackVpn
 
         $certFilePath = "$azshome\CA.cer"
 
-        "Saving Azure Stack Root certificate in $certFilePath..."
+        Write-Verbose "Saving Azure Stack Root certificate in $certFilePath..." -Verbose
 
-        Export-Certificate -Cert $cert -FilePath $certFilePath -Force
+        Export-Certificate -Cert $cert -FilePath $certFilePath -Force | Out-Null
 
-        "`nInstalling Azure Stack Root certificate for the current user..." 
+        Write-Verbose "Installing Azure Stack Root certificate for the current user..." -Verbose
         
         Write-Progress "LOOK FOR CERT ACCEPTANCE PROMPT ON YOUR SCREEN!"
 

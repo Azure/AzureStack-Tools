@@ -50,9 +50,11 @@ Import-Module .\Connect\AzureStack.Connect.psm1
 
 ### VPN to Azure Stack One Node
 
-You can establish a split tunnel VPN connection to an Azure Stack One Node. This allows your client computer to become part of the Azure Stack One Node network system and therefore resolve [https://portal.azurestak.local](https://portal.azurestack.local), api.azurestack.local, *.blob.azurestack.local and so on. 
+You can establish a split tunnel VPN connection to an Azure Stack One Node. 
+This allows your client computer to become part of the Azure Stack One Node network system and therefore resolve [https://portal.azurestak.local](https://portal.azurestack.local), api.azurestack.local, *.blob.azurestack.local and so on. 
 
-The tool will wlso download root certificate of the targeted Azure Stack One Node instance locally to your client computer. This will esnure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
+The tool will wlso download root certificate of the targeted Azure Stack One Node instance locally to your client computer. 
+This will esnure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
 
 Use the admin password provided at the time of the Azure Stack deployment.
 
@@ -78,7 +80,7 @@ set-item wsman:\localhost\Client\TrustedHosts -value *
 Then obtain NAT IP.
 
 ```powershell
-$natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>"
+$natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>" -Password $Password
 ```
 
 Then connect your client computer as follows.
@@ -89,4 +91,20 @@ Add-AzureStackVpnConnection -ServerAddress $natIp -Password $Password
 
 # Connect to the Azure Stack instance. This command can be used multiple times.
 Connect-AzureStackVpn -Password $Password
+```
+### Configure Azure Stack PowerShell Environment
+
+AzureRM command-lets can be targeted at multiple Azure clouds such as Azure China, Government and Azure Stack.
+To target your Azure Stack instance, an AzureRM environment needs to be registered as follows.
+
+Note that Azure Stack One Node host needs to be added to TrustedHosts as described in the VPN section above.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -HostComputer "<Azure Stack host address>" -Password $Password
+``` 
+
+After registering Azure Stack AzureRM environment command-lets can be easily targeted at Azure Stack. For example:
+
+```powershell
+Add-AzureRmAccount -EnvironmentName AzureStack
 ```
