@@ -164,11 +164,11 @@ If the VM image VHD is available locally on the console VM (or another externall
         the article [Deploy Linux virtual machines on Azure
         Stack](https://azure.microsoft.com/en-us/documentation/articles/azure-stack-linux/).
 
-2. Clone this repository and then go to the **Marketplace** directory and then the **VMImageUploader** directory.
-3. Open PowerShell. Then, in the **VMImageUploader** folder, run the following command:
+2. Clone this repository and then go to the **ComputeAdmin** directory.
+3. Open PowerShell. Then, in the **ComputeAdmin** folder, run the following command:
 
 ```powershell
-Import-Module .\Add-VMImage.psm1
+Import-Module .\AzureStack.ComputeAdmin.psm1
 ```
 
 4. Add the VM image by invoking the Add-VMImage cmdlet. Make sure you run the command from the same directory that you imported the module from.
