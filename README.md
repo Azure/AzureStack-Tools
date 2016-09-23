@@ -151,5 +151,46 @@ Of course, you may still need KVM (or some other kind of alternate connection to
     -  It will automatically run Windows Setup as the VHD OS is prepared. When asked, provide your country, language, keyboard, and other preferences.
   - Something goes wrong in the reboot/customization process, and you are not able to RDP to the HOST after some time.
 
+
+
+##Add a VM image to the Marketplace with PowerShell
+
+If the VM image VHD is available locally on the console VM (or another externally connected device), use the following steps:
+
+1. Prepare a Windows or Linux operating system virtual hard disk image in VHD format (not VHDX).
+    -   For Windows images, the article [Upload a Windows VM image to Azure for Resource Manager deployments](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-upload-image/) contains image preparation instructions in the **Prepare the VHD for upload** section.
+    -   For Linux images, follow the steps to
+        prepare the image or use an existing Azure Stack Linux image as described in
+        the article [Deploy Linux virtual machines on Azure
+        Stack](https://azure.microsoft.com/en-us/documentation/articles/azure-stack-linux/).
+
+2. Clone this repository and then go to the **ComputeAdmin** directory.
+3. Open PowerShell. Then, in the **ComputeAdmin** folder, run the following command:
+
+```powershell
+Import-Module .\AzureStack.ComputeAdmin.psm1
+```
+
+4. Add the VM image by invoking the Add-VMImage cmdlet. Make sure you run the command from the same directory that you imported the module from.
+	-  Include the publisher, offer, SKU, and version for the VM image. These parameters are used by Azure Resource Manager templates that reference the VM image.
+	-  Specify osType as Windows or Linux.
+	-  Include your Azure Active Directory tenant ID in the form *&lt;myaadtenant&gt;*.onmicrosoft.com.
+	-  The following is an example invocation of the script:
+	
+```powershell
+Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\AzureStackAdmin\Desktop\UbuntuServer.vhd' -tenantID <myaadtenant>.onmicrosoft.com
+```
+
+Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;myaadtenant&gt;*.onmicrosoft.com, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Uploads the local VHD to a newly created temporary storage account
+- Adds the VM image to the VM image repository
+- Creates a Marketplace item
+
+To verify that the command ran successfully, go to Marketplace in the portal, and then verify that the VM image is available in the **Virtual Machines** category.
+
+
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
