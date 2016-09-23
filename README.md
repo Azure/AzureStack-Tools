@@ -151,5 +151,31 @@ Of course, you may still need KVM (or some other kind of alternate connection to
     -  It will automatically run Windows Setup as the VHD OS is prepared. When asked, provide your country, language, keyboard, and other preferences.
   - Something goes wrong in the reboot/customization process, and you are not able to RDP to the HOST after some time.
 
+  ## Template Validator
+		
+Test-TemplateCapability [-CapabilitiesPath] <String> [-TemplateDirectory] <String> [-TemplatePattern] <String>  [-OutputPath] <String>
+	
+Parameter Description
+CapabilitiesPath - Full Directory path to the Json that has Azure Stack TP2 capabillities ex: AzureStackCapabilitiesTP2.json
+TemplateDirectory - Path to directory containing templates to validate ex: ".\Templates"
+TemplatePattern - Pattern to select templates. Performs PowerShell -like comparison over all files contained in TemplateDirectory including subfile paths. ex: "*\azuredeploy.json"
+OutputPath	- Output filename with path for the validation output. Supports plain txt, html, and xlsx file extensions
+
+#Usage Instructions
+Copy contents to C:\TemplateValidator and run the below script
+
+```powershell
+Import-Module ".\TemplateValidator.psm1"
+Import-module ".\CapabilityParser.dll"
+Test-TemplateCapability -CapabilitiesPath "C:\TemplateValidator\AzureStackCapabilitiesTP2.json" -TemplateDirectory ".\Templates" `
+-TemplatePattern "*\azuredeploy.json" -OutputPath ".\TemplateValidationResults.html" -Verbose
+```
+
+# To Perform Compute Resource Provider Images and Extensions validation use as below
+```powershell
+Test-TemplateCapability -CapabilitiesPath "C:\TemplateValidator\AzureStackCapabilitiesTP2.json" -TemplateDirectory ".\Templates" `
+-TemplatePattern "*\azuredeploy.json" -OutputPath ".\TemplateValidationResults.html" -ProcessImageExtensions $True -Verbose
+```
+
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
