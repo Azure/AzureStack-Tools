@@ -109,5 +109,47 @@ After registering AzureRM environment command-lets can be easily targeted at you
 Add-AzureRmAccount -EnvironmentName AzureStack
 ```
 
+## Prepare to Boot from VHD
+
+This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided AzureStack Technical Preview virtual harddisk (CloudBuilder.vhdx).
+
+PrepareBootFromVHD updates the boot configuration with an AzureStack TP2 entry. 
+It will verify if the disk that hosts the CloudBuilder.vhdx contains the required free disk space, and optionally copy drivers and an unattend.xml that does not require KVM access.
+
+You will need at least (120GB - Size of the CloudBuilder.vhdx file) of free disk space on the disk that contains the CloudBuilder.vhdx.
+
+### PrepareBootFromVHD.ps1 Execution
+
+There are five parameters for this script:
+  - **CloudBuilderDiskPath** (required) – path to the CloudBuilder.vhdx on the HOST
+  - **DriverPath** (optional) – allows you to add additional drivers for the host in the virtual HD 
+  - **ApplyUnattend** (optional) – switch parameter, if specified, the configuration of the OS is automated, and the user will be prompted for the AdminPassword to configure at boot (requires provided accompanying file **unattend_NoKVM.xml**)
+    - If you do not leverage this parameter, the generic **unattend.xml** file is used without further customization
+  - **AdminPassword** (optional) – only used when the **ApplyUnattend** parameter is set, requires a minimum of 6 characters
+  - **VHDLanguage** (optional) – specifies the VHD language, defaulted to “en-US”
+
+```powershell
+.\PrepareBootFromVHD.ps1 -CloudBuilderDiskPath C:\CloudBuilder.vhdx -ApplyUnattend
+```
+
+If you execute this exact command, you will be prompted to enter the **AdminPassword** parameter.
+
+During execution of this script, you will have visibility to the **bcdedit** command execution and output.
+
+When the script execution is complete, you will be asked to confirm reboot.
+If there are other users logged in, this command will fail, run the following command to continue:
+```powershell
+Restart-Computer -force
+```
+
+### HOST Reboot
+
+If you used **ApplyUnattend** and provided an **AdminPassword** during the execution of the PrepareBootFromVHD.ps1 script, you will not need KVM to access the HOST once it completes its reboot cycle.
+
+Of course, you may still need KVM (or some other kind of alternate connection to the HOST other than RDP) if you meet one of the following:
+  - You chose not to use **ApplyUnattend**
+    -  It will automatically run Windows Setup as the VHD OS is prepared. When asked, provide your country, language, keyboard, and other preferences.
+  - Something goes wrong in the reboot/customization process, and you are not able to RDP to the HOST after some time.
+
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
