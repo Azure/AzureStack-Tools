@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 <#
     .SYNOPSIS
-    Uploads a VM Image to your Azure Stack and creates a Marketplace Item for it.
+    Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
 #>
 
 Function Add-VMImage{
