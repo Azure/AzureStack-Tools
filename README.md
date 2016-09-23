@@ -151,8 +151,7 @@ Of course, you may still need KVM (or some other kind of alternate connection to
     -  It will automatically run Windows Setup as the VHD OS is prepared. When asked, provide your country, language, keyboard, and other preferences.
   - Something goes wrong in the reboot/customization process, and you are not able to RDP to the HOST after some time.
 
----
-_This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
+
 
 ##Add a VM image available in the Marketplace with PowerShell
 
@@ -183,3 +182,5 @@ Note: The cmdlet will request credentials for adding the VM image. Provide the a
 5. The command will authenticate to your Azure Stack environment, upload the local VHD to a newly created temporary storage account, add the VM image into the VM image repository, and create a Marketplace item for the VM image. To verify that the command ran successfully, navigate to the Marketplace in the portal and verify that the VM image is available in the Virtual Machines category.
 
 
+---
+_This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
