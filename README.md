@@ -97,10 +97,17 @@ Connect-AzureStackVpn -Password $Password
 AzureRM command-lets can be targeted at multiple Azure clouds such as Azure China, Government and Azure Stack.
 To target your Azure Stack instance, an AzureRM environment needs to be registered as follows.
 
+```powershell
+Add-AzureStackAzureRmEnvironment -AadTenant "<mydirectory>.onmicrosoft.com"
+```
+
+The AadTenant parameter above specifies the directory that was used when deploying Azure Stack. 
+If you do not remember the directory, you coul retrieve it as follows. 
 Note that Azure Stack One Node host needs to be added to TrustedHosts as described in the VPN section above.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -HostComputer "<Azure Stack host address>" -Password $Password
+$AadTenant = Get-AzureStackAadTenant -HostComputer "<Azure Stack host address>" -Password $Password
+Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant
 ``` 
 
 After registering AzureRM environment command-lets can be easily targeted at your Azure Stack instance. For example:
@@ -109,7 +116,26 @@ After registering AzureRM environment command-lets can be easily targeted at you
 Add-AzureRmAccount -EnvironmentName AzureStack
 ```
 
-## Prepare to Boot from VHD
+## Azure Stack Service Administration
+
+```powershell
+Import-Module .\ServiceAdmin\AzureStack.ServiceAdmin.psm1
+```
+
+### Create default plan and quota for tenants
+
+```powershell
+$serviceAdminPassword = (ConvertTo-SecureString "<Azure Stack service admin password in AAD>" -AsPlainText -Force)
+$serviceAdmin = New-Object System.Management.Automation.PSCredential -ArgumentList "<myadmin>@<mydirectory>.onmicrosoft.com", $serviceAdminPassword
+
+New-AzureStackTenantOfferAndQuotas -ServiceAdminCredential $serviceAdmin
+```
+
+Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimuted compute, network, storage and keyvault usage. 
+
+## Deployment of Azure Stack
+
+### Prepare to Boot from VHD
 
 This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided AzureStack Technical Preview virtual harddisk (CloudBuilder.vhdx).
 
@@ -118,7 +144,7 @@ It will verify if the disk that hosts the CloudBuilder.vhdx contains the require
 
 You will need at least (120GB - Size of the CloudBuilder.vhdx file) of free disk space on the disk that contains the CloudBuilder.vhdx.
 
-### PrepareBootFromVHD.ps1 Execution
+#### PrepareBootFromVHD.ps1 Execution
 
 There are five parameters for this script:
   - **CloudBuilderDiskPath** (required) – path to the CloudBuilder.vhdx on the HOST
@@ -129,7 +155,7 @@ There are five parameters for this script:
   - **VHDLanguage** (optional) – specifies the VHD language, defaulted to “en-US”
 
 ```powershell
-.\PrepareBootFromVHD.ps1 -CloudBuilderDiskPath C:\CloudBuilder.vhdx -ApplyUnattend
+.\Deployment\PrepareBootFromVHD.ps1 -CloudBuilderDiskPath C:\CloudBuilder.vhdx -ApplyUnattend
 ```
 
 If you execute this exact command, you will be prompted to enter the **AdminPassword** parameter.
@@ -142,7 +168,7 @@ If there are other users logged in, this command will fail, run the following co
 Restart-Computer -force
 ```
 
-### HOST Reboot
+#### HOST Reboot
 
 If you used **ApplyUnattend** and provided an **AdminPassword** during the execution of the PrepareBootFromVHD.ps1 script, you will not need KVM to access the HOST once it completes its reboot cycle.
 
@@ -151,9 +177,9 @@ Of course, you may still need KVM (or some other kind of alternate connection to
     -  It will automatically run Windows Setup as the VHD OS is prepared. When asked, provide your country, language, keyboard, and other preferences.
   - Something goes wrong in the reboot/customization process, and you are not able to RDP to the HOST after some time.
 
+## Azure Stack Compute Administration
 
-
-##Add a VM image to the Marketplace with PowerShell
+###Add a VM image to the Marketplace with PowerShell
 
 If the VM image VHD is available locally on the console VM (or another externally connected device), use the following steps:
 
@@ -168,7 +194,7 @@ If the VM image VHD is available locally on the console VM (or another externall
 3. Open PowerShell. Then, in the **ComputeAdmin** folder, run the following command:
 
 ```powershell
-Import-Module .\AzureStack.ComputeAdmin.psm1
+Import-Module .\Compute\AzureStack.ComputeAdmin.psm1
 ```
 
 4. Add the VM image by invoking the Add-VMImage cmdlet. Make sure you run the command from the same directory that you imported the module from.

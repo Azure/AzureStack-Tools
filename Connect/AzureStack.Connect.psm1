@@ -6,9 +6,9 @@
 
 <#
     .SYNOPSIS
-    Adds Azure Stack environment to use with AzureRM command-lets when targeting Azure Stack
+    Obtains Aazure Active Directory tenant that was used when deploying the Azure Stack instance
 #>
-function Add-AzureStackAzureRmEnvironment
+function Get-AzureStackAadTenant
 {
     param (
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
@@ -18,62 +18,77 @@ function Add-AzureStackAzureRmEnvironment
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
-        [securestring] $Password,
-        [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
-        [string] $Name = "AzureStack"
+        [securestring] $Password
     )
 
     $UserCred = "$Domain\$User"
     $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
 
     Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
-    $azureEnvironmentParams = Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
+    return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         {            
-            $stackdomain = $env:USERDNSDOMAIN
-                        
             Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
             $config = Get-Content -Path "C:\CloudDeployment\CustomerConfig.xml" -ErrorAction Stop
-            $DirectoryTenantId = ([xml]($config)).SelectSingleNode("//Role[@Id='AAD']").PublicInfo.AADTenant.Id
+            
+            ([xml]($config)).SelectSingleNode("//Role[@Id='AAD']").PublicInfo.AADTenant.Id
 
-            $ResourceManagerEndpoint = "https://api." + $stackdomain            
-
-            Write-Verbose "Retrieving endpoints from the $ResourceManagerEndpoint..." -Verbose
-            $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop
-
-            $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
-            $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
-            $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
-
-            @{
-                Name                                     = $using:Name
-                ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
-                ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-                AdTenant                                 = $DirectoryTenantId
-                ResourceManagerEndpoint                  = $ResourceManagerEndpoint
-                GalleryEndpoint                          = $endpoints.galleryEndpoint
-                GraphEndpoint                            = $endpoints.graphEndpoint
-                GraphAudience                            = $endpoints.graphEndpoint
-                StorageEndpointSuffix                    = $StorageEndpointSuffix
-                AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
-                AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
-            }
         }
+}
 
-    if($azureEnvironmentParams -ne $null)
-    {
-        $armEnv = Get-AzureRmEnvironment -Name $Name
-        if($armEnv -ne $null)
-        {
-            Write-Verbose "Updating AzureRm environment $Name" -Verbose
-            Remove-AzureRmEnvironment -Name $Name | Out-Null
-        }
-        else
-        {
-            Write-Verbose "Adding AzureRm environment $Name" -Verbose
-        }
-        
-        return Add-AzureRmEnvironment @azureEnvironmentParams
+Export-ModuleMember Get-AzureStackAadTenant
+
+<#
+    .SYNOPSIS
+    Adds Azure Stack environment to use with AzureRM command-lets when targeting Azure Stack
+#>
+function Add-AzureStackAzureRmEnvironment
+{
+    param (
+        [parameter(mandatory=$true, HelpMessage="AAD Tenant name or ID used when deploying Azure Stack such as 'mydirectory.onmicrosoft.com'")]
+	    [string] $AadTenant,
+        [parameter(HelpMessage="Domain FQDN of this Azure Stack Instance")]
+        [string] $Domain = "azurestack.local",
+        [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
+        [string] $Name = "AzureStack"
+    )
+
+    $stackdomain = $Domain
+                        
+    $ResourceManagerEndpoint = "https://api." + $stackdomain            
+
+    Write-Verbose "Retrieving endpoints from the $ResourceManagerEndpoint..." -Verbose
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop
+
+    $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
+    $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
+    $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
+
+    $azureEnvironmentParams = @{
+        Name                                     = $Name
+        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+        ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+        AdTenant                                 = $AadTenant
+        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+        GalleryEndpoint                          = $endpoints.galleryEndpoint
+        GraphEndpoint                            = $endpoints.graphEndpoint
+        GraphAudience                            = $endpoints.graphEndpoint
+        StorageEndpointSuffix                    = $StorageEndpointSuffix
+        AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
+        AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
     }
+
+    $armEnv = Get-AzureRmEnvironment -Name $Name
+    if($armEnv -ne $null)
+    {
+        Write-Verbose "Updating AzureRm environment $Name" -Verbose
+        Remove-AzureRmEnvironment -Name $Name | Out-Null
+    }
+    else
+    {
+        Write-Verbose "Adding AzureRm environment $Name" -Verbose
+    }
+        
+    return Add-AzureRmEnvironment @azureEnvironmentParams
 }
 
 Export-ModuleMember Add-AzureStackAzureRmEnvironment
