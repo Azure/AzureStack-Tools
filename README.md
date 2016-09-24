@@ -180,7 +180,7 @@ Of course, you may still need KVM (or some other kind of alternate connection to
 ## Azure Stack Compute Administration
 
 ```powershell
-Import-Module .\Compute\AzureStack.ComputeAdmin.psm1
+Import-Module .\ComputeAdmin\AzureStack.ComputeAdmin.psm1
 ```
 
 ###Add a VM image to the Marketplace with PowerShell
