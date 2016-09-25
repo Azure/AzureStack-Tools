@@ -4,6 +4,10 @@
 #requires -Version 4.0
 #requires -Modules AzureRM.Profile, AzureRm.AzureStackAdmin
 
+<#
+    .SYNOPSIS
+    Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
+#>
 function New-AzureStackTenantOfferAndQuotas
 {
     param (
@@ -13,7 +17,7 @@ function New-AzureStackTenantOfferAndQuotas
         [string] $EnvironmentName = "AzureStack",
         [parameter(HelpMessage="Azure Stack region in which to define plans and quotas")]
         [string]$ResourceLocation = "local",
-        [parameter(Mandatory=$true,HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
+        [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential in Azure Active Directory")]
         [pscredential] $ServiceAdminCredential
     )
 

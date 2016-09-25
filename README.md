@@ -120,6 +120,23 @@ You will be prompted for the account login including two factor authentication i
 
 If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
 
+### Register Azure RM Providers on new subscriptions
+
+If you are intending to use newly created subscriptions via PowerShell, CLI or direct API calls before delpoying any templates or using the Portal, you need to ensure that resource providers are registered on the subscription.
+To register providers on the current subscription, do the following.
+
+```powershell
+Register-AllAzureRmProviders
+```
+
+To regsiter all resource providers on all your subscriptions after logging in using Add-AzureRmAccount do the following. Note that this can take a while.
+
+```powershell
+Register-AllAzureRmProvidersOnAllSubscriptions
+```
+
+These registrations are idempotent and can be run multiple times. If provider has already been registered, it will simply be reported in the output.
+
 ## Azure Stack Service Administration
 
 ```powershell

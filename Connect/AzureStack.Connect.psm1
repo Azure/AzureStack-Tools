@@ -6,6 +6,33 @@
 
 <#
     .SYNOPSIS
+    Registers all providers on the all subscription
+#>
+function Register-AllAzureRmProvidersOnAllSubscriptions
+{
+    foreach($s in (Get-AzureRmSubscription))
+    {
+        Select-AzureRmSubscription -SubscriptionId $s.SubscriptionId | Out-Null
+        Write-Progress $($s.SubscriptionId + " : " + $s.SubscriptionName)
+        Register-AllAzureRmProviders
+    }
+}
+
+Export-ModuleMember Register-AllAzureRmProvidersOnAllSubscriptions
+
+<#
+    .SYNOPSIS
+    Registers all providers on the newly created subscription
+#>
+function Register-AllAzureRmProviders
+{
+    Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force
+}
+
+Export-ModuleMember Register-AllAzureRmProviders
+
+<#
+    .SYNOPSIS
     Obtains Aazure Active Directory tenant that was used when deploying the Azure Stack instance
 #>
 function Get-AzureStackAadTenant
