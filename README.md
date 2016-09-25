@@ -116,6 +116,8 @@ After registering AzureRM environment command-lets can be easily targeted at you
 Add-AzureRmAccount -EnvironmentName AzureStack -TenantId $AadTenant
 ```
 
+You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also login with a service pricipal using aappropriate parametets of the Add-AzureRmAccount command-let.
+
 If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
 
 ## Azure Stack Service Administration
