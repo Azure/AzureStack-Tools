@@ -137,11 +137,11 @@ Tenants can now see the "default" offer available to them and can subscribe to i
 
 ## Deployment of Azure Stack
 
-### Prepare to Boot from VHD
+### Prepare to Deploy (boot from VHD)
 
 This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided AzureStack Technical Preview virtual harddisk (CloudBuilder.vhdx).
 
-PrepareBootFromVHD updates the boot configuration with an AzureStack TP2 entry. 
+PrepareBootFromVHD updates the boot configuration with an **AzureStack TP2** entry. 
 It will verify if the disk that hosts the CloudBuilder.vhdx contains the required free disk space, and optionally copy drivers and an unattend.xml that does not require KVM access.
 
 You will need at least (120GB - Size of the CloudBuilder.vhdx file) of free disk space on the disk that contains the CloudBuilder.vhdx.
@@ -178,6 +178,35 @@ Of course, you may still need KVM (or some other kind of alternate connection to
   - You chose not to use **ApplyUnattend**
     -  It will automatically run Windows Setup as the VHD OS is prepared. When asked, provide your country, language, keyboard, and other preferences.
   - Something goes wrong in the reboot/customization process, and you are not able to RDP to the HOST after some time.
+
+### Prepare to Redeploy (boot back to original/base OS)
+
+This tool allows you to easily initiate a redeployment of your Azure Stack Technical Preview deployment, by presenting you with the boot os options, and the choice to boot back into the original/base OS (away from the previously created **AzureStack TP2**).
+
+BootMenuNoKVM updates the boot configuration with the original/base entry, and then prompts to reboot the host.
+Because the default boot entry is set with this script, no KVM or manual selection of the boot entry is required as the machine restarts.
+
+#### BootMenuNoKVM.ps1 Execution
+
+There are no parameters for this script, but it must be executed in an elevated PS console.
+
+```powershell
+.\BootMenuNoKVM.ps1
+```
+
+During execution of this script, you will be prompted to choose the default OS to boot back into after restart. This will become your new default OS, just like **AzureStack TP2** became the new default OS during deployment.
+
+When the script execution is complete, you will be asked to confirm reboot.
+If there are other users logged in, this command will fail, run the following command to continue:
+```powershell
+Restart-Computer -force
+```
+
+#### HOST Reboot
+
+Because you are choosing the new default OS to boot into, you will not need KVM to access the HOST once it completes its reboot cycle. It will boot into the OS you chose during the execution of the script.
+
+Once the HOST is rebooted back to the original/base OS, you will need to DELETE the previous/existing CloudBuilder.vhdx file, and then copy down a new one to begin redeployment.
 
 ## Azure Stack Compute Administration
 
