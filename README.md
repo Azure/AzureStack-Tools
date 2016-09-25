@@ -113,8 +113,10 @@ Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant
 After registering AzureRM environment command-lets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
-Add-AzureRmAccount -EnvironmentName AzureStack
+Add-AzureRmAccount -EnvironmentName AzureStack -TenantId $AadTenant
 ```
+
+If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
 
 ## Azure Stack Service Administration
 
