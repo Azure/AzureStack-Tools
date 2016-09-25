@@ -65,7 +65,7 @@ function Add-AzureStackAzureRmEnvironment
 
     $azureEnvironmentParams = @{
         Name                                     = $Name
-        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/" + $AadTenant + "/"
         ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
         AdTenant                                 = $AadTenant
         ResourceManagerEndpoint                  = $ResourceManagerEndpoint
