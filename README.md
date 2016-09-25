@@ -213,7 +213,7 @@ Import-Module .\ComputeAdmin\AzureStack.ComputeAdmin.psm1
         the article [Deploy Linux virtual machines on Azure
         Stack](https://azure.microsoft.com/en-us/documentation/articles/azure-stack-linux/).
 
-2. Add the VM image by invoking the Add-VMImage cmdlet. Make sure you run the command from the same directory that you imported the module from.
+2. Add the VM image by invoking the Add-VMImage cmdlet. 
 	-  Include the publisher, offer, SKU, and version for the VM image. These parameters are used by Azure Resource Manager templates that reference the VM image.
 	-  Specify osType as Windows or Linux.
 	-  Include your Azure Active Directory tenant ID in the form *&lt;mydirectory&gt;*.onmicrosoft.com.
