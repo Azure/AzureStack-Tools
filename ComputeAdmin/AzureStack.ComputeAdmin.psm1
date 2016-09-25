@@ -7,78 +7,78 @@
 
 Function Add-VMImage{
 
-    [CmdletBinding(DefaultParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
+    [CmdletBinding(DefaultParameterSetName='VMImageFromLocal')]
     Param(
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateNotNullorEmpty()]
         [String] $publisher,
        
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateNotNullorEmpty()]
         [String] $offer,
     
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateNotNullorEmpty()]
         [String] $sku,
     
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateNotNullorEmpty()]
         [String] $version,
 
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [ValidateNotNullorEmpty()]
         [String] $osDiskLocalPath,
 
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateNotNullorEmpty()]
         [String] $osDiskBlobURI,
 
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateSet('Windows' ,'Linux')]
         [String] $osType,
 
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [ValidateNotNullorEmpty()]
         [String] $tenantID,
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [String] $location = 'local',
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
         [string[]] $dataDisksLocalPaths,
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [string[]] $dataDiskBlobURIs,
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [string] $billingPartNumber,
 
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(Mandatory=$true, ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [string] $azureStackDomain = 'azurestack.local',
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [string] $title,
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [string] $description,
 
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromLocal')]
-        [Parameter(ParameterSetName='PlacePlatformImageIntoPIRFromAzure')]
+        [Parameter(ParameterSetName='VMImageFromLocal')]
+        [Parameter(ParameterSetName='VMImageFromAzure')]
         [string] $CreateGalleryItem = $true
         )
 
@@ -94,6 +94,7 @@ Function Add-VMImage{
         exit
     }
 
+    
 	$resourceGroupName = "addvmimageresourcegroup"
 	$storageAccountName = "addvmimagestorageaccount"
 	$containerName = "addvmimagecontainer"
@@ -125,7 +126,7 @@ Function Add-VMImage{
     Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
 	New-AzureStorageContainer -Name $containerName  -Permission Blob
 	
-    if($pscmdlet.ParameterSetName -eq "PlacePlatformImageIntoPIRFromLocal")
+    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
     {
         $script:osDiskName = Split-Path $osDiskLocalPath -Leaf
         $script:osDiskBlobURIFromLocal = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$osDiskName"
@@ -163,7 +164,7 @@ Function Add-VMImage{
 #building platform image JSON
 
     #building osDisk json
-    if($pscmdlet.ParameterSetName -eq "PlacePlatformImageIntoPIRFromLocal")
+    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
     {
         $osDiskJSON = '"OsDisk":{"OsType":"'+ $osType + '","Uri":"'+$osDiskBlobURIFromLocal+'"}'
     }
@@ -182,7 +183,7 @@ Function Add-VMImage{
     #building dataDisk JSON
     $dataDisksJSON = ''
 
-    if($pscmdlet.ParameterSetName -eq "PlacePlatformImageIntoPIRFromLocal")
+    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
     {
         if ($dataDiskBlobURIsFromLocal.Count -ne 0)
         {
@@ -251,13 +252,13 @@ Function Add-VMImage{
     {
         if($platformImage.Properties.ProvisioningState -eq 'Failed')
         {
-            Write-Host "Platform image download failed.";
+            Write-Host "VM image download failed.";
             break;
         }
 
         if($platformImage.Properties.ProvisioningState -eq 'Canceled')
         {
-            Write-Host "Platform image download was canceled.";
+            Write-Host "PVM image download was canceled.";
             break;
         }
 
@@ -269,9 +270,9 @@ Function Add-VMImage{
     if($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded')
     {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-        $compressedGalleryItemPath = Join-Path $pwd 'CustomizedVMGalleryItem.azpkg'
-        $extractedGalleryItemPath = Join-Path $pwd 'galleryItem'
+        $basePath = Split-Path -Parent  $MyInvocation.MyCommand.Module.Path
+        $compressedGalleryItemPath = Join-Path $basePath 'CustomizedVMGalleryItem.azpkg'
+        $extractedGalleryItemPath = Join-Path $basePath 'galleryItem'
 
         New-Item -ItemType directory -Path $extractedGalleryItemPath
 
@@ -318,17 +319,17 @@ Function Add-VMImage{
         }
         else
         {
-            $descriptionToSet = "Create a virtual machine from a platform image. Publisher: {0}, Offer: {1}, Sku:{2}, Version: {3}" -f $publisher, $offer, $sku, $version
+            $descriptionToSet = "Create a virtual machine from a VM image. Publisher: {0}, Offer: {1}, Sku:{2}, Version: {3}" -f $publisher, $offer, $sku, $version
         }
+
+        $extractedName = 'MarketplaceItem.zip'
+        $compressedGalleryPackagerPath = Join-Path $basePath $extractedName
+        $extractedGalleryPackagerPath = Join-Path $basePath 'MarketplaceItem'
 
         $JSON.longSummary = $descriptionToSet
         $JSON.description = $descriptionToSet
 		$JSON.summary = $descriptionToSet
         $JSON | ConvertTo-Json -Compress | set-content $stringsPath
-		
-		$galleryPackagerGuid = (New-Guid).guid
-		$compressedGalleryPackagerPath = Join-Path $pwd ($galleryPackagerGuid + ".zip")
-		$extractedGalleryPackagerPath = Join-Path $pwd $galleryPackagerGuid
 		
 		Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile $compressedGalleryPackagerPath
 		
