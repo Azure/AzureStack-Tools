@@ -51,10 +51,10 @@ Import-Module .\Connect\AzureStack.Connect.psm1
 ### VPN to Azure Stack One Node
 
 You can establish a split tunnel VPN connection to an Azure Stack One Node. 
-This allows your client computer to become part of the Azure Stack One Node network system and therefore resolve [https://portal.azurestak.local](https://portal.azurestack.local), api.azurestack.local, *.blob.azurestack.local and so on. 
+This allows your client computer to become part of the Azure Stack One Node network system and therefore resolve [https://portal.azurestack.local](https://portal.azurestack.local), api.azurestack.local, *.blob.azurestack.local and so on. 
 
-The tool will wlso download root certificate of the targeted Azure Stack One Node instance locally to your client computer. 
-This will esnure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
+The tool will also download root certificate of the targeted Azure Stack One Node instance locally to your client computer. 
+This will ensure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
 
 Use the admin password provided at the time of the Azure Stack deployment.
 
@@ -70,11 +70,7 @@ Since the command below needs to access the Azure Stack One Node host computer v
 
 ```powershell
 # Add Azure Stack One Node host to the trusted hosts on your client computer
-$hosts = get-item wsman:\localhost\Client\TrustedHosts
-set-item wsman:\localhost\Client\TrustedHosts -value ("<Azure Stack host address>, " + $hosts.Value)
-
-# Or simply allow all hosts to be trusted for remote calls (less secure)
-set-item wsman:\localhost\Client\TrustedHosts -value *
+Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate 
 ```
 
 Then obtain NAT IP.
@@ -94,7 +90,7 @@ Connect-AzureStackVpn -Password $Password
 ```
 ### Configure Azure Stack PowerShell Environment
 
-AzureRM command-lets can be targeted at multiple Azure clouds such as Azure China, Government and Azure Stack.
+AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
 To target your Azure Stack instance, an AzureRM environment needs to be registered as follows.
 
 ```powershell
@@ -102,7 +98,7 @@ Add-AzureStackAzureRmEnvironment -AadTenant "<mydirectory>.onmicrosoft.com"
 ```
 
 The AadTenant parameter above specifies the directory that was used when deploying Azure Stack. 
-If you do not remember the directory, you coul retrieve it as follows. 
+If you do not remember the directory, you could retrieve it as follows. 
 Note that Azure Stack One Node host needs to be added to TrustedHosts as described in the VPN section above.
 
 ```powershell
@@ -110,26 +106,26 @@ $AadTenant = Get-AzureStackAadTenant -HostComputer "<Azure Stack host address>" 
 Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant
 ``` 
 
-After registering AzureRM environment command-lets can be easily targeted at your Azure Stack instance. For example:
+After registering AzureRM environment cmdlets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
 Add-AzureRmAccount -EnvironmentName AzureStack -TenantId $AadTenant
 ```
 
-You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also login with a service pricipal using aappropriate parametets of the Add-AzureRmAccount command-let.
+You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also login with a service pricipal using appropriate parameters of the Add-AzureRmAccount cmdlet.
 
 If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
 
 ### Register Azure RM Providers on new subscriptions
 
-If you are intending to use newly created subscriptions via PowerShell, CLI or direct API calls before delpoying any templates or using the Portal, you need to ensure that resource providers are registered on the subscription.
+If you are intending to use newly created subscriptions via PowerShell, CLI or direct API calls before deploying any templates or using the Portal, you need to ensure that resource providers are registered on the subscription.
 To register providers on the current subscription, do the following.
 
 ```powershell
 Register-AllAzureRmProviders
 ```
 
-To regsiter all resource providers on all your subscriptions after logging in using Add-AzureRmAccount do the following. Note that this can take a while.
+To register all resource providers on all your subscriptions after logging in using Add-AzureRmAccount do the following. Note that this can take a while.
 
 ```powershell
 Register-AllAzureRmProvidersOnAllSubscriptions
@@ -152,7 +148,7 @@ $serviceAdmin = New-Object System.Management.Automation.PSCredential -Argument
 New-AzureStackTenantOfferAndQuotas -ServiceAdminCredential $serviceAdmin
 ```
 
-Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and keyvault usage. 
+Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and key vault usage. 
 
 ## Deployment of Azure Stack
 
@@ -177,7 +173,7 @@ Invoke-WebRequest ($uri + 'unattend_NoKVM.xml') -OutFile ($LocalPath + '\unatten
 
 ### Prepare to Deploy (boot from VHD)
 
-This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided AzureStack Technical Preview virtual harddisk (CloudBuilder.vhdx).
+This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided Azure Stack Technical Preview virtual harddisk (CloudBuilder.vhdx).
 
 PrepareBootFromVHD updates the boot configuration with an **AzureStack TP2** entry. 
 It will verify if the disk that hosts the CloudBuilder.vhdx contains the required free disk space, and optionally copy drivers and an unattend.xml that does not require KVM access.
@@ -205,7 +201,7 @@ During execution of this script, you will have visibility to the **bcdedit** com
 When the script execution is complete, you will be asked to confirm reboot.
 If there are other users logged in, this command will fail, run the following command to continue:
 ```powershell
-Restart-Computer -force
+Restart-Computer -Force
 ```
 
 #### HOST Reboot
@@ -219,14 +215,14 @@ Of course, you may still need KVM (or some other kind of alternate connection to
 
 ### Prepare to Redeploy (boot back to original/base OS)
 
-This tool allows you to easily initiate a redeployment of your Azure Stack Technical Preview deployment, by presenting you with the boot os options, and the choice to boot back into the original/base OS (away from the previously created **AzureStack TP2**).
+This tool allows you to easily initiate a redeployment of your Azure Stack Technical Preview deployment, by presenting you with the boot OS options, and the choice to boot back into the original/base OS (away from the previously created **AzureStack TP2**).
 
 BootMenuNoKVM updates the boot configuration with the original/base entry, and then prompts to reboot the host.
 Because the default boot entry is set with this script, no KVM or manual selection of the boot entry is required as the machine restarts.
 
 #### BootMenuNoKVM.ps1 Execution
 
-There are no parameters for this script, but it must be executed in an elevated PS console.
+There are no parameters for this script, but it must be executed in an elevated PowerShell console.
 
 ```powershell
 .\BootMenuNoKVM.ps1
@@ -237,7 +233,7 @@ During execution of this script, you will be prompted to choose the default OS t
 When the script execution is complete, you will be asked to confirm reboot.
 If there are other users logged in, this command will fail, run the following command to continue:
 ```powershell
-Restart-Computer -force
+Restart-Computer -Force
 ```
 
 #### HOST Reboot
@@ -264,14 +260,14 @@ Import-Module .\ComputeAdmin\AzureStack.ComputeAdmin.psm1
 2. Add the VM image by invoking the Add-VMImage cmdlet. 
 	-  Include the publisher, offer, SKU, and version for the VM image. These parameters are used by Azure Resource Manager templates that reference the VM image.
 	-  Specify osType as Windows or Linux.
-	-  Include your Azure Active Directory tenant ID in the form *&lt;mydirectory&gt;*.onmicrosoft.com.
+	-  Include your Azure Active Directory tenant ID in the form *<mydirectory>*.onmicrosoft.com.
 	-  The following is an example invocation of the script:
 	
 ```powershell
 Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <mydirectory>.onmicrosoft.com
 ```
 
-Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *<Admin Account>*@*<mydirectory>*.onmicrosoft.com, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
