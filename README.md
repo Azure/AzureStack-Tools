@@ -260,14 +260,14 @@ Import-Module .\ComputeAdmin\AzureStack.ComputeAdmin.psm1
 2. Add the VM image by invoking the Add-VMImage cmdlet. 
 	-  Include the publisher, offer, SKU, and version for the VM image. These parameters are used by Azure Resource Manager templates that reference the VM image.
 	-  Specify osType as Windows or Linux.
-	-  Include your Azure Active Directory tenant ID in the form *<mydirectory>*.onmicrosoft.com.
+	-  Include your Azure Active Directory tenant ID in the form *&lt;mydirectory&gt;*.onmicrosoft.com.
 	-  The following is an example invocation of the script:
 	
 ```powershell
 Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <mydirectory>.onmicrosoft.com
 ```
 
-Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *<Admin Account>*@*<mydirectory>*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
