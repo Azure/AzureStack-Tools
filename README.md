@@ -10,6 +10,15 @@ Install-Module -Name AzureRm -RequiredVersion 1.2.6 -Scope CurrentUser
 npm install azure-cli@0.9.18
 ```
 
+Obtain the tools as follows (unless you already synced the git repo)
+
+```powershell
+invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
+expand-archive master.zip -DestinationPath . -Force
+cd AzureStack-Tools-master
+```
+Now you can use instructions below relative to the root of the repo.
+
 ## Azure Resource Manager policy for Azure Stack
 
 This tool constrains Azure subscription to the capabilities available in the Azure Stack via the [Azure Resource Manager policy](https://azure.microsoft.com/en-us/documentation/articles/resource-manager-policy/).
