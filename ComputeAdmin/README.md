@@ -1,6 +1,6 @@
 # Azure Stack Compute Administration
 
-Instructions below are relative to the .\ComputeAdmin folder of the [AzureStack-Tools repo](..\).
+Instructions below are relative to the .\ComputeAdmin folder of the [AzureStack-Tools repo](..).
 
 ```powershell
 Import-Module .\AzureStack.ComputeAdmin.psm1
