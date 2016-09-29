@@ -1,6 +1,6 @@
 # Deployment of Azure Stack
 
-Instructions below are relative to the .\Deployment folder of the [AzureStack-Tools repo](..\).
+Instructions below are relative to the .\Deployment folder of the [AzureStack-Tools repo](..).
 
 ## Azure Stack TP2 Support Files
 
