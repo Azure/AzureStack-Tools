@@ -1,6 +1,6 @@
 # Azure Resource Manager policy for Azure Stack
 
-Instructions below are relative to the .\Policy folder of the [AzureStack-Tools repo](..\).
+Instructions below are relative to the .\Policy folder of the [AzureStack-Tools repo](..).
 
 This tool constrains Azure subscription to the capabilities available in the Azure Stack via the [Azure Resource Manager policy](https://azure.microsoft.com/en-us/documentation/articles/resource-manager-policy/).
 
