@@ -2,7 +2,7 @@
 
 This tool set allows you to connect to an Azure Stack instance from your personal computer/laptop.
 
-Instructions below are relative to the .\Connect folder of the [AzureStack-Tools repo](..\).
+Instructions below are relative to the .\Connect folder of the [AzureStack-Tools repo](..).
 
 ```powershell
 Import-Module .\AzureStack.Connect.psm1
