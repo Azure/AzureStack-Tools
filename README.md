@@ -29,22 +29,30 @@ Instructions below are relative to the root of the repo.
 ## [Azure Resource Manager policy for Azure Stack](Policy)
 
 Constrains Azure subscription to the capabilities available in the Azure Stack.
+- Apply Azure Stack policy to Azure subscriptions and resource groups
 
 ## [Deployment of Azure Stack](Deployment)
 
 Helps perpare for Azure Stack deployment.
+-	Prepare to Deploy (boot from VHD)
+-	Prepare to Redeploy (boot back to original/base OS)
 
 ## [Connecting to Azure Stack](Connect)
 
 Connect to an Azure Stack instance from your personal computer/laptop.
+- Connect via VPN to an Azure Stack installation
+- Configure Azure Stack PowerShell environment
+- Prepare new subscriptions for use in PowerShell and CLI
 
 ## [Azure Stack Service Administration](ServiceAdmin)
 
 Manage plans and subscriptions in Azure Stack.
+- Add default (unlimited) plans and quotas so that tenants can create new subscriptions
 
 ## [Azure Stack Compute Administration](ComputeAdmin)
 
 Manage compute (VM) service in Azure Stack.
+- Add VM Image to the Azure Stack Marketplace
 
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
