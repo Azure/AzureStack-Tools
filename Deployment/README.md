@@ -12,10 +12,10 @@ $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Deployme
 $LocalPath = 'c:\AzureStack_TP2_SupportFiles'
 
 # Create folder
-New-Item $LocalPath -type directory
+New-Item $LocalPath -Type directory
 
 # Download files
-( 'BootMenuNoKVM.ps1', 'PrepareBootFromVHD.ps1', 'Unattend.xml', 'unattend_NoKVM.xml') | foreach { Invoke-WebRequest ($uri + $_) -OutFile ($LocalPath + '\' + $_) } 
+'BootMenuNoKVM.ps1', 'PrepareBootFromVHD.ps1', 'Unattend.xml', 'unattend_NoKVM.xml' | foreach { Invoke-WebRequest ($uri + $_) -OutFile ($LocalPath + '\' + $_) } 
 ```
 
 ## Prepare to Deploy (boot from VHD)
