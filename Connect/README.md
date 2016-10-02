@@ -19,14 +19,14 @@ This will ensure that SSL sites of the target Azure Stack installation are trust
 Use the admin password provided at the time of the Azure Stack deployment.
 
 ```powershell
-$Password = (ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force)
+$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
 ```
 
 To connect to Azure Stack One Node via VPN, first locate the NAT address of the target installation. 
 If you specified static IP of the NAT when deploying Azure Stack One Node, then use it in the connection example below. 
 If you did not specify static IP then NAT was configured with DHCP. In that case, obtain NAT IP as follows using IP address of the Azure Stack One Node host (which should be known to you after deployment).  
 
-Since the command below needs to access the Azure Stack One Node host computer via its IP address, it needs to be a trusted host in PowerShell. Run PowerShell as administrator and add TrustedHosts as follows.
+Since the command below needs to access the Azure Stack One Node host computer via its IP address, it needs to be a trusted host in PowerShell. Run PowerShell as administrator and modify TrustedHosts as follows.
 
 ```powershell
 # Add Azure Stack One Node host to the trusted hosts on your client computer
@@ -72,7 +72,7 @@ After registering AzureRM environment cmdlets can be easily targeted at your Azu
 Add-AzureRmAccount -EnvironmentName AzureStack -TenantId $AadTenant
 ```
 
-You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also login with a service pricipal using appropriate parameters of the Add-AzureRmAccount cmdlet.
+You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also log in with a service principal using appropriate parameters of the Add-AzureRmAccount cmdlet.
 
 If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
 
