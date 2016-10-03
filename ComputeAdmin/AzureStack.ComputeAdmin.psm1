@@ -79,25 +79,23 @@ Function Add-VMImage{
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $CreateGalleryItem = $true
-        )
+        [bool] $CreateGalleryItem = $true
+    )
 
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title'))
     {
-        throw "The title parameter only applies to creating a gallery item."
-        exit
+        Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
     }
 
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('description'))
     {
-        throw "The description parameter only applies to creating a gallery item."
-        exit
+        Write-Error -Message "The description parameter only applies to creating a gallery item." -ErrorAction Stop
     }
 
     
-	$resourceGroupName = "addvmimageresourcegroup"
-	$storageAccountName = "addvmimagestorageaccount"
-	$containerName = "addvmimagecontainer"
+    $resourceGroupName = "addvmimageresourcegroup"
+    $storageAccountName = "addvmimagestorageaccount"
+    $containerName = "addvmimagecontainer"
     $subscriptionName = "Default Provider Subscription"
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
@@ -119,18 +117,33 @@ Function Add-VMImage{
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
 
     Select-AzureRmProfile -Profile $profile
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName  | Select-AzureRmSubscription
+    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
 
-    New-AzureRmResourceGroup -Name $resourceGroupName -Location $location 
-    $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS
+    #pre validate if image is not already deployed
+    if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue) {
+        Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present. Please remove it first or change on of the values' -f $publisher,$offer,$sku,$version) -ErrorAction Stop
+    }
+
+    #potentially the RG was not cleaned up when exception happened in previous run. Test for exist
+    if (-not (Get-AzureRmResourceGroup -Name $resourceGroupName -Location $location -ErrorAction SilentlyContinue)) {
+        New-AzureRmResourceGroup -Name $resourceGroupName -Location $location 
+    }
+
+    #same for storage
+    if (-not (Get-AzureRmStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue)) {
+        $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS
+    }
     Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
-	New-AzureStorageContainer -Name $containerName  -Permission Blob
-	
+    #same for container
+    if (-not (Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue)) {
+        New-AzureStorageContainer -Name $containerName -Permission Blob
+    }
+
     if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
     {
         $script:osDiskName = Split-Path $osDiskLocalPath -Leaf
         $script:osDiskBlobURIFromLocal = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$osDiskName"
-        Add-AzureRmVhd  -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath
+        Add-AzureRmVhd -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath -OverWrite
 
         $script:dataDiskBlobURIsFromLocal = New-Object System.Collections.ArrayList
         if ($PSBoundParameters.ContainsKey('dataDisksLocalPaths'))
@@ -140,19 +153,19 @@ Function Add-VMImage{
                 $dataDiskName = Split-Path $dataDiskLocalPath -Leaf
                 $dataDiskBlobURI = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$dataDiskName"
                 $dataDiskBlobURIsFromLocal.Add($dataDiskBlobURI) 
-                Add-AzureRmVhd  -Destination $dataDiskBlobURI -ResourceGroupName $resourceGroupName -LocalFilePath $dataDiskLocalPath 
+                Add-AzureRmVhd  -Destination $dataDiskBlobURI -ResourceGroupName $resourceGroupName -LocalFilePath $dataDiskLocalPath -OverWrite
             }
         }
     }
 
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
 
-	$adminToken = Get-AzureStackToken `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredentials
+    $adminToken = Get-AzureStackToken `
+        -Authority $authority `
+        -Resource $activeDirectoryServiceEndpointResourceId `
+        -AadTenantId $tenantID `
+        -ClientId $powershellClientId `
+        -Credential $azureStackCredentials
 
     $headers =  @{ Authorization = ("Bearer $adminToken") }
 
@@ -161,7 +174,7 @@ Function Add-VMImage{
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
 
-#building platform image JSON
+    #building platform image JSON
 
     #building osDisk json
     if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
@@ -209,10 +222,10 @@ Function Add-VMImage{
     {
         if ($dataDiskBlobURIs.Count -ne 0)
         {
-             $dataDisksJSON = '"DataDisks":['
-             $i = 0
-             foreach($dataDiskBlobURI in $dataDiskBlobURIs)
-             {
+            $dataDisksJSON = '"DataDisks":['
+            $i = 0
+            foreach($dataDiskBlobURI in $dataDiskBlobURIs)
+            {
                 if($i -ne 0)
                 {
                     $dataDisksJSON = $dataDisksJSON +', '
@@ -222,25 +235,25 @@ Function Add-VMImage{
                 $dataDisksJSON = $dataDisksJSON + $newDataDisk;
             
                 ++$i
-             }
+            }
 
-             $dataDisksJSON = $dataDisksJSON +']'
-       }
-   }
+            $dataDisksJSON = $dataDisksJSON +']'
+        }
+    }
 
-   #building ARMResource
+    #building ARMResource
 
-   $propertyBody = $osDiskJSON 
+    $propertyBody = $osDiskJSON 
 
-   if(![string]::IsNullOrEmpty($dataDisksJson))
-   {
-       $propertyBody = $propertyBody + ', ' + $dataDisksJson
-   }
+    if(![string]::IsNullOrEmpty($dataDisksJson))
+    {
+        $propertyBody = $propertyBody + ', ' + $dataDisksJson
+    }
 
-   if(![string]::IsNullOrEmpty($detailsJson))
-   {
-       $propertyBody = $propertyBody + ', ' + $detailsJson
-   }
+    if(![string]::IsNullOrEmpty($detailsJson))
+    {
+        $propertyBody = $propertyBody + ', ' + $detailsJson
+    }
 
     $RequestBody = '{"Properties":{'+$propertyBody+'}}'
 
@@ -252,25 +265,23 @@ Function Add-VMImage{
     {
         if($platformImage.Properties.ProvisioningState -eq 'Failed')
         {
-            Write-Host "VM image download failed.";
-            break;
+            Write-Error -Message "VM image download failed." -ErrorAction Stop
         }
 
         if($platformImage.Properties.ProvisioningState -eq 'Canceled')
         {
-            Write-Host "PVM image download was canceled.";
-            break;
+            Write-Error -Message "VM image download was canceled." -ErrorAction Stop
         }
 
         Write-Host "Downloading";
-        Start-Sleep -s 4
+        Start-Sleep -Seconds 4
         $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     }
 
     if($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded')
     {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
-        $basePath = Split-Path -Parent  $MyInvocation.MyCommand.Module.Path
+        $basePath = Split-Path -Parent $MyInvocation.MyCommand.Module.Path
         $compressedGalleryItemPath = Join-Path $basePath 'CustomizedVMGalleryItem.azpkg'
         $extractedGalleryItemPath = Join-Path $basePath 'galleryItem'
 
@@ -300,7 +311,7 @@ Function Add-VMImage{
         }
 
         $name = (New-Guid).guid
-	
+
         $JSON.name = $name
         $JSON.publisher = $publisher
         $JSON.version = $version
@@ -328,13 +339,13 @@ Function Add-VMImage{
 
         $JSON.longSummary = $descriptionToSet
         $JSON.description = $descriptionToSet
-		$JSON.summary = $descriptionToSet
+        $JSON.summary = $descriptionToSet
         $JSON | ConvertTo-Json -Compress | set-content $stringsPath
-		
-		Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile $compressedGalleryPackagerPath
-		
-		[System.IO.Compression.ZipFile]::ExtractToDirectory($compressedGalleryPackagerPath, $extractedGalleryPackagerPath)
-		
+
+        Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile $compressedGalleryPackagerPath
+
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($compressedGalleryPackagerPath, $extractedGalleryPackagerPath)
+
         $extractedGalleryPackagerExePath = Join-Path $extractedGalleryPackagerPath "Azure Stack Marketplace Item Generator and Sample\AzureGalleryPackageGenerator"
 
         $galleryItemName = $publisher + "." + $name + "." + $version + ".azpkg"
@@ -353,13 +364,13 @@ Function Add-VMImage{
         $blob = Set-AzureStorageBlobContent –Container $containerName –File $newPKGPath –Blob $galleryItemName
 
         Add-AzureRMGalleryItem -SubscriptionId $subscription.Subscription.SubscriptionId -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
-		
+
         #cleanup
-        Remove-Item $extractedGalleryItemPath -recurse -Force
-		Remove-Item $extractedGalleryPackagerPath -recurse -Force
-		Remove-Item $compressedGalleryPackagerPath
+        Remove-Item $extractedGalleryItemPath -Recurse -Force
+        Remove-Item $extractedGalleryPackagerPath -Recurse -Force
+        Remove-Item $compressedGalleryPackagerPath
     }
-	
+
     Remove-AzureStorageContainer –Name $containerName -Force
     Remove-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -AccountName $storageAccountName 
     Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
