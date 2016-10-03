@@ -1,4 +1,4 @@
-# Deployment of Azure Stack
+﻿# Deployment of Azure Stack
 
 Instructions below are relative to the .\Deployment folder of the [AzureStack-Tools repo](..).
 
@@ -7,15 +7,21 @@ Instructions below are relative to the .\Deployment folder of the [AzureStack-To
 To easily download the Azure Stack TP2 support files from this repository, run the following PowerShell script from your POC machine:
 
 ```powershell
-# Variables
-$Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Deployment/'
+# Set Variabales
 $LocalPath = 'c:\AzureStack_TP2_SupportFiles'
+$Api = 'https://api.github.com/repos/Azure/AzureStack-Tools'
+$Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/'
+$RelPath = 'Deployment'
 
-# Create folder
-New-Item $LocalPath -type directory
+# Get the Tree Recursively from the GitHub API
+$Master = ConvertFrom-Json (invoke-webrequest ($Api + '/git/trees/master'))
+$Content = (ConvertFrom-Json (invoke-webrequest ($Api + '/git/trees/' + $Master.sha + '?recursive=1'))).tree
+if ($RelPath){$Content = $Content | where {$_.path -match $RelPath}}
 
-# Download files
-( 'BootMenuNoKVM.ps1', 'PrepareBootFromVHD.ps1', 'Unattend.xml', 'unattend_NoKVM.xml') | foreach { Invoke-WebRequest ($uri + $_) -OutFile ($LocalPath + '\' + $_) } 
+# Create Folders and download files
+New-Item $LocalPath -type directory -Force
+($Content | where { ($_.type -eq 'tree') -and ($_.path -match $RelPath) }).path | ForEach { New-Item ($LocalPath + '\' + $_) -type directory -Force }
+($Content | where { ($_.type -eq 'blob') -and ($_.path -match $RelPath) }).path | ForEach { Invoke-WebRequest ($Uri + $_) -OutFile ($LocalPath + '\' + $_) }
 ```
 
 ## Prepare to Deploy (boot from VHD)
