@@ -2,10 +2,15 @@
 # See LICENSE.txt in the project root for license information.
 <#
     .SYNOPSIS
-    manage Infrastructure 
+    Manage Azure Stack Infrastructure 
 #>
 
-Function get-AzureStackAlert{
+Function Get-AzureStackAlert{
+
+<#
+    .SYNOPSIS
+    List Active & Closed Infrastructure Alerts
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetAlert')]
     Param(
@@ -14,23 +19,17 @@ Function get-AzureStackAlert{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetAlert')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
-
+	
         [Parameter(ParameterSetName='GetAlert')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetAlert')]
         [string] $region = 'local'
 
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -40,43 +39,33 @@ Function get-AzureStackAlert{
     $authority = $loginEndpoint + $tenantID + "/"
 
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
         
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
-    $Alert=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Alerts=$Alert.value
-    $Alertsprop=$alerts.properties 
-    $alertsprop |select alertid,state,title,resourcename,createdtimestamp,remediation |fl
-    
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
+   $Alert=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+   $Alerts=$Alert.value
+   $Alertsprop=$alerts.properties 
+   $alertsprop |select alertid,state,title,resourcename,createdtimestamp,remediation |fl 
        }
 
-Function get-AzureStackScaleUnit{
+Function Get-AzureStackScaleUnit{
+
+<#
+    .SYNOPSIS
+    List Azure Stack Scale Units in specified Region
+#>
 
     [CmdletBinding(DefaultParameterSetName='ScaleUnit')]
     Param(
@@ -85,11 +74,9 @@ Function get-AzureStackScaleUnit{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='ScaleUnit')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='ScaleUnit')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -97,10 +84,7 @@ Function get-AzureStackScaleUnit{
         [Parameter(ParameterSetName='ScaleUnit')]
         [string] $region = 'local'
 
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -110,41 +94,32 @@ Function get-AzureStackScaleUnit{
     $authority = $loginEndpoint + $tenantID + "/"
 
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
 
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
         
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/clusters?api-version=2016-05-01"
-    $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Cluster.value |select name,location |fl
-    
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/clusters?api-version=2016-05-01"
+   $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+   $Cluster.value |select name,location |fl 
        }
 
-Function get-AzureStackNode{
+Function Get-AzureStackNode{
+
+<#
+    .SYNOPSIS
+    List Nodes in Scale Unit 
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetNode')]
     Param(
@@ -153,11 +128,9 @@ Function get-AzureStackNode{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetNode')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetNode')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -165,10 +138,7 @@ Function get-AzureStackNode{
         [Parameter(ParameterSetName='GetNode')]
         [string] $region = 'local'
 
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -176,43 +146,33 @@ Function get-AzureStackNode{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
         
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/clusters?api-version=2016-05-01"
-    $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Clusterprop=$cluster.value    $clusterprop.properties|select servers|fl
-    
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/clusters?api-version=2016-05-01"
+   $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+   $Clusterprop=$cluster.value
+   $clusterprop.properties|select servers|fl 
        }
 
-Function get-AzureStackStorageCapacity{
+Function Get-AzureStackStorageCapacity{
+
+<#
+    .SYNOPSIS
+    List total storage capacity 
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetStorageCapacity')]
     Param(
@@ -221,22 +181,16 @@ Function get-AzureStackStorageCapacity{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetStorageCapacity')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetStorageCapacity')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetStorageCapacity')]
         [string] $region = 'local'
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -244,43 +198,32 @@ Function get-AzureStackStorageCapacity{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/storagesubSystems?api-version=2016-05-01"
     $Storage=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Storageprop=$storage.value    $storageprop.properties|select totalcapacityGB|fl
-    
+    $Storageprop=$storage.value
+    $storageprop.properties|select totalcapacityGB|fl
        }
 
-Function get-AzureStackInfraRole{
+Function Get-AzureStackInfraRole{
+
+<#
+    .SYNOPSIS
+    List Infrastructure Roles 
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetInfraRole')]
     Param(
@@ -289,19 +232,15 @@ Function get-AzureStackInfraRole{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetInfraRole')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetInfraRole')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetInfraRole')]
         [string] $region = 'local'
-
-
         )
 
      
@@ -312,43 +251,32 @@ Function get-AzureStackInfraRole{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/applications?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/applications?api-version=2016-05-01"
     $Roles=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Roleprop=$roles.value    $Roleprop.Name|fl
-    
+    $Roleprop=$roles.value
+    $Roleprop.Name|fl 
        }
 
-Function get-AzureStackInfraVM{
+Function Get-AzureStackInfraVM{
+
+<#
+    .SYNOPSIS
+    List Infrastructure Role Instances
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetInfraVM')]
     Param(
@@ -357,22 +285,16 @@ Function get-AzureStackInfraVM{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetInfraVM')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetInfraVM')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetInfraVM')]
         [string] $region = 'local'
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -380,43 +302,32 @@ Function get-AzureStackInfraVM{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraVirtualMachines?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraVirtualMachines?api-version=2016-05-01"
     $VMs=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $VMprop=$VMs.value    $VMprop|ft name   
-    
+    $VMprop=$VMs.value
+    $VMprop|ft name 
        }
 
-Function get-AzureStackStorageShare{
+Function Get-AzureStackStorageShare{
+
+<#
+    .SYNOPSIS
+    List File Shares
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetShare')]
     Param(
@@ -425,22 +336,16 @@ Function get-AzureStackStorageShare{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetShare')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetShare')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetShare')]
         [string] $region = 'local'
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -448,43 +353,32 @@ Function get-AzureStackStorageShare{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
-    Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
+Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/fileShares?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/fileShares?api-version=2016-05-01"
     $Shares=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Shareprop=$Shares.value    $Shareprop.properties|select uncPath|fl   
-    
+    $Shareprop=$Shares.value
+    $Shareprop.properties|select uncPath|fl
        }
 
-Function get-AzureStacklogicalnetwork{
+Function Get-AzureStacklogicalnetwork{
+
+<#
+    .SYNOPSIS
+    List Logical Networks
+#>
 
     [CmdletBinding(DefaultParameterSetName='Getlogicalnetwork')]
     Param(
@@ -493,22 +387,16 @@ Function get-AzureStacklogicalnetwork{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='Getlogicalnetwork')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='Getlogicalnetwork')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='Getlogicalnetwork')]
         [string] $region = 'local'
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -516,43 +404,32 @@ Function get-AzureStacklogicalnetwork{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
-   $armEndpoint = 'https://api.' + $azureStackDomain
+		$armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/logicalNetworks?api-version=2016-05-01"
-    $LNetworks=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $LNetworkprop=$LNetworks.value    $LNetworkprop|ft name   
-    
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/logicalNetworks?api-version=2016-05-01"
+   $LNetworks=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+   $LNetworkprop=$LNetworks.value
+   $LNetworkprop|ft name
        }
 
-Function get-AzureStackUpdateSummary{
+Function Get-AzureStackUpdateSummary{
+
+<#
+    .SYNOPSIS
+    List Region Update Summary
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetUpdateSummary')]
     Param(
@@ -561,22 +438,16 @@ Function get-AzureStackUpdateSummary{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdateSummary')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetUpdateSummary')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetUpdateSummary')]
         [string] $region = 'local'
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -584,43 +455,32 @@ Function get-AzureStackUpdateSummary{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/regionUpdateStatus?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/regionUpdateStatus?api-version=2016-05-01"
     $USummary=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $USummaryprop=$USummary.value    $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state|fl   
-    
+    $USummaryprop=$USummary.value
+    $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state|fl 
        }
 
-Function get-AzureStackUpdate{
+Function Get-AzureStackUpdate{
+
+<#
+    .SYNOPSIS
+    List Available Updates
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetUpdate')]
     Param(
@@ -629,22 +489,16 @@ Function get-AzureStackUpdate{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdate')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetUpdate')]
         [string] $azureStackDomain = 'azurestack.local',
 
         [Parameter(ParameterSetName='GetUpdate')]
         [string] $region = 'local'
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -652,45 +506,32 @@ Function get-AzureStackUpdate{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
-        
-        
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/updates?api-version=2016-05-01"
     $Updates=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Updateprop=$Updates.value    $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink|fl   
-    
+    $Updateprop=$Updates.value
+    $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink|fl
        }
 
-Function get-AzureStackUpdateRun{
+Function Get-AzureStackUpdateRun{
+
+<#
+    .SYNOPSIS
+    List Status for a specific Update Run
+#>
 
     [CmdletBinding(DefaultParameterSetName='GetUpdateRun')]
     Param(
@@ -699,11 +540,9 @@ Function get-AzureStackUpdateRun{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdateRun')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='GetUpdateRun')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -714,11 +553,7 @@ Function get-AzureStackUpdateRun{
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdateRun')]
         [ValidateNotNullorEmpty()]
         [String] $vupdate
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -726,43 +561,32 @@ Function get-AzureStackUpdateRun{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint | Out-Null 
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate/updateRuns?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate/updateRuns?api-version=2016-05-01"
     $UpdateRuns=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Updaterunprop=$UpdateRuns.value    $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration|fl   
-    
+    $Updaterunprop=$UpdateRuns.value
+    $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration|fl 
        }
 
 Function Apply-AzureStackUpdate{
+
+<#
+    .SYNOPSIS
+    Apply Azure Stack Update 
+#>
 
     [CmdletBinding(DefaultParameterSetName='ApplyUpdate')]
     Param(
@@ -771,11 +595,9 @@ Function Apply-AzureStackUpdate{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='ApplyUpdate')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='ApplyUpdate')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -786,13 +608,7 @@ Function Apply-AzureStackUpdate{
         [Parameter(Mandatory=$true, ParameterSetName='ApplyUpdate')]
         [ValidateNotNullorEmpty()]
         [String] $vupdate
-
-        
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -800,52 +616,37 @@ Function Apply-AzureStackUpdate{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null 
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-
-
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-
-
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/updates?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/updates?api-version=2016-05-01"
     $Updates=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Updateprop=$Updates.value    $Update=$updateprop |where-object {$_.name -eq "$vupdate"}
-    
-
+    $Updateprop=$Updates.value
+    $Update=$updateprop |where-object {$_.name -eq "$vupdate"}
     $StartUpdateBody = $update | ConvertTo-Json
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate ?api-version=2016-05-01"
     $Runs=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $StartUpdateBody
-    $Startrun=$Runs.value    $Startrun   
-    
+    $Startrun=$Runs.value
+    $Startrun   
        }
 
 Function Close-AzureStackAlert{
+
+<#
+    .SYNOPSIS
+    Close Active Alert
+#>
 
     [CmdletBinding(DefaultParameterSetName='closealert')]
     Param(
@@ -854,11 +655,9 @@ Function Close-AzureStackAlert{
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-    
         [Parameter(Mandatory=$true, ParameterSetName='closealert')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
-
 
         [Parameter(ParameterSetName='closealert')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -869,13 +668,7 @@ Function Close-AzureStackAlert{
         [Parameter(Mandatory=$true, ParameterSetName='closealert')]
         [ValidateNotNullorEmpty()]
         [String] $alertid
-
-        
-
-
         )
-
-     
 
     $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
     $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
@@ -883,51 +676,29 @@ Function Close-AzureStackAlert{
     $graphEndpoint = $endpoints.graphEndpoint
     $loginEndpoint = $endpoints.authentication.loginEndpoint
     $authority = $loginEndpoint + $tenantID + "/"
-
     Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null 
-        
-
     $environment = Get-AzureRmEnvironment 'Azure Stack'
-
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
- 
-
-    
-
-
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-	$adminToken = Get-AzureStackToken -WarningAction Ignore `
+    $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
 		-Credential $azureStackCredentials
-
-
-        
-
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-
-
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
+   $headers =  @{ Authorization = ("Bearer $adminToken") }
+   $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
     $Alert=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Alerts=$Alert.value |where-object {$_.properties.alertid -eq "$alertid"}
     $alertname=$alerts.name
-
-    $Alerts.properties.state = "Closed"
+   $Alerts.properties.state = "Closed"
     $AlertUpdateBody = $Alerts | ConvertTo-Json
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts/${alertname}?api-version=2016-05-01"
     $URI
     $Close=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $AlertUpdateBody
-    $CloseRun=$Close.value    $closeRun   
-    
+    $CloseRun=$Close.value
+    $closeRun 
        }
-
-       
