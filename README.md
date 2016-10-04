@@ -21,7 +21,7 @@ Otherwise download the tools as follows
 
 ```powershell
 $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Download.ps1'
-Invoke-Expression ((Invoke-webrequest -Uri $Uri).content).Replace('FILTER','')
+Invoke-Expression ((Invoke-WebRequest -Uri $Uri).content).Replace('FILTER','')
 ```
 Instructions below are relative to the root of the repo.
 

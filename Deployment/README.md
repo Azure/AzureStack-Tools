@@ -8,7 +8,7 @@ To easily download the Azure Stack TP2 support files from this repository, run t
 
 ```powershell
 $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Download.ps1'
-Invoke-Expression ((Invoke-webrequest -Uri $Uri).content).Replace('FILTER','Deployment')
+Invoke-Expression ((Invoke-WebRequest -Uri $Uri).content).Replace('FILTER','Deployment')
 ```
 
 ## Prepare to Deploy (boot from VHD)
