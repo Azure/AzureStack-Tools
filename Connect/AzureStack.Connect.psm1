@@ -49,13 +49,13 @@ function Get-AzureStackAadTenant
     )
 
     $UserCred = "$Domain\$User"
-    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
+    $credential = New-ObjectÂ System.Management.Automation.PSCredentialÂ -ArgumentListÂ $UserCred,Â $Password
 
     Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
     return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         {            
             Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
-            $config = Get-Content -Path "C:\CloudDeployment\CustomerConfig.xml" -ErrorAction Stop
+            $config = Get-Content -Path "C:\CloudDeployment\Config.xml" -ErrorAction Stop
             
             ([xml]($config)).SelectSingleNode("//Role[@Id='AAD']").PublicInfo.AADTenant.Id
 
@@ -140,7 +140,7 @@ function Get-AzureStackNatServerAddress
     )
 
     $UserCred = "$Domain\$User"
-    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
+    $credential = New-ObjectÂ System.Management.Automation.PSCredentialÂ -ArgumentListÂ $UserCred,Â $Password
 
     $nat = "$natServer.$Domain"
 
@@ -186,8 +186,8 @@ function Add-AzureStackVpnConnection
         Write-Verbose "Creating Azure Stack VPN connection named $ConnectionName" -Verbose
     }
 
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-    $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    $BSTRÂ = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+    $PlainPasswordÂ =Â [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
     $connection = Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod MSChapv2 -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
     
@@ -221,8 +221,8 @@ function Connect-AzureStackVpn
 
     Write-Verbose "Connecting to Azure Stack VPN using connection named $ConnectionName..." -Verbose
 
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-    $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    $BSTRÂ = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+    $PlainPasswordÂ =Â [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
     # Connecting using legacy command. Need to use domainless cred. Domain will be assumed on the other end.
     rasdial $ConnectionName $User $PlainPassword
@@ -234,7 +234,7 @@ function Connect-AzureStackVpn
     New-Item $azshome -ItemType Directory -Force | Out-Null
 
     $UserCred = "$Domain\$User"
-    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
+    $credential = New-ObjectÂ System.Management.Automation.PSCredentialÂ -ArgumentListÂ $UserCred,Â $Password
 
     Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
     $cert = Invoke-Command -ComputerName "$Remote.$Domain" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -eq "CN=AzureStackCertificationAuthority, DC=AzureStack, DC=local"} } -Credential $credential
