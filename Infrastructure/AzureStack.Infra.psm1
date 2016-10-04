@@ -41,12 +41,7 @@ Function Get-AzureStackAlert{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
         
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
@@ -97,13 +92,7 @@ Function Get-AzureStackScaleUnit{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
         
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
@@ -152,14 +141,8 @@ Function Get-AzureStackNode{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
-        
-   $armEndpoint = 'https://api.' + $azureStackDomain
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
+    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
    $headers =  @{ Authorization = ("Bearer $adminToken") }
@@ -206,12 +189,7 @@ Function Get-AzureStackStorageCapacity{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -261,12 +239,7 @@ Function Get-AzureStackInfraRole{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -315,12 +288,7 @@ Function Get-AzureStackInfraVM{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -369,12 +337,7 @@ Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $auth
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -423,13 +386,8 @@ Function Get-AzureStacklogicalnetwork{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
-		$armEndpoint = 'https://api.' + $azureStackDomain
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
+   $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
    $headers =  @{ Authorization = ("Bearer $adminToken") }
@@ -477,12 +435,7 @@ Function Get-AzureStackUpdateSummary{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -531,12 +484,7 @@ Function Get-AzureStackUpdate{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -589,12 +537,7 @@ Function Get-AzureStackUpdateRun{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -647,12 +590,7 @@ Function Apply-AzureStackUpdate{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -710,12 +648,7 @@ Function Close-AzureStackAlert{
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
     $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-    $adminToken = Get-AzureStackToken -WarningAction Ignore `
-		-Authority $authority `
-		-Resource $activeDirectoryServiceEndpointResourceId `
-		-AadTenantId $tenantID `
-		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+    $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $authority -Resource $activeDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
