@@ -20,7 +20,7 @@ Function Get-AzureStackAlert{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetAlert')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
         [Parameter(ParameterSetName='GetAlert')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -39,14 +39,14 @@ Function Get-AzureStackAlert{
 
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
         
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
@@ -57,6 +57,7 @@ Function Get-AzureStackAlert{
    $Alerts=$Alert.value
    $Alertsprop=$alerts.properties 
    $alertsprop |select alertid,state,title,resourcename,createdtimestamp,remediation |fl 
+   Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 export-modulemember -function Get-AzureStackAlert
 
@@ -75,7 +76,7 @@ Function Get-AzureStackScaleUnit{
         
         [Parameter(Mandatory=$true, ParameterSetName='ScaleUnit')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='ScaleUnit')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -94,7 +95,7 @@ Function Get-AzureStackScaleUnit{
 
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
 
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
@@ -102,7 +103,7 @@ Function Get-AzureStackScaleUnit{
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
         
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
@@ -111,6 +112,7 @@ Function Get-AzureStackScaleUnit{
    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system/providers/Microsoft.Fabric.Admin/fabricLocations/$region/clusters?api-version=2016-05-01"
    $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
    $Cluster.value |select name,location |fl 
+   Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
        
 export-modulemember -function Get-AzureStackScaleUnit
@@ -130,7 +132,7 @@ Function Get-AzureStackNode{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetNode')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetNode')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -148,14 +150,14 @@ Function Get-AzureStackNode{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
         
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
@@ -165,6 +167,7 @@ Function Get-AzureStackNode{
    $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
    $Clusterprop=$cluster.value
    $clusterprop.properties|select servers|fl 
+   Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
        
 export-modulemember -function Get-AzureStackNode
@@ -184,7 +187,7 @@ Function Get-AzureStackStorageCapacity{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetStorageCapacity')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetStorageCapacity')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -201,14 +204,14 @@ Function Get-AzureStackStorageCapacity{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -217,6 +220,7 @@ Function Get-AzureStackStorageCapacity{
     $Storage=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Storageprop=$storage.value
     $storageprop.properties|select totalcapacityGB|fl
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Get-AzureStackStorageCapacity
@@ -236,7 +240,7 @@ Function Get-AzureStackInfraRole{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetInfraRole')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetInfraRole')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -255,14 +259,14 @@ Function Get-AzureStackInfraRole{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -271,6 +275,7 @@ Function Get-AzureStackInfraRole{
     $Roles=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Roleprop=$roles.value
     $Roleprop.Name|fl 
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
        
 export-modulemember -function Get-AzureStackInfraRole
@@ -291,7 +296,7 @@ Function Get-AzureStackInfraVM{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetInfraVM')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetInfraVM')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -308,14 +313,14 @@ Function Get-AzureStackInfraVM{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -324,6 +329,7 @@ Function Get-AzureStackInfraVM{
     $VMs=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $VMprop=$VMs.value
     $VMprop|ft name 
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
        
 export-modulemember -function Get-AzureStackInfraVM
@@ -344,7 +350,7 @@ Function Get-AzureStackStorageShare{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetShare')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetShare')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -361,14 +367,14 @@ Function Get-AzureStackStorageShare{
     $authority = $loginEndpoint + $tenantID + "/"
 Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -377,6 +383,7 @@ Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $auth
     $Shares=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Shareprop=$Shares.value
     $Shareprop.properties|select uncPath|fl
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Get-AzureStackStorageShare
@@ -397,7 +404,7 @@ Function Get-AzureStacklogicalnetwork{
         
         [Parameter(Mandatory=$true, ParameterSetName='Getlogicalnetwork')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='Getlogicalnetwork')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -414,14 +421,14 @@ Function Get-AzureStacklogicalnetwork{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
 		$armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -430,6 +437,7 @@ Function Get-AzureStacklogicalnetwork{
    $LNetworks=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
    $LNetworkprop=$LNetworks.value
    $LNetworkprop|ft name
+   Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Get-AzureStacklogicalnetwork
@@ -450,7 +458,7 @@ Function Get-AzureStackUpdateSummary{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdateSummary')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetUpdateSummary')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -467,14 +475,14 @@ Function Get-AzureStackUpdateSummary{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -483,6 +491,7 @@ Function Get-AzureStackUpdateSummary{
     $USummary=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $USummaryprop=$USummary.value
     $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state|fl 
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Get-AzureStackUpdateSummary
@@ -503,7 +512,7 @@ Function Get-AzureStackUpdate{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdate')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetUpdate')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -520,14 +529,14 @@ Function Get-AzureStackUpdate{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -536,6 +545,7 @@ Function Get-AzureStackUpdate{
     $Updates=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Updateprop=$Updates.value
     $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink|fl
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Get-AzureStackUpdate
@@ -556,7 +566,7 @@ Function Get-AzureStackUpdateRun{
         
         [Parameter(Mandatory=$true, ParameterSetName='GetUpdateRun')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='GetUpdateRun')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -577,14 +587,14 @@ Function Get-AzureStackUpdateRun{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint | Out-Null 
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -593,6 +603,7 @@ Function Get-AzureStackUpdateRun{
     $UpdateRuns=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Updaterunprop=$UpdateRuns.value
     $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration|fl 
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Get-AzureStackUpdateRun
@@ -613,7 +624,7 @@ Function Apply-AzureStackUpdate{
         
         [Parameter(Mandatory=$true, ParameterSetName='ApplyUpdate')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='ApplyUpdate')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -634,14 +645,14 @@ Function Apply-AzureStackUpdate{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null 
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -655,6 +666,7 @@ Function Apply-AzureStackUpdate{
     $Runs=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $StartUpdateBody
     $Startrun=$Runs.value
     $Startrun   
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Apply-AzureStackUpdate
@@ -675,7 +687,7 @@ Function Close-AzureStackAlert{
         
         [Parameter(Mandatory=$true, ParameterSetName='closealert')]
         [ValidateNotNullorEmpty()]
-        [System.Management.Automation.PSCredential] $azureStackCredential,
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(ParameterSetName='closealert')]
         [string] $azureStackDomain = 'azurestack.local',
@@ -696,14 +708,14 @@ Function Close-AzureStackAlert{
     $authority = $loginEndpoint + $tenantID + "/"
     Add-AzureRmEnvironment -Name 'AzureStackInfraEnv' -ActiveDirectoryEndpoint $authority -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId -ResourceManagerEndpoint  "https://api.$azureStackDomain/" -GalleryEndpoint $galleryEndpoint -GraphEndpoint $graphEndpoint |Out-Null 
     $environment = Get-AzureRmEnvironment 'AzureStackInfraEnv'
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredential
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore `
 		-Authority $authority `
 		-Resource $activeDirectoryServiceEndpointResourceId `
 		-AadTenantId $tenantID `
 		-ClientId $powershellClientId `
-		-Credential $azureStackCredential
+		-Credential $azureStackCredentials
    $armEndpoint = 'https://api.' + $azureStackDomain
    $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $ArmEndPoint -Token $admintoken -WarningAction Ignore
    $subscription = $adminSubscription.SubscriptionId 
@@ -719,6 +731,7 @@ Function Close-AzureStackAlert{
     $Close=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $AlertUpdateBody
     $CloseRun=$Close.value
     $closeRun 
+    Remove-AzureRmEnvironment -Name 'AzureStackInfraEnv' -Force | Out-Null
        }
 
 export-modulemember -function Close-AzureStackAlert
