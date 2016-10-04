@@ -6,16 +6,10 @@
 
 <#
     .SYNOPSIS
-    Manage Azure Stack Infrastructure 
-#>
-
-
-Function Get-AzureStackAlert{
-
-<#
-    .SYNOPSIS
     List Active & Closed Infrastructure Alerts
 #>
+
+Function Get-AzureStackAlert{
 
     [CmdletBinding(DefaultParameterSetName='GetAlert')]
     Param(
@@ -66,12 +60,11 @@ Function Get-AzureStackAlert{
        }
 export-modulemember -function Get-AzureStackAlert
 
-Function Get-AzureStackScaleUnit{
-
 <#
     .SYNOPSIS
     List Azure Stack Scale Units in specified Region
 #>
+Function Get-AzureStackScaleUnit{
 
     [CmdletBinding(DefaultParameterSetName='ScaleUnit')]
     Param(
@@ -121,13 +114,12 @@ Function Get-AzureStackScaleUnit{
        }
        
 export-modulemember -function Get-AzureStackScaleUnit
-
-Function Get-AzureStackNode{
-
 <#
     .SYNOPSIS
     List Nodes in Scale Unit 
 #>
+
+Function Get-AzureStackNode{
 
     [CmdletBinding(DefaultParameterSetName='GetNode')]
     Param(
@@ -176,13 +168,12 @@ Function Get-AzureStackNode{
        }
        
 export-modulemember -function Get-AzureStackNode
-
-Function Get-AzureStackStorageCapacity{
-
 <#
     .SYNOPSIS
     List total storage capacity 
 #>
+
+Function Get-AzureStackStorageCapacity{
 
     [CmdletBinding(DefaultParameterSetName='GetStorageCapacity')]
     Param(
@@ -230,12 +221,11 @@ Function Get-AzureStackStorageCapacity{
 
 export-modulemember -function Get-AzureStackStorageCapacity
 
-Function Get-AzureStackInfraRole{
-
 <#
     .SYNOPSIS
     List Infrastructure Roles 
 #>
+Function Get-AzureStackInfraRole{
 
     [CmdletBinding(DefaultParameterSetName='GetInfraRole')]
     Param(
@@ -285,12 +275,12 @@ Function Get-AzureStackInfraRole{
        
 export-modulemember -function Get-AzureStackInfraRole
 
-Function Get-AzureStackInfraVM{
-
 <#
     .SYNOPSIS
     List Infrastructure Role Instances
 #>
+
+Function Get-AzureStackInfraVM{
 
     [CmdletBinding(DefaultParameterSetName='GetInfraVM')]
     Param(
@@ -338,12 +328,12 @@ Function Get-AzureStackInfraVM{
        
 export-modulemember -function Get-AzureStackInfraVM
 
-Function Get-AzureStackStorageShare{
-
 <#
     .SYNOPSIS
     List File Shares
 #>
+
+Function Get-AzureStackStorageShare{
 
     [CmdletBinding(DefaultParameterSetName='GetShare')]
     Param(
@@ -391,12 +381,12 @@ Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -
 
 export-modulemember -function Get-AzureStackStorageShare
 
-Function Get-AzureStacklogicalnetwork{
-
 <#
     .SYNOPSIS
     List Logical Networks
 #>
+
+Function Get-AzureStacklogicalnetwork{
 
     [CmdletBinding(DefaultParameterSetName='Getlogicalnetwork')]
     Param(
@@ -444,12 +434,12 @@ Function Get-AzureStacklogicalnetwork{
 
 export-modulemember -function Get-AzureStacklogicalnetwork
 
-Function Get-AzureStackUpdateSummary{
-
 <#
     .SYNOPSIS
     List Region Update Summary
 #>
+
+Function Get-AzureStackUpdateSummary{
 
     [CmdletBinding(DefaultParameterSetName='GetUpdateSummary')]
     Param(
@@ -497,12 +487,12 @@ Function Get-AzureStackUpdateSummary{
 
 export-modulemember -function Get-AzureStackUpdateSummary
 
-Function Get-AzureStackUpdate{
-
 <#
     .SYNOPSIS
     List Available Updates
 #>
+
+Function Get-AzureStackUpdate{
 
     [CmdletBinding(DefaultParameterSetName='GetUpdate')]
     Param(
@@ -550,12 +540,12 @@ Function Get-AzureStackUpdate{
 
 export-modulemember -function Get-AzureStackUpdate
 
-Function Get-AzureStackUpdateRun{
-
 <#
     .SYNOPSIS
     List Status for a specific Update Run
 #>
+
+Function Get-AzureStackUpdateRun{
 
     [CmdletBinding(DefaultParameterSetName='GetUpdateRun')]
     Param(
@@ -607,12 +597,12 @@ Function Get-AzureStackUpdateRun{
 
 export-modulemember -function Get-AzureStackUpdateRun
 
-Function Apply-AzureStackUpdate{
-
 <#
     .SYNOPSIS
     Apply Azure Stack Update 
 #>
+
+Function Apply-AzureStackUpdate{
 
     [CmdletBinding(DefaultParameterSetName='ApplyUpdate')]
     Param(
@@ -669,12 +659,12 @@ Function Apply-AzureStackUpdate{
 
 export-modulemember -function Apply-AzureStackUpdate
 
-Function Close-AzureStackAlert{
-
 <#
     .SYNOPSIS
     Close Active Alert
 #>
+
+Function Close-AzureStackAlert{
 
     [CmdletBinding(DefaultParameterSetName='closealert')]
     Param(
