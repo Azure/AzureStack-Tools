@@ -1,9 +1,12 @@
 ﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
+
+#requires -Version 4.0
+#requires -Modules AzureRM.Profile, AzureRm.AzureStackAdmin
+
 <#
     .SYNOPSIS
     Manage Azure Stack Infrastructure 
-    Requires AzureRm.AzureStackAdmin module
 #>
 
 
