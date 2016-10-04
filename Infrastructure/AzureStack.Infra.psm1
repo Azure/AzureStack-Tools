@@ -3,7 +3,9 @@
 <#
     .SYNOPSIS
     Manage Azure Stack Infrastructure 
+    Requires AzureRm.AzureStackAdmin module
 #>
+
 
 Function Get-AzureStackAlert{
 
