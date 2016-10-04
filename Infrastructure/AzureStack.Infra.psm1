@@ -61,6 +61,7 @@ Function Get-AzureStackAlert{
    $Alertsprop=$alerts.properties 
    $alertsprop |select alertid,state,title,resourcename,createdtimestamp,remediation |fl 
        }
+export-modulemember -function Get-AzureStackAlert
 
 Function Get-AzureStackScaleUnit{
 
@@ -115,6 +116,8 @@ Function Get-AzureStackScaleUnit{
    $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
    $Cluster.value |select name,location |fl 
        }
+       
+export-modulemember -function Get-AzureStackScaleUnit
 
 Function Get-AzureStackNode{
 
@@ -168,6 +171,8 @@ Function Get-AzureStackNode{
    $Clusterprop=$cluster.value
    $clusterprop.properties|select servers|fl 
        }
+       
+export-modulemember -function Get-AzureStackNode
 
 Function Get-AzureStackStorageCapacity{
 
@@ -219,6 +224,8 @@ Function Get-AzureStackStorageCapacity{
     $Storageprop=$storage.value
     $storageprop.properties|select totalcapacityGB|fl
        }
+
+export-modulemember -function Get-AzureSt
 
 Function Get-AzureStackInfraRole{
 
