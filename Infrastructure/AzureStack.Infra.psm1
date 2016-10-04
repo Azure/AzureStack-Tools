@@ -225,7 +225,7 @@ Function Get-AzureStackStorageCapacity{
     $storageprop.properties|select totalcapacityGB|fl
        }
 
-export-modulemember -function Get-AzureSt
+export-modulemember -function Get-AzureStackStorageCapacity
 
 Function Get-AzureStackInfraRole{
 
@@ -279,6 +279,8 @@ Function Get-AzureStackInfraRole{
     $Roleprop=$roles.value
     $Roleprop.Name|fl 
        }
+       
+export-modulemember -function Get-AzureStackInfraRole
 
 Function Get-AzureStackInfraVM{
 
@@ -330,6 +332,8 @@ Function Get-AzureStackInfraVM{
     $VMprop=$VMs.value
     $VMprop|ft name 
        }
+       
+export-modulemember -function Get-AzureStackInfraVM
 
 Function Get-AzureStackStorageShare{
 
@@ -382,6 +386,8 @@ Add-AzureRmEnvironment -Name 'Azure Stack' -ActiveDirectoryEndpoint $authority -
     $Shareprop.properties|select uncPath|fl
        }
 
+export-modulemember -function Get-AzureStackStorageShare
+
 Function Get-AzureStacklogicalnetwork{
 
 <#
@@ -432,6 +438,8 @@ Function Get-AzureStacklogicalnetwork{
    $LNetworkprop=$LNetworks.value
    $LNetworkprop|ft name
        }
+
+export-modulemember -function Get-AzureStacklogicalnetwork
 
 Function Get-AzureStackUpdateSummary{
 
@@ -484,6 +492,8 @@ Function Get-AzureStackUpdateSummary{
     $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state|fl 
        }
 
+export-modulemember -function Get-AzureStackUpdateSummary
+
 Function Get-AzureStackUpdate{
 
 <#
@@ -534,6 +544,8 @@ Function Get-AzureStackUpdate{
     $Updateprop=$Updates.value
     $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink|fl
        }
+
+export-modulemember -function Get-AzureStackUpdate
 
 Function Get-AzureStackUpdateRun{
 
@@ -589,6 +601,8 @@ Function Get-AzureStackUpdateRun{
     $Updaterunprop=$UpdateRuns.value
     $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration|fl 
        }
+
+export-modulemember -function Get-AzureStackUpdateRun
 
 Function Apply-AzureStackUpdate{
 
@@ -649,6 +663,8 @@ Function Apply-AzureStackUpdate{
     $Startrun=$Runs.value
     $Startrun   
        }
+
+export-modulemember -function Apply-AzureStackUpdate
 
 Function Close-AzureStackAlert{
 
@@ -711,3 +727,5 @@ Function Close-AzureStackAlert{
     $CloseRun=$Close.value
     $closeRun 
        }
+
+export-modulemember -function Close-AzureStackAlert
