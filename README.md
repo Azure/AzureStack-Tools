@@ -54,5 +54,23 @@ Manage plans and subscriptions in Azure Stack.
 Manage compute (VM) service in Azure Stack.
 - Add VM Image to the Azure Stack Marketplace
 
+## [Azure Stack Infrastructure Administration](Infrastructure)
+
+Manage Azure Stack Infrastructure
+- Get Infrastructure resolve
+- Get Infrastructure Virtual machines
+- Get Storage Capacity
+- Get Storage Shares
+- Get Scale Unit
+- Get Node
+- Get Logical network
+- Get Alert
+- Close Alert
+- Get Update Region Summary
+- Get Update
+- Apply Update
+- Get Update run
+
+
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
