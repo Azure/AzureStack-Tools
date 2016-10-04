@@ -12,7 +12,7 @@ List active and closed Infrastructure Alerts
 
 ```powershell
 $credential=get-credential
-Get-AzureStackAlert -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackAlert -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -28,7 +28,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Close-AzureStackAlert -AzureStackCredential $credential- TenantID "ID" -AlertID "ID"
+Close-AzureStackAlert -AzureStackCredentials $credential- TenantID "ID" -AlertID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -44,7 +44,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackUpdateSummary -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackUpdateSummary -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -60,7 +60,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackUpdate -AzureStackCredential $credential- TenantID "ID" -AlertID "ID"
+Get-AzureStackUpdate -AzureStackCredentials $credential- TenantID "ID" -AlertID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -76,7 +76,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Apply-AzureStackUpdate -AzureStackCredential $credential- TenantID "ID" -vupdate "Update Version"
+Apply-AzureStackUpdate -AzureStackCredentials $credential- TenantID "ID" -vupdate "Update Version"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -92,7 +92,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackUpdateRun -AzureStackCredential $credential- TenantID "ID" -vupdate "Update Version"
+Get-AzureStackUpdateRun -AzureStackCredentials $credential- TenantID "ID" -vupdate "Update Version"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -108,7 +108,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackInfraRole -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackInfraRole -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -124,7 +124,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackInfraVM -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackInfraVM -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -140,7 +140,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackScaleUnit -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackScaleUnit -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -156,7 +156,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackNode -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackNode -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -172,7 +172,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackLogialNetwork -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackLogialNetwork -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -188,7 +188,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackStorageCapacity -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackStorageCapacity -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -204,7 +204,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackStorageShare -AzureStackCredential $credential- TenantID "ID"
+Get-AzureStackStorageShare -AzureStackCredentials $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
