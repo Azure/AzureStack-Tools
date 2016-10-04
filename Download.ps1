@@ -3,7 +3,7 @@ Param(
 )
 
 # Set Variabales
-$LocalPath = 'c:\AzureStack_TP2_SupportFiles'
+$LocalPath = 'c:\AzureStack-Tools'
 $Api = 'https://api.github.com/repos/Azure/AzureStack-Tools'
 $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/'
 

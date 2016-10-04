@@ -11,6 +11,8 @@ $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Download
 Invoke-Expression ((Invoke-WebRequest -Uri $Uri).content).Replace('FILTER','Deployment')
 ```
 
+This will download the Azure Stack TP2 support files for deployment to c:\AzureStack-Tools\Deployment
+
 ## Prepare to Deploy (boot from VHD)
 
 This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided Azure Stack Technical Preview virtual harddisk (CloudBuilder.vhdx).

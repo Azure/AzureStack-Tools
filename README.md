@@ -23,6 +23,9 @@ Otherwise download the tools as follows
 $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Download.ps1'
 Invoke-Expression ((Invoke-WebRequest -Uri $Uri).content).Replace('FILTER','')
 ```
+
+This will download the content of this repository to c:\AzureStack-Tools
+
 Instructions below are relative to the root of the repo.
 
 ## [Azure Resource Manager policy for Azure Stack](Policy)
