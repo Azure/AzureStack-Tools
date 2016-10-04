@@ -9,7 +9,7 @@ Import-Module .\AzureStack.ServiceAdmin.psm1
 ## Create default plan and quota for tenants
 
 ```powershell
-$serviceAdminPassword = (ConvertTo-SecureString "<Azure Stack service admin password in AAD>" -AsPlainText -Force)
+$serviceAdminPassword = ConvertTo-SecureString "<Azure Stack service admin password in AAD>" -AsPlainText -Force
 $serviceAdmin = New-Object System.Management.Automation.PSCredential -ArgumentList "<myadmin>@<mydirectory>.onmicrosoft.com", $serviceAdminPassword
 
 New-AzureStackTenantOfferAndQuotas -ServiceAdminCredential $serviceAdmin
