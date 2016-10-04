@@ -60,7 +60,7 @@ The command does the following:
 
 ```powershell
 $credential=get-credential
-Get-AzureStackUpdate -AzureStackCredential $credential- TenantID "ID" -AlertID "ID"
+Get-AzureStackUpdate -AzureStackCredential $credential- TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
