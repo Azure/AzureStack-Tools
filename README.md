@@ -17,13 +17,13 @@ git clone https://github.com/Azure/AzureStack-Tools.git --recursive
 cd AzureStack-Tools
 ```
 
-Otherwise download the tools as follows
+Or you can use the following PowerShell script to download the content of this repository to c:\AzureStack-Tools
 
 ```powershell
-invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
-expand-archive master.zip -DestinationPath . -Force
-cd AzureStack-Tools-master
+$Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Download.ps1'
+Invoke-Expression ((Invoke-WebRequest -Uri $Uri).content).Replace('FILTER','')
 ```
+
 Instructions below are relative to the root of the repo.
 
 ## [Azure Resource Manager policy for Azure Stack](Policy)

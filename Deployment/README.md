@@ -1,4 +1,4 @@
-# Deployment of Azure Stack
+﻿# Deployment of Azure Stack
 
 Instructions below are relative to the .\Deployment folder of the [AzureStack-Tools repo](..).
 
@@ -7,16 +7,11 @@ Instructions below are relative to the .\Deployment folder of the [AzureStack-To
 To easily download the Azure Stack TP2 support files from this repository, run the following PowerShell script from your POC machine:
 
 ```powershell
-# Variables
-$Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Deployment/'
-$LocalPath = 'c:\AzureStack_TP2_SupportFiles'
-
-# Create folder
-New-Item $LocalPath -type directory
-
-# Download files
-( 'BootMenuNoKVM.ps1', 'PrepareBootFromVHD.ps1', 'Unattend.xml', 'unattend_NoKVM.xml') | foreach { Invoke-WebRequest ($uri + $_) -OutFile ($LocalPath + '\' + $_) } 
+$Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Download.ps1'
+Invoke-Expression ((Invoke-WebRequest -Uri $Uri).content).Replace('FILTER','Deployment')
 ```
+
+This will download the Azure Stack TP2 support files for deployment to c:\AzureStack-Tools\Deployment
 
 ## Prepare to Deploy (boot from VHD)
 
