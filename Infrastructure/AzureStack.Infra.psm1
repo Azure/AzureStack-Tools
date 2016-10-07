@@ -45,7 +45,7 @@ Function LoginAzureStackAdminEnvironment {
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
     $adminToken = Get-AzureStackToken -WarningAction Ignore -Authority $environment.ActiveDirectoryAuthority -Resource $environment.ActiveDirectoryServiceEndpointResourceId -AadTenantId $tenantID -ClientId $powershellClientId -Credential $azureStackCredential
     $adminSubscription = Get-AzureRMTenantSubscription -AdminUri $environment.ResourceManagerUrl -Token $admintoken -WarningAction Ignore
-    $subscription = $adminSubscription.SubscriptionId
+    $subscription = ($adminSubscription | Where-Object {$_.DisplayName -EQ "Default Provider Subscription"}).SubscriptionId
     $properties = @{
         ArmEndpoint = $environment.ResourceManagerUrl
         AdminToken = $adminToken
