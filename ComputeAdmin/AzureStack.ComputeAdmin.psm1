@@ -409,7 +409,7 @@ Function Remove-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $azureStackDomain = 'azurestack.local',
+        [string] $azureStackDomain = 'azurestack.local'
 
     )
     $subscriptionName = "Default Provider Subscription"
