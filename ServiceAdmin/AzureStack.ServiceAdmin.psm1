@@ -17,6 +17,9 @@ function New-AzureStackTenantOfferAndQuotas
         [string] $EnvironmentName = "AzureStack",
         [parameter(HelpMessage="Azure Stack region in which to define plans and quotas")]
         [string]$ResourceLocation = "local",
+        [Parameter(HelpMessage="If this parameter is not specified all quotas are assigned. Provide a sub selection of quotas in this parameter if you do not want all quotas assigned.")]
+        [ValidateSet('Compute','Network','Storage','KeyVault','Subscriptions',IgnoreCase =$true)]
+        [array]$ServiceQuotas,
         [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential in Azure Active Directory")]
         [pscredential] $ServiceAdminCredential
     )
@@ -41,12 +44,12 @@ function New-AzureStackTenantOfferAndQuotas
     $asToken = Get-AzureStackToken -Authority ($ActiveDirectoryEndpoint + "oauth2") -Resource $ActiveDirectoryServiceEndpointResourceId -AadTenantId $AADTenantID -Credential $credentialObj
 
     Write-Verbose "Creating quotas..." -Verbose
-    $serviceQuotas = @()
-    $serviceQuotas += Get-SubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
-    $serviceQuotas += New-StorageQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
-    $serviceQuotas += New-ComputeQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
-    $serviceQuotas += New-NetworkQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
-    $serviceQuotas += Get-KeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
+    $Quotas = @()
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')){ $Quotas += New-ComputeQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Network')){ $Quotas += New-NetworkQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Storage')){ $Quotas += New-StorageQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'KeyVault')){ $Quotas += Get-KeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Subscriptions')){ $Quotas += Get-SubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
 
     Write-Verbose "Creating resource group for plans and offers..." -Verbose
     if (Get-AzureRmResourceGroup -Name $Name -ErrorAction SilentlyContinue)
@@ -56,7 +59,7 @@ function New-AzureStackTenantOfferAndQuotas
     New-AzureRmResourceGroup -Name $Name -Location $ResourceLocation -ErrorAction Stop
 
     Write-Verbose "Creating plan..." -Verbose
-    $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $ResourceLocation -ResourceGroup $Name -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $armEndpoint -Token $asToken -QuotaIds $serviceQuotas
+    $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $ResourceLocation -ResourceGroup $Name -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $armEndpoint -Token $asToken -QuotaIds $Quotas
 
     Write-Verbose "Creating public offer..." -Verbose
     $offer = New-AzureRMOffer -Name $Name -DisplayName $Name -State Public -BasePlanIds @($plan.Id) -ArmLocation $ResourceLocation -ResourceGroup $Name
