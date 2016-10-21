@@ -84,6 +84,12 @@ if ((Get-DiskImage -ImagePath $CloudBuilderDiskPath).Attached)
     Exit
     }
 
+if ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk') 
+    {
+    Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server."
+    Exit
+    }
+
 if (($ApplyUnattend) -and (!($AdminPassword)))
     {
     while ($AdminPassword.Length -le 6) {

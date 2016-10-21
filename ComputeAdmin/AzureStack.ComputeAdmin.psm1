@@ -2,7 +2,10 @@
 # See LICENSE.txt in the project root for license information.
 <#
     .SYNOPSIS
-    Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
+    Contains two functions.
+    Add-VMImage: Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
+    Remove-VMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any 
+    maketplace items created by Add-VMImage.
 #>
 
 Function Add-VMImage{
@@ -11,22 +14,22 @@ Function Add-VMImage{
     Param(
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidateNotNullorEmpty()]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
         [String] $publisher,
        
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidateNotNullorEmpty()]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
         [String] $offer,
     
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidateNotNullorEmpty()]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
         [String] $sku,
     
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidateNotNullorEmpty()]
+        [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
 
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
@@ -110,7 +113,7 @@ Function Add-VMImage{
         -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId `
         -ResourceManagerEndpoint  "https://api.$azureStackDomain/" `
         -GalleryEndpoint $galleryEndpoint `
-        -GraphEndpoint $graphEndpoint `
+        -GraphEndpoint $graphEndpoint
 
     $environment = Get-AzureRmEnvironment 'Azure Stack'
 
@@ -374,4 +377,91 @@ Function Add-VMImage{
     Remove-AzureStorageContainer –Name $containerName -Force
     Remove-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -AccountName $storageAccountName 
     Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
+}
+
+Function Remove-VMImage{
+    Param(
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $publisher,
+       
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $offer,
+    
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $sku,
+    
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [String] $version,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('Windows' ,'Linux')]
+        [String] $osType,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullorEmpty()]
+        [String] $tenantID,
+
+        [String] $location = 'local',
+
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+        [string] $azureStackDomain = 'azurestack.local'
+
+    )
+    $subscriptionName = "Default Provider Subscription"
+
+    $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
+    $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+    $galleryEndpoint = $endpoints.galleryEndpoint
+    $graphEndpoint = $endpoints.graphEndpoint
+    $loginEndpoint = $endpoints.authentication.loginEndpoint
+    $authority = $loginEndpoint + $tenantID + "/"
+
+    Add-AzureRmEnvironment -Name 'Azure Stack' `
+        -ActiveDirectoryEndpoint $authority `
+        -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId `
+        -ResourceManagerEndpoint  "https://api.$azureStackDomain/" `
+        -GalleryEndpoint $galleryEndpoint `
+        -GraphEndpoint $graphEndpoint
+
+    $environment = Get-AzureRmEnvironment 'Azure Stack'
+
+    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
+
+    Select-AzureRmProfile -Profile $profile
+    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+
+    if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue -ov images) {
+        Write-Verbose "Image found in Azure Gallery Continuing"
+    }
+    else{
+        Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
+    }
+
+    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
+
+    $adminToken = Get-AzureStackToken `
+        -Authority $authority `
+        -Resource $activeDirectoryServiceEndpointResourceId `
+        -AadTenantId $tenantID `
+        -ClientId $powershellClientId `
+        -Credential $azureStackCredentials
+
+    $headers =  @{ Authorization = ("Bearer $adminToken") }
+
+    $armEndpoint = 'https://api.' + $azureStackDomain
+    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
+
+    try{
+        Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
+    }
+    catch{
+        Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
+    }
+
 }
