@@ -71,6 +71,12 @@ Manage Azure Stack Infrastructure
 - Apply Update
 - Get Update run
 
+## Get Azure Stack Cloud Capabilities
 
+```powershell
+Import-Module .\CloudCapabilities\GetCloudCapabilities.psm1
+Get-CloudCapabilities -tenantID <provide AADTenant id>
+```
+During the run you will be prompted for the account login. provide the azure active directory credentials. To get Compute resource provider Images and Extensions available in the cloud , set GetComputeImageExtensions to true
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
