@@ -39,7 +39,7 @@ To verify that the command ran successfully, go to Marketplace in the portal, an
 Run the below command to remove an uploaded VM image. After removal, tenants will no longer be able to deploy virtual machines with this image.
 
 ```powershell
-Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <mydirectory>.onmicrosoft.com
+Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -tenantID <mydirectory>.onmicrosoft.com
 ```
 
 Note: This cmdlet does not remove any Marketplace item created as part of uploading a VM Image. These Marketplace items will need to be removed separately.
