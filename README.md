@@ -33,7 +33,7 @@ Constrains Azure subscription to the capabilities available in the Azure Stack.
 
 ## [Deployment of Azure Stack](Deployment)
 
-Helps perpare for Azure Stack deployment.
+Helps prepare for Azure Stack deployment.
 -	Prepare to Deploy (boot from VHD)
 -	Prepare to Redeploy (boot back to original/base OS)
 
