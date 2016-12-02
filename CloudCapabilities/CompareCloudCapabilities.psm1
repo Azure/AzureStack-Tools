@@ -131,7 +131,7 @@ function Compare-CloudCapabilities()
                 #Compute timespan between latest API version available in A and the latest commonly available version
                 $APIVersionTimeDelta = New-Timespan -Start $latestCommonAPIVersion -End $latestAonlyAPIVersion
                 $TimeDeltaMonths = $APIVersionTimeDelta.Days / 30.5;
-                if($TimeDeltaMonths > 0){
+                if($TimeDeltaMonths -ge 0){
                     $commonResource | Add-Member NoteProperty TimeDeltaBehindAMonths($TimeDeltaMonths)
                 }else{
                     $commonResource | Add-Member NoteProperty TimeDeltaBehindAMonths(0)
