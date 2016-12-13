@@ -146,7 +146,9 @@ function ValidateTemplate
     [Parameter(Mandatory = $true, HelpMessage = "Cloud Capabilities Json ")]
     [PSObject] $Capabilities,
     [Parameter(HelpMessage = "Set to process VMImages, VMExtensions and VMSizes")]
-    [Switch] $IncludeComputeCapabilities
+    [Switch] $IncludeComputeCapabilities,
+    [Parameter(Mandatory = $false)]
+	[bool] $NestedTemplate = $false
     )
 	$TemplatePS = ConvertFrom-Json (Get-Content -Path $TemplatePath -Raw)
 	$ValidationOutput =[PSCustomObject]@{
@@ -154,14 +156,21 @@ function ValidateTemplate
 		Status = ""
 		Details = ""
 		}
-	$ValidationOutPut.TemplateName = (Split-path -Path $template.FullName).Split("\")[-1]
+    if ($NestedTemplate)
+    {
+        $ValidationOutPut.TemplateName = $TemplatePath.Substring($TemplatePath.LastIndexOf("\") + 1).Replace(".json", "").Replace("azuredeploy.", "")
+    }
+    else
+    {
+	    $ValidationOutPut.TemplateName = (Split-path -Path $TemplatePath).Split("\")[-1]
+    }
 	$ErrorList = @()
 	foreach ($templateResource in $TemplatePS.resources)
 	{ 
-		$ErrorList += ValidateResource $templateResource $TemplatePS
+		$ErrorList += ValidateResource $templateResource $TemplatePS $TemplatePath $Capabilities -IncludeComputeCapabilities:$IncludeComputeCapabilities
 		foreach ($nestedResource in $templateResource.resources)
 		{
-			$ErrorList += ValidateResource $nestedResource $TemplatePS
+			$ErrorList += ValidateResource $nestedResource $TemplatePS $TemplatePath $Capabilities -IncludeComputeCapabilities:$IncludeComputeCapabilities
 		}
 	}
 	
@@ -201,16 +210,34 @@ function Get-PropertyValue
 		[ValidateNotNullOrEmpty()]
 		[PSCustomObject] $Template
 	)
+	if ($property -like "*concat(*")
+	{
+		$property = $property.Replace("[concat(", "")
+		$property = $property.Replace(")]", "")
+		$firstPart = Get-PropertyValue $property.Split(",")[0] $template
+		$secondPart = Get-PropertyValue $property.Split(",")[1] $template        
+        if ($firstPart.StartsWith("'") -and $firstPart.EndsWith("'"))
+        {
+            $firstPart = $firstPart.Substring(1, $firstPart.Length)
+        }
+        if ($secondPart.StartsWith("'") -and $secondPart.EndsWith("'"))
+        {
+            $secondPart = $secondPart.Substring(1, $secondPart.Length-2)
+        }
+
+		return ($firstPart + $secondPart)
+	}
 	if ($property -like "*variables*")
 	{
 		$propertyName = $property.Split("'")[1]
 		$property = $Template.variables.$propertyName
 		#Variable referencing another variable
-		if ($property -like "*variables*")
+		<#if ($property -like "*variables*")
 		{
 			$propertyName = $property.Split("'")[1]
 			$property = $Template.variables.$propertyName
-		}
+		}#>
+        return Get-PropertyValue $property $template
 	}
 	if ($property -like "*parameters*")
 	{
@@ -225,13 +252,20 @@ function Get-PropertyValue
 	return $property
 }
 
+　
 function ValidateResource
 {
 	param(
 		[ValidateNotNullOrEmpty()]
 		[PSObject] $resource,
 		[ValidateNotNullOrEmpty()]
-		[PSCustomObject] $Template
+		[PSCustomObject] $Template,
+        [Parameter(Mandatory = $true, HelpMessage = "Template JSON Path")]
+	    [String] $TemplatePath,
+        [Parameter(Mandatory = $true, HelpMessage = "Cloud Capabilities Json ")]
+        [PSObject] $Capabilities,
+        [Parameter(HelpMessage = "Set to process VMImages, VMExtensions and VMSizes")]
+        [Switch] $IncludeComputeCapabilities
 	)
 	$ResourceProviderNameSpace = $resource.type.Split("/")[0]
 	$ResourceTypeName = $resource.type.Substring($resource.type.indexOf('/')+1)    
@@ -290,6 +324,20 @@ function ValidateResource
 				$resourceOutput += "Warning:For Resource type $($resource.type), it is recommended to set location as resourceGroup().location"
 			}
 		
+		}
+        else # Validate nested templates
+		{
+			$nestedTemplate = Get-PropertyValue $resource.properties.templateLink.uri $TemplatePS
+			$nestedTemplateDeployJSON = $nestedTemplate.Substring($nestedTemplate.LastIndexOf("/") + 1)
+			$nestedTemplateLocalPath = (Get-Item $TemplatePath).DirectoryName + "\" + $nestedTemplateDeployJSON
+            if (Test-Path -Path $nestedTemplateLocalPath)
+			{
+			    ValidateTemplate  -TemplatePath $nestedTemplateLocalPath  -Capabilities $Capabilities -IncludeComputeCapabilities:$IncludeComputeCapabilities -NestedTemplate $true
+			}
+			else
+			{
+				# download file
+			}
 		}
 		#Process VMImages 
 		if ($IncludeComputeCapabilities)
@@ -469,5 +517,5 @@ function ValidateResource
 		}
 	}
 	return $resourceOutput
-}
+} 
 
