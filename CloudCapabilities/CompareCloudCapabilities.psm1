@@ -29,8 +29,6 @@ function Compare-CloudCapabilities()
 
         [Parameter(HelpMessage = 'Restrict the comparison to top level resources and do not examine nested resources')]
 		[Switch] $excludeNestedResources
-
-
     )
 
     $cloudACapabilities = ConvertFrom-Json (Get-Content -Path $aPath -Raw) -ErrorAction Stop
