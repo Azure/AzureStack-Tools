@@ -4,7 +4,6 @@ To Validate Compute Capabilities such as Images, Extensions & Sizes available in
 Notes: 
 The following are currently not supported
 1. StorageCapabilities(ex:Sku)
-2. Nested Templates
 
 ```powershell
 Import-Module ".\AzureRM.TemplateValidator.psm1"
