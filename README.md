@@ -71,7 +71,7 @@ Manage Azure Stack Infrastructure
 - Apply Update
 - Get Update run
 
-## [AzureRM Template Validator](AzureRMTemplateValidator)
+## [AzureRM Template Validator](TemplateValidator)
 
 Validate Azure ARM Template Capabilities
 - resources - Types, Location, Apiversion

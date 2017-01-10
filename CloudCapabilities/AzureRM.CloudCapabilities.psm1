@@ -10,7 +10,7 @@
 
 #>
 
-function Get-CloudCapabilities()
+function Get-AzureRMCloudCapabilities()
 {
 	[CmdletBinding()]
     Param(

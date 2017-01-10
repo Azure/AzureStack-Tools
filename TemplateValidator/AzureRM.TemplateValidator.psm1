@@ -297,49 +297,56 @@ function ValidateResource
 			if ($ResourceTypeName -Like '*extensions')
 			{
 				Write-Verbose "Validating VMExtension $ResourceProviderNameSpace/$ResourceTypeName"
-				$templateextPublisher = $resource.properties.publisher
-				$templateextType = $resource.properties.type
-				$templateextVersion = $resource.properties.typeHandlerVersion                
-				$supportedPublisher = $capabilities.VMExtensions | Where-Object { $_.publisher -eq $templateextPublisher }
-				if (-not $supportedPublisher)
+				if (-not $capabilities.VMExtensions)
 				{
-					Write-Error "VMExtension publisher: $templateextPublisher currently not supported. Refer to Capabilities.json for supported VMExtension publishers"
-					$resourceOutput += "Error: VMExtension publisher: $templateextPublisher currently not supported. Refer to Capabilities.json for supported VMExtension publishers"
+					Write-Warning "No VMExtensions found in Capabilities.json. Run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities"
 				}
 				else
 				{
-					$supportedType = $supportedPublisher.types| Where-Object { $_.type -eq $templateextType }
-					if (-not $supportedType)
+					$templateextPublisher = $resource.properties.publisher
+					$templateextType = $resource.properties.type
+					$templateextVersion = $resource.properties.typeHandlerVersion
+					$supportedPublisher = $capabilities.VMExtensions | Where-Object { $_.publisher -eq $templateextPublisher }
+					if (-not $supportedPublisher)
 					{
-						Write-Error "VMExtension type: $templateextType is currently not supported"
-						$resourceOutput += "Error: VMExtension type: $templateextType is currently not supported "
+						Write-Error "VMExtension publisher: $templateextPublisher currently not supported. Refer to Capabilities.json for supported VMExtension publishers"
+						$resourceOutput += "Error: VMExtension publisher: $templateextPublisher currently not supported. Refer to Capabilities.json for supported VMExtension publishers"
 					}
-					else 
+					else
 					{
-						$supportedVersions = @()
-						foreach ($ver in $supportedType.versions)
-						{ 
-							$supportedVersions +=[version]$ver 
-						}
-						if ($templateextVersion -notin $supportedVersions)
+						$supportedType = $supportedPublisher.types| Where-Object { $_.type -eq $templateextType }
+						if (-not $supportedType)
 						{
-							if ($templateextVersion.Split(".").Count -eq 2) {$templateextVersion = $templateextVersion + ".0.0" }
-							$v = [version]$templateextVersion							
-							if ($v -notin $supportedVersions)
+							Write-Error "VMExtension type: $templateextType is currently not supported"
+							$resourceOutput += "Error: VMExtension type: $templateextType is currently not supported "
+						}
+						else 
+						{
+							$supportedVersions = @()
+							foreach ($ver in $supportedType.versions)
+							{ 
+								$supportedVersions +=[version]$ver 
+							}
+							if ($templateextVersion -notin $supportedVersions)
 							{
-								$autoupgradeSupported = $supportedVersions| Where-Object { ($_.Major -eq $v.Major) -and ($_.Minor -gt $v.Minor) }
-								if ($autoupgradeSupported)
+								if ($templateextVersion.Split(".").Count -eq 2) {$templateextVersion = $templateextVersion + ".0.0" }
+								$v = [version]$templateextVersion							
+								if ($v -notin $supportedVersions)
 								{
-									if ((-not $resource.properties.autoupgrademinorversion) -or ($resource.properties.autoupgrademinorversion -eq $false))
+									$autoupgradeSupported = $supportedVersions| Where-Object { ($_.Major -eq $v.Major) -and ($_.Minor -gt $v.Minor) }
+									if ($autoupgradeSupported)
 									{
-										Write-warning "Warning: Exact Match for VMExtension version: $templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
-										$resourceOutput += "Warning: Exact Match for VMExtension version: $templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
+										if ((-not $resource.properties.autoupgrademinorversion) -or ($resource.properties.autoupgrademinorversion -eq $false))
+										{
+											Write-warning "Warning: Exact Match for VMExtension version: $templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
+											$resourceOutput += "Warning: Exact Match for VMExtension version: $templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
+										}
 									}
-								}
-								else
-								{
-									Write-Error "VMExtension version: $templateextVersion not found in $supportedVersions"
-									$resourceOutput += "Error:VMExtension version: $templateextVersion not found in $supportedVersions"
+									else
+									{
+										Write-Error "VMExtension version: $templateextVersion not found in $supportedVersions"
+										$resourceOutput += "Error:VMExtension version: $templateextVersion not found in $supportedVersions"
+									}
 								}
 							}
 						}
@@ -353,96 +360,110 @@ function ValidateResource
 				if ($templateImagePublisher)
 				{
 					Write-Verbose "Validating VMImages"
-					try
+					if (-not $capabilities.VMImages)
 					{
-						$templateImagePublisher = Get-PropertyValue $templateImagePublisher $Template
-					}
-					catch
-					{
-						Write-Error $_.Exception.Message
-						$resourceOutput += "Error: $($_.Exception.Message)"
-					}
-					$supportedPublisher = $capabilities.VMImages | Where-Object { $_.publisherName -eq $templateImagePublisher }
-					if (-not $supportedPublisher)
-					{
-						Write-Error "VMImage publisher: $templateImagePublisher currently not supported. Refer to Capabilities.json for supported VMImages publishers"
-						$resourceOutput += "Error: VMImage publisher: $templateImagePublisher currently not supported. Refer to Capabilities.json for supported VMImages publishers"
+						Write-Warning "No VMImages found in Capabilities.json. Run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities"
 					}
 					else
 					{
 						try
 						{
-							$templateImageOffer = Get-PropertyValue $resource.properties.storageprofile.imagereference.offer $Template
+							$templateImagePublisher = Get-PropertyValue $templateImagePublisher $Template
 						}
 						catch
 						{
 							Write-Error $_.Exception.Message
 							$resourceOutput += "Error: $($_.Exception.Message)"
 						}
-						$supportedOffer = $capabilities.VMImages.Offers | Where-Object { $_.offerName -eq $templateImageOffer }
-						if (-not $supportedOffer)
+						$supportedPublisher = $capabilities.VMImages | Where-Object { $_.publisherName -eq $templateImagePublisher }
+						if (-not $supportedPublisher)
 						{
-							Write-Error "VMImage Offer: $templateImageOffer currently not supported. Refer to Capabilities.json for supported VMImages Offers"
-							$resourceOutput += "Error: VMImage Offer: $templateImageOffer currently not supported. Refer to Capabilities.json for supported VMImages Offers"
+							Write-Error "VMImage publisher: $templateImagePublisher currently not supported. Refer to Capabilities.json for supported VMImages publishers"
+							$resourceOutput += "Error: VMImage publisher: $templateImagePublisher currently not supported. Refer to Capabilities.json for supported VMImages publishers"
 						}
 						else
 						{
-							$templateImageSku = $resource.properties.storageprofile.imagereference.sku
 							try
 							{
-								$templateImagesku = Get-PropertyValue $templateImagesku $Template
+								$templateImageOffer = Get-PropertyValue $resource.properties.storageprofile.imagereference.offer $Template
 							}
 							catch
 							{
 								Write-Error $_.Exception.Message
 								$resourceOutput += "Error: $($_.Exception.Message)"
 							}
-							$supportedSku = $capabilities.VMImages.Offers.skus | where { $_.skuName -eq $templateImagesku}
-							if (-not $supportedSku)
+							$supportedOffer = $capabilities.VMImages.Offers | Where-Object { $_.offerName -eq $templateImageOffer }
+							if (-not $supportedOffer)
 							{
-								Write-Error "VMImage SKu: $templateImageSku currently not supported. Refer to Capabilities.json for supported VMImages Skus"
-								$resourceOutput += "Error:VMImage SKu: $templateImageSku currently not supported. Refer to Capabilities.json for supported VMImages Skus"
+								Write-Error "VMImage Offer: $templateImageOffer currently not supported. Refer to Capabilities.json for supported VMImages Offers"
+								$resourceOutput += "Error: VMImage Offer: $templateImageOffer currently not supported. Refer to Capabilities.json for supported VMImages Offers"
 							}
 							else
 							{
-								$templateImageskuVersion = $resource.properties.storageprofile.imagereference.version
+								$templateImageSku = $resource.properties.storageprofile.imagereference.sku
 								try
 								{
-									$templateImageskuVersion = Get-PropertyValue $templateImageskuVersion $Template
+									$templateImagesku = Get-PropertyValue $templateImagesku $Template
 								}
 								catch
 								{
 									Write-Error $_.Exception.Message
 									$resourceOutput += "Error: $($_.Exception.Message)"
 								}
-								if (($templateImageskuVersion -ne "latest") -and ($templateImageskuVersion -notin $supportedSku.versions)) 
+								$supportedSku = $capabilities.VMImages.Offers.skus | where { $_.skuName -eq $templateImagesku}
+								if (-not $supportedSku)
 								{
-									Write-Error "VMImage SKu version: $templateImageskuVersion currently not supported. Set to latest or Refer to Capabilities.json for supported VMImages Skus version "
-									$resourceOutput += "Error: VMImage SKu version: $templateImageskuVersion currently not supported. Set to latest or Refer to Capabilities.json for supported VMImages Skus version"
+									Write-Error "VMImage SKu: $templateImageSku currently not supported. Refer to Capabilities.json for supported VMImages Skus"
+									$resourceOutput += "Error:VMImage SKu: $templateImageSku currently not supported. Refer to Capabilities.json for supported VMImages Skus"
 								}
-								elseif (($templateImageskuVersion -ne "latest") -and ($templateImageskuVersion -in $supportedSku.versions)) 
+								else
 								{
-									Write-Error "Warning: It is recommended to set storageprofile.imagereference.version to 'latest'"
-									$resourceOutput += "Warning: It is recommended to set storageprofile.imagereference.version to 'latest'"
+									$templateImageskuVersion = $resource.properties.storageprofile.imagereference.version
+									try
+									{
+										$templateImageskuVersion = Get-PropertyValue $templateImageskuVersion $Template
+									}
+									catch
+									{
+										Write-Error $_.Exception.Message
+										$resourceOutput += "Error: $($_.Exception.Message)"
+									}
+									if (($templateImageskuVersion -ne "latest") -and ($templateImageskuVersion -notin $supportedSku.versions)) 
+									{
+										Write-Error "VMImage SKu version: $templateImageskuVersion currently not supported. Set to latest or Refer to Capabilities.json for supported VMImages Skus version "
+										$resourceOutput += "Error: VMImage SKu version: $templateImageskuVersion currently not supported. Set to latest or Refer to Capabilities.json for supported VMImages Skus version"
+									}
+									elseif (($templateImageskuVersion -ne "latest") -and ($templateImageskuVersion -in $supportedSku.versions)) 
+									{
+										Write-Error "Warning: It is recommended to set storageprofile.imagereference.version to 'latest'"
+										$resourceOutput += "Warning: It is recommended to set storageprofile.imagereference.version to 'latest'"
+									}
 								}
 							}
 						}
 					}
 				}
-				try
+				if (-not $capabilities.VMSizes)
 				{
-					$templateVMSize = Get-PropertyValue $resource.properties.hardwareprofile.vmSize $Template
+					Write-Warning "No VMSizes found in Capabilities.json. Run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities"
 				}
-				catch
+				else
 				{
-					Write-Error $_.Exception.Message
-					$resourceOutput += "Error: $($_.Exception.Message)"
-				}
-				$supportedSize = $capabilities.VMSizes | Where-Object { $_ -eq $templateVMSize }
-				if (-not $supportedSize)
-				{
-					Write-Error "VMSize: $templateVMSize currently not supported. Refer to Capabilities.json for supported VMSizes"
-					$resourceOutput += "Error:VMSize: $templateVMSize currently not supported. Refer to Capabilities.json for supported VMSizes"
+					try
+					{
+						$templateVMSize = Get-PropertyValue $resource.properties.hardwareprofile.vmSize $Template
+					}
+					catch
+					{
+						Write-Error $_.Exception.Message
+						$resourceOutput += "Error: $($_.Exception.Message)"
+					}
+					$supportedSize = $capabilities.VMSizes | Where-Object { $_ -eq $templateVMSize }
+					if (-not $supportedSize)
+					{
+						Write-Error "VMSize: $templateVMSize currently not supported. Refer to Capabilities.json for supported VMSizes"
+						$resourceOutput += "Error:VMSize: $templateVMSize currently not supported. Refer to Capabilities.json for supported VMSizes"
+					}
 				}
 			}
 		}

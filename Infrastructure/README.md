@@ -172,7 +172,7 @@ The command does the following:
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackLogialNetwork -AzureStackCredential $credential -TenantID "ID"
+Get-AzureStackLogicalNetwork -AzureStackCredential $credential -TenantID "ID"
 ```
 
 Note: The cmdlet requires credentials to retrieve logical Networks. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
