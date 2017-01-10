@@ -21,11 +21,16 @@ function Compare-CloudCapabilities()
 		[Parameter(Mandatory=$true, HelpMessage= 'Cloud B Capabilties File Path. ')]
 		[String] $bPath,
 
-		[Parameter(HelpMessage = 'Restrict the comparision to only provider namespaces available in Cloud B')]
+		[Parameter(HelpMessage = 'Restrict the cloud comparision to only provider namespaces available in Cloud B')]
 		[Switch] $restrictNamespaces,
+
+        [Parameter(HelpMessage = 'Restrict the cloud comparision to only namespaces specified')]
+		[array] $comparisonNamespaces,
 
         [Parameter(HelpMessage = 'Restrict the comparison to top level resources and do not examine nested resources')]
 		[Switch] $excludeNestedResources
+
+
     )
 
     $cloudACapabilities = ConvertFrom-Json (Get-Content -Path $aPath -Raw) -ErrorAction Stop
@@ -36,13 +41,15 @@ function Compare-CloudCapabilities()
 
     $commonResources = @()
     $AonlyResources = @()
+    $namespaces = @()
 
-
-    if($restrictNamespaces){
+    if($comparisonNamespaces){
+        $namespaces = $comparisonNamespaces
+    }elseif ($restrictNamespaces) {
         $namespaces = @()
         foreach ($bResource in $cloudBCapabilities.resources) {
             $namespaces += $bResource.providerNameSpace
-        }
+        } 
     }
 
     # Look for common resources and resources only available in cloud A
@@ -165,4 +172,6 @@ function Compare-CloudCapabilities()
         $AonlyResource.apiVersions = $AonlyResource.apiVersions -join ","
     }
     $AonlyResources | Export-Csv "AResources.csv" -NoTypeInformation
+
+    Write-Output "Detailed resource comparison available in the AResources.csv file and the CommonResources.csv file."
 }
