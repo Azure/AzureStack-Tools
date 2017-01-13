@@ -92,9 +92,13 @@ if ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk')
 
 if (($ApplyUnattend) -and (!($AdminPassword)))
     {
-    while ($AdminPassword.Length -le 6) {
-        $AdminPassword = read-host 'Password for the local administrator account of the AzureStack TP2 host. Requires 6 characters minimum' 
+    while ($SecureAdminPassword.Length -le 6) {
+        [System.Security.SecureString]$SecureAdminPassword = read-host 'Password for the local administrator account of the AzureStack TP2 host. Requires 6 characters minimum' -AsSecureString
         }
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureAdminPassword)
+    $AdminPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    Write-Host "The following password will be configured for the local administrator account of the Azure Stack TP2 host:"
+    Write-Host $AdminPassword -ForegroundColor Cyan
     }
 
 #region Validate disk space for expanding cloudbuilder.vhdx
