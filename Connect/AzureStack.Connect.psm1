@@ -89,6 +89,7 @@ function Add-AzureStackAzureRmEnvironment
     $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
     $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
     $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
+    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
 
     $azureEnvironmentParams = @{
         Name                                     = $Name
@@ -102,6 +103,7 @@ function Add-AzureStackAzureRmEnvironment
         StorageEndpointSuffix                    = $StorageEndpointSuffix
         AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
         AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
+	EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
     }
 
     $armEnv = Get-AzureRmEnvironment -Name $Name
