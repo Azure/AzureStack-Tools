@@ -1,12 +1,7 @@
 $Global:JSONLogFile  = "Run-Canary.JSON"
 $Global:TxtLogFile  = "AzureStackCanaryLog.Log"
-
-[double]$Global:UsecaseID = 1.0
-$Global:Canary            = New-Object -TypeName PSCustomObject
-$Global:canaryName        = ""
-$Global:canaryType        = ""
-$Global:CurrUsecase       = ""
-
+$UseCase = @{}
+[System.Collections.Stack] $AllUseCases = New-Object System.Collections.Stack
 filter timestamp {"$(Get-Date -Format G): $_"}
 
 function Log-Info
@@ -18,6 +13,7 @@ function Log-Info
         $Message = "[INFO] " + $Message | timestamp
     }
     $Message | Tee-Object -FilePath $Global:TxtLogFile -Append
+    Log-JSONReport $Message
 } 
 
 function Log-Error
@@ -26,6 +22,7 @@ function Log-Error
 
     $Message = "[ERR] " + $Message | timestamp
     $Message | Tee-Object -FilePath $Global:TxtLogFile -Append
+    Log-JSONReport $Message
 }
 
 function Log-Exception
@@ -34,6 +31,68 @@ function Log-Exception
 
     $Message = "[EXCEPTION] " + $Message | timestamp
     $Message | Tee-Object -FilePath $Global:TxtLogFile -Append
+    Log-JSONReport $Message
+}
+
+function Log-JSONReport
+{
+    param (
+        [string] $Message
+    )
+    if ($Message)
+    {
+        if ($Message.Contains(": ["))
+        {
+            $time = $Message.Substring(0, $Message.IndexOf(": ["))
+        }    
+        if ($Message.Contains("[START]"))
+        {
+            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim().Replace("######", "").Trim()
+            if ($AllUseCases.Count)
+            {
+                $nestedUseCase = @{
+                "Name" = $name
+                "StartTime" = $time
+                }
+                if (-not $AllUseCases.Peek().UseCase)
+                {
+                    $AllUseCases.Peek().Add("UseCase", @())
+                }
+                $AllUseCases.Peek().UseCase += , $nestedUseCase
+                $AllUseCases.Push($nestedUseCase)
+            }
+            else
+            {
+                $UseCase.Add("Name", $name)
+                $UseCase.Add("StartTime", $time)
+                $AllUseCases.Push($UseCase)
+            }
+        }
+        elseif ($Message.Contains("[END]"))
+        {
+            $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
+            $AllUseCases.Peek().Add("EndTime", $time)
+            $AllUseCases.Peek().Add("Result", $result)
+            $AllUseCases.Pop() | Out-Null
+            if (-not $AllUseCases.Count)
+            {
+                $jsonReport = ConvertFrom-Json (Get-Content -Path $Global:JSONLogFile -Raw)
+                $jsonReport.UseCases += , $UseCase
+                $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+                $UseCase.Clear()
+            }
+        }
+        elseif ($Message.Contains("[DESCRIPTION]"))
+        {
+            $description = $Message.Substring($Message.IndexOf("[DESCRIPTION]") + "[DESCRIPTION]".Length).Trim()
+            $AllUseCases.Peek().Add("Description", $description)
+        }
+        elseif ($Message.Contains("[EXCEPTION]"))
+        {
+            $exception = $Message.Substring($Message.IndexOf("[EXCEPTION]") + "[EXCEPTION]".Length).Trim()
+            $AllUseCases.Peek().Add("Exception", $exception)
+        }
+    }
 }
 
 function Start-Scenario
@@ -66,17 +125,15 @@ function Start-Scenario
     }
     New-Item -Path $Global:JSONLogFile -Type File -Force
     New-Item -Path $Global:TxtLogFile -Type File -Force
-
-    $Global:canaryName = $Name
-    $Global:canaryType = $Type 
-    $Global:Canary | Add-Member -Type NoteProperty -TypeName System.Management.Automation.PSCustomObject -Name "$Name-$Type" -Value (New-Object -TypeName PSCustomObject)
-    $Global:Canary."$Name-$Type" | Add-Member -Type NoteProperty -TypeName System.Management.Automation.PSCustomObject -Name "Usecases" -Value (New-Object -TypeName PSCustomObject)
+    $jsonReport = @{
+    "Scenario" = ($Name + "-" + $Type)
+    "UseCases" = @()
+    }    
+    $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
 }
 
 function End-Scenario
-{   
-    $Global:Canary | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
-}
+{}
 
 function Invoke-Usecase
 {
@@ -92,17 +149,17 @@ function Invoke-Usecase
         [ValidateNotNullOrEmpty()]
         [ScriptBlock]$UsecaseBlock    
     )
-    Log-Info ("###### [START] Usecase: $Name ######") 
+    Log-Info ("###### [START] Usecase: $Name ######`n") 
 
     if ($Description)
     {
-        Log-Info ($Description)        
+        Log-Info ("[DESCRIPTION] $Description`n")        
     }
 
     try
     {
         $result = Invoke-Command -ScriptBlock $UsecaseBlock
-        if ($result)
+        if ($result -and (-not $UsecaseBlock.ToString().Contains("Invoke-Usecase")))
         {
             Log-Info ($result)
         }
