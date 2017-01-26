@@ -48,7 +48,7 @@ param (
 
 #Requires -Modules AzureRM
 #Requires -RunAsAdministrator
-Import-Module -Name $PSScriptRoot\AzureStack.Canary.Utilities.psm1 -Force
+Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
 
 $storageAccName     = $CanaryUtilitiesRG + "sa"
 $storageCtrName     = $CanaryUtilitiesRG + "sc"
