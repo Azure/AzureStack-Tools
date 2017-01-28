@@ -19,7 +19,15 @@ This will ensure that SSL sites of the target Azure Stack installation are trust
 To connect to Azure Stack PoC via VPN, first locate the external BGP-NAT01 address of the target installation. 
 If you specified a static IP for the BGP-NAT during deployment of the Azure Stack PoC, then use it in the connection example below. 
 
-If you did not specify a static IP then the BGP-NAT was configured with DHCP. In that case, **read the below section** to obtain your BGP-NAT VM IP by using the IP address of the Azure Stack PoC host (which should be known to you after deployment).   
+If you did not specify a static IP then the BGP-NAT was configured with DHCP. In that case, **read the below section** to obtain your BGP-NAT VM IP by using the IP address of the Azure Stack PoC host (which should be known to you after deployment). 
+
+The commands below need to access the Azure Stack PoC host computer and Azure Stack CA, so they need to be trusted hosts in PowerShell. Run PowerShell as administrator and modify TrustedHosts as follows.
+
+```powershell
+# Add Azure Stack PoC host to the trusted hosts on your client computer
+Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
+Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
+```  
 
 For the VPN connection, use the admin password provided at the time of the Azure Stack deployment.
 
@@ -39,17 +47,7 @@ Connect-AzureStackVpn -Password $Password
 
 ## Obtain the NAT IP address with the Azure Stack PoC host address
 
-These commands are helpful if you do not immediately know the NAT IP of the Azure Stack PoC you are trying to connect to. You must know the host address of your Azure Stack PoC.
-
-The commands below need to access the Azure Stack PoC host computer and Azure Stack CA, so they need to be trusted hosts in PowerShell. Run PowerShell as administrator and modify TrustedHosts as follows.
-
-```powershell
-# Add Azure Stack PoC host to the trusted hosts on your client computer
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
-```
-
-Then obtain NAT IP.
+This command is helpful if you do not immediately know the NAT IP of the Azure Stack PoC you are trying to connect to. You must know the host address of your Azure Stack PoC.
 
 ```powershell
 $natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>" -Password $Password
@@ -63,10 +61,17 @@ One method of deploying templates and interacting with your Azure Stack PoC is t
 See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-powershell) article to download and install the correct PowerShell modules for Azure Stack.
 
 AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
+
+To retrieve your Azure Active Directory Tenant ID (this will be a GUID value), run the following command:
+```powershell
+$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
+$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+```
+
 To target your Azure Stack instance, an AzureRM environment needs to be registered as follows.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -AadTenant "<mydirectory>.onmicrosoft.com"
+Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant
 ```
 
 The AadTenant parameter above specifies the directory that was used when deploying Azure Stack. 
@@ -74,10 +79,10 @@ The AadTenant parameter above specifies the directory that was used when deployi
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName AzureStack -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $AadTenant
 ```
 
-You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also log in with a service principal using appropriate parameters of the Add-AzureRmAccount cmdlet.
+You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also log in with a service principal using appropriate parameters of the Login-AzureRmAccount cmdlet.
 
 If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
 
