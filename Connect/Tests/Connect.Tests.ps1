@@ -53,26 +53,26 @@ Describe $script:ModuleName {
 InModuleScope $script:ModuleName {
 
     
-    $HostComputer = $env:HostComputer
-    $Domain = $env:Domain 
-    $natServer = $env:natServer 
-    $AdminUser= $env:AdminUser 
-    $AadServiceAdmin = $env:AadServiceAdmin 
+    $HostComputer = $global:HostComputer
+    $Domain = $global:Domain 
+    $natServer = $global:natServer 
+    $AdminUser= $global:AdminUser 
+    $AadServiceAdmin = $global:AadServiceAdmin 
 
     $AdminPassword = $global:AdminPassword
     $AadServiceAdminPassword = $global:AadServiceAdminPassword
     $stackLoginCreds = $global:AzureStackLoginCredentials
 
-    $VPNConnectionName = $env:VPNConnectionName
+    $VPNConnectionName = $global:VPNConnectionName
 
     Set-Item wsman:\localhost\Client\TrustedHosts -Value $HostComputer -Concatenate
     Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
 
     Describe 'ConnectModule - Accessing Environment Data' {
         It 'Recovered AAD Tenant ID should be correct' {
-            $env:AadTenantID = Get-AzureStackAadTenant  -HostComputer $HostComputer -Domain $Domain -User $AdminUser -Password $AdminPassword 
-            Write-Verbose "Aad Tenant ID is $env:AadTenantID" -Verbose
-            $env:AadTenantID | Should Not Be $null
+            $global:AadTenantID = Get-AzureStackAadTenant  -HostComputer $HostComputer -Domain $Domain -User $AdminUser -Password $AdminPassword 
+            Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
+            $global:AadTenantID | Should Not Be $null
         }
 
         It 'Get-AzureStackNatServerAddress should return valid NAT address' {
@@ -92,14 +92,14 @@ InModuleScope $script:ModuleName {
 
         It 'Add-AzureStackAzureRmEnvironment should successfully add a One Node environment' {
             Remove-AzureRmEnvironment -Name "AzureStack" -ErrorAction SilentlyContinue -Force
-            Add-AzureStackAzureRmEnvironment -AadTenant $env:AadTenantID -Domain $Domain
+            Add-AzureStackAzureRmEnvironment -AadTenant $global:AadTenantID -Domain $Domain
             Get-AzureRmEnvironment -Name "AzureStack" | Should Not Be $null
         }
 
         It 'User should be able to login to environment successfully created by Add-AzureStackAzureRmEnvironment' {
-            Write-Verbose "Aad Tenant ID is $env:AadTenantID" -Verbose
+            Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
             Write-Verbose "Passing credential to Login-AzureRmAccount" -Verbose
-            {Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $env:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
+            {Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $global:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
         }
 
         It 'User should be able to list resource groups successfully in connected Azure Stack' {

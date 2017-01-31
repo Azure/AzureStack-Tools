@@ -16,18 +16,18 @@ param (
 )
 
 # Set environment varibles to pass along testing variables
-$env:HostComputer = $HostComputer
-$env:Domain = $Domain
-$env:natServer = $natServer
-$env:AdminUser = $AdminUser
+$global:HostComputer = $HostComputer
+$global:Domain = $Domain
+$global:natServer = $natServer
+$global:AdminUser = $AdminUser
 $global:AdminPassword = $AdminPassword
-$env:AadServiceAdmin = $AadServiceAdmin
+$global:AadServiceAdmin = $AadServiceAdmin
 $global:AadServiceAdminPassword = $AadServiceAdminPassword
 
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "$env:AadServiceAdmin", ($AadServiceAdminPassword)
 $global:AzureStackLoginCredentials = $ServiceAdminCreds
 
-$env:VPNConnectionName = "AzureStackTestVPN"
+$global:VPNConnectionName = "AzureStackTestVPN"
 
 #Start running tests
 Set-Location ..
@@ -36,6 +36,6 @@ Set-Location .\ToolTestingUtils\
 
 #Disconnect and Remove VPN Connection
 Write-Verbose "Disconnecting and removing vpn connection"
-rasdial $env:VPNConnectionName /d
-Remove-VpnConnection -Name $env:VPNConnectionName
+rasdial $global:VPNConnectionName /d
+Remove-VpnConnection -Name $global:VPNConnectionName
 
