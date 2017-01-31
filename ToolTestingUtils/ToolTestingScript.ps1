@@ -29,10 +29,12 @@ $global:AzureStackLoginCredentials = $ServiceAdminCreds
 
 $global:VPNConnectionName = "AzureStackTestVPN"
 
-#Start running tests
-Set-Location ..
+#Start running tests in correct order
+Set-Location ..\Connect
 Invoke-Pester 
-Set-Location .\ToolTestingUtils\
+Set-Location ..\ComputeAdmin
+Invoke-Pester
+Set-Location ..\ToolTestingUtils\
 
 #Disconnect and Remove VPN Connection
 Write-Verbose "Disconnecting and removing vpn connection"
