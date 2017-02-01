@@ -1,3 +1,4 @@
+$Global:ContinueOnFailure = $false
 $Global:JSONLogFile  = "Run-Canary.JSON"
 $Global:TxtLogFile  = "AzureStackCanaryLog.Log"
 $UseCase = @{}
@@ -107,7 +108,9 @@ function Start-Scenario
         [string]$Type,
         [parameter(Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
-        [string]$LogFilename
+        [string]$LogFilename,
+        [parameter(Mandatory=$false)]
+        [bool] $ContinueOnFailure = $false
     )
 
     if ($LogFileName)
@@ -130,6 +133,7 @@ function Start-Scenario
     "UseCases" = @()
     }    
     $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    $Global:ContinueOnFailure = $ContinueOnFailure
 }
 
 function End-Scenario
@@ -171,7 +175,10 @@ function Invoke-Usecase
     {        
         Log-Exception ($_.Exception)
         Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
-        throw $_.Exception
+        if (-not $Global:ContinueOnFailure)
+        {
+            throw $_.Exception
+        }
     }
 }
 
@@ -452,20 +459,6 @@ function NewAzureStackDefaultQuotas
     $serviceQuotas += NewKeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     
     $serviceQuotas    
-}
-
-function RegisterResourceProviders
-{
-    Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force
-    $requiredRPs = ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault")
-    foreach ($rp in $requiredRPs)
-    {
-        while ((Get-AzureRmResourceProvider | Where-Object ProviderNamespace -eq $rp).RegistrationState -ne "Registered")
-        {
-            Start-Sleep -Seconds 10
-        }
-    }
-    Get-AzureRmResourceProvider | Format-Table    
 }
 
 function NewAzureStackDSCScriptResource
