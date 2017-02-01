@@ -55,10 +55,14 @@ function Get-AzureStackAadTenant
     return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         {            
             Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
-            $config = Get-Content -Path "C:\CloudDeployment\Config.xml" -ErrorAction Stop
-            
-            ([xml]($config)).SelectSingleNode("//Role[@Id='AAD']").PublicInfo.AADTenant.Id
+            $configFile = Get-ChildItem -Path C:\EceStore -Recurse | ?{-not $_.PSIsContainer} | sort Length -Descending | select -First 1
+            $customerConfig = [xml] (Get-Content -Path $configFile.FullName)
 
+            $Parameters = $customerConfig.CustomerConfiguration
+            $fabricRole = $Parameters.Role.Roles.Role | ?{$_.Id -eq "Fabric"}
+            $allFabricRoles = $fabricRole.Roles.ChildNodes
+            $idProviderRole = $allFabricRoles | ?{$_.Id -eq "IdentityProvider"}
+            $idProviderRole.PublicInfo.AADTenant.Id
         }
 }
 
@@ -93,7 +97,7 @@ function Add-AzureStackAzureRmEnvironment
 
     $azureEnvironmentParams = @{
         Name                                     = $Name
-        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/" + $AadTenant + "/"
+        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
         ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
         AdTenant                                 = $AadTenant
         ResourceManagerEndpoint                  = $ResourceManagerEndpoint
@@ -103,7 +107,7 @@ function Add-AzureStackAzureRmEnvironment
         StorageEndpointSuffix                    = $StorageEndpointSuffix
         AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
         AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
-	EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
+	    EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
     }
 
     $armEnv = Get-AzureRmEnvironment -Name $Name
