@@ -43,7 +43,11 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourceLocation = "local"
+    [string]$ResourceLocation = "local",
+    [parameter(HelpMessage="Flag to cleanup resources after exception")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [bool] $ContinueOnFailure = $false
 )
 
 #Requires -Modules AzureRM
@@ -69,7 +73,7 @@ New-Item -Path $canaryUtilPath -ItemType Directory
 # Start Canary 
 #
 $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
-Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile
+Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
 Invoke-Usecase -Name 'CreateAzureStackEnv' -Description "Create Azure Stack environment $EnvironmentName" -UsecaseBlock `
 {
@@ -161,7 +165,29 @@ if ($TenantAdminCredentials)
         }           
     }  
 
-    RegisterResourceProviders  
+    Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
+    {
+        Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force        
+        $sleepTime = 0        
+        while($true)
+        {
+            $sleepTime += 10
+            Start-Sleep 10
+            $requiredRPs = Get-AzureRmResourceProvider -ListAvailable | ? {$_.ProviderNamespace -in ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault")}
+            $notRegistered = $requiredRPs | ? {$_.RegistrationState -ne "Registered"}
+            $registered = $requiredRPs | ? {$_.RegistrationState -eq "Registered"}
+            if (($sleepTime -ge 120) -and $notRegistered)
+            {
+                Get-AzureRmResourceProvider | Format-Table
+                throw [System.Exception] "Resource providers did not get registered in time."
+            }
+            elseif ($registered.Count -eq $requiredRPs.Count)
+            {
+                break
+            }
+        }
+        Get-AzureRmResourceProvider | Format-Table             
+    }
 }
 
 Invoke-Usecase -Name 'CreateResourceGroupForUtilities' -Description "Create a resource group $CanaryUtilitiesRG for the placing the utility files" -UsecaseBlock `
