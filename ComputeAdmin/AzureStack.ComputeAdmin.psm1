@@ -70,7 +70,7 @@ Function Add-VMImage{
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $Domain = 'azurestack.local',
+        [string] $ArmEndpoint = 'https://api.azurestack.local',
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
@@ -99,19 +99,8 @@ Function Add-VMImage{
     $resourceGroupName = "addvmimageresourcegroup"
     $storageAccountName = "addvmimagestorageaccount"
     $containerName = "addvmimagecontainer"
-    $subscriptionName = "Default Provider Subscription"
 
-    if (-not (Get-AzureRmEnvironment -Name AzureStack -ErrorAction SilentlyContinue)){
-        Add-AzureStackAzureRmEnvironment -AadTenant $tenantID -Domain $Domain
-    }
-    
-    $azureStackEnvironment = Get-AzureRmEnvironment -Name AzureStack -ErrorAction Stop
-    $authority = $azureStackEnvironment.ActiveDirectoryAuthority
-    $activeDirectoryServiceEndpointResourceId = $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId
-
-    Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $tenantID -Credential $azureStackCredentials
-
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     #pre validate if image is not already deployed
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue) {
@@ -152,19 +141,7 @@ Function Add-VMImage{
         }
     }
 
-    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken `
-        -Authority $authority `
-        -Resource $activeDirectoryServiceEndpointResourceId `
-        -AadTenantId $tenantID `
-        -ClientId $powershellClientId `
-        -Credential $azureStackCredentials
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    $armEndpoint = 'https://api.' + $Domain
-    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
 
@@ -359,7 +336,7 @@ Function Add-VMImage{
 
         $blob = Set-AzureStorageBlobContent –Container $containerName –File $newPKGPath –Blob $galleryItemName
 
-        Add-AzureRMGalleryItem -SubscriptionId $subscription.Subscription.SubscriptionId -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
+        Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
 
         #cleanup
         Remove-Item $extractedGalleryItemPath -Recurse -Force
@@ -402,22 +379,11 @@ Function Remove-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $Domain = 'azurestack.local'
+        [string] $ArmEndpoint = 'https://api.azurestack.local'
 
     )
-    $subscriptionName = "Default Provider Subscription"
 
-    if (-not (Get-AzureRmEnvironment -Name AzureStack -ErrorAction SilentlyContinue)){
-        Add-AzureStackAzureRmEnvironment -AadTenant $tenantID -Domain $Domain
-    }
-
-    $azureStackEnvironment = Get-AzureRmEnvironment -Name AzureStack -ErrorAction SilentlyContinue
-    $authority = $azureStackEnvironment.ActiveDirectoryAuthority
-    $activeDirectoryServiceEndpointResourceId = $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId
-
-    Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $tenantID -Credential $azureStackCredentials
-
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue -ov images) {
         Write-Verbose "VM Image has been added to Azure Stack - continuing"
@@ -426,19 +392,7 @@ Function Remove-VMImage{
         Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
-    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken `
-        -Authority $authority `
-        -Resource $activeDirectoryServiceEndpointResourceId `
-        -AadTenantId $tenantID `
-        -ClientId $powershellClientId `
-        -Credential $azureStackCredentials
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    $armEndpoint = 'https://api.' + $Domain
-    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
     try{

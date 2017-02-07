@@ -26,7 +26,7 @@ Describe $script:ModuleName {
 InModuleScope $script:ModuleName {
 
     $HostComputer = $global:HostComputer
-    $Domain = $global:Domain 
+    $ArmEndpoint = $global:ArmEndpoint
     $natServer = $global:natServer 
     $AdminUser= $global:AdminUser 
     $AadServiceAdmin = $global:AadServiceAdmin 
@@ -51,7 +51,7 @@ InModuleScope $script:ModuleName {
     $publisher = 'Microsoft'
     $offer = 'Azure'
     $sku = 'StackToolTest'
-    $version = '1.0.3'
+    $version = '1.0.4'
     $osType = 'Windows'
     $gallerySku = 'StackToolGalleryTest'
 
@@ -89,7 +89,7 @@ InModuleScope $script:ModuleName {
         }
 
         It 'Adding Ubuntu Linux 16.04 Image and Marketplace Item Succeeds' {
-            { Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "16.04.1-LTS" -version "1.0.3" -osType Linux -osDiskLocalPath $ubuntuPath -tenantID $AadTenant -AzureStackCredential $stackLoginCreds} | 
+            { Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "16.04.1-LTS" -version "1.0.4" -osType Linux -osDiskLocalPath $ubuntuPath -tenantID $AadTenant -AzureStackCredential $stackLoginCreds} | 
                 Should Not Throw
         }
 
@@ -98,7 +98,7 @@ InModuleScope $script:ModuleName {
                 $newPub = "Canonical"
                 $newOffer = "UbuntuServer"
                 $newSKU = "16.04.1-LTS"
-                $newVersion = "1.0.3"
+                $newVersion = "1.0.4"
                 Remove-VMImage -publisher $newPub -offer $newOffer -sku $newSKU -version $newVersion -osType Linux -tenantID $AadTenant -AzureStackCredential $stackLoginCreds
                 $GalleryItemName = "$newOffer$newSKU"
                 $GalleryItemName = $GalleryItemName -replace "\.","-"
