@@ -16,14 +16,14 @@ function Test-AzureRMTemplate()
 	[String] $TemplatePattern = "*azuredeploy.json",
 	[Parameter(Mandatory = $true, HelpMessage = "Cloud Capabilities JSON File Name in the current folder or with full path")]
 	[ValidateScript({ Test-Path -Path $_  })]
-    [String] $CapabilitiesPath,
-    [Parameter(HelpMessage = "Set to process VMImages , VMExtensions & VMSizes")]
+	[String] $CapabilitiesPath,
+	[Parameter(HelpMessage = "Set to process VMImages , VMExtensions & VMSizes")]
 	[Switch] $IncludeComputeCapabilities,
 	[Parameter(HelpMessage = "Set to process Storage Skus")]
 	[Switch] $IncludeStorageCapabilities,
-    [Parameter(HelpMessage = "Output Report FileName")]
-    [String] $Report = "TemplateValidationReport.html"
-    )
+	[Parameter(HelpMessage = "Output Report FileName")]
+	[String] $Report = "TemplateValidationReport.html"
+	)
 	$capabilities = ConvertFrom-Json (Get-Content -Path $CapabilitiesPath -Raw) -ErrorAction Stop
 	$TemplateDirectory = Get-ChildItem -Path $TemplatePath -Recurse -Include $TemplatePattern
 	$reportOutPut = @()
@@ -78,13 +78,13 @@ function Test-AzureRMTemplate()
 					Status = "Passed"
 					Details = ""
 					}
-				if ($templateValidationStatus.Contains("Exception"))
-				{
-					$templateResults[0].Status = "Exception"
-				}
-				elseif ($templateValidationStatus.Contains("NotSupported"))
+				if ($templateValidationStatus.Contains("NotSupported"))
 				{
 					$templateResults[0].Status = "NotSupported"
+				}
+				elseif ($templateValidationStatus.Contains("Exception"))
+				{
+					$templateResults[0].Status = "Exception"
 				}
 				elseif ($templateValidationStatus.Contains("Warning"))
 				{
@@ -164,7 +164,8 @@ background: peachpuff;
 }
 h1 { font-size:200%; text-align:center;text-decoration: underline;}
 .PASS td:nth-child(2){background-color: Lime }
-.FAIL td:nth-child(2){background-color: orangered}
+.NOTSUPPORTED td:nth-child(2){background-color: orangered}
+.EXCEPTION td:nth-child(2){background-color: gray}
 .WARN td:nth-child(2){background-color: yellow}
 .RECOMMEND td:nth-child(2){background-color: Orange}
 table td:nth-child(2){font-weight: bold;}
@@ -173,11 +174,11 @@ table td:nth-child(3){white-space:pre-line}
 "@
 		$title = "<H1>Template Validation Report</H1>"
 		$validationSummary = "<H3>Template Validation completed on $(Get-Date)<br>
-		Passed: $passedCount<br>		
-		Recommend: $recommendCount<br>
-		Warning: $warningCount<br> 
+		Passed: $passedCount<br>
 		NotSupported: $notSupportedCount<br>
 		Exception: $exceptionCount<br>
+		Warning: $warningCount<br>		
+		Recommend: $recommendCount<br>
 		Total Templates: $totalCount</H3>"
 		[xml] $reportXml = $reportOutPut | ConvertTo-Html -Fragment
 		for ($i = 1; $i -le $reportXml.table.tr.count-1; $i++)
@@ -189,14 +190,19 @@ table td:nth-child(3){white-space:pre-line}
 				$style.Value = "background-color: goldenrod"
 				$reportXml.table.tr[$i].Attributes.Append($style)| out-null
 			}
-			if (($reportXml.table.tr[$i].td[1] -eq 'NotSupported') -or ($reportXml.table.tr[$i].td[1] -eq 'Exception'))
-			{
-				$class.value ="FAIL"
-				$reportXml.table.tr[$i].Attributes.Append($class)| out-null
-			}
-			elseif ($reportXml.table.tr[$i].td[1] -eq 'Passed')
+			if ($reportXml.table.tr[$i].td[1] -eq 'Passed')
 			{
 				$class.value ="PASS"
+				$reportXml.table.tr[$i].Attributes.Append($class)| out-null
+			}
+			elseif ($reportXml.table.tr[$i].td[1] -eq 'NotSupported')
+			{
+				$class.value ="NOTSUPPORTED"
+				$reportXml.table.tr[$i].Attributes.Append($class)| out-null
+			}
+			elseif ($reportXml.table.tr[$i].td[1] -eq 'Exception')
+			{
+				$class.value ="EXCEPTION"
 				$reportXml.table.tr[$i].Attributes.Append($class)| out-null
 			}
 			elseif ($reportXml.table.tr[$i].td[1] -eq 'Warning')
@@ -353,7 +359,16 @@ function ExecuteTemplateFunction
 		$functionParams = GetFunctionParams $Property ","
 		foreach ($functionParam in $functionParams)
 		{
-			$PropertyValue += ExecuteTemplateFunction $functionParam $TemplateJSON $Resource
+			$funRetVal = ExecuteTemplateFunction $functionParam $TemplateJSON $Resource
+			$propertyValueType = GetPropertyType $funRetVal
+			if ($propertyValueType -eq "array")
+			{
+				$propertyValue += $funRetVal[0]
+			}
+			else
+			{
+				$PropertyValue += $funRetVal
+			}
 		}
 	}
 	elseif ($Property.StartsWith("length(", 'CurrentCultureIgnoreCase'))
@@ -453,14 +468,14 @@ function ExecuteTemplateFunction
 		$parameterKey = $functionParams[0]
 		$parameterKey = TrimFunctionName $parameterKey
 		$parameterKey = ExecuteTemplateFunction $parameterKey $TemplateJSON $Resource
-		$parameterValue = $TemplateJSON.parameters.$parameterKey.allowedValues
+		$parameterValue = $TemplateJSON.parameters.$parameterKey.defaultValue
 		if (-not $parameterValue)
 		{
-			if (-not $TemplateJSON.parameters.$parameterKey.defaultValue)
-			{				
+			$parameterValue = $TemplateJSON.parameters.$parameterKey.allowedValues
+			if (-not $parameterValue)
+			{
 				throw "Parameter: $parameterKey - No defaultvalue or allowedValues set"
 			}
-			$parameterValue = $TemplateJSON.parameters.$parameterKey.defaultValue
 		}
 		$parameterValueType = GetPropertyType $parameterValue
 		if ($parameterValueType -eq "function")
@@ -484,6 +499,11 @@ function ExecuteTemplateFunction
 		$variableKey = $functionParams[0]
 		$variableKey = TrimFunctionName $variableKey
 		$variableKey = ExecuteTemplateFunction $variableKey $TemplateJSON $Resource
+		$variableKeyType = GetPropertyType $variableKey
+		if ($variableKeyType -eq "array")
+		{
+			$variableKey = $variableKey[0]
+		}
 		$variableValue = $TemplateJSON.variables.$variableKey
 		$variableValueType = GetPropertyType $variableValue
 		if ($variableValueType -eq "function")
@@ -501,6 +521,11 @@ function ExecuteTemplateFunction
 				$functionParams[$indx] = $functionParams[$indx].Remove($functionParams[$indx].Length-1, 1).Trim()
 			}
 			$functionParamValue = ExecuteTemplateFunction $functionParams[$indx] $TemplateJSON $Resource
+			$functionParamValueType = GetPropertyType $functionParamValue
+			if ($functionParamValueType -eq "array")
+			{
+				$functionParamValue = $functionParamValue[0]
+			}
 			$propertyValueType = GetPropertyType $propertyValue
 			if ($propertyValueType -eq "array")
 			{
@@ -655,8 +680,22 @@ function CompareValues
 	if ($result)
 	{
 		$result = $result | ? { $_.SideIndicator -eq "<="}
+		if (($result -and $ProvidedValue.GetType().Name -eq "Object[]" -and $result.Count -eq $ProvidedValue.Count) -or ($result -and $ProvidedValue.GetType().Name -eq "String"))
+		{
+			$result = [PSCustomObject]@{
+							NoneSupported = $true
+							NotSupportedValues = $result.InputObject
+							}
+		}
+		elseif($result)
+		{
+			$result = [PSCustomObject]@{
+							NoneSupported = $false
+							NotSupportedValues = $result.InputObject
+							}
+		}
 	}
-	return ($result -eq $null)
+	return $result
 }
 
 function ValidateResource
@@ -672,14 +711,19 @@ function ValidateResource
 		[Switch] $IncludeStorageCapabilities
 	)
 	$ResourceProviderNameSpace = $resource.type.Split("/")[0]
-	$ResourceTypeName = $resource.type.Substring($resource.type.indexOf('/')+1)    
+	$ResourceTypeName = ""
+	if ($resource.type.Contains('/'))
+	{
+		$ResourceTypeName = $resource.type.Substring($resource.type.indexOf('/') + 1)
+	}
 	$ResourceTypeProperties = $capabilities.resources | Where-Object { $_.providerNameSpace -eq $ResourceProviderNameSpace } | Where-Object { $_.ResourcetypeName -eq $ResourceTypeName }
 	$resourceOutput = @()
 	Write-Verbose "Validating ProviderNameSpace and ResourceType"
 	if (-not $ResourceTypeProperties)
 	{
-		Write-Error "NotSupported: Resource type $($resource.type) is currently not supported."
-		$resourceOutput += "NotSupported: Resource type $($resource.type) is currently not supported."
+		$msg = "NotSupported: Resource type '$($resource.type)'"
+		Write-Error $msg
+		$resourceOutput += $msg
 	}
 	else
 	{
@@ -690,26 +734,32 @@ function ValidateResource
 			$templateResApiversionType = GetPropertyType $templateResApiversion
 			if ($templateResApiversionType -eq "function")
 			{
-				Write-Warning "Recommend: For apiVersion ($templateResApiversion), it is recommended to set a literal value."
-				$resourceOutput += "Recommend: For apiVersion ($templateResApiversion), it is recommended to set a literal value."
+				$msg = "Recommend: apiVersion (Resource type: $($resource.type)). It is recommended to set it as a literal value."
+				Write-Warning $msg
+				$resourceOutput += $msg
 			}
 			$templateResApiversion = Get-PropertyValue $templateResApiversion $Template $resource
 			$supportedApiVersions = $ResourceTypeProperties.Apiversions
-			$supported = CompareValues $templateResApiversion $supportedApiVersions
-			if ($supported)
+			$notSupported = CompareValues $templateResApiversion $supportedApiVersions
+			if ($notSupported)
 			{
-				Write-Verbose "Resource type $($resource.type) apiversion:$templateResApiversion. Supported Values are $supportedApiVersions"
-			}
-			else
-			{
-				Write-Warning "Warning: Resource type $($resource.type) apiversion: $templateResApiversion. Supported Values are $supportedApiVersions"
-				$resourceOutput += "Warning: Resource type $($resource.type) apiversion: $templateResApiversion. Supported Values are $supportedApiVersions"
+				if ($notSupported.NoneSupported)
+				{
+					$msg = "NotSupported: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
+				}
+				else
+				{
+					$msg = "Warning: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
+				}
+				Write-Warning $msg
+				$resourceOutput += $msg
 			}
 		}
 		catch
 		{
-			Write-Error "Exception: Resource apiVersion: $($_.Exception.Message)"
-			$resourceOutput += "Exception: Resource apiVersion: $($_.Exception.Message)"
+			$msg = "Exception: apiVersion. $($_.Exception.Message)"
+			Write-Error $msg
+			$resourceOutput += $msg
 		}
 		Write-Verbose "Validating Location info for $ResourceProviderNameSpace\$ResourceTypeName"
 		try
@@ -722,26 +772,35 @@ function ValidateResource
 			{
 				$locationToCheck = Get-PropertyValue $resource.location $Template $resource
 				$supportedLocations = $ResourceTypeProperties.Locations
-				$supported = CompareValues $locationToCheck $supportedLocations
-				if ((-not $supported) -and ($locationToCheck -notlike "*resourceGroup().location*"))
+				$notSupported = CompareValues $locationToCheck $supportedLocations
+				if (($notSupported) -and ($locationToCheck -notlike "*resourceGroup().location*"))
 				{
-					Write-Warning "Warning: Resource type $($resource.type) targets $locationToCheck location. Supported Values are 'resourceGroup().location' or $supportedLocations"
-					$resourceOutput += "Warning: Resource type $($resource.type) targets $locationToCheck location. Supported Values are 'resourceGroup().location' or $supportedLocations"
+					if ($notSupported.NoneSupported)
+					{
+						$msg = "NotSupported: Location (Resource type: $($resource.type)). Not supported values - $($notSupported.NotSupportedValues). It is recommended to set it as resourceGroup().location."
+					}
+					else
+					{
+						$msg = "Warning: Location (Resource type: $($resource.type)). Not supported values - $($notSupported.NotSupportedValues). It is recommended to set it as resourceGroup().location."
+					}
+					Write-Warning $msg
+					$resourceOutput += $msg
 				}
-				elseif (($supported) -and ($locationToCheck -notlike "*resourceGroup().location*"))
+				elseif ((-not $notSupported) -and ($locationToCheck -notlike "*resourceGroup().location*"))
 				{
-					Write-Warning "Recommend:For Resource type $($resource.type), it is recommended to set location as resourceGroup().location"
-					$resourceOutput += "Recommend:For Resource type $($resource.type), it is recommended to set location as resourceGroup().location"
+					$msg = "Recommend: Location (Resource type: $($resource.type)). It is recommended to set it as resourceGroup().location."
+					Write-Warning $msg
+					$resourceOutput += $msg
 				}
 			}
 		}
 		catch
 		{
-			Write-Error "Exception: Resource location: $($_.Exception.Message)"
-			$resourceOutput += "Exception: Resource location: $($_.Exception.Message)"
+			$msg = "Exception: Location (Resource type: $($resource.type)). $($_.Exception.Message)"
+			Write-Error $msg
+			$resourceOutput += $msg
 		}
 		Write-Verbose "Process VMImages"
-
 		if ($IncludeComputeCapabilities)
 		{
 			if ($ResourceTypeName -Like '*extensions')
@@ -749,7 +808,7 @@ function ValidateResource
 				Write-Verbose "Validating VMExtension $ResourceProviderNameSpace/$ResourceTypeName"
 				if (-not $capabilities.VMExtensions)
 				{
-					Write-Warning "Warning: No VMExtensions found in Capabilities.json. Run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities"
+					Write-Warning "Warning: No VMExtensions found in Capabilities json file. Run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities"
 				}
 				else
 				{
@@ -761,16 +820,18 @@ function ValidateResource
 						$supportedPublisher = $capabilities.VMExtensions | Where-Object { $_.publisher -eq $templateextPublisher }
 						if (-not $supportedPublisher)
 						{
-							Write-Warning "Warning: VMExtension publisher: $templateextPublisher currently not supported. Refer to Capabilities.json for supported VMExtension publishers"
-							$resourceOutput += "Warning: VMExtension publisher: $templateextPublisher currently not supported. Refer to Capabilities.json for supported VMExtension publishers"
+							$msg = "NotSupported: VMExtension publisher '$templateextPublisher'"
+							Write-Warning $msg
+							$resourceOutput += $msg
 						}
 						else
 						{
 							$supportedType = $supportedPublisher.types| Where-Object { $_.type -eq $templateextType }
 							if (-not $supportedType)
 							{
-								Write-Error "Warning: VMExtension type: $templateextPublisher\$templateextType is currently not supported. Refer to Capabilities.json for supported VMExtension Types"
-								$resourceOutput += "Warning: VMExtension type: $templateextPublisher\$templateextType is currently not supported. Refer to Capabilities.json for supported VMExtension Types"
+								$msg = "NotSupported: VMExtension type '$templateextPublisher\$templateextType'"
+								Write-Error $msg
+								$resourceOutput += $msg
 							}
 							else
 							{
@@ -790,14 +851,16 @@ function ValidateResource
 										{
 											if ((-not $resource.properties.autoupgrademinorversion) -or ($resource.properties.autoupgrademinorversion -eq $false))
 											{
-												Write-warning "Warning: Exact Match for VMExtension version: $templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
-												$resourceOutput += "Warning: Exact Match for VMExtension version: $templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
+												$msg = "Warning: Exact Match for VMExtension version: $templateextPublisher\$templateextType\$templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
+												Write-warning $msg
+												$resourceOutput += $msg
 											}
 										}
 										else
 										{
-											Write-Warning "Warning: VMExtension version: $templateextPublisher\$templateextType\$templateextVersion not found in $supportedVersions. Refer to Capabilities.json for supported VMExtension versions"
-											$resourceOutput += "Warning: VMExtension version: $templateextPublisher\$templateextType\$templateextVersion not found in $supportedVersions. Refer to Capabilities.json for supported VMExtension versions"
+											$msg = "Warning: VMExtension version: $templateextPublisher\$templateextType\$templateextVersion not found in $supportedVersions."
+											Write-Warning $msg
+											$resourceOutput += $msg
 										}
 									}
 								}
@@ -806,8 +869,9 @@ function ValidateResource
 					}
 					catch
 					{
-						Write-Error "Exception: Resource VMExtension: $($_.Exception.Message)"
-						$resourceOutput += "Exception: Resource VMExtension: $($_.Exception.Message)"
+						$msg = "Exception: VMExtension. $($_.Exception.Message)"
+						Write-Error $msg
+						$resourceOutput += $msg
 					}
 				}
 			}
@@ -824,77 +888,129 @@ function ValidateResource
 					{
 						try
 						{
-							$templateImagePublisher = Get-PropertyValue $resource.properties.storageprofile.imagereference $Template $resource "publisher"
-							$supportedPublisher = $capabilities.VMImages | Where-Object { $_.publisherName -eq $templateImagePublisher }
-							if (-not $supportedPublisher)
+							$templateImagePublisher = Get-PropertyValue $resource.properties.storageprofile.imagereference $Template $resource "publisher"							
+							$notSupported = CompareValues $templateImagePublisher $capabilities.VMImages.publisherName
+							if ($notSupported)
 							{
-								Write-Warning "Warning: VMImage publisher: $templateImagePublisher currently not supported. Refer to Capabilities.json for supported VMImages publishers"
-								$resourceOutput += "Warning: VMImage publisher: $templateImagePublisher currently not supported. Refer to Capabilities.json for supported VMImages publishers"
+								if ($notSupported.NoneSupported)
+								{
+									$msg = "NotSupported: VMImage publisher (Resource type: $($resource.type)). Not supported values - $($notSupported.NotSupportedValues)"
+								}
+								else
+								{
+									$msg = "Warning: VMImage publisher (Resource type: $($resource.type)). Not supported values - $($notSupported.NotSupportedValues)"
+								}
+								Write-Warning $msg
+								$resourceOutput += $msg
 							}
 							else
 							{
+								if ($templateImagePublisher.GetType().Name -eq "Object[]")
+								{
+									$templateImagePublisher = $templateImagePublisher[0]
+								}
+								$supportedPublisher = $capabilities.VMImages | Where-Object { $_.publisherName -eq $templateImagePublisher }
 								try
 								{
 									$templateImageOffer = Get-PropertyValue $resource.properties.storageprofile.imagereference $Template $resource "offer"
-									$supportedOffer = $supportedPublisher.Offers | Where-Object { $_.offerName -eq $templateImageOffer }
-									if (-not $supportedOffer)
+									$notSupported = CompareValues $templateImageOffer $supportedPublisher.Offers.offerName
+									if ($notSupported)
 									{
-										Write-Warning "Warning: VMImage Offer: $templateImagePublisher\$templateImageOffer currently not supported. Refer to Capabilities.json for supported VMImages Offers"
-										$resourceOutput += "Warning: VMImage Offer: $templateImagePublisher\$templateImageOffer currently not supported. Refer to Capabilities.json for supported VMImages Offers"
+										if ($notSupported.NoneSupported)
+										{
+											$msg = "NotSupported: VMImage Offer (Publisher: $templateImagePublisher). Not supported values - $($notSupported.NotSupportedValues)"
+										}
+										else
+										{
+											$msg = "Warning: VMImage Offer (Publisher: $templateImagePublisher). Not supported values - $($notSupported.NotSupportedValues)"
+										}
+										Write-Warning $msg
+										$resourceOutput += $msg
 									}
 									else
 									{
+										if ($templateImageOffer.GetType().Name -eq "Object[]")
+										{
+											$templateImageOffer = $templateImageOffer[0]
+										}
+										$supportedOffer = $supportedPublisher.Offers | Where-Object { $_.offerName -eq $templateImageOffer }
 										try
 										{
 											$templateImagesku = Get-PropertyValue $resource.properties.storageprofile.imagereference $Template $resource "sku"
-											$supportedSku = $supportedOffer.skus | where { $_.skuName -eq $templateImagesku}
-											if (-not $supportedSku)
+											$notSupported = CompareValues $templateImagesku $supportedOffer.skus.skuName
+											if ($notSupported)
 											{
-												Write-Warning "Warning: VMImage SKu: $templateImagePublisher\$templateImageOffer\$templateImageSku currently not supported. Refer to Capabilities.json for supported VMImages Skus"
-												$resourceOutput += "Warning: VMImage SKu: $templateImagePublisher\$templateImageOffer\$templateImageSku currently not supported. Refer to Capabilities.json for supported VMImages Skus"
+												if ($notSupported.NoneSupported)
+												{
+													$msg = "NotSupported: VMImage SKu (Offer: $templateImagePublisher\$templateImageOffer). Not supported values - $($notSupported.NotSupportedValues)"
+												}
+												else
+												{
+													$msg = "Warning: VMImage SKu (Offer: $templateImagePublisher\$templateImageOffer). Not supported values - $($notSupported.NotSupportedValues)"
+												}
+												Write-Warning $msg
+												$resourceOutput += $msg
 											}
 											else
 											{
+												if ($templateImagesku.GetType().Name -eq "Object[]")
+												{
+													$templateImagesku = $templateImagesku[0]
+												}
+												$supportedSku = $supportedOffer.skus | Where-Object { $_.skuName -eq $templateImagesku }
 												try
 												{
 													$templateImageskuVersion = Get-PropertyValue $resource.properties.storageprofile.imagereference $Template $resource "version"
-													$supported = CompareValues $templateImageskuVersion $supportedSku.versions
-													if (($templateImageskuVersion -ne "latest") -and (-not $supported)) 
+													$notSupported = CompareValues $templateImageskuVersion $supportedSku.versions
+													if (($templateImageskuVersion -ne "latest") -and ($notSupported))
 													{
-														Write-Warning "Warning: VMImage SKu version: $templateImagePublisher\$templateImageOffer\$templateImageSku\$templateImageskuVersion currently not supported. Set to latest or Refer to Capabilities.json for supported VMImages Skus version "
-														$resourceOutput += "Warning: VMImage SKu version: $templateImagePublisher\$templateImageOffer\$templateImageSku\$templateImageskuVersion currently not supported. Set to latest or Refer to Capabilities.json for supported VMImages Skus version"
+														if ($notSupported.NoneSupported)
+														{
+															$msg = "NotSupported: VMImage SKu version (Sku: $templateImagePublisher\$templateImageOffer\$templateImageSku). Not supported values - $($notSupported.NotSupportedValues)"
+														}
+														else
+														{
+															$msg = "Warning: VMImage SKu version (Sku: $templateImagePublisher\$templateImageOffer\$templateImageSku). Not supported values - $($notSupported.NotSupportedValues)"
+														}
+														Write-Warning $msg
+														$resourceOutput += $msg
 													}
-													elseif (($templateImageskuVersion -ne "latest") -and ($supported)) 
+													elseif (($templateImageskuVersion -ne "latest") -and (-not $notSupported)) 
 													{
-														Write-Warning "Recommend: It is recommended to set storageprofile.imagereference.version to 'latest'"
-														$resourceOutput += "Recommend: It is recommended to set storageprofile.imagereference.version to 'latest'"
+														$msg = "Recommend: It is recommended to set storageprofile.imagereference.version to 'latest'"
+														Write-Warning $msg
+														$resourceOutput += $msg
 													}
 												}
 												catch
 												{
-													Write-Error "Exception: Resource ImageSkuVersion $($_.Exception.Message)"
-													$resourceOutput += "Exception: Resource ImageSkuVersion $($_.Exception.Message)"
+													$msg = "Exception: VMImage SKu version (Sku: $templateImagePublisher\$templateImageOffer\$templateImageSku). $($_.Exception.Message)"
+													Write-Error $msg
+													$resourceOutput += $msg
 												}
 											}
 										}
 										catch
 										{
-											Write-Error "Exception: Resource ImageSku $($_.Exception.Message)"
-											$resourceOutput += "Exception: Resource ImageSku $($_.Exception.Message)"
+											$msg = "Exception: VMImage SKu (Offer: $templateImagePublisher\$templateImageOffer). $($_.Exception.Message)"
+											Write-Error $msg
+											$resourceOutput += $msg
 										}
 									}
 								}
 								catch
 								{
-									Write-Error "Exception: Resource ImageOffer $($_.Exception.Message)"
-									$resourceOutput += "Exception: Resource ImageOffer $($_.Exception.Message)"
+									$msg = "Exception: VMImage Offer (Publisher: $templateImagePublisher). $($_.Exception.Message)"
+									Write-Error $msg
+									$resourceOutput += $msg
 								}
 							}
 						}
 						catch
 						{
-							Write-Error "Exception: Resource ImagePublisher $($_.Exception.Message)"
-							$resourceOutput += "Exception: Resource ImagePublisher $($_.Exception.Message)"
+							$msg = "Exception: VMImage publisher (Resource type: $($resource.type)). $($_.Exception.Message)"
+							Write-Error $msg
+							$resourceOutput += $msg
 						}
 					}
 				}
@@ -907,17 +1023,26 @@ function ValidateResource
 					try
 					{
 						$templateVMSize = Get-PropertyValue $resource.properties.hardwareprofile $Template $resource "vmSize"
-						$supported = CompareValues $templateVMSize $capabilities.VMSizes
-						if (-not $supported)
+						$notSupported = CompareValues $templateVMSize $capabilities.VMSizes
+						if ($notSupported)
 						{
-							Write-Warning "Warning: VMSize: $templateVMSize currently not supported. Refer to Capabilities.json for supported VMSizes"
-							$resourceOutput += "Warning: VMSize: $templateVMSize currently not supported. Refer to Capabilities.json for supported VMSizes"
+							if ($notSupported.NoneSupported)
+							{
+								$msg = "NotSupported: VMSize. Not Supported Values - $($notSupported.NotSupportedValues)"
+							}
+							else
+							{
+								$msg = "Warning: VMSize. Not Supported Values - $($notSupported.NotSupportedValues)"
+							}
+							Write-Warning $msg
+							$resourceOutput += $msg
 						}
 					}
 					catch
 					{
-						Write-Error "Exception: Resource VMSize $($_.Exception.Message)"
-						$resourceOutput += "Exception: Resource VMSize $($_.Exception.Message)"
+						$msg = "Exception: VMSize. $($_.Exception.Message)"
+						Write-Error $msg
+						$resourceOutput += $msg
 					}
 				}
 			}
@@ -935,23 +1060,39 @@ function ValidateResource
 				{
 					try
 					{
-						$templateStorageKind = Get-PropertyValue $resource.properties.kind $Template $resource
-						$supportedKind = $capabilities.StorageSkus | Where-Object { $_.kind -eq $templateStorageKind }
-						$supportedKind = CompareValues $templateStorageKind $supportedKind 
-						if (-not $supported)
+						$templateStorageKind = Get-PropertyValue $resource.kind $Template $resource
+						$supportedKind = ($capabilities.StorageSkus | Where-Object { $_.kind -eq $templateStorageKind }).kind
+						$notSupported = CompareValues $templateStorageKind $supportedKind 
+						if ($notSupported)
 						{
-							Write-Warning "Warning: Storage kind: $templateStorageKind currently not supported. Refer to Capabilities.json for supported storage kind"
-							$resourceOutput += "Warning: Storage kind: $templateStorageKind currently not supported. Refer to Capabilities.json for supported storage kind"
+							if ($notSupported.NoneSupported)
+							{
+								$msg = "NotSupported: Storage kind. Not Supported Values - $($notSupported.NotSupportedValues)"
+							}
+							else
+							{
+								$msg = "Warning: Storage kind. Not Supported Values - $($notSupported.NotSupportedValues)"
+							}
+							Write-Warning $msg
+							$resourceOutput += $msg
 						}
 						else
 						{
-							$templateStorageSku = Get-PropertyValue $resource.properties.sku.Name $Template $resource
+							$templateStorageSku = Get-PropertyValue $resource.sku.Name $Template $resource
 							$supportedSkus= ($capabilities.StorageSkus | Where-Object { $_.kind -eq $templateStorageKind }).skus
-							$supported= CompareValues $templateStorageSku $supportedSkus
-							if (-not $supported)
+							$notSupported= CompareValues $templateStorageSku $supportedSkus
+							if ($notSupported)
 							{
-								Write-Warning "Warning: Storage sku: $templateStorageKind\$templateStorageSku currently not supported. Refer to Capabilities.json for supported storage kind and its Skus"
-								$resourceOutput += "Warning: Storage Sku: $templateStorageKind\$templateStorageSku currently not supported. Refer to Capabilities.json for supported storage kind and its Skus"
+								if ($notSupported.NoneSupported)
+								{
+									$msg = "NotSupported: Storage sku '$templateStorageKind\$templateStorageSku'. Not Supported Values - $($notSupported.NotSupportedValues)"
+								}
+								else
+								{
+									$msg = "Warning: Storage sku '$templateStorageKind\$templateStorageSku'. Not Supported Values - $($notSupported.NotSupportedValues)"
+								}
+								Write-Warning $msg
+								$resourceOutput += $msg
 							}
 						}
 					}
@@ -962,17 +1103,26 @@ function ValidateResource
 						{
 							$templateStorageAccountType = Get-PropertyValue $resource.properties.accountType $Template $resource
 							$supportedTypes = ($capabilities.StorageSkus | Where-Object { $_.kind -eq 'Storage' }).skus
-							$supported = CompareValues $templateStorageAccountType $supportedTypes
-							if (-not $supported)
+							$notSupported = CompareValues $templateStorageAccountType $supportedTypes
+							if ($notSupported)
 							{
-								Write-Warning "Warning: Storage AccountType: $templateStorageAccountType currently not supported. Refer to Capabilities.json for supported Storage skus"
-								$resourceOutput += "Warning: Storage AccountType: $templateStorageAccountType currently not supported. Refer to Capabilities.json for supported Storage skus"
+								if ($notSupported.NoneSupported)
+								{
+									$msg = "NotSupported: Storage AccountType. Not Supported Values - $($notSupported.NotSupportedValues)"
+								}
+								else
+								{
+									$msg = "Warning: Storage AccountType. Not Supported Values - $($notSupported.NotSupportedValues)"
+								}
+								Write-Warning $msg
+								$resourceOutput += $msg
 							}
 						}
 						catch
 						{
-							Write-Error "Exception: Resource Storage AccountType $($_.Exception.Message)"
-							$resourceOutput += "Exception: Resource Storage AccountType $($_.Exception.Message)"
+							$msg = "Exception: Storage AccountType. $($_.Exception.Message)"
+							Write-Error $msg
+							$resourceOutput += $msg
 						}
 					}
 				}

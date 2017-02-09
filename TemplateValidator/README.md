@@ -18,7 +18,11 @@ Test-AzureRMTemplate -TemplatePath $TemplatePath -CapabilitiesPath $Capabilities
 ```
 #Reporting Usage
 Passed - Validation passed. The template has all the Capabilities to deploy on the validated Cloud 
-Recommend - The template has all the Capabilities to deploy on the validated Cloud but has recommendations for best practices
-Warning - Changes are required either in Template or the validated cloud to deploy succesfully
 NotSupported - The template Capabilities is currently not supported on the validated cloud
 Exception - Exception in processing and validating the template
+Recommend - The template has all the Capabilities to deploy on the validated Cloud but has recommendations for best practices
+Warning - Changes are required either in Template or the validated cloud to deploy succesfully
+
+# TroubleShooting
+For "NotSupported" - Refer the region specific capability JSON for the supported capabilities.
+For Warnings(in Console Output) such as "No StorageSkus found in region specific Capabilities json file.", Please run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities and -IncludeStorageCapabilities
