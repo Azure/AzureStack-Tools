@@ -25,4 +25,4 @@ Warning - Changes are required either in Template or the validated cloud to depl
 
 # TroubleShooting
 For "NotSupported" - Refer the region specific capability JSON for the supported capabilities.
-For Warnings(in Console Output) such as "No StorageSkus found in region specific Capabilities json file.", Please run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities and -IncludeStorageCapabilities
+For Warnings(in Console Output) such as "No StorageSkus found in region specific Capabilities JSON file.", Please run Get-AzureRMCloudCapabilities with -IncludeComputeCapabilities and -IncludeStorageCapabilities
