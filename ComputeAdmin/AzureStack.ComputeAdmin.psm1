@@ -85,6 +85,15 @@ Function Add-VMImage{
         [bool] $CreateGalleryItem = $true
     )
 
+    $Domain = ""
+    try {
+        $uriARMEndpoint = [System.Uri] $ArmEndpoint
+        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+    }
+    catch {
+        Write-Error "The specified ARM endpoint was invalid"
+    }
+
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title'))
     {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
