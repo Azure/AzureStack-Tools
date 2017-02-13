@@ -21,7 +21,10 @@ function Get-AzureRMCloudCapabilities()
 		[String] $Location,
 
 		[Parameter(HelpMessage = 'Set this to get compute resource provider Capabilities like Extensions, Images, Sizes')]
-		[Switch] $IncludeComputeCapabilities
+		[Switch] $IncludeComputeCapabilities,
+
+		[Parameter(HelpMessage = 'Set this to get storage resource provider Capabilities like Sku')]
+		[Switch] $IncludeStorageCapabilities
     )
 	$sw = [Diagnostics.Stopwatch]::StartNew()
 	Write-Verbose "Getting CloudCapabilities for location: '$location'"
@@ -147,6 +150,34 @@ function Get-AzureRMCloudCapabilities()
 			}
 			$capabilities.Add("VMExtensions", $extensionList)
 			$capabilities.Add("VMImages", $imageList)
+		}
+	}
+	if ($IncludeStorageCapabilities)
+	{
+		Write-Verbose "Getting Storage Sku supported for $location"
+		try
+		{
+			$storageSkus = Get-AzureRmResource -ResourceType "Microsoft.Storage/Skus" -ResourceName "/"
+			if ($storageSkus)
+			{
+				$skuList = New-Object System.Collections.ArrayList
+				$storageKind = $storageSkus| Select-Object Kind | Get-Unique -AsString
+				foreach ($kind in $storageKind.Kind)
+				{
+					$skus= ($storageSkus | Where-Object { $_.Kind -eq $kind }).Name
+					$kindDict = @{ "kind" = $kind; "skus" = $skus }
+					$skuList.Add($kindDict) | Out-Null
+				}
+				$capabilities.Add("StorageSkus",  $skuList)
+			}
+			else
+			{
+				Write-Verbose "No StorageSkus found for $location"
+			}
+		}
+		catch
+		{
+			Write-Error "Error occurred processing StorageSkus for $location. Exception: " $_.Exception.Message
 		}
 	}
 	$capabilitiesJson = ConvertTo-Json $capabilities -Depth 10
