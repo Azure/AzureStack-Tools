@@ -131,8 +131,8 @@ function Get-AzureStackNatServerAddress
 	    [string] $HostComputer,
         [parameter(HelpMessage="Domain FQDN of this Azure Stack Instance")]
         [string] $Domain = "azurestack.local",
-        [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
-        [string] $natServer = "mas-bgpnat01",
+        [parameter(HelpMessage="CON computer name in this Azure Stack Instance")]
+        [string] $conServer = "MAS-CON01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
@@ -142,7 +142,7 @@ function Get-AzureStackNatServerAddress
     $UserCred = "$Domain\$User"
     $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
 
-    $nat = "$natServer.$Domain"
+    $nat = "$conServer.$Domain"
 
     Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
     return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
@@ -150,8 +150,27 @@ function Get-AzureStackNatServerAddress
             Write-Verbose "Remoting to the Azure Stack NAT server $using:nat..." -Verbose
             Invoke-Command -ComputerName "$using:nat"  -Credential $using:credential -ScriptBlock `
                 { 
-                    Write-Verbose "Obtaining external IP..." -Verbose
-                    Get-NetIPConfiguration | ? { $_.IPv4DefaultGateway -ne $null } | foreach { $_.IPv4Address.IPAddress }
+                    Write-Verbose "Obtaining NAT NIC..." -Verbose
+                    $natNic = Get-NetIPConfiguration | ? { $_.IPv4DefaultGateway -ne $null } | select -First 1
+                    try
+                    {
+                        Write-Verbose "Obtaining external IP..." -Verbose
+                        $Request = [System.Net.HttpWebRequest]::Create("https://lee.io/ip")
+                        $Request.Timeout = 30000
+                        $Request.KeepAlive = $false
+                        $Request.ServicePoint.BindIPEndPointDelegate = { New-Object -TypeName System.Net.IPEndPoint $([System.Net.IPAddress]::Parse($natNic.IPv4Address.IPv4Address)), 0 }
+                        $Reader = New-Object System.IO.StreamReader -ArgumentList $Request.GetResponse().GetResponseStream()
+                        $Response = $Reader.ReadToEnd().Trim()
+
+                        $Response
+                    }
+                    finally
+                    {
+                        if ($Reader -ne $null)
+                        {
+                            $Reader.Dispose()
+                        }
+                    }
                 }
         } 
 }
