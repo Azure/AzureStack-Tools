@@ -69,7 +69,14 @@ See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/
 
 AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
 
-To retrieve your Azure Active Directory Tenant ID (this will be a GUID value), run the following command:
+To retrieve your Azure Active Directory Tenant ID (this will be a GUID value), do the following:
+
+First, make sure that your host is added to the list of trusted hosts:
+```powershell
+Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
+```
+
+Then execute the following:
 ```powershell
 $Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
 $AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
