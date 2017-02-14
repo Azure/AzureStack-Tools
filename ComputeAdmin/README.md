@@ -1,9 +1,14 @@
 # Azure Stack Compute Administration
-
 Instructions below are relative to the .\ComputeAdmin folder of the [AzureStack-Tools repo](..).
 
 ```powershell
 Import-Module .\AzureStack.ComputeAdmin.psm1
+```
+
+Note: This module also requires that you have imported the AzureStack.Connect module.
+
+```powershell
+Import-Module ..\Connect\AzureStack.Connect.psm1
 ```
 
 ##Add a VM image to the Marketplace with PowerShell

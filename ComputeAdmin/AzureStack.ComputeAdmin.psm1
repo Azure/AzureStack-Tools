@@ -70,7 +70,7 @@ Function Add-VMImage{
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $azureStackDomain = 'azurestack.local',
+        [string] $ArmEndpoint = 'https://api.azurestack.local',
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
@@ -84,6 +84,15 @@ Function Add-VMImage{
         [Parameter(ParameterSetName='VMImageFromAzure')]
         [bool] $CreateGalleryItem = $true
     )
+
+    $Domain = ""
+    try {
+        $uriARMEndpoint = [System.Uri] $ArmEndpoint
+        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+    }
+    catch {
+        Write-Error "The specified ARM endpoint was invalid"
+    }
 
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title'))
     {
@@ -99,28 +108,8 @@ Function Add-VMImage{
     $resourceGroupName = "addvmimageresourcegroup"
     $storageAccountName = "addvmimagestorageaccount"
     $containerName = "addvmimagecontainer"
-    $subscriptionName = "Default Provider Subscription"
 
-    $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
-    $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-    $galleryEndpoint = $endpoints.galleryEndpoint
-    $graphEndpoint = $endpoints.graphEndpoint
-    $loginEndpoint = $endpoints.authentication.loginEndpoint
-    $authority = $loginEndpoint + $tenantID + "/"
-
-    Add-AzureRmEnvironment -Name 'Azure Stack' `
-        -ActiveDirectoryEndpoint $authority `
-        -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId `
-        -ResourceManagerEndpoint  "https://api.$azureStackDomain/" `
-        -GalleryEndpoint $galleryEndpoint `
-        -GraphEndpoint $graphEndpoint
-
-    $environment = Get-AzureRmEnvironment 'Azure Stack'
-
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
-    Select-AzureRmProfile -Profile $profile
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     #pre validate if image is not already deployed
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue) {
@@ -145,7 +134,7 @@ Function Add-VMImage{
     if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
     {
         $script:osDiskName = Split-Path $osDiskLocalPath -Leaf
-        $script:osDiskBlobURIFromLocal = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$osDiskName"
+        $script:osDiskBlobURIFromLocal = "https://$storageAccountName.blob.$Domain/$containerName/$osDiskName"
         Add-AzureRmVhd -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath -OverWrite
 
         $script:dataDiskBlobURIsFromLocal = New-Object System.Collections.ArrayList
@@ -154,26 +143,14 @@ Function Add-VMImage{
             foreach($dataDiskLocalPath in $dataDisksLocalPaths)
             {
                 $dataDiskName = Split-Path $dataDiskLocalPath -Leaf
-                $dataDiskBlobURI = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$dataDiskName"
+                $dataDiskBlobURI = "https://$storageAccountName.blob.$Domain/$containerName/$dataDiskName"
                 $dataDiskBlobURIsFromLocal.Add($dataDiskBlobURI) 
                 Add-AzureRmVhd  -Destination $dataDiskBlobURI -ResourceGroupName $resourceGroupName -LocalFilePath $dataDiskLocalPath -OverWrite
             }
         }
     }
 
-    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken `
-        -Authority $authority `
-        -Resource $activeDirectoryServiceEndpointResourceId `
-        -AadTenantId $tenantID `
-        -ClientId $powershellClientId `
-        -Credential $azureStackCredentials
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    $armEndpoint = 'https://api.' + $azureStackDomain
-    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
 
@@ -313,7 +290,9 @@ Function Add-VMImage{
             $displayName = "{0}-{1}-{2}" -f $publisher, $offer, $sku
         }
 
-        $name = (New-Guid).guid
+        $name = "$offer$sku"
+        #Remove periods so that the offer and sku can be part of the MarketplaceItem name 
+        $name =$name -replace "\.","-"
 
         $JSON.name = $name
         $JSON.publisher = $publisher
@@ -362,11 +341,11 @@ Function Add-VMImage{
 
         cd $currentPath
 
-        $galleryItemURI = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$galleryItemName"
+        $galleryItemURI = "https://$storageAccountName.blob.$Domain/$containerName/$galleryItemName"
 
         $blob = Set-AzureStorageBlobContent –Container $containerName –File $newPKGPath –Blob $galleryItemName
 
-        Add-AzureRMGalleryItem -SubscriptionId $subscription.Subscription.SubscriptionId -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
+        Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
 
         #cleanup
         Remove-Item $extractedGalleryItemPath -Recurse -Force
@@ -409,52 +388,20 @@ Function Remove-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $azureStackDomain = 'azurestack.local'
+        [string] $ArmEndpoint = 'https://api.azurestack.local'
 
     )
-    $subscriptionName = "Default Provider Subscription"
 
-    $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
-    $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-    $galleryEndpoint = $endpoints.galleryEndpoint
-    $graphEndpoint = $endpoints.graphEndpoint
-    $loginEndpoint = $endpoints.authentication.loginEndpoint
-    $authority = $loginEndpoint + $tenantID + "/"
-
-    Add-AzureRmEnvironment -Name 'Azure Stack' `
-        -ActiveDirectoryEndpoint $authority `
-        -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId `
-        -ResourceManagerEndpoint  "https://api.$azureStackDomain/" `
-        -GalleryEndpoint $galleryEndpoint `
-        -GraphEndpoint $graphEndpoint
-
-    $environment = Get-AzureRmEnvironment 'Azure Stack'
-
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
-    Select-AzureRmProfile -Profile $profile
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue -ov images) {
-        Write-Verbose "Image found in Azure Gallery Continuing"
+        Write-Verbose "VM Image has been added to Azure Stack - continuing"
     }
     else{
         Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
-    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken `
-        -Authority $authority `
-        -Resource $activeDirectoryServiceEndpointResourceId `
-        -AadTenantId $tenantID `
-        -ClientId $powershellClientId `
-        -Credential $azureStackCredentials
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    $armEndpoint = 'https://api.' + $azureStackDomain
-    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
     try{
