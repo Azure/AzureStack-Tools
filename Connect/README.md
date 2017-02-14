@@ -1,3 +1,10 @@
+As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
+
+```powershell
+Install-Module -Name AzureRM -RequiredVersion 1.2.6 -Scope CurrentUser
+Install-Module -Name AzureStack
+```
+
 This tool set allows you to connect to an Azure Stack PoC (Proof of Concept) instance from an external personal laptop. You can then access the portal or log into that environment via PowerShell. 
 
 Instructions below are relative to the .\Connect folder of the [AzureStack-Tools repo](..).
