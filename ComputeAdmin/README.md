@@ -11,6 +11,18 @@ Note: This module also requires that you have imported the AzureStack.Connect mo
 Import-Module ..\Connect\AzureStack.Connect.psm1
 ```
 
+Adding a VM Image requires that you obtain the GUID value of your Azure Active Directory Tenant.
+
+Add your host to the list of TrustedHosts:
+```powershell
+Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
+```
+Then execute the following:
+```powershell
+$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
+$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+```
+
 ##Add a VM image to the Marketplace with PowerShell
 
 1. Prepare a Windows or Linux operating system virtual hard disk image in VHD format (not VHDX).
@@ -27,7 +39,7 @@ Import-Module ..\Connect\AzureStack.Connect.psm1
 	-  The following is an example invocation of the script:
 	
 ```powershell
-Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <mydirectory>.onmicrosoft.com
+Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <GUID AADTenant>
 ```
 
 Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -44,7 +56,7 @@ To verify that the command ran successfully, go to Marketplace in the portal, an
 Run the below command to remove an uploaded VM image. After removal, tenants will no longer be able to deploy virtual machines with this image.
 
 ```powershell
-Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -tenantID <mydirectory>.onmicrosoft.com
+Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -tenantID <GUID AADTenant>
 ```
 
 Note: This cmdlet does not remove any Marketplace item created as part of uploading a VM Image. These Marketplace items will need to be removed separately.
