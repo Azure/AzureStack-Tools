@@ -5,7 +5,7 @@ To use these tools, obtain Azure Stack compatible Azure PowerShell module and CL
 For PowerShell, install the following:
 
 ```powershell
-Install-Module -Name AzureRM -RequiredVersion 1.2.6 -Scope CurrentUser
+Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
 Install-Module -Name AzureStack
 ```
 

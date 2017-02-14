@@ -1,7 +1,7 @@
 As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
 
 ```powershell
-Install-Module -Name AzureRM -RequiredVersion 1.2.6 -Scope CurrentUser
+Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
 Install-Module -Name AzureStack
 ```
 
