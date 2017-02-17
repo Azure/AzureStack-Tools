@@ -47,7 +47,11 @@ param (
     [parameter(HelpMessage="Flag to cleanup resources after exception")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [bool] $ContinueOnFailure = $false
+    [bool]$ContinueOnFailure = $false,
+    [parameter(HelpMessage="Location where log files are stored")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 )
 
 #Requires -Modules AzureRM
@@ -62,7 +66,6 @@ $kvSecretName       = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName    = "CanaryAdmin" 
 $VMAdminUserPass    = "CanaryAdmin@123"
 $canaryUtilPath     = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities"
-$CanaryLogPath      = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 if (Test-Path -Path $canaryUtilPath)
 {
     Remove-Item -Path $canaryUtilPath -Force -Recurse 
