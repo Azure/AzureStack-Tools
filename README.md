@@ -33,7 +33,7 @@ Constrains Azure subscription to the capabilities available in the Azure Stack.
 
 ## [Deployment of Azure Stack](Deployment)
 
-Helps perpare for Azure Stack deployment.
+Helps prepare for Azure Stack deployment.
 -	Prepare to Deploy (boot from VHD)
 -	Prepare to Redeploy (boot back to original/base OS)
 
@@ -71,6 +71,12 @@ Manage Azure Stack Infrastructure
 - Apply Update
 - Get Update run
 
+## [AzureRM Template Validator](TemplateValidator)
+
+Validate Azure ARM Template Capabilities
+- resources - Types, Location, Apiversion
+- Compute Capabilities - extensions, images, sizes
+- Storage Capabilities - skus
 
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._

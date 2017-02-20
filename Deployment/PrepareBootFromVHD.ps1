@@ -84,11 +84,21 @@ if ((Get-DiskImage -ImagePath $CloudBuilderDiskPath).Attached)
     Exit
     }
 
+if ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk') 
+    {
+    Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server."
+    Exit
+    }
+
 if (($ApplyUnattend) -and (!($AdminPassword)))
     {
-    while ($AdminPassword.Length -le 6) {
-        $AdminPassword = read-host 'Password for the local administrator account of the AzureStack TP2 host. Requires 6 characters minimum' 
+    while ($SecureAdminPassword.Length -le 6) {
+        [System.Security.SecureString]$SecureAdminPassword = read-host 'Password for the local administrator account of the AzureStack TP2 host. Requires 6 characters minimum' -AsSecureString
         }
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureAdminPassword)
+    $AdminPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    Write-Host "The following password will be configured for the local administrator account of the Azure Stack TP2 host:"
+    Write-Host $AdminPassword -ForegroundColor Cyan
     }
 
 #region Validate disk space for expanding cloudbuilder.vhdx
@@ -101,7 +111,7 @@ if (($cbDiskSizeReq - $cbDiskSize) -ge $cbhDiskRemaining)
     {
     Write-Host 'Error: Insufficient disk space' -BackgroundColor Red
     Write-Host 'Cloudbuilder.vhdx is placed on' ((Get-Item $CloudBuilderDiskPath).PSDrive.Root) -ForegroundColor Yellow
-    Write-Host 'When you boot from CloudBuilder.vhdx the virtual hard disk will be epxanded to its full size of' $cbDiskSizeReq 'GB.' -ForegroundColor Yellow
+    Write-Host 'When you boot from CloudBuilder.vhdx the virtual hard disk will be expanded to its full size of' $cbDiskSizeReq 'GB.' -ForegroundColor Yellow
     Write-Host ((Get-Item $CloudBuilderDiskPath).PSDrive.Root) 'does not contain enough free space.' -ForegroundColor Yellow
     Write-Host 'You need' ($cbDiskSizeReq - $cbDiskSize) 'GB of free disk space for a succesfull boot from CloudBuilder.vhdx, but' ((Get-Item $CloudBuilderDiskPath).PSDrive.Root) 'only has' $cbhDiskRemaining 'GB remaining.' -ForegroundColor Yellow
     Write-Host 'Ensure Cloudbuilder.vhdx is placed on a local disk that contains enough free space and rerun this script.' -ForegroundColor Yellow
