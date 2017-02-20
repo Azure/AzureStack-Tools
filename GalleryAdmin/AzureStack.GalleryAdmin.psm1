@@ -102,7 +102,7 @@ Function Get-AzureRMGalleryItemContent {
         Write-Verbose "Create Storage Context"
         $ctx = $storageAccount.Context
 
-        $cont = Get-AzureStorageContainer -Context $ctx | Sort-Object -Property LastModified -Descending | Select -First 1
+        $cont = Get-AzureStorageContainer -Context $ctx | Sort-Object -Property LastModified -Descending | Select-Object -First 1
         Write-Verbose "Retrieved Container Name $($cont.Name)"
 
         Write-Verbose "Retrieving Blobs"

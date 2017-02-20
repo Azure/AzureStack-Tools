@@ -24,7 +24,6 @@ InModuleScope $script:ModuleName {
         GalleryItemName = 'TestName'
         azureStackDomain = 'azurestack.local'
         location = 'local'
-        osDiskLocalPath = '.\Test.vhd'
         tenantID = 'TestTenantId.onmicrosoft.com'
         azureStackCredentials = [pscredential]::new('testuser',(ConvertTo-SecureString -String 'testpass' -AsPlainText -Force))
     }
