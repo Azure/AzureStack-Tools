@@ -17,7 +17,7 @@ Describe $script:ModuleName {
         }
 
         It 'Remove-VMImage should be exported' {
-            Get-Command -Name Add-VMImage -ErrorAction SilentlyContinue | 
+            Get-Command -Name Remove-VMImage -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     }

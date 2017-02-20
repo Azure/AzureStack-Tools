@@ -5,6 +5,7 @@
     .SYNOPSIS
     Get-AzureRMGalleryItemContent
     Retireves an existing Gallery Item and outputs it to a directory
+    Does not take pipeline input, yet.
 
     Update-AzureRMGalleryItem (coming soon)
     Updates an existing Azure Gallery Item
@@ -28,7 +29,10 @@ Function Get-AzureRMGalleryItemContent {
         [ValidateNotNullorEmpty()]
         [String] $tenantID,
 
-        [String] $location = 'local'
+        [String] $location = 'local',
+
+        #Whether or not to overwrite the contents of the destination directory
+        [Switch] $Force
 
     )
 
@@ -41,6 +45,19 @@ Function Get-AzureRMGalleryItemContent {
     if(-not (Get-Item $TargetDirectory).PSIsContainer){
         Throw "$TargetDirectory is not a directory"
         Exit
+    }
+
+    #check if target directory is not empty
+    if(Test-Path (Join-Path -Path $TargetDirectory -ChildPath $GalleryItemName)){
+        Write-Verbose "Path $TargetDirectory\$GalleryItemName exists"
+        if((Get-ChildItem (Join-Path -Path $TargetDirectory -ChildPath $GalleryItemName)).count -gt 0){
+            If($Force){
+                Write-Verbose "Path $TargetDirectory\$GalleryItemName is not empty, and will be overwritten"
+            }
+            Else{
+                Throw "Path $TargetDirectory\$GalleryItemName is not empty, run command with -Force to overwrite"
+            }
+        }
     }
 
     #Connect to Azure Stack Environment and Subscription
