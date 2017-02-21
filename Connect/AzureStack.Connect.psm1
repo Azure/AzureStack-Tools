@@ -41,7 +41,7 @@ function Get-AzureStackAadTenant
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
 	    [string] $HostComputer,        
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.azurestack.local',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
@@ -87,7 +87,7 @@ function Add-AzureStackAzureRmEnvironment
         [parameter(mandatory=$true, HelpMessage="AAD Tenant name or ID used when deploying Azure Stack such as 'mydirectory.onmicrosoft.com'")]
 	    [string] $AadTenant,
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.azurestack.local',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
         [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
         [string] $Name = "AzureStack"
     )
@@ -153,7 +153,9 @@ function Get-AzureStackNatServerAddress
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
 	    [string] $HostComputer,
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.azurestack.local',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
+        [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
         [string] $natServer = "mas-bgpnat01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
@@ -169,6 +171,10 @@ function Get-AzureStackNatServerAddress
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
+    }
+
+    if($DomainSuffix){
+        $Domain = $DomainSuffix
     }
 
     $UserCred = "$Domain\$User"
@@ -242,7 +248,9 @@ function Connect-AzureStackVpn
 	    [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
 	    [string] $ConnectionName = "azurestack",
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.azurestack.local',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
+        [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="Certificate Authority computer name in this Azure Stack Instance")]
         [string] $Remote = "mas-ca01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
@@ -258,6 +266,11 @@ function Connect-AzureStackVpn
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
+    }
+
+    
+    if($DomainSuffix){
+        $Domain = $DomainSuffix
     }
     
     Write-Verbose "Connecting to Azure Stack VPN using connection named $ConnectionName..." -Verbose
@@ -324,7 +337,7 @@ function Get-AzureStackAdminSubTokenHeader
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.azurestack.local'
+        [string] $ArmEndpoint = 'https://api.local.azurestack.global'
     )
 
     if(-not $azureStackCredentials){
@@ -370,3 +383,16 @@ function Get-AzureStackAdminSubTokenHeader
 }
 
 Export-ModuleMember Get-AzureStackAdminSubTokenHeader
+
+function Get-AADTenantGUID ()
+{
+    param(
+        [parameter(HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
+	    [string] $ADDomainName = "AzureStack"
+    )
+    $OauthMetadata = (wget “https://login.microsoftonline.com/$ADDomain/v2.0/.well-known/openid-configuration”).Content | ConvertFrom-Json
+    $AADid = $OauthMetadata.Issuer.Split('/')[3]
+    $AADid
+}
+
+Export-ModuleMember Get-AADTenantGUID
