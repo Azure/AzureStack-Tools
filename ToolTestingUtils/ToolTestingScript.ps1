@@ -32,6 +32,8 @@ $global:VPNConnectionName = "AzureStackTestVPN"
 #Start running tests in correct order
 Set-Location ..\Connect
 Invoke-Pester 
+Set-Location ..\ServiceAdmin
+Invoke-Pester
 Set-Location ..\Infrastructure
 Invoke-Pester
 Set-Location ..\ComputeAdmin
