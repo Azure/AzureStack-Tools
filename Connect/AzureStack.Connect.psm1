@@ -390,7 +390,7 @@ function Get-AADTenantGUID ()
         [parameter(HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
 	    [string] $ADDomainName = "AzureStack"
     )
-    $OauthMetadata = (wget “https://login.microsoftonline.com/$ADDomain/v2.0/.well-known/openid-configuration”).Content | ConvertFrom-Json
+    $OauthMetadata = (wget "https://login.microsoftonline.com/$ADDomain/v2.0/.well-known/openid-configuration").Content | ConvertFrom-Json
     $AADid = $OauthMetadata.Issuer.Split('/')[3]
     $AADid
 }
