@@ -2,10 +2,12 @@
 # See LICENSE.txt in the project root for license information.
 <#
     .SYNOPSIS
-    Contains two functions.
+    Contains 3 functions.
     Add-VMImage: Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
     Remove-VMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any 
     maketplace items created by Add-VMImage.
+    New-Server2016VMImage: Creates and Uploads a new Server 2016 Core and / or Full Image and
+    creates a Marketplace item for it.
 #>
 
 Function Add-VMImage{
@@ -411,4 +413,111 @@ Function Remove-VMImage{
         Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
     }
 
+}
+
+function New-Server2016VMImage {
+    [cmdletbinding()]
+    param (
+        [Parameter()]
+        [validateset('Full','Core','Both')]
+        [String] $Version = 'Full',
+
+        [switch] $IncludeLatestCU,
+
+        [Parameter(ParameterSetName = 'PreDownloadedISO')]
+        [ValidateScript({Test-Path -Path $_})]
+        [string] $ISOPath,
+
+        [Parameter(Mandatory)]
+        [pscredential] 
+        [System.Management.Automation.Credential()] $AzureStackCredentials,
+
+        [ValidateNotNullorEmpty()]
+        [String] $TenantId
+    )
+    process {
+        if (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+            Write-Error -Message "New-Server2016VMImage must run with Administrator privileges" -ErrorAction Stop
+        }
+        $ModulePath = Split-Path -Path $MyInvocation.MyCommand.Module.Path
+        $CoreEdition = 'Windows Server 2016 SERVERDATACENTERCORE'
+        $FullEdition = 'Windows Server 2016 SERVERDATACENTER'
+
+        if ($PSCmdlet.ParameterSetName -ne 'PreDownloadedISO') {
+            #download ISO to temp file
+            $CurrentProgressPref = $ProgressPreference
+            $ProgressPreference = 'SilentlyContinue'
+            Write-Verbose -Message "Starting download of Server 2016 Eval ISO. This will take some time." -Verbose
+            $IsoIWRArg = @{
+                Uri = 'http://care.dlservice.microsoft.com/dl/download/1/6/F/16FA20E6-4662-482A-920B-1A45CF5AAE3C/14393.0.160715-1616.RS1_RELEASE_SERVER_EVAL_X64FRE_EN-US.ISO'
+                OutFile = "$ModulePath\14393.0.16715-1616.RS1_RELEASE_SERVER_EVAL_X64FRE_EN-US.ISO"
+                UseBasicParsing = $true
+            }
+            Invoke-WebRequest @IsoIWRArg
+            $ProgressPreference = $CurrentProgressPref
+            Unblock-File -Path $IsoIWRArg.OutFile
+            $ISOPath = $IsoIWRArg.OutFile
+        }
+
+        if ($IncludeLatestCU) {
+            $CurrentProgressPref = $ProgressPreference
+            $ProgressPreference = 'SilentlyContinue'
+            Write-Verbose -Message "Starting download of latest CU. This will take some time." -Verbose
+            $CUIWRArg = @{
+                #for latest CU, check https://support.microsoft.com/en-us/help/4000825/windows-10-and-windows-server-2016-update-history
+                Uri = 'http://download.windowsupdate.com/d/msdownload/update/software/updt/2017/01/windows10.0-kb4010672-x64_e12a6da8744518197757d978764b6275f9508692.msu'
+                OutFile = "$ModulePath\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu"
+                UseBasicParsing = $true
+            }
+            Invoke-WebRequest @CUIWRArg
+            $ProgressPreference = $CurrentProgressPref
+            Unblock-File -Path $CUIWRArg.OutFile
+         
+            #expand cab from msu
+            $expandcab = expand -f:*KB*.cab (Resolve-Path $CUIWRArg.OutFile) (Split-Path (Resolve-Path $CUIWRArg.OutFile))
+        }
+
+        $mount = Mount-DiskImage -ImagePath $ISOPath -PassThru
+        $DriveLetter = ($mount | Get-Volume).DriveLetter
+        . $DriveLetter`:\NanoServer\NanoServerImageGenerator\Convert-WindowsImage.ps1
+        $mount | Dismount-DiskImage
+    
+        $ConvertParams = @{
+            SourcePath          = $ISOPath
+            VHDFormat           = 'vhd'
+            DiskLayout          = 'BIOS'
+            SizeBytes           = 60GB
+            RemoteDesktopEnable = $true
+        }
+
+        if ($IncludeLatestCU) {
+            [void] $ConvertParams.Add('Package', $expandcab[3].Split()[1])
+        }
+
+        $PublishArguments = @{
+            publisher = 'MicrosoftWindowsServer'
+            offer = 'WindowsServer'
+            version = '1.0.0'
+            osType = 'Windows'
+            tenantID = $tenantID
+            azureStackCredentials = $AzureStackCredentials
+        }
+        
+        if ($Version -eq 'Core' -or $Version -eq 'Both') {
+            $2016CoreParams = $ConvertParams.Clone()
+            [void] $2016CoreParams.Add('VHDPath',"$ModulePath\Server2016DatacenterCoreEval.vhd")
+            [void] $2016CoreParams.Add('Edition',$CoreEdition)
+            Write-Verbose -Message "Creating Server Core Image"
+            Convert-WindowsImage @2016CoreParams
+            Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $2016CoreParams.VHDPath @PublishArguments
+        }
+        if ($Version -eq 'Full' -or $Version -eq 'Both') {
+            $2016FullParams = $ConvertParams.Clone()
+            [void] $2016FullParams.Add('VHDPath',"$ModulePath\Server2016DatacenterFullEval.vhd")
+            [void] $2016FullParams.Add('Edition',$FullEdition)
+            Write-Verbose -Message "Creating Server Full Image" -Verbose
+            Convert-WindowsImage @2016FullParams
+            Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $2016FullParams.VHDPath @PublishArguments
+        }
+    }
 }
