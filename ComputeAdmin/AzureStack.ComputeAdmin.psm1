@@ -88,7 +88,7 @@ Function Add-VMImage{
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+        $Domain = $ArmEndpoint.Split(".")[-3] + '.' + $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1] 
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
