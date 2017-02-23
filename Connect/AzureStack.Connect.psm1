@@ -42,6 +42,8 @@ function Get-AzureStackAadTenant
 	    [string] $HostComputer,        
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
+        [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
@@ -55,6 +57,10 @@ function Get-AzureStackAadTenant
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
+    }
+
+    if($DomainSuffix){
+        $Domain = $DomainSuffix
     }
 
     $UserCred = "$Domain\$User"
@@ -95,7 +101,7 @@ function Add-AzureStackAzureRmEnvironment
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+        $Domain = $ArmEndpoint.Split(".")[-3] + '.' + $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1] 
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
