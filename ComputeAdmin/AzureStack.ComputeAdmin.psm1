@@ -416,15 +416,22 @@ Function Remove-VMImage{
 }
 
 function New-Server2016VMImage {
-    [cmdletbinding()]
+    [cmdletbinding(DefaultParameterSetName = 'NoCU')]
     param (
         [Parameter()]
         [validateset('Full','Core','Both')]
         [String] $Version = 'Full',
 
+        [Parameter(ParameterSetName = 'LatestCU')]
         [switch] $IncludeLatestCU,
 
-        [Parameter(ParameterSetName = 'PreDownloadedISO')]
+        [Parameter(ParameterSetName = 'ManualCUUri')]
+        [string] $CUUri,
+
+        [Parameter(ParameterSetName = 'ManualCUPath')]
+        [string] $CUPath,
+
+        [Parameter(Mandatory)]
         [ValidateScript({Test-Path -Path $_})]
         [string] $ISOPath,
 
@@ -435,6 +442,79 @@ function New-Server2016VMImage {
         [ValidateNotNullorEmpty()]
         [String] $TenantId
     )
+    begin {
+        function CreateWindowsVHD {
+            [cmdletbinding()]
+            param (
+                [string] $VHDPath,
+                [uint32] $VHDSizeInMB,
+                [string] $IsoPath,
+                [string] $Edition,
+                [string] $CabPath
+            )
+            $tmpfile = New-TemporaryFile
+            "create vdisk FILE=`"$VHDPath`" TYPE=EXPANDABLE MAXIMUM=$VHDSizeInMB" | 
+                Out-File -FilePath $tmpfile.FullName -Encoding ascii
+
+            Write-Verbose -Message "Creating VHD at: $VHDPath of size: $VHDSizeInMB MB"
+            diskpart.exe /s $tmpfile.FullName | Out-Null
+
+            $tmpfile | Remove-Item -Force
+
+            try {
+                if (!(Test-Path -Path $VHDPath)) {
+                    Write-Error -Message "VHD was not created" -ErrorAction Stop
+                }
+                Write-Verbose -Message "Preparing VHD"
+                $VHDMount = Mount-DiskImage -ImagePath $VHDPath -PassThru -ErrorAction Stop
+                $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
+                $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
+                $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
+                $volume = Format-Volume -Partition $partition -FileSystem NTFS -ErrorAction Stop
+                $VHDDriveLetter = $volume.DriveLetter
+                Write-Verbose -Message "VHD is mounted at drive letter: $VHDDriveLetter"
+
+                Write-Verbose -Message "Mounting ISO"
+                $IsoMount = Mount-DiskImage -ImagePath $ISOPath -PassThru
+                $IsoDriveLetter = ($IsoMount | Get-Volume).DriveLetter
+                Write-Verbose -Message "ISO is mounted at drive letter: $IsoDriveLetter"
+
+                Write-Verbose -Message "Applying Image $Edition to VHD"
+                $ExpandArgs = @{
+                    ApplyPath = "$VHDDriveLetter`:\" 
+                    ImagePath = "$IsoDriveLetter`:\Sources\install.wim"
+                    Name = $Edition
+                    ErrorAction = 'Stop'
+                }
+                $null = Expand-WindowsImage @ExpandArgs
+
+                if ($CabPath) {
+                    Write-Verbose -Message "Applying update: $(Split-Path -Path $CabPath -Leaf)"
+                    $null = Add-WindowsPackage -PackagePath $CabPath -Path "$VHDDriveLetter`:\"  -ErrorAction Stop
+                }
+
+                Write-Verbose -Message "Making VHD bootable"
+                $null = Invoke-Expression -Command "$VHDDriveLetter`:\Windows\System32\bcdboot.exe $VHDDriveLetter`:\windows /s $VHDDriveLetter`: /f BIOS" -ErrorAction Stop
+            } catch {
+                Write-Error -ErrorRecord $_ -ErrorAction Stop
+            } finally {
+                if ($VHDMount) {
+                    $VHDMount | Dismount-DiskImage
+                }
+                if ($IsoMount) {
+                    $IsoMount | Dismount-DiskImage
+                }
+            }
+        }
+
+        function ExpandMSU {
+            param (
+                $Path
+            )
+            $expandcab = expand -f:*KB*.cab (Resolve-Path $Path) (Split-Path (Resolve-Path $Path))
+            $expandcab[3].Split()[1]
+        }
+    }
     process {
         if (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
             Write-Error -Message "New-Server2016VMImage must run with Administrator privileges" -ErrorAction Stop
@@ -443,55 +523,49 @@ function New-Server2016VMImage {
         $CoreEdition = 'Windows Server 2016 SERVERDATACENTERCORE'
         $FullEdition = 'Windows Server 2016 SERVERDATACENTER'
 
-        if ($PSCmdlet.ParameterSetName -ne 'PreDownloadedISO') {
-            #download ISO to temp file
-            $CurrentProgressPref = $ProgressPreference
-            $ProgressPreference = 'SilentlyContinue'
-            Write-Verbose -Message "Starting download of Server 2016 Eval ISO. This will take some time." -Verbose
-            $IsoIWRArg = @{
-                Uri = 'http://care.dlservice.microsoft.com/dl/download/1/6/F/16FA20E6-4662-482A-920B-1A45CF5AAE3C/14393.0.160715-1616.RS1_RELEASE_SERVER_EVAL_X64FRE_EN-US.ISO'
-                OutFile = "$ModulePath\14393.0.16715-1616.RS1_RELEASE_SERVER_EVAL_X64FRE_EN-US.ISO"
-                UseBasicParsing = $true
-            }
-            Invoke-WebRequest @IsoIWRArg
-            $ProgressPreference = $CurrentProgressPref
-            Unblock-File -Path $IsoIWRArg.OutFile
-            $ISOPath = $IsoIWRArg.OutFile
+        if ($pscmdlet.ParameterSetName -ne 'NoCU') {
+            if ($pscmdlet.ParameterSetName -eq 'ManualCUPath') {
+                $CUFile = Split-Path -Path $CUPath -Leaf
+                $FileExt = $CUFile.Split('.')[-1]
+                if ($FileExt -eq 'msu') {
+                    $CabPath = ExpandMSU -Path $CUPath
+                } elseif ($FileExt -eq 'cab') {
+                    $CabPath = $CUPath
+                } else {
+                    Write-Error -Message "CU File: $CUFile has the wrong file extension. Should be 'cab' or 'msu' but is $FileExt" -ErrorAction Stop
+                }
+            } else {
+                if ($IncludeLatestCU) {
+                    #for latest CU, check https://support.microsoft.com/en-us/help/4000825/windows-10-and-windows-server-2016-update-history
+                    $Uri = 'http://download.windowsupdate.com/d/msdownload/update/software/updt/2017/01/windows10.0-kb4010672-x64_e12a6da8744518197757d978764b6275f9508692.msu'
+                    $OutFile = "$ModulePath\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu"
+                } else {
+                    #test if manual Uri is giving 200
+                    $TestCUUri = Invoke-WebRequest -Uri $CUUri -UseBasicParsing -Method Head
+                    if ($TestCUUri.StatusCode -ne 200) {
+                        Write-Error -Message "The CU Uri specified is not valid. StatusCode: $($TestCUUri.StatusCode)" -ErrorAction Stop
+                    } else {
+                        $Uri = $CUUri
+                        $OutFile = "$ModulePath\" + $CUUri.Split('/')[-1]
+                    }
+                }
+                $CurrentProgressPref = $ProgressPreference
+                $ProgressPreference = 'SilentlyContinue'
+                Write-Verbose -Message "Starting download of CU. This will take some time." -Verbose
+                Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
+                $ProgressPreference = $CurrentProgressPref
+                Unblock-File -Path $OutFile
+                $CabPath = ExpandMSU -Path $OutFile
+            }
         }
 
-        if ($IncludeLatestCU) {
-            $CurrentProgressPref = $ProgressPreference
-            $ProgressPreference = 'SilentlyContinue'
-            Write-Verbose -Message "Starting download of latest CU. This will take some time." -Verbose
-            $CUIWRArg = @{
-                #for latest CU, check https://support.microsoft.com/en-us/help/4000825/windows-10-and-windows-server-2016-update-history
-                Uri = 'http://download.windowsupdate.com/d/msdownload/update/software/updt/2017/01/windows10.0-kb4010672-x64_e12a6da8744518197757d978764b6275f9508692.msu'
-                OutFile = "$ModulePath\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu"
-                UseBasicParsing = $true
-            }
-            Invoke-WebRequest @CUIWRArg
-            $ProgressPreference = $CurrentProgressPref
-            Unblock-File -Path $CUIWRArg.OutFile
-         
-            #expand cab from msu
-            $expandcab = expand -f:*KB*.cab (Resolve-Path $CUIWRArg.OutFile) (Split-Path (Resolve-Path $CUIWRArg.OutFile))
-        }
-
-        $mount = Mount-DiskImage -ImagePath $ISOPath -PassThru
-        $DriveLetter = ($mount | Get-Volume).DriveLetter
-        . $DriveLetter`:\NanoServer\NanoServerImageGenerator\Convert-WindowsImage.ps1
-        $mount | Dismount-DiskImage
-    
         $ConvertParams = @{
-            SourcePath          = $ISOPath
-            VHDFormat           = 'vhd'
-            DiskLayout          = 'BIOS'
-            SizeBytes           = 60GB
-            RemoteDesktopEnable = $true
+            VHDSizeInMB = 61440
+            IsoPath = $ISOPath
         }
 
-        if ($IncludeLatestCU) {
-            [void] $ConvertParams.Add('Package', $expandcab[3].Split()[1])
+        if ($null -ne $CabPath) {
+            [void] $ConvertParams.Add('CabPath', $CabPath)
         }
 
         $PublishArguments = @{
@@ -504,20 +578,24 @@ function New-Server2016VMImage {
         }
         
         if ($Version -eq 'Core' -or $Version -eq 'Both') {
-            $2016CoreParams = $ConvertParams.Clone()
-            [void] $2016CoreParams.Add('VHDPath',"$ModulePath\Server2016DatacenterCoreEval.vhd")
-            [void] $2016CoreParams.Add('Edition',$CoreEdition)
-            Write-Verbose -Message "Creating Server Core Image"
-            Convert-WindowsImage @2016CoreParams
-            Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $2016CoreParams.VHDPath @PublishArguments
+            $ImagePath = "$ModulePath\Server2016DatacenterCoreEval.vhd" 
+            try {
+                Write-Verbose -Message "Creating Server Core Image"
+                CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
+                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $2016CoreParams.VHDPath @PublishArguments
+            } catch {
+                Write-Error -ErrorRecord $_ -ErrorAction Stop
+            }
         }
         if ($Version -eq 'Full' -or $Version -eq 'Both') {
-            $2016FullParams = $ConvertParams.Clone()
-            [void] $2016FullParams.Add('VHDPath',"$ModulePath\Server2016DatacenterFullEval.vhd")
-            [void] $2016FullParams.Add('Edition',$FullEdition)
+            $ImagePath = "$ModulePath\Server2016DatacenterFullEval.vhd"
             Write-Verbose -Message "Creating Server Full Image" -Verbose
-            Convert-WindowsImage @2016FullParams
-            Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $2016FullParams.VHDPath @PublishArguments
+            try {
+                CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
+                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $2016FullParams.VHDPath @PublishArguments
+            } catch {
+                Write-Error -ErrorRecord $_ -ErrorAction Stop
+            }
         }
     }
 }
