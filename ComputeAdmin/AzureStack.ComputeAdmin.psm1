@@ -70,7 +70,7 @@ Function Add-VMImage{
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
@@ -388,7 +388,7 @@ Function Remove-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global'
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
 
     )
 

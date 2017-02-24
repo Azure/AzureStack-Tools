@@ -75,13 +75,19 @@ $Password = ConvertTo-SecureString "<Admin password provided when deploying Azur
 $AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
 ```
 
-To target your Azure Stack instance, an AzureRM environment needs to be registered as follows.
+The AadTenant parameter specifies the directory that was used when deploying Azure Stack. 
+
+To target your Azure Stack instance, an AzureRM environment needs to be registered as follows. This will give you access to the administrative portal. 
 
 ```powershell
 Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant
 ```
 
-The AadTenant parameter above specifies the directory that was used when deploying Azure Stack. 
+To get access to the tenant portal, run the following instead:
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name AzureStackTenant -ArmEndpoint "https://publicapi.local.azurestack.external" -AadTenant $aadTenant
+```
 
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
 
@@ -89,9 +95,11 @@ After registering the AzureRM environment, cmdlets can be easily targeted at you
 Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $AadTenant
 ```
 
-You will be prompted for the account login including two factor authentication if it is enabled in your organization. You can also log in with a service principal using appropriate parameters of the Login-AzureRmAccount cmdlet.
+Similarly, for the tenant portal:
 
-If the account you are logging in with comes from the same Azure Active Directory tenant as the one used when deploying Azure Stack, then you can omit the TenantId parameter above.
+```powershell
+Login-AzureRmAccount -EnvironmentName "AzureStackTenant" -TenantId $AadTenant
+```
 
 ## Register Azure RM Providers on new subscriptions
 
