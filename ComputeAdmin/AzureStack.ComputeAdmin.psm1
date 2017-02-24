@@ -440,7 +440,9 @@ function New-Server2016VMImage {
         [System.Management.Automation.Credential()] $AzureStackCredentials,
 
         [ValidateNotNullorEmpty()]
-        [String] $TenantId
+        [String] $TenantId,
+
+        [switch] $Net35
     )
     begin {
         function CreateWindowsVHD {
@@ -450,7 +452,8 @@ function New-Server2016VMImage {
                 [uint32] $VHDSizeInMB,
                 [string] $IsoPath,
                 [string] $Edition,
-                [string] $CabPath
+                [string] $CabPath,
+                [switch] $Net35
             )
             $tmpfile = New-TemporaryFile
             "create vdisk FILE=`"$VHDPath`" TYPE=EXPANDABLE MAXIMUM=$VHDSizeInMB" | 
@@ -491,6 +494,11 @@ function New-Server2016VMImage {
                 if ($CabPath) {
                     Write-Verbose -Message "Applying update: $(Split-Path -Path $CabPath -Leaf)"
                     $null = Add-WindowsPackage -PackagePath $CabPath -Path "$VHDDriveLetter`:\"  -ErrorAction Stop
+                }
+                
+                if ($Net35) {
+                    Write-Verbose -Message "Adding .NET 3.5"
+                    $null = Add-WindowsPackage -PackagePath "$IsoDriveLetter`:\sources\sxs\microsoft-windows-netfx3-ondemand-package.cab" -Path "$VHDDriveLetter`:\" 
                 }
 
                 Write-Verbose -Message "Making VHD bootable"
@@ -568,6 +576,10 @@ function New-Server2016VMImage {
             [void] $ConvertParams.Add('CabPath', $CabPath)
         }
 
+        if ($Net35) {
+            [void] $ConvertParams.Add('Net35', $true)
+        }
+
         $PublishArguments = @{
             publisher = 'MicrosoftWindowsServer'
             offer = 'WindowsServer'
@@ -582,7 +594,7 @@ function New-Server2016VMImage {
             try {
                 Write-Verbose -Message "Creating Server Core Image"
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
-                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $2016CoreParams.VHDPath @PublishArguments
+                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
@@ -592,7 +604,7 @@ function New-Server2016VMImage {
             Write-Verbose -Message "Creating Server Full Image" -Verbose
             try {
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
-                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $2016FullParams.VHDPath @PublishArguments
+                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
