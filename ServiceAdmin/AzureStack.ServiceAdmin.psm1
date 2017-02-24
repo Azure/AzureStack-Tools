@@ -18,7 +18,7 @@ function New-AzSTenantOfferAndQuotas
         [Parameter(HelpMessage="If this parameter is not specified all quotas are assigned. Provide a sub selection of quotas in this parameter if you do not want all quotas assigned.")]
         [ValidateSet('Compute','Network','Storage','KeyVault','Subscriptions',IgnoreCase =$true)]
         [array]$ServiceQuotas,
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential")]
         [pscredential] $azureStackCredential,
         [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]

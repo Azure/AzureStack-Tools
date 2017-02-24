@@ -2,7 +2,7 @@ param (
     [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
     [string] $HostComputer,
     [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-    [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+    [string] $ArmEndpoint = 'https://api.local.azurestack.external',
     [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
     [string] $natServer = "MAS-BGPNAT01",
     [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]

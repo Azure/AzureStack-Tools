@@ -41,7 +41,7 @@ function Get-AzureStackAadTenant
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
 	    [string] $HostComputer,        
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
@@ -93,7 +93,7 @@ function Add-AzureStackAzureRmEnvironment
         [parameter(mandatory=$true, HelpMessage="AAD Tenant name or ID used when deploying Azure Stack such as 'mydirectory.onmicrosoft.com'")]
 	    [string] $AadTenant,
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
         [string] $Name = "AzureStack"
     )
@@ -159,7 +159,7 @@ function Get-AzureStackNatServerAddress
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
 	    [string] $HostComputer,
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
@@ -254,7 +254,7 @@ function Connect-AzureStackVpn
 	    [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
 	    [string] $ConnectionName = "azurestack",
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="Certificate Authority computer name in this Azure Stack Instance")]
@@ -343,7 +343,7 @@ function Get-AzureStackAdminSubTokenHeader
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.global'
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
     )
 
     if(-not $azureStackCredentials){
