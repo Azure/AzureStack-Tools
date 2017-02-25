@@ -19,25 +19,29 @@ This will ensure that SSL sites of the target Azure Stack installation are trust
 Use the admin password provided at the time of the Azure Stack deployment.
 
 ```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
+$Password = ConvertTo-SecureString -AsPlainText -Force "<Admin password provided when deploying Azure Stack>" 
 ```
 
 To connect to Azure Stack One Node via VPN, first locate the NAT address of the target installation. 
 If you specified static IP of the NAT when deploying Azure Stack One Node, then use it in the connection example below. 
 If you did not specify static IP then NAT was configured with DHCP. In that case, obtain NAT IP as follows using IP address of the Azure Stack One Node host (which should be known to you after deployment).  
 
+```powershell
+$hostIp = "<Azure Stack host address>"
+```
+
 Since the command below needs to access the Azure Stack One Node host computer and Azure Stack CA, they need to be trusted hosts in PowerShell. Run PowerShell as administrator and modify TrustedHosts as follows.
 
 ```powershell
 # Add Azure Stack One Node host to the trusted hosts on your client computer
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
+Set-Item wsman:\localhost\Client\TrustedHosts -Value $hostIp -Concatenate
 Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
 ```
 
 Then obtain NAT IP.
 
 ```powershell
-$natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>" -Password $Password
+$natIp = Get-AzureStackNatServerAddress -HostComputer $hostIp -Password $Password
 ```
 
 Then connect your client computer as follows.
