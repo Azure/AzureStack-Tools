@@ -430,6 +430,9 @@ function New-Server2016VMImage {
 
         [Parameter(ParameterSetName = 'ManualCUPath')]
         [string] $CUPath,
+        
+        [Parameter()]
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
 
         [Parameter(Mandatory)]
         [ValidateScript({Test-Path -Path $_})]
@@ -524,6 +527,12 @@ function New-Server2016VMImage {
         }
     }
     process {
+        Write-Verbose -Message "Checking authorization against your Azure Stack environment" -Verbose
+    
+        $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+
+        Write-Verbose -Message "Authorization verified" -Verbose
+        
         if (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
             Write-Error -Message "New-Server2016VMImage must run with Administrator privileges" -ErrorAction Stop
         }
@@ -587,6 +596,7 @@ function New-Server2016VMImage {
             osType = 'Windows'
             tenantID = $tenantID
             azureStackCredentials = $AzureStackCredentials
+            ArmEndpoint = $ArmEndpoint
         }
         
         if ($Version -eq 'Core' -or $Version -eq 'Both') {
