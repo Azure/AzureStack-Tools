@@ -26,19 +26,12 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 # Reading the results & logs
 Canary generates log files in the TMP directory ($env:TMP). The logs can be found under the directory "CanaryLogs<DATETIME>". There are two types of logs generated, a text log and a JSON log. JSON log provides a quick and easy view of all the usecases and their corresponding results. Text log provides a more detailed output of each usecase execution, its output and results.
 
-Sample JSON log entry:
-	   {
-                         "Description":  "Create Azure Stack environment AzureStackCanaryCloud-SVCAdmin",
-                         "Name":  "CreateAdminAzureStackEnv",
-                         "StartTime":  "16:35:02.1179",
-                         "EndTime":  "16:35:02.1961",
-                         "Result":  "PASS"
-                     },
-                     {
-                         "Description":  "Create Azure Stack environment AzureStackCanaryCloud-Tenant",
-                         "Name":  "CreateTenantAzureStackEnv",
-                         "StartTime":  "16:35:02.2429",
-                         "EndTime":  "16:35:02.3054",
-                         "Result":  "PASS"
-                     }
-A failed usecase logs an additional field called "Exception" in the JSON log, which can be used to identify the cause of the failure.
+Each usecase entry in the JSON log consists of the following fields.
+- Name
+- Description
+- StartTime
+- EndTime
+- Result
+- Exception (in case a scenario fails)
+
+The exception field is helpful to debug failed usecases.  
