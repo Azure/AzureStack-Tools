@@ -24,7 +24,7 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 ```
 
 # Reading the results & logs
-Canary generates log files in the TMP directory ($env:TMP). The logs can be found under the directory "CanaryLogs<DATETIME>". There are two types of logs generated, a text log and a JSON log. JSON log provides a quick and easy view of all the usecases and their corresponding results. Text log provides a more detailed output of each usecase execution, its output and results.
+Canary generates log files in the TMP directory ($env:TMP). The logs can be found under the directory "CanaryLogs[DATETIME]". There are two types of logs generated, a text log and a JSON log. JSON log provides a quick and easy view of all the usecases and their corresponding results. Text log provides a more detailed output of each usecase execution, its output and results.
 
 Each usecase entry in the JSON log consists of the following fields.
 - Name
