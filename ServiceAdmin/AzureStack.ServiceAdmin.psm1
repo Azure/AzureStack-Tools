@@ -37,7 +37,7 @@ function New-AzureStackTenantOfferAndQuotas
     $azEnv = Get-AzureRmEnvironment -Name $envName
     $ActiveDirectoryEndpoint = $azEnv.ActiveDirectoryAuthority + $azEnv.AdTenant + "/"
     $ActiveDirectoryServiceEndpointResourceId = $azEnv.ActiveDirectoryServiceEndpointResourceId
-    $AADTenantID = $azEnv.AdTenant
+    $AADTenantID =  $defaultSubscription.TenantId
     $armEndpoint = $azEnv.ResourceManagerUrl
 
     Write-Verbose "Obtaining token from AAD..." -Verbose
