@@ -50,6 +50,9 @@ Then connect your client computer as follows.
 # Create VPN connection entry for the current user
 Add-AzureStackVpnConnection -ServerAddress $natIp -Password $Password
 
+# Add Azure Stack MAS-CA01 to the trusted hosts on your client computer
+Set-Item wsman:\localhost\Client\TrustedHosts -Value "MAS-CA01.azurestack.local" -Concatenate 
+
 # Connect to the Azure Stack instance. This command can be used multiple times.
 Connect-AzureStackVpn -Password $Password
 ```
