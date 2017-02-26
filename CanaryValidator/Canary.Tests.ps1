@@ -10,8 +10,8 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$AADTenantID,
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)] 
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)] 
     [ValidateNotNullOrEmpty()]
     [string]$TenantAdminObjectId = "",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
@@ -19,6 +19,16 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$EnvironmentDomainFQDN,    
+    [parameter(HelpMessage="Administrative ARM endpoint")]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$AdminArmEndpoint,    
+    [parameter(HelpMessage="Tenant ARM endpoint")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Name of the Azure Stack environment to be deployed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -93,7 +103,7 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'CreateAdminAzureStackEnv' -Description "Create Azure Stack environment $SvcAdminEnvironmentName" -UsecaseBlock `
     {
-        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -EnvironmentProfile "ServiceAdmin"
+        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $AdminArmEndpoint 
         Add-AzureRmEnvironment  -Name ($SvcAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
@@ -103,14 +113,13 @@ while ($runCount -le $NumberOfIterations)
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
                                 -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
                                 -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
-                                -AzureKeyVaultServiceEndpointResourceId ($asEndpoints.AzureKeyVaultServiceEndpointResourceId) `
                                 -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                 -ErrorAction Stop
     }
 
     Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
     {
-        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -EnvironmentProfile "Tenant"
+        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $TenantArmEndpoint
         Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
@@ -120,7 +129,6 @@ while ($runCount -le $NumberOfIterations)
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
                                 -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
                                 -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
-                                -AzureKeyVaultServiceEndpointResourceId ($asEndpoints.AzureKeyVaultServiceEndpointResourceId) `
                                 -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                 -ErrorAction Stop
     }
@@ -158,11 +166,10 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'CreateTenantPlan' -Description "Create a tenant plan" -UsecaseBlock `
         {      
-            $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -EnvironmentProfile "ServiceAdmin"
-            $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop
-            $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
-            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -EnvironmentProfile "ServiceAdmin" 
-            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $armEndpoint -Token $asToken -QuotaIds $asCanaryQuotas -ErrorAction Stop
+            $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
+            $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop            
+            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
+            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $AdminArmEndPoint -Token $asToken -QuotaIds $asCanaryQuotas -ErrorAction Stop
         }
 
         Invoke-Usecase -Name 'CreateTenantOffer' -Description "Create a tenant offer" -UsecaseBlock `
