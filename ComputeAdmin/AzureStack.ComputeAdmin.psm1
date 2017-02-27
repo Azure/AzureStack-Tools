@@ -1,5 +1,8 @@
 ﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
+
+#requires -Modules AzureStack.Connect
+
 <#
     .SYNOPSIS
     Contains 3 functions.
@@ -390,6 +393,8 @@ Function Remove-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
+        [switch] $KeepMarketplaceItem,
+
         [string] $ArmEndpoint = 'https://api.local.azurestack.external'
 
     )
@@ -413,6 +418,13 @@ Function Remove-VMImage{
         Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
     }
 
+    if(-not $KeepMarketplaceItem){
+        $name = "$offer$sku"
+        #Remove periods so that the offer and sku can be retrieved from the Marketplace Item name
+        $name =$name -replace "\.","-"
+        Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
+    }
+
 }
 
 function New-Server2016VMImage {
@@ -433,6 +445,9 @@ function New-Server2016VMImage {
         
         [Parameter()]
         [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+
+        [Parameter()]
+        [string] $VHDSizeInMB = 40960,
 
         [Parameter(Mandatory)]
         [ValidateScript({Test-Path -Path $_})]
@@ -476,7 +491,7 @@ function New-Server2016VMImage {
                 $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
                 $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
                 $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
-                $volume = Format-Volume -Partition $partition -FileSystem NTFS -ErrorAction Stop
+                $volume = Format-Volume -Partition $partition -FileSystem NTFS -confirm:$false -ErrorAction Stop
                 $VHDDriveLetter = $volume.DriveLetter
                 Write-Verbose -Message "VHD is mounted at drive letter: $VHDDriveLetter"
 
@@ -577,7 +592,7 @@ function New-Server2016VMImage {
         }
 
         $ConvertParams = @{
-            VHDSizeInMB = 61440
+            VHDSizeInMB = $VhdSizeInMB
             IsoPath = $ISOPath
         }
 
@@ -604,7 +619,8 @@ function New-Server2016VMImage {
             try {
                 Write-Verbose -Message "Creating Server Core Image"
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
-                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments
+                $description = "This evaluation image should not be used for production workloads."
+                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
@@ -614,10 +630,15 @@ function New-Server2016VMImage {
             Write-Verbose -Message "Creating Server Full Image" -Verbose
             try {
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
-                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments
+                $description = "This evaluation image should not be used for production workloads."
+                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
+        }
+
+        if(Test-Path -Path $ImagePath){
+            Remove-Item $ImagePath
         }
     }
 }

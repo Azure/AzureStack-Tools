@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, VpnClient
+#requires -Modules AzureRM.Profile, VpnClient, AzureStack
 
 <#
     .SYNOPSIS
@@ -396,7 +396,7 @@ function Get-AADTenantGUID ()
         [parameter(mandatory=$true, HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
 	    [string] $AADTenantName = ""
     )
-    $OauthMetadata = (wget "https://login.microsoftonline.com/$AADTenantName/v2.0/.well-known/openid-configuration").Content | ConvertFrom-Json
+    $OauthMetadata = (wget -UseBasicParsing "https://login.microsoftonline.com/$AADTenantName/v2.0/.well-known/openid-configuration").Content | ConvertFrom-Json
     $AADid = $OauthMetadata.Issuer.Split('/')[3]
     $AADid
 }
