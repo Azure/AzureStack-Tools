@@ -1,43 +1,43 @@
 [CmdletBinding(DefaultParameterSetName="default")]
 param (    
-    [parameter(HelpMessage="Service Administrator account credential from the Azure Stack active directory")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)]    
-    [ValidateNotNullOrEmpty()]
-    [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="ADD Tenant ID value")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$AADTenantID,
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)] 
-    [ValidateNotNullOrEmpty()]
-    [string]$TenantAdminObjectId = "",
-    [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
-    [ValidateNotNullOrEmpty()]
-    [string]$EnvironmentDomainFQDN,    
     [parameter(HelpMessage="Administrative ARM endpoint")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AdminArmEndpoint,    
+    [string]$AdminArmEndpoint,   
+    [parameter(HelpMessage="Service Administrator account credential from the Azure Stack active directory")]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]    
+    [ValidateNotNullOrEmpty()]
+    [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="Tenant ARM endpoint")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
+    [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]    
+    [pscredential]$TenantAdminCredentials,
+    [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$EnvironmentDomainFQDN,    
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)] 
+    [ValidateNotNullOrEmpty()]
+    [string]$TenantAdminObjectId = "", 
     [parameter(HelpMessage="Name of the Azure Stack environment to be deployed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$EnvironmentName = "AzureStackCanaryCloud",   
-    [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]    
-    [pscredential]$TenantAdminCredentials,
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -96,6 +96,9 @@ while ($runCount -le $NumberOfIterations)
     # Start Canary 
     #
     $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
+    $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
+    $EnvironmentDomainFQDN = $endptres.portalEndpoint.Replace("https://portal.","").TrimEnd("/")
+
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
