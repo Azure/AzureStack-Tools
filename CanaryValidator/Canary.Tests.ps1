@@ -66,7 +66,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [switch]$NoCleanup
+    [switch]$NoCleanup,
+    [parameter(HelpMessage="Specifies the path for log files")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 )
 
 #Requires -Modules AzureRM
@@ -81,7 +86,6 @@ $kvSecretName       = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName    = "CanaryAdmin" 
 $VMAdminUserPass    = "CanaryAdmin@123"
 $canaryUtilPath     = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-$CanaryLogPath      = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -96,8 +100,12 @@ while ($runCount -le $NumberOfIterations)
     # Start Canary 
     #
     $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
-    $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
-    $EnvironmentDomainFQDN = $endptres.portalEndpoint.Replace("https://portal.","").TrimEnd("/")
+    if(-not $EnvironmentDomainFQDN)
+    {
+        $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
+        $EnvironmentDomainFQDN = $endptres.portalEndpoint
+        $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
+    }
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
@@ -199,7 +207,8 @@ while ($runCount -le $NumberOfIterations)
         }
 
         Invoke-Usecase -Name 'CreateTenantSubscription' -Description "Create a subcsription for the tenant and select it as the current subscription" -UsecaseBlock `
-        {   
+        {
+            Set-AzureRmContext -SubscriptionName $canaryDefaultTenantSubscription
             $asCanaryOffer = Get-AzureRmOffer -Provider "Default" -ErrorAction Stop | Where-Object Name -eq $tenantOfferName
             $asTenantSubscription = New-AzureRmTenantSubscription -OfferId $asCanaryOffer.Id -DisplayName $tenantSubscriptionName -ErrorAction Stop
             if ($asTenantSubscription)
