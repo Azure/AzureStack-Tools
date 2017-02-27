@@ -5,7 +5,7 @@
  
 .SYNOPSIS 
  
-Modify the boot entry and reboot the Azure Stack TP2 host back to the base Operating System, so that Azure Stack TP2 can be redeployed. 
+Modify the boot entry and reboot the Azure Stack host back to the base Operating System, so that Azure Stack can be redeployed. 
  
 .DESCRIPTION 
  
@@ -14,7 +14,7 @@ Because the default boot entry is set with this script, no KVM or manual selecti
 
 .EXAMPLE 
 
-Prompt user for the desired boot configuraiton and confirm reboot of the host so a redeployment of Azure Stack TP2 can begin.
+Prompt user for the desired boot configuraiton and confirm reboot of the host so a redeployment of Azure Stack can begin.
 This does not require KVM access to the host for selection of the correct Operating System as the machine restarts.
 .\BootMenuNoKVM.ps1
 

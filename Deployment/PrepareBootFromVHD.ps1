@@ -5,11 +5,11 @@
  
 .SYNOPSIS 
  
-Prepare the host to boot from AzureStack TP2 virtual harddisk. 
+Prepare the host to boot from Azure Stack virtual harddisk. 
  
 .DESCRIPTION 
  
-PrepareBootFromVHD updates the boot configuration with an AzureStack TP2 entry. 
+PrepareBootFromVHD updates the boot configuration with an Azure Stack entry. 
 It will verify if the disk that hosts the cloudbuilder.vhdx contains the required free disk space, Optionally copy drivers and an unattend.xml that does not require KVM access.
 
  
@@ -93,11 +93,11 @@ if ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk')
 if (($ApplyUnattend) -and (!($AdminPassword)))
     {
     while ($SecureAdminPassword.Length -le 6) {
-        [System.Security.SecureString]$SecureAdminPassword = read-host 'Password for the local administrator account of the AzureStack TP2 host. Requires 6 characters minimum' -AsSecureString
+        [System.Security.SecureString]$SecureAdminPassword = read-host 'Password for the local administrator account of the Azure Stack host. Requires 6 characters minimum' -AsSecureString
         }
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureAdminPassword)
     $AdminPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-    Write-Host "The following password will be configured for the local administrator account of the Azure Stack TP2 host:"
+    Write-Host "The following password will be configured for the local administrator account of the Azure Stack host:"
     Write-Host $AdminPassword -ForegroundColor Cyan
     }
 
@@ -123,7 +123,6 @@ if (($cbDiskSizeReq - $cbDiskSize) -ge $cbhDiskRemaining)
 #region Remove boot from previous deployment
 $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
 $bootOptions | ForEach {
-    if ((($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*') -and (($_.Context.PostContext[0] -replace '^description +') -eq 'AzureStack TP2'))
     {
     Write-Host 'The boot configuration contains an existing CloudBuilder.vhdx entry' -ForegroundColor Cyan
     Write-Host 'Description:' ($_.Context.PostContext[0] -replace '^description +') -ForegroundColor Cyan
@@ -147,14 +146,14 @@ $bootOptions | ForEach {
 
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
     $bootOptions | ForEach {
-    if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$CBDriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'AzureStack TP2')))
+    if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$CBDriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack')))
     {
     Write-Host 'Updating description for the boot entry' -ForegroundColor Cyan
     Write-Host 'Description:' ($_.Context.PostContext[0] -replace '^description +') -ForegroundColor Cyan
     Write-Host 'Device:' ($_.Context.PreContext[1] -replace '^device +') -ForegroundColor Cyan
     $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
-    Write-Host 'bcdedit /set' $BootID 'description "AzureStack TP2"' -ForegroundColor Yellow
-    bcdedit /set $BootID description "AzureStack TP2"
+    Write-Host 'bcdedit /set' $BootID 'description "Azure Stack"' -ForegroundColor Yellow
+    bcdedit /set $BootID description "Azure Stack"
     }
 }   
 #endregion
