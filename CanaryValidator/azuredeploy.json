@@ -66,7 +66,7 @@
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
         "OSDiskName": "osdisk",
-        "vmSize": "Standard_A3",
+        "vmSize": "Standard_A1",
         "VMNamePrefix": "[concat(resourceGroup().name, 'VM')]",
         "networkSecurityGroupName": "[toLower(concat(resourceGroup().name, 'SG'))]",
         "storageAccountType": "Standard_LRS",
@@ -78,17 +78,16 @@
         "publicIPAddressType": "Dynamic",
         "dnsNameForPublicIP": "[concat(toLower(resourceGroup().name), 'pubdns')]",
         "virtualNetworkName1": "[concat(resourceGroup().name, 'vNet1')]",
-        "virtualNetworkName2": "[concat(resourceGroup().name, 'vNet2')]",
         "vNet1addressPrefix": "15.15.15.0/16",
         "vNet1subnetName": "[concat(resourceGroup().name, 'vNet1Sub')]",
         "vNet1subnetPrefix": "15.15.15.0/24",
         "virtualNetworkName2": "[concat(resourceGroup().name, 'vNet2')]",
-        "vNet2addressPrefix": "16.16.16.0/16",
+        "vNet2addressPrefix": "10.1.0.0/24",
         "vNet2subnetName": "[concat(resourceGroup().name, 'vNet2Sub')]",
-        "vNet2subnetPrefix": "16.16.16.0/24",        
-        "NIC2vNet1PrivateIP": "15.15.15.99",
-        "NIC3vNet2PrivateIP": "16.16.16.99",
+        "vNet2subnetPrefix": "10.1.0.0/24",
         "networkInterfacePrefix": "[concat(resourceGroup().name, 'NIC')]",
+        "NIC2vNet1PrivateIP": "15.15.15.99",
+        "NIC3vNet2PrivateIP": "15.15.15.100",
         "ASCanaryCustomScriptName": "ASCheckDataDiskUtil.ps1",
         "ASCanaryDisableFWScript": "ASDisableFirewall.ps1",
         "ASCanaryDSCScriptZip": "DSCResource.ZIP",
@@ -202,6 +201,7 @@
                     {
                         "name": "ipconfigpublic",
                         "properties": {                            
+                            "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
                             },
@@ -239,38 +239,13 @@
             }
         },
         {
-            "apiVersion": "[variables('apiVersionNRP')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(variables('networkInterfacePrefix'), '3')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName1'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfigdynamic",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName1')),'/subnets/',variables('vNet1subnetName'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
             "apiVersion": "[variables('apiVersionCRP')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('VMNamePrefix'), '1')]",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName1'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '1'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '3'))]"
+                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '1'))]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -322,16 +297,8 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "properties": {
-                                "primary": true
-                            },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '1'))]"                           
-                        },
-                        {
-                            "properties": {
-                                "primary": false
-                            },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '3'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '1'))]"
+
                         }
                     ]
                 },
@@ -340,6 +307,25 @@
                         "enabled": "true",
                         "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName1')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob]"
                     }
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersionCRP')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(concat(variables('VMNamePrefix'), '1'),'/ASCanaryDSCScript')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/',variables('VMNamePrefix'), '1')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.15",
+                "autoUpgradeMinorVersion": "true",
+                "settings": {
+                    "modulesUrl": "[concat(reference(resourceId(parameters('ASCanaryUtilRG'), 'Microsoft.Storage/storageAccounts', parameters('ASCanaryUtilSA')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, parameters('ASCanaryUtilSC'),'/', variables('ASCanaryDSCScriptZip'))]",
+                    "configurationFunction": "[variables('ASCanaryDSCConfigFunction')]"
                 }
             }
         },
@@ -362,25 +348,6 @@
                         "[concat(reference(resourceId(parameters('ASCanaryUtilRG'), 'Microsoft.Storage/storageAccounts', parameters('ASCanaryUtilSA')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, parameters('ASCanaryUtilSC'),'/', variables('ASCanaryCustomScriptName'))]"
                     ],
                     "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ',variables('ASCanaryCustomScriptName'))]"
-                }
-            }
-        },
-        {
-            "apiVersion": "[variables('apiVersionCRP')]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(concat(variables('VMNamePrefix'), '1'),'/ASCanaryDSCScript')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/',variables('VMNamePrefix'), '1')]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.15",
-                "autoUpgradeMinorVersion": "true",
-                "settings": {
-                    "modulesUrl": "[concat(reference(resourceId(parameters('ASCanaryUtilRG'), 'Microsoft.Storage/storageAccounts', parameters('ASCanaryUtilSA')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, parameters('ASCanaryUtilSC'),'/', variables('ASCanaryDSCScriptZip'))]",
-                    "configurationFunction": "[variables('ASCanaryDSCConfigFunction')]"
                 }
             }
         },
