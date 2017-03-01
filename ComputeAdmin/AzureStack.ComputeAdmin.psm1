@@ -1,11 +1,16 @@
 ﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
+
+#requires -Modules AzureStack.Connect
+
 <#
     .SYNOPSIS
-    Contains two functions.
+    Contains 3 functions.
     Add-VMImage: Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
     Remove-VMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any 
     maketplace items created by Add-VMImage.
+    New-Server2016VMImage: Creates and Uploads a new Server 2016 Core and / or Full Image and
+    creates a Marketplace item for it.
 #>
 
 Function Add-VMImage{
@@ -70,7 +75,7 @@ Function Add-VMImage{
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $azureStackDomain = 'azurestack.local',
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
@@ -84,6 +89,15 @@ Function Add-VMImage{
         [Parameter(ParameterSetName='VMImageFromAzure')]
         [bool] $CreateGalleryItem = $true
     )
+
+    $Domain = ""
+    try {
+        $uriARMEndpoint = [System.Uri] $ArmEndpoint
+        $Domain = $ArmEndpoint.Split(".")[-3] + '.' + $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1] 
+    }
+    catch {
+        Write-Error "The specified ARM endpoint was invalid"
+    }
 
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title'))
     {
@@ -99,28 +113,8 @@ Function Add-VMImage{
     $resourceGroupName = "addvmimageresourcegroup"
     $storageAccountName = "addvmimagestorageaccount"
     $containerName = "addvmimagecontainer"
-    $subscriptionName = "Default Provider Subscription"
 
-    $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
-    $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-    $galleryEndpoint = $endpoints.galleryEndpoint
-    $graphEndpoint = $endpoints.graphEndpoint
-    $loginEndpoint = $endpoints.authentication.loginEndpoint
-    $authority = $loginEndpoint + $tenantID + "/"
-
-    Add-AzureRmEnvironment -Name 'Azure Stack' `
-        -ActiveDirectoryEndpoint $authority `
-        -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId `
-        -ResourceManagerEndpoint  "https://api.$azureStackDomain/" `
-        -GalleryEndpoint $galleryEndpoint `
-        -GraphEndpoint $graphEndpoint
-
-    $environment = Get-AzureRmEnvironment 'Azure Stack'
-
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
-    Select-AzureRmProfile -Profile $profile
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     #pre validate if image is not already deployed
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue) {
@@ -145,7 +139,7 @@ Function Add-VMImage{
     if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
     {
         $script:osDiskName = Split-Path $osDiskLocalPath -Leaf
-        $script:osDiskBlobURIFromLocal = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$osDiskName"
+        $script:osDiskBlobURIFromLocal = "https://$storageAccountName.blob.$Domain/$containerName/$osDiskName"
         Add-AzureRmVhd -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath -OverWrite
 
         $script:dataDiskBlobURIsFromLocal = New-Object System.Collections.ArrayList
@@ -154,26 +148,14 @@ Function Add-VMImage{
             foreach($dataDiskLocalPath in $dataDisksLocalPaths)
             {
                 $dataDiskName = Split-Path $dataDiskLocalPath -Leaf
-                $dataDiskBlobURI = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$dataDiskName"
+                $dataDiskBlobURI = "https://$storageAccountName.blob.$Domain/$containerName/$dataDiskName"
                 $dataDiskBlobURIsFromLocal.Add($dataDiskBlobURI) 
                 Add-AzureRmVhd  -Destination $dataDiskBlobURI -ResourceGroupName $resourceGroupName -LocalFilePath $dataDiskLocalPath -OverWrite
             }
         }
     }
 
-    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken `
-        -Authority $authority `
-        -Resource $activeDirectoryServiceEndpointResourceId `
-        -AadTenantId $tenantID `
-        -ClientId $powershellClientId `
-        -Credential $azureStackCredentials
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    $armEndpoint = 'https://api.' + $azureStackDomain
-    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
 
@@ -313,7 +295,9 @@ Function Add-VMImage{
             $displayName = "{0}-{1}-{2}" -f $publisher, $offer, $sku
         }
 
-        $name = (New-Guid).guid
+        $name = "$offer$sku"
+        #Remove periods so that the offer and sku can be part of the MarketplaceItem name 
+        $name =$name -replace "\.","-"
 
         $JSON.name = $name
         $JSON.publisher = $publisher
@@ -362,11 +346,11 @@ Function Add-VMImage{
 
         cd $currentPath
 
-        $galleryItemURI = "https://$storageAccountName.blob.$azureStackDomain/$containerName/$galleryItemName"
+        $galleryItemURI = "https://$storageAccountName.blob.$Domain/$containerName/$galleryItemName"
 
         $blob = Set-AzureStorageBlobContent –Container $containerName –File $newPKGPath –Blob $galleryItemName
 
-        Add-AzureRMGalleryItem -SubscriptionId $subscription.Subscription.SubscriptionId -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
+        Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
 
         #cleanup
         Remove-Item $extractedGalleryItemPath -Recurse -Force
@@ -409,52 +393,22 @@ Function Remove-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $azureStackDomain = 'azurestack.local'
+        [switch] $KeepMarketplaceItem,
+
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
 
     )
-    $subscriptionName = "Default Provider Subscription"
 
-    $endpoints = (Invoke-RestMethod -Uri https://api.$azureStackDomain/metadata/endpoints?api-version=1.0 -Method Get)
-    $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-    $galleryEndpoint = $endpoints.galleryEndpoint
-    $graphEndpoint = $endpoints.graphEndpoint
-    $loginEndpoint = $endpoints.authentication.loginEndpoint
-    $authority = $loginEndpoint + $tenantID + "/"
-
-    Add-AzureRmEnvironment -Name 'Azure Stack' `
-        -ActiveDirectoryEndpoint $authority `
-        -ActiveDirectoryServiceEndpointResourceId $activeDirectoryServiceEndpointResourceId `
-        -ResourceManagerEndpoint  "https://api.$azureStackDomain/" `
-        -GalleryEndpoint $galleryEndpoint `
-        -GraphEndpoint $graphEndpoint
-
-    $environment = Get-AzureRmEnvironment 'Azure Stack'
-
-    $profile = Add-AzureRmAccount -Environment $environment -Credential $azureStackCredentials
-
-    Select-AzureRmProfile -Profile $profile
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName | Select-AzureRmSubscription
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue -ov images) {
-        Write-Verbose "Image found in Azure Gallery Continuing"
+        Write-Verbose "VM Image has been added to Azure Stack - continuing"
     }
     else{
         Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
-    $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
-
-    $adminToken = Get-AzureStackToken `
-        -Authority $authority `
-        -Resource $activeDirectoryServiceEndpointResourceId `
-        -AadTenantId $tenantID `
-        -ClientId $powershellClientId `
-        -Credential $azureStackCredentials
-
-    $headers =  @{ Authorization = ("Bearer $adminToken") }
-
-    $armEndpoint = 'https://api.' + $azureStackDomain
-    $uri = $armEndpoint + '/subscriptions/' + $subscription.Subscription.SubscriptionId + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
     try{
@@ -464,4 +418,227 @@ Function Remove-VMImage{
         Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
     }
 
+    if(-not $KeepMarketplaceItem){
+        $name = "$offer$sku"
+        #Remove periods so that the offer and sku can be retrieved from the Marketplace Item name
+        $name =$name -replace "\.","-"
+        Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
+    }
+
+}
+
+function New-Server2016VMImage {
+    [cmdletbinding(DefaultParameterSetName = 'NoCU')]
+    param (
+        [Parameter()]
+        [validateset('Full','Core','Both')]
+        [String] $Version = 'Full',
+
+        [Parameter(ParameterSetName = 'LatestCU')]
+        [switch] $IncludeLatestCU,
+
+        [Parameter(ParameterSetName = 'ManualCUUri')]
+        [string] $CUUri,
+
+        [Parameter(ParameterSetName = 'ManualCUPath')]
+        [string] $CUPath,
+        
+        [Parameter()]
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+
+        [Parameter()]
+        [string] $VHDSizeInMB = 40960,
+
+        [Parameter(Mandatory)]
+        [ValidateScript({Test-Path -Path $_})]
+        [string] $ISOPath,
+
+        [Parameter(Mandatory)]
+        [pscredential] 
+        [System.Management.Automation.Credential()] $AzureStackCredentials,
+
+        [ValidateNotNullorEmpty()]
+        [String] $TenantId,
+
+        [switch] $Net35
+    )
+    begin {
+        function CreateWindowsVHD {
+            [cmdletbinding()]
+            param (
+                [string] $VHDPath,
+                [uint32] $VHDSizeInMB,
+                [string] $IsoPath,
+                [string] $Edition,
+                [string] $CabPath,
+                [switch] $Net35
+            )
+            $tmpfile = New-TemporaryFile
+            "create vdisk FILE=`"$VHDPath`" TYPE=EXPANDABLE MAXIMUM=$VHDSizeInMB" | 
+                Out-File -FilePath $tmpfile.FullName -Encoding ascii
+
+            Write-Verbose -Message "Creating VHD at: $VHDPath of size: $VHDSizeInMB MB"
+            diskpart.exe /s $tmpfile.FullName | Out-Null
+
+            $tmpfile | Remove-Item -Force
+
+            try {
+                if (!(Test-Path -Path $VHDPath)) {
+                    Write-Error -Message "VHD was not created" -ErrorAction Stop
+                }
+                Write-Verbose -Message "Preparing VHD"
+                $VHDMount = Mount-DiskImage -ImagePath $VHDPath -PassThru -ErrorAction Stop
+                $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
+                $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
+                $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
+                $volume = Format-Volume -Partition $partition -FileSystem NTFS -confirm:$false -ErrorAction Stop
+                $VHDDriveLetter = $volume.DriveLetter
+                Write-Verbose -Message "VHD is mounted at drive letter: $VHDDriveLetter"
+
+                Write-Verbose -Message "Mounting ISO"
+                $IsoMount = Mount-DiskImage -ImagePath $ISOPath -PassThru
+                $IsoDriveLetter = ($IsoMount | Get-Volume).DriveLetter
+                Write-Verbose -Message "ISO is mounted at drive letter: $IsoDriveLetter"
+
+                Write-Verbose -Message "Applying Image $Edition to VHD"
+                $ExpandArgs = @{
+                    ApplyPath = "$VHDDriveLetter`:\" 
+                    ImagePath = "$IsoDriveLetter`:\Sources\install.wim"
+                    Name = $Edition
+                    ErrorAction = 'Stop'
+                }
+                $null = Expand-WindowsImage @ExpandArgs
+
+                if ($CabPath) {
+                    Write-Verbose -Message "Applying update: $(Split-Path -Path $CabPath -Leaf)"
+                    $null = Add-WindowsPackage -PackagePath $CabPath -Path "$VHDDriveLetter`:\"  -ErrorAction Stop
+                }
+                
+                if ($Net35) {
+                    Write-Verbose -Message "Adding .NET 3.5"
+                    $null = Add-WindowsPackage -PackagePath "$IsoDriveLetter`:\sources\sxs\microsoft-windows-netfx3-ondemand-package.cab" -Path "$VHDDriveLetter`:\" 
+                }
+
+                Write-Verbose -Message "Making VHD bootable"
+                $null = Invoke-Expression -Command "$VHDDriveLetter`:\Windows\System32\bcdboot.exe $VHDDriveLetter`:\windows /s $VHDDriveLetter`: /f BIOS" -ErrorAction Stop
+            } catch {
+                Write-Error -ErrorRecord $_ -ErrorAction Stop
+            } finally {
+                if ($VHDMount) {
+                    $VHDMount | Dismount-DiskImage
+                }
+                if ($IsoMount) {
+                    $IsoMount | Dismount-DiskImage
+                }
+            }
+        }
+
+        function ExpandMSU {
+            param (
+                $Path
+            )
+            $expandcab = expand -f:*KB*.cab (Resolve-Path $Path) (Split-Path (Resolve-Path $Path))
+            $expandcab[3].Split()[1]
+        }
+    }
+    process {
+        Write-Verbose -Message "Checking authorization against your Azure Stack environment" -Verbose
+    
+        $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+
+        Write-Verbose -Message "Authorization verified" -Verbose
+        
+        if (!([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+            Write-Error -Message "New-Server2016VMImage must run with Administrator privileges" -ErrorAction Stop
+        }
+        $ModulePath = Split-Path -Path $MyInvocation.MyCommand.Module.Path
+        $CoreEdition = 'Windows Server 2016 SERVERDATACENTERCORE'
+        $FullEdition = 'Windows Server 2016 SERVERDATACENTER'
+
+        if ($pscmdlet.ParameterSetName -ne 'NoCU') {
+            if ($pscmdlet.ParameterSetName -eq 'ManualCUPath') {
+                $CUFile = Split-Path -Path $CUPath -Leaf
+                $FileExt = $CUFile.Split('.')[-1]
+                if ($FileExt -eq 'msu') {
+                    $CabPath = ExpandMSU -Path $CUPath
+                } elseif ($FileExt -eq 'cab') {
+                    $CabPath = $CUPath
+                } else {
+                    Write-Error -Message "CU File: $CUFile has the wrong file extension. Should be 'cab' or 'msu' but is $FileExt" -ErrorAction Stop
+                }
+            } else {
+                if ($IncludeLatestCU) {
+                    #for latest CU, check https://support.microsoft.com/en-us/help/4000825/windows-10-and-windows-server-2016-update-history
+                    $Uri = 'http://download.windowsupdate.com/d/msdownload/update/software/updt/2017/01/windows10.0-kb4010672-x64_e12a6da8744518197757d978764b6275f9508692.msu'
+                    $OutFile = "$ModulePath\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu"
+                } else {
+                    #test if manual Uri is giving 200
+                    $TestCUUri = Invoke-WebRequest -Uri $CUUri -UseBasicParsing -Method Head
+                    if ($TestCUUri.StatusCode -ne 200) {
+                        Write-Error -Message "The CU Uri specified is not valid. StatusCode: $($TestCUUri.StatusCode)" -ErrorAction Stop
+                    } else {
+                        $Uri = $CUUri
+                        $OutFile = "$ModulePath\" + $CUUri.Split('/')[-1]
+                    }
+                }
+                $CurrentProgressPref = $ProgressPreference
+                $ProgressPreference = 'SilentlyContinue'
+                Write-Verbose -Message "Starting download of CU. This will take some time." -Verbose
+                Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
+                $ProgressPreference = $CurrentProgressPref
+                Unblock-File -Path $OutFile
+                $CabPath = ExpandMSU -Path $OutFile
+            }
+        }
+
+        $ConvertParams = @{
+            VHDSizeInMB = $VhdSizeInMB
+            IsoPath = $ISOPath
+        }
+
+        if ($null -ne $CabPath) {
+            [void] $ConvertParams.Add('CabPath', $CabPath)
+        }
+
+        if ($Net35) {
+            [void] $ConvertParams.Add('Net35', $true)
+        }
+
+        $PublishArguments = @{
+            publisher = 'MicrosoftWindowsServer'
+            offer = 'WindowsServer'
+            version = '1.0.0'
+            osType = 'Windows'
+            tenantID = $tenantID
+            azureStackCredentials = $AzureStackCredentials
+            ArmEndpoint = $ArmEndpoint
+        }
+        
+        if ($Version -eq 'Core' -or $Version -eq 'Both') {
+            $ImagePath = "$ModulePath\Server2016DatacenterCoreEval.vhd" 
+            try {
+                Write-Verbose -Message "Creating Server Core Image"
+                CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
+                $description = "This evaluation image should not be used for production workloads."
+                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description
+            } catch {
+                Write-Error -ErrorRecord $_ -ErrorAction Stop
+            }
+        }
+        if ($Version -eq 'Full' -or $Version -eq 'Both') {
+            $ImagePath = "$ModulePath\Server2016DatacenterFullEval.vhd"
+            Write-Verbose -Message "Creating Server Full Image" -Verbose
+            try {
+                CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
+                $description = "This evaluation image should not be used for production workloads."
+                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description
+            } catch {
+                Write-Error -ErrorRecord $_ -ErrorAction Stop
+            }
+        }
+
+        if(Test-Path -Path $ImagePath){
+            Remove-Item $ImagePath
+        }
+    }
 }

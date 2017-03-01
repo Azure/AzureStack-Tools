@@ -1,9 +1,17 @@
 $Global:ContinueOnFailure = $false
 $Global:JSONLogFile  = "Run-Canary.JSON"
 $Global:TxtLogFile  = "AzureStackCanaryLog.Log"
+$Global:wttLogFileName= ""
+if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
+{
+    Import-Module -Name "$PSScriptRoot\..\WTTLog.ps1" -Force
+    $Global:wttLogFileName = (Join-Path $PSScriptRoot "AzureStack_CanaryValidation_Test.wtl")    
+}
+
 $UseCase = @{}
 [System.Collections.Stack] $AllUseCases = New-Object System.Collections.Stack
-filter timestamp {"$(Get-Date -Format G): $_"}
+filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
+
 
 function Log-Info
 {
@@ -96,6 +104,41 @@ function Log-JSONReport
     }
 }
 
+function Get-CanaryResult
+{    
+    $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json
+    Log-Info ($logContent.UseCases | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"}, 
+                                                            @{Expression = {$_.Result}; Label="Result"; Align = "Left"}, 
+                                                            @{Expression = {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}; Label = "Duration`n[Seconds]"; Align = "Left"},
+                                                            @{Expression = {$_.Description}; Label = "Description"; Align = "Left"})                                                    
+}
+
+function Get-CanaryLonghaulResult
+{
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$true, Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$LogPath
+    )
+
+    $logFiles = (Get-ChildItem -Path $LogPath -Filter *.JSON -File).FullName
+    $logContent = @()
+    foreach($file in $logFiles)
+    {
+        $logContent += (Get-Content -Raw -Path $file | ConvertFrom-Json).UseCases
+    }
+    $usecasesGroup = $logContent | Group-Object -Property Name
+    $usecasesGroup | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"},
+                                            @{Expression={$_.Count}; Label="Count"; Align = "Left"},
+                                            @{Expression={$passPct = [math]::Round(((($_.Group | Where-Object Result -eq "PASS" | Measure-Object).Count/$_.Count)*100), 0); $passPct.ToString()+"%"};Label="Pass`n[Goal: >99%]"; Align = "Left"},    
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Minimum).Minimum, 0)};Label="MinTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Maximum).Maximum, 0)};Label="MaxTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Average).Average, 0)};Label="AvgTime`n[MilliSeconds]"; Align = "Left"},
+                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round([math]::Sqrt($sd/$pCount), 0)};Label="StdDev"; Align = "Left"},
+                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round(([math]::Round([math]::Sqrt($sd/$pCount), 2)/$avgTime), 0) * 100};Label="RelativeStdDev`n[Goal: <50%]"; Align = "Left"}
+}
+
 function Start-Scenario
 {
     [CmdletBinding()]
@@ -126,6 +169,11 @@ function Start-Scenario
             $Global:TxtLogFile = $LogFileName + ".Log"               
         }        
     }
+    if ($Global:wttLogFileName)
+    {
+        OpenWTTLogger $Global:wttLogFileName    
+    }
+    
     New-Item -Path $Global:JSONLogFile -Type File -Force
     New-Item -Path $Global:TxtLogFile -Type File -Force
     $jsonReport = @{
@@ -137,7 +185,12 @@ function Start-Scenario
 }
 
 function End-Scenario
-{}
+{
+    if ($Global:wttLogFileName)
+    {
+        CloseWTTLogger    
+    }
+}
 
 function Invoke-Usecase
 {
@@ -154,6 +207,10 @@ function Invoke-Usecase
         [ScriptBlock]$UsecaseBlock    
     )
     Log-Info ("###### [START] Usecase: $Name ######`n") 
+    if ($Global:wttLogFileName)
+    {
+        StartTest "CanaryGate:$Name"
+    }
 
     if ($Description)
     {
@@ -167,7 +224,10 @@ function Invoke-Usecase
         {
             Log-Info ($result)
         }
-
+        if ($Global:wttLogFileName)
+        {
+            EndTest "CanaryGate:$Name" $true
+        }
         Log-Info ("###### [END] Usecase: $Name ###### [RESULT = PASS] ######`n")
         return $result | Out-Null
     }
@@ -175,6 +235,10 @@ function Invoke-Usecase
     {        
         Log-Exception ($_.Exception)
         Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
+        if ($Global:wttLogFileName)
+        {
+            EndTest "CanaryGate:$Name" $false
+        }
         if (-not $Global:ContinueOnFailure)
         {
             throw $_.Exception
@@ -188,13 +252,16 @@ function GetAzureStackEndpoints
     param( 
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string]$EnvironmentDomainFQDN      
+        [string]$EnvironmentDomainFQDN,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ArmEndpoint
+
     ) 
 
     $aadTenantId    = $AADTenantId
-    $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
     $endptres = Invoke-RestMethod "${armEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop    
-    $ActiveDirectoryEndpoint = $($endptres.authentication.loginEndpoint)
+    $ActiveDirectoryEndpoint = $($endptres.authentication.loginEndpoint).TrimEnd("/") + "/"
     $ActiveDirectoryServiceEndpointResourceId = $($endptres.authentication.audiences[0])
     $ResourceManagerEndpoint = $armEndpoint
     $GalleryEndpoint = $endptres.galleryEndpoint
@@ -399,7 +466,7 @@ function NewKeyVaultQuota
         [string] $ArmLocation  
     ) 
 
-    $uri = "{0}/subscriptions/{1}/providers/Microsoft.Keyvault.Admin/locations/{2}/quotas?api-version=2014-04-01-preview" -f $AdminUri, $SubscriptionId, $ArmLocation
+    $uri = "{0}/subscriptions/{1}/providers/Microsoft.Keyvault.Admin/locations/{2}/quotas?api-version=2017-02-01-preview" -f $AdminUri, $SubscriptionId, $ArmLocation
     $headers = @{ "Authorization" = "Bearer "+ $AzureStackToken }
     $kvQuota = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers -ContentType 'application/json' -ErrorAction Stop
         
@@ -418,11 +485,14 @@ function NewAzureStackToken
         [string]$EnvironmentDomainFQDN,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.PSCredential]$Credentials
+        [System.Management.Automation.PSCredential]$Credentials,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ArmEndpoint
+
     )
     
-    $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN
-    #$asToken = Get-AzureStackToken -Authority ($endpoints.ActiveDirectoryEndpoint  + $aadTenantId + "/oauth2") -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $AADTenantID -Credential $Credentials -ErrorAction Stop
+    $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndPoint $ArmEndpoint
     $asToken = Get-AzureStackToken -Authority $endpoints.ActiveDirectoryEndpoint -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $aadTenantId -Credential $Credentials -ErrorAction Stop
     return $asToken  
 }
@@ -445,13 +515,15 @@ function NewAzureStackDefaultQuotas
         [string]$EnvironmentDomainFQDN,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.PSCredential]$Credentials
+        [System.Management.Automation.PSCredential]$Credentials,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ArmEndpoint
     ) 
 
     $aadTenantId    = $AADTenantId
     $serviceQuotas  = @()
-    $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
-    $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $Credentials
+    $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $Credentials -ArmEndpoint $ArmEndpoint
     #$serviceQuotas += NewSubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     $serviceQuotas += NewStorageQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     $serviceQuotas += NewComputeQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
