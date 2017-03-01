@@ -7,9 +7,9 @@ Canary can be invoked either as Service Administrator or Tenant Administrator.
 
 # Download Canary
 ```powershell
-invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
-expand-archive master.zip -DestinationPath . -Force
-cd AzureStack-Tools-master\CanaryValidator
+Invoke-WebRequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
+Expand-Archive master.zip -DestinationPath . -Force
+Set-Location -Path ".\AzureStack-Tools-master\CanaryValidator" -PassThru
 ```
 
 # To execute Canary as Tenant Administrator
@@ -18,7 +18,7 @@ cd AzureStack-Tools-master\CanaryValidator
 # Install-Module AzureStack
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
-.\Canary.Tests.ps1  -AADTenantID "<TenantID from Azure Active Directory>"  -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds
+.\Canary.Tests.ps1  -AADTenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
 ```
 
 # To execute Canary as Service Administrator
@@ -26,7 +26,7 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 # Install-Module AzureRM -RequiredVersion 1.2.8 -Force
 # Install-Module AzureStack
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
-.\Canary.Tests.ps1 -AADTenantID "<TenantID from Azure Active Directory>"  -AdminArmEndpoint "<Administrative ARM endpoint>"  -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" 
+.\Canary.Tests.ps1 -AADTenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
 ```
 # Reading the results & logs
 Canary generates log files in the TMP directory ($env:TMP). The logs can be found under the directory "CanaryLogs[DATETIME]". There are two types of logs generated, a text log and a JSON log. JSON log provides a quick and easy view of all the usecases and their corresponding results. Text log provides a more detailed output of each usecase execution, its output and results.

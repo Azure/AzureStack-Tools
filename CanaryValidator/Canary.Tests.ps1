@@ -1,6 +1,6 @@
 [CmdletBinding(DefaultParameterSetName="default")]
 param (    
-    [parameter(HelpMessage="ADD Tenant ID value")]
+    [parameter(HelpMessage="Tenant ID value from Azure Stack active directory")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
@@ -21,9 +21,15 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
+    [parameter(HelpMessage="Local path where the windows ISO is stored")]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$WindowsISOPath, 
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -77,6 +83,8 @@ param (
 #Requires -Modules AzureRM
 #Requires -RunAsAdministrator
 Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
+Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1
+Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1
 
 $storageAccName     = $CanaryUtilitiesRG + "sa"
 $storageCtrName     = $CanaryUtilitiesRG + "sc"
@@ -86,6 +94,13 @@ $kvSecretName       = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName    = "CanaryAdmin" 
 $VMAdminUserPass    = "CanaryAdmin@123"
 $canaryUtilPath     = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+
+if(-not $EnvironmentDomainFQDN)
+{
+    $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
+    $EnvironmentDomainFQDN = $endptres.portalEndpoint
+    $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
+}
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -100,12 +115,6 @@ while ($runCount -le $NumberOfIterations)
     # Start Canary 
     #
     $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
-    if(-not $EnvironmentDomainFQDN)
-    {
-        $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
-        $EnvironmentDomainFQDN = $endptres.portalEndpoint
-        $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
-    }
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
@@ -116,22 +125,6 @@ while ($runCount -le $NumberOfIterations)
     {
         $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $AdminArmEndpoint 
         Add-AzureRmEnvironment  -Name ($SvcAdminEnvironmentName) `
-                                -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
-                                -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
-                                -ADTenant $AADTenantID `
-                                -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
-                                -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
-                                -GraphEndpoint ($asEndpoints.GraphEndpoint) `
-                                -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
-                                -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
-                                -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
-                                -ErrorAction Stop
-    }
-
-    Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
-    {
-        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $TenantArmEndpoint
-        Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
                                 -ADTenant $AADTenantID `
@@ -158,6 +151,21 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
+    Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
+    {
+        if (-not (Get-AzureRmVMImage -Location "local" -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-DataCenter-Core" -ErrorAction SilentlyContinue))
+        {
+            if (-not (Test-Path -Path $WindowsISOPath))
+            {
+                throw [System.Exception] "No ISO path found to create the PIR image."
+            }
+            else 
+            {
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials  
+            }
+        }
+    }
+
     if ($TenantAdminCredentials)
     {
         $subscriptionRGName                 = "ascansubscrrg" + [Random]::new().Next(1,999)
@@ -166,6 +174,26 @@ while ($runCount -le $NumberOfIterations)
         $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
         $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription"
 
+        if (-not $TenantArmEndpoint)
+        {
+            throw [System.Exception] "Tenant ARM endpoint missing."
+        }
+
+        Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
+        {
+            $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $TenantArmEndpoint
+            Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
+                                    -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
+                                    -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
+                                    -ADTenant $AADTenantID `
+                                    -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
+                                    -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
+                                    -GraphEndpoint ($asEndpoints.GraphEndpoint) `
+                                    -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
+                                    -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
+                                    -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
+                                    -ErrorAction Stop
+        }
         Invoke-Usecase -Name 'CreateResourceGroupForTenantSubscription' -Description "Create a resource group $subscriptionRGName for the tenant subscription" -UsecaseBlock `
         {        
             if (Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction SilentlyContinue)
