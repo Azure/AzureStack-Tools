@@ -12,6 +12,7 @@ $UseCase = @{}
 [System.Collections.Stack] $AllUseCases = New-Object System.Collections.Stack
 filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
 
+
 function Log-Info
 {
     Param ($Message)
@@ -518,7 +519,6 @@ function NewAzureStackDefaultQuotas
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
         [string]$ArmEndpoint
-
     ) 
 
     $aadTenantId    = $AADTenantId

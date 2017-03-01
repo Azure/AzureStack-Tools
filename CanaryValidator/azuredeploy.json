@@ -298,6 +298,7 @@
                     "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '1'))]"
+
                         }
                     ]
                 },

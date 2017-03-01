@@ -40,3 +40,4 @@ Each usecase entry in the JSON log consists of the following fields.
 - Exception (in case a scenario fails)
 
 The exception field is helpful to debug failed usecases.  
+
