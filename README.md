@@ -1,23 +1,26 @@
+# Azure Stack Technical Preview Version
+
+These tools are meant for use with **Azure Stack Technical Preview 3**. Azure Stack Technical Preview 2 users can still use the tools in the [tp2-refresh branch](https://github.com/Azure/AzureStack-Tools/tree/tp2-refresh).
+
 # Tools for using Azure and Azure Stack
 
-To use these tools, obtain Azure Stack compatible Azure PowerShell module and CLI. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows. Note that both of these could still be used to operate against Azure as well as Azure Stack, but may lack some of the latest Azure features.
+To use these tools, obtain Azure Stack compatible Azure PowerShell module. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows. Note that both of these could still be used to operate against Azure as well as Azure Stack, but may lack some of the latest Azure features.
+
+For PowerShell, install the following:
 
 ```powershell
-Install-Module -Name AzureRm -RequiredVersion 1.2.6 -Scope CurrentUser
+Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
+Install-Module -Name AzureStack
 ```
 
-```
-npm install azure-cli@0.9.18
-```
-
-Obtain the tools by cloning the git repo.
+Obtain the tools by cloning the git repository.
 
 ```
 git clone https://github.com/Azure/AzureStack-Tools.git --recursive
 cd AzureStack-Tools
 ```
 
-Otherwise download the tools as follows
+Otherwise download the tools as follows:
 
 ```powershell
 invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
