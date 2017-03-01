@@ -1,33 +1,43 @@
 [CmdletBinding(DefaultParameterSetName="default")]
 param (    
-    [parameter(HelpMessage="Service Administrator account credential from the Azure Stack active directory")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)]    
-    [ValidateNotNullOrEmpty()]
-    [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="ADD Tenant ID value")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$AADTenantID,
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)] 
-    [ValidateNotNullOrEmpty()]
-    [string]$TenantAdminObjectId = "",
-    [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
+    [parameter(HelpMessage="Administrative ARM endpoint")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
+    [string]$AdminArmEndpoint,   
+    [parameter(HelpMessage="Service Administrator account credential from the Azure Stack active directory")]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]    
+    [ValidateNotNullOrEmpty()]
+    [pscredential]$ServiceAdminCredentials,
+    [parameter(HelpMessage="Tenant ARM endpoint")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$TenantArmEndpoint,    
+    [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]    
+    [pscredential]$TenantAdminCredentials,
+    [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
     [string]$EnvironmentDomainFQDN,    
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)] 
+    [ValidateNotNullOrEmpty()]
+    [string]$TenantAdminObjectId = "", 
     [parameter(HelpMessage="Name of the Azure Stack environment to be deployed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$EnvironmentName = "AzureStackCanaryCloud",   
-    [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]    
-    [pscredential]$TenantAdminCredentials,
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -56,7 +66,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [switch]$NoCleanup
+    [switch]$NoCleanup,
+    [parameter(HelpMessage="Specifies the path for log files")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 )
 
 #Requires -Modules AzureRM
@@ -71,7 +86,6 @@ $kvSecretName       = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName    = "CanaryAdmin" 
 $VMAdminUserPass    = "CanaryAdmin@123"
 $canaryUtilPath     = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-$CanaryLogPath      = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -86,6 +100,13 @@ while ($runCount -le $NumberOfIterations)
     # Start Canary 
     #
     $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
+    if(-not $EnvironmentDomainFQDN)
+    {
+        $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
+        $EnvironmentDomainFQDN = $endptres.portalEndpoint
+        $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
+    }
+
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
@@ -93,7 +114,7 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'CreateAdminAzureStackEnv' -Description "Create Azure Stack environment $SvcAdminEnvironmentName" -UsecaseBlock `
     {
-        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -EnvironmentProfile "ServiceAdmin"
+        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $AdminArmEndpoint 
         Add-AzureRmEnvironment  -Name ($SvcAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
@@ -103,14 +124,13 @@ while ($runCount -le $NumberOfIterations)
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
                                 -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
                                 -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
-                                -AzureKeyVaultServiceEndpointResourceId ($asEndpoints.AzureKeyVaultServiceEndpointResourceId) `
                                 -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                 -ErrorAction Stop
     }
 
     Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
     {
-        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -EnvironmentProfile "Tenant"
+        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $TenantArmEndpoint
         Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
@@ -120,7 +140,6 @@ while ($runCount -le $NumberOfIterations)
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
                                 -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
                                 -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
-                                -AzureKeyVaultServiceEndpointResourceId ($asEndpoints.AzureKeyVaultServiceEndpointResourceId) `
                                 -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                 -ErrorAction Stop
     }
@@ -158,11 +177,10 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'CreateTenantPlan' -Description "Create a tenant plan" -UsecaseBlock `
         {      
-            $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -EnvironmentProfile "ServiceAdmin"
-            $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop
-            $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
-            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -EnvironmentProfile "ServiceAdmin" 
-            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $armEndpoint -Token $asToken -QuotaIds $asCanaryQuotas -ErrorAction Stop
+            $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
+            $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop            
+            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
+            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $AdminArmEndPoint -Token $asToken -QuotaIds $asCanaryQuotas -ErrorAction Stop
         }
 
         Invoke-Usecase -Name 'CreateTenantOffer' -Description "Create a tenant offer" -UsecaseBlock `
@@ -189,7 +207,8 @@ while ($runCount -le $NumberOfIterations)
         }
 
         Invoke-Usecase -Name 'CreateTenantSubscription' -Description "Create a subcsription for the tenant and select it as the current subscription" -UsecaseBlock `
-        {   
+        {
+            Set-AzureRmContext -SubscriptionName $canaryDefaultTenantSubscription
             $asCanaryOffer = Get-AzureRmOffer -Provider "Default" -ErrorAction Stop | Where-Object Name -eq $tenantOfferName
             $asTenantSubscription = New-AzureRmTenantSubscription -OfferId $asCanaryOffer.Id -DisplayName $tenantSubscriptionName -ErrorAction Stop
             if ($asTenantSubscription)

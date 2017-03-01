@@ -10,7 +10,7 @@ if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 
 $UseCase = @{}
 [System.Collections.Stack] $AllUseCases = New-Object System.Collections.Stack
-filter timestamp {"$(Get-Date -Format G): $_"}
+filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
 
 function Log-Info
 {
@@ -131,11 +131,11 @@ function Get-CanaryLonghaulResult
     $usecasesGroup | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"},
                                             @{Expression={$_.Count}; Label="Count"; Align = "Left"},
                                             @{Expression={$passPct = [math]::Round(((($_.Group | Where-Object Result -eq "PASS" | Measure-Object).Count/$_.Count)*100), 0); $passPct.ToString()+"%"};Label="Pass`n[Goal: >99%]"; Align = "Left"},    
-                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds} | Measure-Object -Average).Average, 2)};Label="AvgTime`n[Seconds]"; Align = "Left"},
-                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round([math]::Sqrt($sd/$pCount), 2)};Label="StdDev"; Align = "Left"},
-                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; $sDev = [math]::Round([math]::Sqrt($sd/$pCount), 2); [math]::Round([math]::Pow($sDev, 2), 2)};Label="Variance`n[Goal: <1]"; Align = "Left"},
-                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds} | Measure-Object -Minimum).Minimum, 2)};Label="MinTime`n[Seconds]"; Align = "Left"},
-                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds} | Measure-Object -Maximum).Maximum, 2)};Label="MaxTime`n[Seconds]"; Align = "Left"}
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Minimum).Minimum, 0)};Label="MinTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Maximum).Maximum, 0)};Label="MaxTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Average).Average, 0)};Label="AvgTime`n[MilliSeconds]"; Align = "Left"},
+                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round([math]::Sqrt($sd/$pCount), 0)};Label="StdDev"; Align = "Left"},
+                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round(([math]::Round([math]::Sqrt($sd/$pCount), 2)/$avgTime), 0) * 100};Label="RelativeStdDev`n[Goal: <50%]"; Align = "Left"}
 }
 
 function Start-Scenario
@@ -254,19 +254,11 @@ function GetAzureStackEndpoints
         [string]$EnvironmentDomainFQDN,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet("ServiceAdmin", "Tenant")]
-        [string]$EnvironmentProfile        
+        [string]$ArmEndpoint
+
     ) 
 
     $aadTenantId    = $AADTenantId
-    if ($EnvironmentProfile -eq "ServiceAdmin")
-    {
-        $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
-    }
-    elseif ($EnvironmentProfile -eq "Tenant") 
-    {
-        $armEndpoint    = "https://publicapi." + $EnvironmentDomainFQDN   
-    }
     $endptres = Invoke-RestMethod "${armEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop    
     $ActiveDirectoryEndpoint = $($endptres.authentication.loginEndpoint).TrimEnd("/") + "/"
     $ActiveDirectoryServiceEndpointResourceId = $($endptres.authentication.audiences[0])
@@ -495,11 +487,11 @@ function NewAzureStackToken
         [System.Management.Automation.PSCredential]$Credentials,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet("ServiceAdmin", "Tenant")]
-        [string]$EnvironmentProfile     
+        [string]$ArmEndpoint
+
     )
     
-    $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -EnvironmentProfile $EnvironmentProfile
+    $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndPoint $ArmEndpoint
     $asToken = Get-AzureStackToken -Authority $endpoints.ActiveDirectoryEndpoint -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $aadTenantId -Credential $Credentials -ErrorAction Stop
     return $asToken  
 }
@@ -525,21 +517,13 @@ function NewAzureStackDefaultQuotas
         [System.Management.Automation.PSCredential]$Credentials,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet("ServiceAdmin", "Tenant")]
-        [string]$EnvironmentProfile
+        [string]$ArmEndpoint
+
     ) 
 
     $aadTenantId    = $AADTenantId
     $serviceQuotas  = @()
-    if ($EnvironmentProfile -eq "ServiceAdmin")
-    {
-        $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
-    }
-    elseif ($EnvironmentProfile -eq "Tenant") 
-    {
-        $armEndpoint    = "https://publicapi." + $EnvironmentDomainFQDN   
-    }
-    $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $Credentials -EnvironmentProfile "ServiceAdmin"
+    $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $Credentials -ArmEndpoint $ArmEndpoint
     #$serviceQuotas += NewSubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     $serviceQuotas += NewStorageQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     $serviceQuotas += NewComputeQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
