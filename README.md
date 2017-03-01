@@ -1,6 +1,6 @@
-# Azure Stack Technical Preview
+# Azure Stack Technical Preview Version
 
-These tools are meant for use with Azure Stack Technical Preview 3. Azure Stack Technical Preview 2 users can still use the tools in the [tp2-refresh branch](https://github.com/Azure/AzureStack-Tools/tree/tp2-refresh).
+These tools are meant for use with **Azure Stack Technical Preview 3**. Azure Stack Technical Preview 2 users can still use the tools in the [tp2-refresh branch](https://github.com/Azure/AzureStack-Tools/tree/tp2-refresh).
 
 # Tools for using Azure and Azure Stack
 
