@@ -176,7 +176,7 @@ while ($runCount -le $NumberOfIterations)
 
         if (-not $TenantArmEndpoint)
         {
-            throw [System.Exception] "Tenant ARM endpoint missing."
+            throw [System.Exception] "Tenant ARM endpoint is required."
         }
 
         Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
