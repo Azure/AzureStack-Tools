@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, AzureRm.AzureStackAdmin
+#requires -Modules AzureStack.Connect
 
 <#
     .SYNOPSIS
@@ -65,7 +65,7 @@ function Get-SubscriptionsQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackTokenHeader,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -95,7 +95,7 @@ function New-StorageQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackTokenHeader,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -133,7 +133,7 @@ function New-ComputeQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackTokenHeader,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -177,7 +177,7 @@ function New-NetworkQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackTokenHeader,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -219,7 +219,7 @@ function Get-KeyVaultQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackTokenHeader,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
