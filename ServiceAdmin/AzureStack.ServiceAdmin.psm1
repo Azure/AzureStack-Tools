@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, AzureRm.AzureStackAdmin
+#requires -Modules AzureStack.Connect
 
 <#
     .SYNOPSIS
