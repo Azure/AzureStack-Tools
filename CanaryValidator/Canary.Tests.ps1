@@ -244,32 +244,32 @@ while ($runCount -le $NumberOfIterations)
                 $asTenantSubscription | Select-AzureRmSubscription -ErrorAction Stop
             }           
         }  
-
-        Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
-        {
-            Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force        
-            $sleepTime = 0        
-            while($true)
-            {
-                $sleepTime += 10
-                Start-Sleep 10
-                $requiredRPs = Get-AzureRmResourceProvider -ListAvailable | Where-Object {$_.ProviderNamespace -in ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault")}
-                $notRegistered = $requiredRPs | Where-Object {$_.RegistrationState -ne "Registered"}
-                $registered = $requiredRPs | Where-Object {$_.RegistrationState -eq "Registered"}
-                if (($sleepTime -ge 120) -and $notRegistered)
-                {
-                    Get-AzureRmResourceProvider | Format-Table
-                    throw [System.Exception] "Resource providers did not get registered in time."
-                }
-                elseif ($registered.Count -eq $requiredRPs.Count)
-                {
-                    break
-                }
-            }
-            Get-AzureRmResourceProvider | Format-Table             
-        }
     }
 
+    Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
+    {
+        Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force        
+        $sleepTime = 0        
+        while($true)
+        {
+            $sleepTime += 10
+            Start-Sleep -Seconds  10
+            $requiredRPs = Get-AzureRmResourceProvider -ListAvailable | Where-Object {$_.ProviderNamespace -in ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault")}
+            $notRegistered = $requiredRPs | Where-Object {$_.RegistrationState -ne "Registered"}
+            $registered = $requiredRPs | Where-Object {$_.RegistrationState -eq "Registered"}
+            if (($sleepTime -ge 120) -and $notRegistered)
+            {
+                Get-AzureRmResourceProvider | Format-Table
+                throw [System.Exception] "Resource providers did not get registered in time."
+            }
+            elseif ($registered.Count -eq $requiredRPs.Count)
+            {
+                break
+            }
+        }
+        Get-AzureRmResourceProvider | Format-Table             
+    }
+    
     Invoke-Usecase -Name 'CreateResourceGroupForUtilities' -Description "Create a resource group $CanaryUtilitiesRG for the placing the utility files" -UsecaseBlock `
     {        
         if (Get-AzureRmResourceGroup -Name $CanaryUtilitiesRG -ErrorAction SilentlyContinue)
