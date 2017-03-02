@@ -84,6 +84,8 @@ Param     (
 Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psm1 -Force 
 cd  C:\CloudDeployment\Setup\Activation\Bridge
 
+Read-Host "This script will turn marketplace syndication $marketplaceSyndication and usage reporting $reportUsage. You can change this by running the script using different flags. Press Enter to continue."
+
 #
 # Step 1: Configure Bridge identity
 #
