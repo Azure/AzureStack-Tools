@@ -104,7 +104,7 @@ Read-Host "STEP 2: Registration request completed. Re-enter your Azure subscript
 #
 # Step 3: Register Azure Stack with Azure
 #
-
+New-Item -ItemType Directory -Force -Path "C:\temp"
 $registrationRequestFile = "c:\temp\registration.json"
 $registrationOutputFile = "c:\temp\registrationOutput.json"
 
@@ -112,20 +112,28 @@ Login-AzureRmAccount -EnvironmentName AzureCloud
 Select-AzureRmSubscription -SubscriptionId $azureSubscriptionId
 
 # Ensure subscription is registered to Microsoft.AzureStack namespace in Azure
-$regState = $(Get-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack')[0].RegistrationState
-$regState
-while ($regState -ne 'Registered')
+Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack'
+$result                        = $null
+$attempts                      = 0
+$maxAttempts                   = 20
+$delayInSecondsBetweenAttempts = 10
+do
 {
-    $regState = $(Get-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack')[0].RegistrationState
-    if ($regState -eq 'NotRegistered' -or $regState -eq 'UnRegistered')
+    $attempts++
+    Write-Verbose "[CHECK] Checking for resource provider registration... (attempt $attempts of $maxAttempts)"
+    $result = $(Get-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack')[0].RegistrationState -EQ 'Registered'
+    $result
+    if ((-not $result) -and ($attempts -lt $maxAttempts))
     {
-        Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack'
+        Write-Verbose "[DELAY] Attempt $attempts failed to see provider registration, delaying for $delayInSecondsBetweenAttempts seconds before retry"
+        Start-Sleep -Seconds $delayInSecondsBetweenAttempts
     }
-    elseif ($regState -eq 'Registering')
-    {
-        Start-Sleep 10
-        
-    }
+}
+while ((-not $result) -and ($attempts -lt $maxAttempts))
+
+if (-not $result)
+{
+    throw New-Object System.InvalidOperationException("Azure Bridge Resource Provider was registered but did not become routable within the alloted time")
 }
 
 .\Register-AzureStack.ps1 -BillingModel Consumption -Syndication $marketplaceSyndication -ReportUsage $reportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $azureDirectory `
@@ -147,7 +155,7 @@ usagebridge = $reportUsage
 $reg.properties = $newProps
 $reg | ConvertTo-Json -Depth 4 | Out-File -FilePath $registrationOutputFile
 
-$regResponse = Get-Content -path  "C:\Temp\registrationOutput.json" 
+$regResponse = Get-Content -path  $registrationOutputFile
 $bytes = [System.Text.Encoding]::Unicode.GetBytes($regResponse)
 $activationCode = [Convert]::ToBase64String($bytes)
 
