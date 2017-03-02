@@ -2,14 +2,14 @@
 
 Instructions below are relative to the .\Deployment folder of the [AzureStack-Tools repo](..).
 
-## Azure Stack TP2 Support Files
+## Azure Stack TP3 Support Files
 
-To easily download the Azure Stack TP2 support files from this repository, run the following PowerShell script from your POC machine:
+To easily download the Azure Stack TP3 support files from this repository, run the following PowerShell script from your POC machine:
 
 ```powershell
 # Variables
 $Uri = 'https://raw.githubusercontent.com/Azure/AzureStack-Tools/master/Deployment/'
-$LocalPath = 'c:\AzureStack_TP2_SupportFiles'
+$LocalPath = 'c:\AzureStack_TP3_SupportFiles'
 
 # Create folder
 New-Item $LocalPath -Type directory
@@ -22,7 +22,7 @@ New-Item $LocalPath -Type directory
 
 This tool allows you to easily prepare your Azure Stack Technical Preview deployment, by preparing the host to boot from the provided Azure Stack Technical Preview virtual harddisk (CloudBuilder.vhdx).
 
-PrepareBootFromVHD updates the boot configuration with an **AzureStack TP2** entry. 
+PrepareBootFromVHD updates the boot configuration with an **Azure Stack** entry. 
 It will verify if the disk that hosts the CloudBuilder.vhdx contains the required free disk space, and optionally copy drivers and an unattend.xml that does not require KVM access.
 
 You will need at least (120GB - Size of the CloudBuilder.vhdx file) of free disk space on the disk that contains the CloudBuilder.vhdx.
@@ -62,7 +62,7 @@ Of course, you may still need KVM (or some other kind of alternate connection to
 
 ## Prepare to Redeploy (boot back to original/base OS)
 
-This tool allows you to easily initiate a redeployment of your Azure Stack Technical Preview deployment, by presenting you with the boot OS options, and the choice to boot back into the original/base OS (away from the previously created **AzureStack TP2**).
+This tool allows you to easily initiate a redeployment of your Azure Stack Technical Preview deployment, by presenting you with the boot OS options, and the choice to boot back into the original/base OS (away from the previously created **Azure Stack**).
 
 BootMenuNoKVM updates the boot configuration with the original/base entry, and then prompts to reboot the host.
 Because the default boot entry is set with this script, no KVM or manual selection of the boot entry is required as the machine restarts.
@@ -75,7 +75,7 @@ There are no parameters for this script, but it must be executed in an elevated 
 .\BootMenuNoKVM.ps1
 ```
 
-During execution of this script, you will be prompted to choose the default OS to boot back into after restart. This will become your new default OS, just like **AzureStack TP2** became the new default OS during deployment.
+During execution of this script, you will be prompted to choose the default OS to boot back into after restart. This will become your new default OS, just like **Azure Stack** became the new default OS during deployment.
 
 When the script execution is complete, you will be asked to confirm reboot.
 If there are other users logged in, this command will fail, run the following command to continue:
