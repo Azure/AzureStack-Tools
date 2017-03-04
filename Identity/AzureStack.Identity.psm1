@@ -2,6 +2,31 @@
 # See LICENSE.txt in the project root for license information.
 
 <#
+.Synopsis
+    Get the Guid of the directory tenant
+.DESCRIPTION
+    This function fetches the OpenID configuration metadata from the identity system and parses the Directory TenantID out of it. 
+    Azure Stack AD FS is configured to be a single tenanted identity system with a TenantID.
+.EXAMPLE
+    Get-DirectoryTenantIdentifier -authority https://login.windows.net/microsoft.onmicrosoft.com
+.EXAMPLE
+    Get-DirectoryTenantIdentifier -authority https://adfs.local.azurestack.external/adfs
+#>
+function Get-DirectoryTenantIdentifier
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Param1 help description
+        [Parameter(Mandatory=$true,
+                    Position=0)]
+        $Authority
+    )
+    
+    return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $authority.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
+}
+
+<#
    .Synopsis
       This function is used to create a Service Principal on teh AD Graph
    .DESCRIPTION
