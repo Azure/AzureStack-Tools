@@ -21,7 +21,7 @@ An example of an authority for AAD is `https://login.windows.net/microsoft.onmic
 and for AD FS is `https://adfs.local.azurestack.global/adfs`.
 
 ## Creating a Service Principal in a disconnected (AD FS) topology
-You can create a Service Principal by executing the following command after importing the Identity Module
+You can create a Service Principal by executing the following command after importing the Identity module
 
 ```powershell
 $servicePrincipal = New-ADGraphServicePrincipal -DisplayName "<YourServicePrincipalName>" -AdminCredential $(Get-Credential) -Verbose
