@@ -400,13 +400,14 @@ while ($runCount -le $NumberOfIterations)
                         "vaultName"           = $keyvaultName;
                         "windowsOSVersion"    = $osVersion;
                         "secretUrlWithVersion"= $kvSecretId}   
-        if (-not (Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters))
+        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters
+        if (-not $templateError)
         {
             New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
         }
         else 
         {
-            throw [System.Exception] "Template validation failed. Please check for errors in your template"
+            throw [System.Exception] "Template validation failed. `n$templateError"
         }
     }
 
