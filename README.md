@@ -10,7 +10,7 @@ For PowerShell, install the following:
 
 ```powershell
 Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-Install-Module -Name AzureStack
+Install-Module -Name AzureStack -Scope CurrentUser
 ```
 
 Obtain the tools by cloning the git repository.
