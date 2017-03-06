@@ -394,11 +394,16 @@ function Get-AADTenantGUID ()
 {
     param(
         [parameter(mandatory=$true, HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
-	    [string] $AADTenantName = ""
+       [string] $AADTenantName = "",
+        [parameter(mandatory=$false, HelpMessage="Azure Cloud")]
+         [ValidateSet("AzureCloud","AzureChinaCloud","AzureUSGovernment","AzureGermanCloud")]
+        [string] $AzureCloud = "AzureCloud"
     )
-    $OauthMetadata = (wget -UseBasicParsing "https://login.microsoftonline.com/$AADTenantName/v2.0/.well-known/openid-configuration").Content | ConvertFrom-Json
+    $ADauth = (Get-AzureRmEnvironment -Name $AzureCloud).ActiveDirectoryAuthority
+    $endpt = "{0}{1}/.well-known/openid-configuration" -f $ADauth, $AADTenantName
+    $OauthMetadata = (wget -UseBasicParsing $endpt).Content | ConvertFrom-Json
     $AADid = $OauthMetadata.Issuer.Split('/')[3]
     $AADid
-}
+} 
 
 Export-ModuleMember Get-AADTenantGUID
