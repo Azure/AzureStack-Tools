@@ -387,7 +387,7 @@ while ($runCount -le $NumberOfIterations)
         {
             $osVersion = "2016-DataCenter-Core"
         }
-        elseif (Get-AzureRmVMImage -Location ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
+        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
         {
             $osVersion = "2012-R2-Datacenter"
         }
