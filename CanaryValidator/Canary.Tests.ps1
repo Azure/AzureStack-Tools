@@ -127,7 +127,6 @@ while ($runCount -le $NumberOfIterations)
         Add-AzureRmEnvironment  -Name ($SvcAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
-                                -ADTenant $AADTenantID `
                                 -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
                                 -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
@@ -151,21 +150,17 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
+    if (Test-Path -Path $WindowsISOPath)
     {
-        if (-not (Get-AzureRmVMImage -Location "local" -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-DataCenter-Core" -ErrorAction SilentlyContinue))
+        Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
         {
-            if (-not (Test-Path -Path $WindowsISOPath))
-            {
-                throw [System.Exception] "No ISO path found to create the PIR image."
-            }
-            else 
+            if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-DataCenter-Core" -ErrorAction SilentlyContinue))
             {
                 New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials  
             }
         }
     }
-
+    
     if ($TenantAdminCredentials)
     {
         $subscriptionRGName                 = "ascansubscrrg" + [Random]::new().Next(1,999)
@@ -185,7 +180,6 @@ while ($runCount -le $NumberOfIterations)
             Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
                                     -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                     -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
-                                    -ADTenant $AADTenantID `
                                     -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
                                     -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
                                     -GraphEndpoint ($asEndpoints.GraphEndpoint) `
@@ -388,6 +382,15 @@ while ($runCount -le $NumberOfIterations)
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {        
         $kvSecretId = (Get-AzureKeyVaultSecret -VaultName $keyVaultName -Name $kvSecretName -IncludeVersions -ErrorAction Stop).Id  
+        $osVersion = ""
+        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-DataCenter-Core" -ErrorAction SilentlyContinue)
+        {
+            $osVersion = "2016-DataCenter-Core"
+        }
+        elseif (Get-AzureRmVMImage -Location ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
+        {
+            $osVersion = "2012-R2-Datacenter"
+        }
         $templateDeploymentName = "CanaryVMDeployment"
         $parameters = @{"VMAdminUserName"     = $VMAdminUserName;
                         "VMAdminUserPassword" = $VMAdminUserPass;
@@ -395,10 +398,15 @@ while ($runCount -le $NumberOfIterations)
                         "ASCanaryUtilSA"      = $storageAccName;
                         "ASCanaryUtilSC"      = $storageCtrName;
                         "vaultName"           = $keyvaultName;
+                        "windowsOSVersion"    = $osVersion;
                         "secretUrlWithVersion"= $kvSecretId}   
         if (-not (Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters))
         {
             New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
+        }
+        else 
+        {
+            throw [System.Exception] "Template validation failed. Please check for errors in your template"
         }
     }
 
