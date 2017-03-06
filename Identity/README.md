@@ -2,7 +2,7 @@
 
 ```powershell
 Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-Install-Module -Name AzureStack
+Install-Module -Name AzureStack -Scope CurrentUser
 ```
 Then make sure the following modules are imported:
 
@@ -18,7 +18,7 @@ This function is used to get the Directory Tenant Guid. This method works for bo
 $directoryTenantId = Get-DirectoryTenantIdentifier -Authority "<DirectoryTenantUrl>"
 ```
 An example of an authority for AAD is `https://login.windows.net/microsoft.onmicrosoft.com`
-and for AD FS is `https://adfs.local.azurestack.global/adfs`.
+and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 
 ## Creating a Service Principal in a disconnected (AD FS) topology
 You can create a Service Principal by executing the following command after importing the Identity module
