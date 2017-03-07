@@ -28,7 +28,7 @@ param (
     [parameter(HelpMessage="Local path where the windows ISO is stored")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [ValidateNotNullOrEmpty()]
+    [ValidateScript({Test-Path -Path $_})]
     [string]$WindowsISOPath, 
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
@@ -150,7 +150,7 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    if ($WindowsISOPath -and (Test-Path -Path $WindowsISOPath))
+    if ($WindowsISOPath)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
         {
