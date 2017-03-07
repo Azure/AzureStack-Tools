@@ -53,7 +53,8 @@ function Get-AzureStackAadTenant
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+        $i = $ArmEndpoint.IndexOf('.')
+        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
@@ -101,7 +102,8 @@ function Add-AzureStackAzureRmEnvironment
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-3] + '.' + $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1] 
+        $i = $ArmEndpoint.IndexOf('.')
+        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
@@ -173,7 +175,8 @@ function Get-AzureStackNatServerAddress
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+        $i = $ArmEndpoint.IndexOf('.')
+        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
@@ -268,7 +271,8 @@ function Connect-AzureStackVpn
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+        $i = $ArmEndpoint.IndexOf('.')
+        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
@@ -353,7 +357,8 @@ function Get-AzureStackAdminSubTokenHeader
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $Domain = $ArmEndpoint.Split(".")[-2] + '.' + $ArmEndpoint.Split(".")[-1]
+        $i = $ArmEndpoint.IndexOf('.')
+        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
