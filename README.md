@@ -47,6 +47,11 @@ Connect to an Azure Stack instance from your personal computer/laptop.
 - Configure Azure Stack PowerShell environment
 - Prepare new subscriptions for use in PowerShell and CLI
 
+## [Setting up Identity for Azure Stack](Identity)
+
+Create and manage identity related objects and configurations for Azure Stack
+- Create Service Principals in a disconnected topology
+
 ## [Azure Stack Service Administration](ServiceAdmin)
 
 Manage plans and subscriptions in Azure Stack.
