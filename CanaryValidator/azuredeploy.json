@@ -62,8 +62,8 @@
             "metadata": {
                 "description": "Number of VM instances in VM scale set."
             },
-            "maxValue": 1,
-            "defaultValue": 1
+            "maxValue": 2,
+            "defaultValue": 2
         }
     },
 
