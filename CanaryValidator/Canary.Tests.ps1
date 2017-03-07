@@ -150,7 +150,7 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    if (Test-Path -Path $WindowsISOPath)
+    if (Test-Path -Path $WindowsISOPath -ErrorAction SilentlyContinue)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
         {
