@@ -60,12 +60,21 @@ Manage compute (VM) service in Azure Stack.
 ## [Azure Stack Infrastructure Administration](Infrastructure)
 
 Manage Azure Stack Infrastructure
-- Get Infrastructure resolve
-- Get Infrastructure Virtual machines
+- Get Infrastructure Roles
+- Get Infrastructure Role Instances
+- Start Infrastructure Role Instance
+- Stop Infrastructure Role Instance
+- Restart Infrastructure Role Instance
 - Get Storage Capacity
 - Get Storage Shares
 - Get Scale Unit
-- Get Node
+- Get Scale Unit Node
+- Get Gateway Pool
+- Get Gateway
+- Get SLB MUX
+- Get IP Pool
+- Add IP Pool
+- Get MAC Address Pool
 - Get Logical network
 - Get Alert
 - Close Alert
