@@ -26,10 +26,9 @@ param (
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
     [parameter(HelpMessage="Local path where the windows ISO is stored")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateScript({Test-Path -Path $_})]
-    [ValidateNotNullOrEmpty()]
     [string]$WindowsISOPath, 
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
@@ -49,12 +48,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "ascanutrg" + [Random]::new().Next(1,999),
+    [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "ascanvmrg" + [Random]::new().Next(1,999),
+    [string]$CanaryVMRG = "canvr" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
