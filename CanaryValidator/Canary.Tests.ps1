@@ -85,6 +85,7 @@ param (
 #Requires -RunAsAdministrator
 Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
+Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
 
 $storageAccName     = $CanaryUtilitiesRG + "sa"
@@ -151,6 +152,13 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
+    Invoke-Usecase -Name 'ExecuteFabricAdminScenarios' -Description "Queries for all the fabric resources as a service admin" -UsecaseBlock `
+    {
+        Invoke-Usecase -Name 'ListScaleUnitsInRegion' -Description "Queries for all the azure stack scale units in a given region" -UsecaseBlock `
+        {
+            
+        }
+    }
     if ($WindowsISOPath)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
