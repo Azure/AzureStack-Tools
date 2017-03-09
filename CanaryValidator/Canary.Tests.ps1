@@ -82,7 +82,15 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
+    [parameter(HelpMessage="Path for Linux VHD")]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [string] $LinuxImagePath,
+    [parameter(HelpMessage="Linux VHD flavor")]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
+    [string] $LinuxImageFlavor
 )
 
 #Requires -Modules AzureRM
@@ -92,14 +100,88 @@ Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
 
-$storageAccName     = $CanaryUtilitiesRG + "sa"
-$storageCtrName     = $CanaryUtilitiesRG + "sc"
-$keyvaultName       = $CanaryUtilitiesRG + "kv"
-$keyvaultCertName   = "ASCanaryVMCertificate"
-$kvSecretName       = $keyvaultName.ToLowerInvariant() + "secret"
-$VMAdminUserName    = "CanaryAdmin" 
-$VMAdminUserPass    = "CanaryAdmin@123"
-$canaryUtilPath     = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+$storageAccName         = $CanaryUtilitiesRG + "sa"
+$storageCtrName         = $CanaryUtilitiesRG + "sc"
+$keyvaultName           = $CanaryUtilitiesRG + "kv"
+$keyvaultCertName       = "ASCanaryVMCertificate"
+$kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
+$VMAdminUserName        = "CanaryAdmin" 
+$VMAdminUserPass        = "CanaryAdmin@123"
+$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+$linuxImagePublisher    = "$($LinuxImageFlavor)CanaryPublisher"
+$linuxImageOffer        = "$($LinuxImageFlavor)CanaryServer"
+$linuxImageSku          = $LinuxImageFlavor
+$CanaryImagePath        = Join-Path -Path $env:TMP -childPath "CanaryImages$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+
+function DownloadFile
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $FileUrl,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+    $retries = 20
+    $lastException = $null
+    $success = $false
+    
+    while($success -eq $false -and $retries -ge 0)
+    {
+        $success = $true
+        try 
+        {
+            $outputFile = Join-Path $OutputFolder (Split-Path -Path $FileUrl -Leaf)
+            $wc = New-Object System.Net.WebClient
+            $wc.DownloadFile($FileUrl, $outputFile) | Out-Null
+        }
+        catch
+        {
+            $success = $false            
+            $lastException = $_
+        }
+        $retries--
+        if($success -eq $false)
+        {
+            Start-Sleep -Seconds 10                        
+        }
+    }
+
+    if($success -eq $false)
+    {
+        Write-Output "Timed out trying to download $FileUrl"
+        throw $lastException
+    }
+
+    return $outputFile
+}
+
+function CopyImage
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $ImagePath,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+
+    if (Test-Path $ImagePath)
+    {
+        Copy-Item $ImagePath $OutputFolder
+        $outputfile = Join-Path $OutputFolder (Split-Path $ImagePath -Leaf)
+    }
+    elseif ($LinuxImagePath.StartsWith("http"))
+    {
+        $outputfile = DownloadFile -FileUrl $ImagePath -OutputFolder $OutputFolder
+    }
+    if (([System.IO.FileInfo]$outputfile).Extension -eq ".zip")
+    {
+        Expand-Archive -Path $outputfile -DestinationPath $OutputFolder -Force   
+    }
+
+    return (Get-ChildItem -Path $OutputFolder -File | Where-Object {$_.Extension -eq ".vhd" -or $_.Extension -eq ".vhdx"})[0].FullName
+}
 
 if(-not $EnvironmentDomainFQDN)
 {
@@ -107,6 +189,15 @@ if(-not $EnvironmentDomainFQDN)
     $EnvironmentDomainFQDN = $endptres.portalEndpoint
     $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
 }
+
+if (Test-Path -Path $CanaryImagePath)
+{
+    Remove-Item -Path $CanaryImagePath -Force -Recurse 
+}
+New-Item -Path $CanaryImagePath -ItemType Directory
+$CanaryLinuxImagePath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryImagePath
+Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $linuxImageSku -version "1.0.0" -osDiskLocalPath $CanaryLinuxImagePath -osType Linux -tenantID $AADTenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
+Remove-Item $CanaryImagePath\* -Recurse
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -423,11 +514,12 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    $canaryVMList = @()
-    $canaryVMList = Invoke-Usecase -Name 'QueryTheVMsDeployed' -Description "Queries for the VMs that were deployed using the ARM template" -UsecaseBlock `
+    $canaryWindowsVMList = @()
+    $canaryWindowsVMList = Invoke-Usecase -Name 'QueryTheVMsDeployed' -Description "Queries for the VMs that were deployed using the ARM template" -UsecaseBlock `
     {
-        $canaryVMList = @()
+        $canaryWindowsVMList = @()        
         $vmList = Get-AzureRmVm -ResourceGroupName $CanaryVMRG -ErrorAction Stop
+        $vmList = $vmList | Where-Object {$_.OSProfile.WindowsConfiguration}
         foreach ($vm in $vmList)
         {
             $vmObject = New-Object -TypeName System.Object
@@ -455,21 +547,21 @@ while ($runCount -le $NumberOfIterations)
             }
             $vmObject | Add-Member -Type NoteProperty -Name VMPrivateIP -Value $privateIP -Force
             $vmObject | Add-Member -Type NoteProperty -Name VMPublicIP -Value $publicIP -Force
-            $canaryVMList += $vmObject 
+            $canaryWindowsVMList += $vmObject 
         }
-        $canaryVMList
+        $canaryWindowsVMList
     }
-    if ($canaryVMList)
+    if ($canaryWindowsVMList)
     {   
-        $canaryVMList | Format-Table -AutoSize    
-        foreach($vm in $canaryVMList)
+        $canaryWindowsVMList | Format-Table -AutoSize    
+        foreach($vm in $canaryWindowsVMList)
         {
-            if ($vm.VMPublicIP)
+            if ($vm.VMPublicIP -and $vm.VMName.EndsWith("VM1", 'CurrentCultureIgnoreCase'))
             {
                 $publicVMName = $vm.VMName
                 $publicVMIP = $vm.VMPublicIP[0]
             }
-            if ((-not ($vm.VMPublicIP)) -and ($vm.VMPrivateIP))
+            if ((-not ($vm.VMPublicIP)) -and ($vm.VMPrivateIP) -and ($vm.VMName.EndsWith("VM2", 'CurrentCultureIgnoreCase')))
             {
                 $privateVMName = $vm.VMName
                 $privateVMIP = $vm.VMPrivateIP[0]
