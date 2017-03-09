@@ -1,4 +1,4 @@
-[CmdletBinding(DefaultParameterSetName="default")]
+#[CmdletBinding(DefaultParameterSetName="default")]
 param (    
     [parameter(HelpMessage="Tenant ID value from Azure Stack active directory")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
@@ -25,11 +25,16 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
-    [parameter(HelpMessage="Local path where the windows ISO is stored")]
+    [parameter(HelpMessage="Local path where the windows 2016/2012R2 ISO image is stored")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateScript({Test-Path -Path $_})]
     [string]$WindowsISOPath, 
+    [parameter(HelpMessage="Local path where the windows 2016/2012R2 VHD file is stored")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateScript({Test-Path -Path $_})]
+    [string]$WindowsVHDPath, 
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -162,7 +167,7 @@ while ($runCount -le $NumberOfIterations)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
         {
-            if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-DataCenter-Core" -ErrorAction SilentlyContinue))
+            if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
                 New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials  
             }
