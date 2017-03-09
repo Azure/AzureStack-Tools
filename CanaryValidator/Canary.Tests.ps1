@@ -156,20 +156,13 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    Invoke-Usecase -Name 'ExecuteFabricAdminScenarios' -Description "Queries for all the fabric resources as a service admin" -UsecaseBlock `
-    {
-        Invoke-Usecase -Name 'ListScaleUnitsInRegion' -Description "Queries for all the azure stack scale units in a given region" -UsecaseBlock `
-        {
-            
-        }
-    }
     if ($WindowsISOPath)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials  
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
             }
         }
     }
