@@ -1,10 +1,10 @@
 [CmdletBinding(DefaultParameterSetName="default")]
 param (    
-    [parameter(HelpMessage="Tenant ID value from Azure Stack active directory")]
+    [parameter(HelpMessage="Tenant ID value")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AADTenantID,
+    [string]$TenantID,
     [parameter(HelpMessage="Administrative ARM endpoint")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
