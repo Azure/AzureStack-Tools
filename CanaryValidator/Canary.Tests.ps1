@@ -1,4 +1,4 @@
-#[CmdletBinding(DefaultParameterSetName="default")]
+[CmdletBinding(DefaultParameterSetName="default")]
 param (    
     [parameter(HelpMessage="Tenant ID value from Azure Stack active directory")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
@@ -208,7 +208,8 @@ while ($runCount -le $NumberOfIterations)
             $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
             $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop            
             $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
-            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $AdminArmEndPoint -Token $asToken -QuotaIds $asCanaryQuotas -ErrorAction Stop
+            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -QuotaIds $asCanaryQuotas -ErrorAction Stop
+
         }
 
         Invoke-Usecase -Name 'CreateTenantOffer' -Description "Create a tenant offer" -UsecaseBlock `
@@ -393,10 +394,15 @@ while ($runCount -le $NumberOfIterations)
         {
             $osVersion = "2016-Datacenter-Core"
         }
+        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter" -ErrorAction SilentlyContinue)
+        {
+            $osVersion = "2016-Datacenter"
+        }
         elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
         {
             $osVersion = "2012-R2-Datacenter"
-        }
+        }        
+        
         $templateDeploymentName = "CanaryVMDeployment"
         $parameters = @{"VMAdminUserName"     = $VMAdminUserName;
                         "VMAdminUserPassword" = $VMAdminUserPass;
