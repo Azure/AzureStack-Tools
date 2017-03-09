@@ -460,6 +460,9 @@ function New-Server2016VMImage {
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
 
+        [Parameter()]
+        [bool] $CreateGalleryItem = $true,
+        
         [switch] $Net35
     )
     begin {
@@ -620,7 +623,7 @@ function New-Server2016VMImage {
                 Write-Verbose -Message "Creating Server Core Image"
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
                 $description = "This evaluation image should not be used for production workloads."
-                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description
+                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
@@ -631,7 +634,7 @@ function New-Server2016VMImage {
             try {
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
                 $description = "This evaluation image should not be used for production workloads."
-                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description
+                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
