@@ -65,6 +65,24 @@
             },
             "maxValue": 2,
             "defaultValue": 2
+        },
+        "LinuxImagePublisher": {
+            "type": "string",
+            "metadata": {
+                "description": "Maps to the publisher in the Azure Stack Platform Image Repository manifest file Eg: Canonical, Suse, OpenLogic"
+            }
+        },
+        "LinuxImageOffer": {
+            "type": "string",
+            "metadata": {
+                "description": "Maps to the Offer in the Azure Stack Platform Image Repository manifest file Eg: UbuntuServer, SlesServer, CentOS "
+            }
+        },
+        "LinuxImageSku": {
+            "type": "string",
+            "metadata": {
+                "description": "Maps to the sku in the Azure Stack Platform Image Repository manifest file Eg: 12.SP1, 6.7 , 7.2"
+            }
         }
     },
 
@@ -89,6 +107,8 @@
         "storageAccountName3ID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Storage/storageAccounts/', variables('storageAccountName3'))]",
         "storageAccountName4": "[toLower(concat(resourceGroup().name, '4SA'))]",
         "storageAccountContainerName4": "[toLower(concat(resourceGroup().name, '4SC'))]",
+        "storageAccountName5": "[toLower(concat(resourceGroup().name, '5SA'))]",
+        "storageAccountContainerName5": "[toLower(concat(resourceGroup().name, '5SC'))]",
         "publicIPAddressName1": "[toLower(concat(resourceGroup().name, 'PubIP1'))]",
         "publicIPAddressName2": "[toLower(concat(resourceGroup().name, 'PubIP2'))]",
         "publicIPAddressName3": "[toLower(concat(resourceGroup().name, 'PubIP3'))]",
@@ -199,6 +219,15 @@
             "apiVersion": "[variables('apiVersionSRP')]",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName4')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersionSRP')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName5')]",
             "location": "[variables('location')]",
             "properties": {
                 "accountType": "[variables('storageAccountType')]"
@@ -785,6 +814,65 @@
                     }
                 }
             }
-        } 
+        },
+        {
+            "apiVersion": "[variables('apiVersionCRP')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(variables('VMNamePrefix'), '3')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName5'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '2'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '4'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSizeD2')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(variables('VMNamePrefix'), '3')]",
+                    "adminUsername": "[parameters('VMAdminUserName')]",
+                    "adminPassword": "[parameters('VMAdminUserPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[parameters('LinuxImagePublisher')]",
+                        "offer": "[parameters('LinuxImageOffer')]",
+                        "sku": "[parameters('LinuxImageSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName5')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName5'),'/',variables('OSDiskName'),'.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },                
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "properties": {
+                                "primary": true
+                            },
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '2'))]"                           
+                        },
+                        {
+                            "properties": {
+                                "primary": false
+                            },
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '4'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName5')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        }
     ]
 }
