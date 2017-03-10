@@ -390,7 +390,7 @@ while ($runCount -le $NumberOfIterations)
     {        
         $kvSecretId = (Get-AzureKeyVaultSecret -VaultName $keyVaultName -Name $kvSecretName -IncludeVersions -ErrorAction Stop).Id  
         $osVersion = ""
-        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-DataCenter-Core" -ErrorAction SilentlyContinue)
+        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue)
         {
             $osVersion = "2016-Datacenter-Core"
         }
