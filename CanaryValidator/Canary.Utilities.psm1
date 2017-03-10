@@ -134,7 +134,7 @@ function Get-CanaryLonghaulResult
                                             @{Expression={$passPct = [math]::Round(((($_.Group | Where-Object Result -eq "PASS" | Measure-Object).Count/$_.Count)*100), 0); $passPct.ToString()+"%"};Label="Pass`n[Goal: >99%]"; Align = "Left"},    
                                             @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Minimum).Minimum, 0)};Label="MinTime`n[msecs]"; Align = "Left"},
                                             @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Maximum).Maximum, 0)};Label="MaxTime`n[msecs]"; Align = "Left"},
-                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Average).Average, 0)};Label="AvgTime`n[MilliSeconds]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Average).Average, 0)};Label="AvgTime`n[msecs]"; Align = "Left"},
                                             @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round([math]::Sqrt($sd/$pCount), 0)};Label="StdDev"; Align = "Left"},
                                             @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round(([math]::Round([math]::Sqrt($sd/$pCount), 2)/$avgTime), 0) * 100};Label="RelativeStdDev`n[Goal: <50%]"; Align = "Left"}
 }
@@ -702,4 +702,74 @@ function GetAzureStackBlobUri
     {
         throw $_.Exception.Message    
     }
+}
+
+function DownloadFile
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $FileUrl,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+    $retries = 20
+    $lastException = $null
+    $success = $false
+    
+    while($success -eq $false -and $retries -ge 0)
+    {
+        $success = $true
+        try 
+        {
+            $outputFile = Join-Path $OutputFolder (Split-Path -Path $FileUrl -Leaf)
+            $wc = New-Object System.Net.WebClient
+            $wc.DownloadFile($FileUrl, $outputFile) | Out-Null
+        }
+        catch
+        {
+            $success = $false            
+            $lastException = $_
+        }
+        $retries--
+        if($success -eq $false)
+        {
+            Start-Sleep -Seconds 10                        
+        }
+    }
+
+    if($success -eq $false)
+    {
+        Write-Output "Timed out trying to download $FileUrl"
+        throw $lastException
+    }
+
+    return $outputFile
+}
+
+function CopyImage
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $ImagePath,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+
+    if (Test-Path $ImagePath)
+    {
+        Copy-Item $ImagePath $OutputFolder
+        $outputfile = Join-Path $OutputFolder (Split-Path $ImagePath -Leaf)
+    }
+    elseif ($ImagePath.StartsWith("http"))
+    {
+        $outputfile = DownloadFile -FileUrl $ImagePath -OutputFolder $OutputFolder
+    }
+    if (([System.IO.FileInfo]$outputfile).Extension -eq ".zip")
+    {
+        Expand-Archive -Path $outputfile -DestinationPath $OutputFolder -Force   
+    }
+
+    return (Get-ChildItem -Path $OutputFolder -File | Where-Object {$_.Extension -eq ".vhd" -or $_.Extension -eq ".vhdx"})[0].FullName
 }
