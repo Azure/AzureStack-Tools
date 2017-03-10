@@ -674,4 +674,3 @@ Function CreateGalleyItem{
         $azpkg = '{0}\{1}' -f $workdir, $galleryItemName
         return Get-Item -LiteralPath $azpkg
     }
-
