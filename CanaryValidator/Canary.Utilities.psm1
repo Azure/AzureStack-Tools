@@ -703,3 +703,73 @@ function GetAzureStackBlobUri
         throw $_.Exception.Message    
     }
 }
+
+function DownloadFile
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $FileUrl,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+    $retries = 20
+    $lastException = $null
+    $success = $false
+    
+    while($success -eq $false -and $retries -ge 0)
+    {
+        $success = $true
+        try 
+        {
+            $outputFile = Join-Path $OutputFolder (Split-Path -Path $FileUrl -Leaf)
+            $wc = New-Object System.Net.WebClient
+            $wc.DownloadFile($FileUrl, $outputFile) | Out-Null
+        }
+        catch
+        {
+            $success = $false            
+            $lastException = $_
+        }
+        $retries--
+        if($success -eq $false)
+        {
+            Start-Sleep -Seconds 10                        
+        }
+    }
+
+    if($success -eq $false)
+    {
+        Write-Output "Timed out trying to download $FileUrl"
+        throw $lastException
+    }
+
+    return $outputFile
+}
+
+function CopyImage
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $ImagePath,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+
+    if (Test-Path $ImagePath)
+    {
+        Copy-Item $ImagePath $OutputFolder
+        $outputfile = Join-Path $OutputFolder (Split-Path $ImagePath -Leaf)
+    }
+    elseif ($ImagePath.StartsWith("http"))
+    {
+        $outputfile = DownloadFile -FileUrl $ImagePath -OutputFolder $OutputFolder
+    }
+    if (([System.IO.FileInfo]$outputfile).Extension -eq ".zip")
+    {
+        Expand-Archive -Path $outputfile -DestinationPath $OutputFolder -Force   
+    }
+
+    return (Get-ChildItem -Path $OutputFolder -File | Where-Object {$_.Extension -eq ".vhd" -or $_.Extension -eq ".vhdx"})[0].FullName
+}
