@@ -150,14 +150,8 @@ Function Add-VMImage{
         }
     }
 
-    if ($ArmEndpoint.EndsWith("/")) 
-    {
-        $uri = $ArmEndpoint + 'subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
-    }
-    else
-    {
-        $uri = $ArmEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
-    }
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+    $uri = $ArmEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
 
@@ -327,14 +321,8 @@ Function Remove-VMImage{
         Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
-    if ($ArmEndpoint.EndsWith("/")) 
-    {
-        $uri = $ArmEndpoint + 'subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
-    }
-    else
-    {
-        $uri = $ArmEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
-    }
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+    $uri = $ArmEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
     try{
