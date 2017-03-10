@@ -88,7 +88,7 @@
 
     "variables": {
         "apiVersion": "2015-06-15",
-        "apiVersionCRP": "2015-06-15",
+        "apiVersionCRP": "2016-03-30",
         "apiVersionSRP": "2015-06-15",
         "apiVersionNRP": "2015-06-15",
         "imagePublisher": "MicrosoftWindowsServer",
