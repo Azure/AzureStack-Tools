@@ -42,7 +42,7 @@ param (
     [parameter(HelpMessage="Linux OS sku")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $linuxOSSku = "Canonical",
+    [string] $LinuxOSSku = "14.04.3-LTS",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -108,39 +108,9 @@ $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName        = "CanaryAdmin" 
 $VMAdminUserPass        = "CanaryAdmin@123"
 $canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-$linuxImagePublisher    = "$($linuxOSSku)CanaryPublisher"
-$linuxImageOffer        = "$($linuxOSSku)CanaryServer"
-
-if(-not $EnvironmentDomainFQDN)
-{
-    $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
-    $EnvironmentDomainFQDN = $endptres.portalEndpoint
-    $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
-}
-
-Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
-{
-    $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-    if (Test-Path -Path $CanaryCustomImageFolder)
-    {
-        Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
-    }
-    New-Item -Path $CanaryCustomImageFolder -ItemType Directory
-    $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $linuxOSSku -version "1.0.0" -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $AADTenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
-    Remove-Item $CanaryCustomImagePath -Recurse
-}
-
-if ($WindowsISOPath)
-{
-    Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
-    {
-        if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
-        {
-            New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
-        }
-    }
-}
+$linuxImagePublisher    = "Canonical"
+$linuxImageOffer        = "UbuntuServer"
+$linuxImageVersion      = "1.0.0"
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -161,6 +131,13 @@ while ($runCount -le $NumberOfIterations)
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
     $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
 
+    if(-not $EnvironmentDomainFQDN)
+    {
+        $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
+        $EnvironmentDomainFQDN = $endptres.portalEndpoint
+        $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
+    }
+
     Invoke-Usecase -Name 'CreateAdminAzureStackEnv' -Description "Create Azure Stack environment $SvcAdminEnvironmentName" -UsecaseBlock `
     {
         $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $AdminArmEndpoint 
@@ -178,7 +155,7 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdmin' -Description "Login to $SvcAdminEnvironmentName as service administrator" -UsecaseBlock `
     {     
-        Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $AADTenantID -ErrorAction Stop
+        Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
     }
 
     Invoke-Usecase -Name 'SelectDefaultProviderSubscription' -Description "Select the Default Provider Subscription" -UsecaseBlock `
@@ -188,8 +165,35 @@ while ($runCount -le $NumberOfIterations)
         {
             $defaultSubscription | Select-AzureRmSubscription
         }
-    }    
-    
+    } 
+       
+    if ($WindowsISOPath)
+    {
+        Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
+        {
+            if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
+            {
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+            }
+        }
+    }
+
+    Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
+    {
+        if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+        {
+            $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+            if (Test-Path -Path $CanaryCustomImageFolder)
+            {
+                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+            }
+            New-Item -Path $CanaryCustomImageFolder -ItemType Directory
+            $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
+            Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
+            Remove-Item $CanaryCustomImageFolder -Recurse
+        }
+    }
+
     if ($TenantAdminCredentials)
     {
         $subscriptionRGName                 = "ascansubscrrg" + [Random]::new().Next(1,999)
@@ -228,9 +232,9 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'CreateTenantPlan' -Description "Create a tenant plan" -UsecaseBlock `
         {      
-            $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
+            $asToken = NewAzureStackToken -AADTenantId $TenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
             $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop            
-            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
+            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $TenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
             New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -QuotaIds $asCanaryQuotas -ErrorAction Stop
 
         }
@@ -255,7 +259,7 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'LoginToAzureStackEnvAsTenantAdmin' -Description "Login to $TntAdminEnvironmentName as tenant administrator" -UsecaseBlock `
         {     
-            Add-AzureRmAccount -EnvironmentName $TntAdminEnvironmentName -Credential $TenantAdminCredentials -TenantId $AADTenantID -ErrorAction Stop
+            Add-AzureRmAccount -EnvironmentName $TntAdminEnvironmentName -Credential $TenantAdminCredentials -TenantId $TenantID -ErrorAction Stop
         }
 
         Invoke-Usecase -Name 'CreateTenantSubscription' -Description "Create a subcsription for the tenant and select it as the current subscription" -UsecaseBlock `
@@ -437,7 +441,7 @@ while ($runCount -le $NumberOfIterations)
                         "secretUrlWithVersion"  = $kvSecretId;
                         "LinuxImagePublisher"   = $linuxImagePublisher;
                         "LinuxImageOffer"       = $linuxImageOffer;
-                        "LinuxImageSku"         = $linuxOSSku}   
+                        "LinuxImageSku"         = $LinuxOSSku}   
         $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters
         if (-not $templateError)
         {
@@ -725,7 +729,7 @@ while ($runCount -le $NumberOfIterations)
 
                 Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
                 {     
-                    Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $AADTenantID -ErrorAction Stop
+                    Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
                 }
 
                 Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
