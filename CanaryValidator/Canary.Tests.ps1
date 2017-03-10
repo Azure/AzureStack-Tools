@@ -119,7 +119,7 @@ while ($runCount -le $NumberOfIterations)
     {
         Remove-Item -Path $canaryUtilPath -Force -Recurse 
     }
-    New-Item -Path $canaryUtilPath -ItemType Directory
+    New-Item -Path $canaryUtilPath -ItemType Directory | Out-Null
 
     #
     # Start Canary 
