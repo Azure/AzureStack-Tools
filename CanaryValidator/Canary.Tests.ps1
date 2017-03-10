@@ -34,7 +34,15 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateScript({Test-Path -Path $_})]
-    [string]$WindowsVHDPath, 
+    [string]$WindowsVHDPath,
+    [parameter(HelpMessage="Path for Linux VHD")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [string] $LinuxImagePath = "https://partner-images.canonical.com/azure/azure_stack/ubuntu-14.04-LTS-microsoft_azure_stack-20161208-9.vhd.zip",
+    [parameter(HelpMessage="Linux OS sku")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [string] $linuxOSSku = "Canonical",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -82,15 +90,7 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
-    [parameter(HelpMessage="Path for Linux VHD")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
-    [string] $LinuxImagePath,
-    [parameter(HelpMessage="Linux VHD flavor")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
-    [string] $LinuxImageFlavor
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
 )
 
 #Requires -Modules AzureRM
@@ -108,80 +108,8 @@ $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName        = "CanaryAdmin" 
 $VMAdminUserPass        = "CanaryAdmin@123"
 $canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-$linuxImagePublisher    = "$($LinuxImageFlavor)CanaryPublisher"
-$linuxImageOffer        = "$($LinuxImageFlavor)CanaryServer"
-$linuxImageSku          = $LinuxImageFlavor
-$CanaryImagePath        = Join-Path -Path $env:TMP -childPath "CanaryImages$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-
-function DownloadFile
-{
-    param
-    (
-        [Parameter(Mandatory=$true)]
-        [String] $FileUrl,
-        [Parameter(Mandatory=$true)]
-        [String] $OutputFolder
-    )
-    $retries = 20
-    $lastException = $null
-    $success = $false
-    
-    while($success -eq $false -and $retries -ge 0)
-    {
-        $success = $true
-        try 
-        {
-            $outputFile = Join-Path $OutputFolder (Split-Path -Path $FileUrl -Leaf)
-            $wc = New-Object System.Net.WebClient
-            $wc.DownloadFile($FileUrl, $outputFile) | Out-Null
-        }
-        catch
-        {
-            $success = $false            
-            $lastException = $_
-        }
-        $retries--
-        if($success -eq $false)
-        {
-            Start-Sleep -Seconds 10                        
-        }
-    }
-
-    if($success -eq $false)
-    {
-        Write-Output "Timed out trying to download $FileUrl"
-        throw $lastException
-    }
-
-    return $outputFile
-}
-
-function CopyImage
-{
-    param
-    (
-        [Parameter(Mandatory=$true)]
-        [String] $ImagePath,
-        [Parameter(Mandatory=$true)]
-        [String] $OutputFolder
-    )
-
-    if (Test-Path $ImagePath)
-    {
-        Copy-Item $ImagePath $OutputFolder
-        $outputfile = Join-Path $OutputFolder (Split-Path $ImagePath -Leaf)
-    }
-    elseif ($LinuxImagePath.StartsWith("http"))
-    {
-        $outputfile = DownloadFile -FileUrl $ImagePath -OutputFolder $OutputFolder
-    }
-    if (([System.IO.FileInfo]$outputfile).Extension -eq ".zip")
-    {
-        Expand-Archive -Path $outputfile -DestinationPath $OutputFolder -Force   
-    }
-
-    return (Get-ChildItem -Path $OutputFolder -File | Where-Object {$_.Extension -eq ".vhd" -or $_.Extension -eq ".vhdx"})[0].FullName
-}
+$linuxImagePublisher    = "$($linuxOSSku)CanaryPublisher"
+$linuxImageOffer        = "$($linuxOSSku)CanaryServer"
 
 if(-not $EnvironmentDomainFQDN)
 {
@@ -190,14 +118,29 @@ if(-not $EnvironmentDomainFQDN)
     $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
 }
 
-if (Test-Path -Path $CanaryImagePath)
+Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
 {
-    Remove-Item -Path $CanaryImagePath -Force -Recurse 
+    $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+    if (Test-Path -Path $CanaryCustomImageFolder)
+    {
+        Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+    }
+    New-Item -Path $CanaryCustomImageFolder -ItemType Directory
+    $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
+    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $linuxOSSku -version "1.0.0" -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $AADTenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
+    Remove-Item $CanaryCustomImagePath -Recurse
 }
-New-Item -Path $CanaryImagePath -ItemType Directory
-$CanaryLinuxImagePath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryImagePath
-Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $linuxImageSku -version "1.0.0" -osDiskLocalPath $CanaryLinuxImagePath -osType Linux -tenantID $AADTenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
-Remove-Item $CanaryImagePath\* -Recurse
+
+if ($WindowsISOPath)
+{
+    Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
+    {
+        if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
+        {
+            New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+        }
+    }
+}
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -245,18 +188,7 @@ while ($runCount -le $NumberOfIterations)
         {
             $defaultSubscription | Select-AzureRmSubscription
         }
-    }
-
-    if ($WindowsISOPath)
-    {
-        Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
-        {
-            if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
-            {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $AADTenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
-            }
-        }
-    }
+    }    
     
     if ($TenantAdminCredentials)
     {
@@ -495,14 +427,17 @@ while ($runCount -le $NumberOfIterations)
         }        
         
         $templateDeploymentName = "CanaryVMDeployment"
-        $parameters = @{"VMAdminUserName"     = $VMAdminUserName;
-                        "VMAdminUserPassword" = $VMAdminUserPass;
-                        "ASCanaryUtilRG"      = $CanaryUtilitiesRG;
-                        "ASCanaryUtilSA"      = $storageAccName;
-                        "ASCanaryUtilSC"      = $storageCtrName;
-                        "vaultName"           = $keyvaultName;
-                        "windowsOSVersion"    = $osVersion;
-                        "secretUrlWithVersion"= $kvSecretId}   
+        $parameters = @{"VMAdminUserName"       = $VMAdminUserName;
+                        "VMAdminUserPassword"   = $VMAdminUserPass;
+                        "ASCanaryUtilRG"        = $CanaryUtilitiesRG;
+                        "ASCanaryUtilSA"        = $storageAccName;
+                        "ASCanaryUtilSC"        = $storageCtrName;
+                        "vaultName"             = $keyvaultName;
+                        "windowsOSVersion"      = $osVersion;
+                        "secretUrlWithVersion"  = $kvSecretId;
+                        "LinuxImagePublisher"   = $linuxImagePublisher;
+                        "LinuxImageOffer"       = $linuxImageOffer;
+                        "LinuxImageSku"         = $linuxOSSku}   
         $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters
         if (-not $templateError)
         {
