@@ -1,6 +1,8 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
-# {FileName} {Version} {DateTime}
-# {BuildRepo} {BuildBranch} {BuildType}-{BuildArchitecture}
+﻿<###################################################
+ #                                                 #
+ #  Copyright (c) Microsoft. All rights reserved.  #
+ #                                                 #
+ ##################################################>
 
 <#
 .Synopsis
@@ -28,9 +30,20 @@ function Initialize-GraphEnvironment
         [ValidateNotNull()]
         [SecureString] $RefreshToken = $null,
 
+        # The client identifier (application identifier) of a service principal with which to acquire an access token targeting Graph.
+        [Parameter(ParameterSetName='ServicePrincipal_AAD')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ClientId = $null,
+
+        # The client certificate of a service principal with which to acquire an access token targeting Graph.
+        [Parameter(ParameterSetName='ServicePrincipal_AAD')]
+        [ValidateNotNull()]
+        [System.Security.Cryptography.X509Certificates.X509Certificate2] $ClientCertificate = $null,
+
         # The name of the supported Cloud Environment in which the target Graph Service is available.
         [Parameter(ParameterSetName='Credential_AAD')]
         [Parameter(ParameterSetName='RefreshToken_AAD')]
+        [Parameter(ParameterSetName='ServicePrincipal_AAD')]
         [ValidateSet('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')]
         [string] $Environment = 'AzureCloud',
 
@@ -61,9 +74,13 @@ function Initialize-GraphEnvironment
     {
         Write-Verbose "Initializing the module to use Graph environment '$Environment' (with refresh token) in directory tenant '$DirectoryTenantId'." -Verbose
     }
+    elseif ($ClientId -and $ClientCertificate)
+    {
+        Write-Verbose "Initializing the module to use Graph environment '$Environment' for service principal '$($ClientId)' in directory tenant '$DirectoryTenantId' with certificate $($ClientCertificate.Thumbprint)." -Verbose
+    }
     else
     {
-        Write-Warning "A user credential or refresh token was not provided. Graph API calls cannot be made until one is provided. Please run 'Initialize-GraphEnvironment' again with a valid credential or refresh token."
+        Write-Warning "A user credential, refresh token, or service principal info was not provided. Graph API calls cannot be made until one is provided. Please run 'Initialize-GraphEnvironment' again with valid credentials."        
     }
 
     $graphEnvironmentTemplate = @{}
@@ -79,8 +96,6 @@ function Initialize-GraphEnvironment
 
                 LoginEndpoint = [Uri]"https://login.windows.net/$DirectoryTenantId"
                 GraphEndpoint = [Uri]"https://graph.windows.net/$DirectoryTenantId"
-
-                CommonLoginEndpoint = "https://login.windows.net/common"
 
                 LoginBaseEndpoint = [Uri]"https://login.windows.net/"
                 GraphBaseEndpoint = [Uri]"https://graph.windows.net/"
@@ -172,7 +187,7 @@ function Initialize-GraphEnvironment
         }
     }
 
-    # TODO: if this data varies from environment to environment, declare it in switch above
+    # Note: if this data varies from environment to environment, declare it in switch above
     $graphEnvironmentTemplate += @{
         Environment       = $Environment
         DirectoryTenantId = $DirectoryTenantId
@@ -184,6 +199,11 @@ function Initialize-GraphEnvironment
             RefreshToken          = $RefreshToken
             AccessTokenUpdateTime = $null
             AccessTokenExpiresIn  = $null
+            ClientRequestId       = [guid]::NewGuid().ToString()
+            ServicePrincipal = [pscustomobject]@{
+                ClientId    = $ClientId
+                Certificate = $ClientCertificate
+            }
         }
 
         Applications = [pscustomobject]@{
@@ -210,9 +230,10 @@ function Initialize-GraphEnvironment
     }
 
     $Script:GraphEnvironment = [pscustomobject]$graphEnvironmentTemplate
+    Write-Verbose "Graph Environment initialized: client-request-id: $($Script:GraphEnvironment.User.ClientRequestId)"
 
     # Attempt to log-in the user
-    if ($UserCredential -or $RefreshToken)
+    if ($UserCredential -or $RefreshToken -or ($ClientId -and $ClientCertificate))
     {
         Update-GraphAccessToken -Verbose
     }
@@ -240,9 +261,12 @@ function Get-GraphEnvironmentInfo
 #>
 function Assert-GraphEnvironmentIsInitialized
 {
-    if (-not $Script:GraphEnvironment -or -not ($Script:GraphEnvironment.User.Credential -or $Script:GraphEnvironment.User.RefreshToken))
+    if (-not $Script:GraphEnvironment -or
+        -not ($Script:GraphEnvironment.User.Credential -or
+             $Script:GraphEnvironment.User.RefreshToken -or
+             ($Script:GraphEnvironment.User.ServicePrincipal.ClientId -and $Script:GraphEnvironment.User.ServicePrincipal.Certificate)))
     {
-        throw New-Object InvalidOperationException("The graph environment has not yet been initialized. Please run 'Initialize-GraphEnvironment' with a valid user credential or refresh token.")
+        throw New-Object InvalidOperationException("The graph environment has not yet been initialized. Please run 'Initialize-GraphEnvironment' with a valid credential or refresh token.")
     }
 }
 
@@ -282,7 +306,7 @@ function Assert-GraphConnection
             # Trace the message to verbose stream as well in case error is not traced in same file as other verbose logs
             $traceMessage = "An error occurred while trying to verify connection to the graph endpoint '$($Script:GraphEnvironment.OpenIdMetadata)': $_`r`n`r`nAdditional details: $traceResponse"
             Write-Verbose "ERROR: $traceMessage"
-
+            
             throw New-Object System.InvalidOperationException($traceMessage)
         }
     }
@@ -313,6 +337,16 @@ function Get-GraphToken
         [ValidateNotNullOrEmpty()]
         [SecureString] $RefreshToken = $null,
 
+        # The client identifier (application identifier) of a service principal with which to acquire an access token targeting the specified resource.
+        [Parameter(Mandatory=$true, ParameterSetName='ServicePrincipal')]
+        [ValidateNotNull()]
+        [string] $ClientId = $null,
+
+        # The client certificate of a service principal with which to acquire an access token targeting targeting the specified resource.
+        [Parameter(Mandatory=$true, ParameterSetName='ServicePrincipal')]
+        [ValidateNotNull()]
+        [System.Security.Cryptography.X509Certificates.X509Certificate2] $ClientCertificate = $null,
+
         # Indicates whether the user credential or refresh token should be used from the initialized environment data.
         [Parameter(Mandatory=$true, ParameterSetName='Environment')]
         [Switch] $UseEnvironmentData
@@ -330,18 +364,21 @@ function Get-GraphToken
         {
             $RefreshToken = $Script:GraphEnvironment.User.RefreshToken
         }
+        elseif ($Script:GraphEnvironment.User.ServicePrincipal.ClientId -and $Script:GraphEnvironment.User.ServicePrincipal.Certificate)
+        {
+            $ClientId          = $Script:GraphEnvironment.User.ServicePrincipal.ClientId
+            $ClientCertificate = $Script:GraphEnvironment.User.ServicePrincipal.Certificate
+        }
     }
 
-    $requestBody = @{
-        client_id = $Script:GraphEnvironment.Applications.PowerShell.Id
-        scope     = "openid"
-        resource  = $Resource
-    }
+    $requestBody = @{ resource = $Resource }
 
     if ($Credential)
     {
         $requestBody += @{
-            grant_type = "password"
+            client_id  = $Script:GraphEnvironment.Applications.PowerShell.Id
+            grant_type = 'password'
+            scope      = 'openid'
             username   = $Credential.UserName
             password   = $Credential.GetNetworkCredential().Password
         }
@@ -351,11 +388,86 @@ function Get-GraphToken
     elseif ($RefreshToken)
     {
         $requestBody += @{
-            grant_type    = "refresh_token"
+            client_id     = $Script:GraphEnvironment.Applications.PowerShell.Id
+            grant_type    = 'refresh_token'
+            scope         = 'openid'
             refresh_token = (New-Object System.Net.NetworkCredential('refreshToken', $RefreshToken)).Password
         }
 
         Write-Verbose "Attempting to acquire a token for resource '$Resource' using a refresh token"
+    }
+    elseif ($ClientId -and $ClientCertificate)
+    {
+        function ConvertTo-Base64UrlEncode([byte[]]$bytes) { [System.Convert]::ToBase64String($bytes).Replace('/','_').Replace('+','-').Trim('=') }
+
+        $tokenHeaders = [ordered]@{
+            alg = 'RS256'
+            x5t = ConvertTo-Base64UrlEncode $ClientCertificate.GetCertHash()
+        }
+
+        $tokenClaims = [ordered]@{
+            aud = "$($Script:GraphEnvironment.LoginEndpoint)".Trim('/') + '/oauth2/token'
+            exp = [long](([datetime]::UtcNow - [datetime]'1970-01-01 00:00:00').TotalSeconds + 3600)
+            iss = $ClientId
+            jti = [guid]::NewGuid().ToString()
+            nbf = [long](([datetime]::UtcNow - [datetime]'1970-01-01 00:00:00').TotalSeconds - 90)
+            sub = $ClientId
+        }
+
+        Write-Verbose "Preparing client assertion with token header: '$(ConvertTo-Json $tokenHeaders -Compress)' and claims: $(ConvertTo-Json $tokenClaims)"
+
+        # Note - we escape the forward slashes ('/') as the ConvertTo-Json cmdlet does not. This may not actually be necessary.
+        $tokenParts = @()
+        $tokenParts += ConvertTo-Base64UrlEncode ([System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $tokenHeaders -Depth 10 -Compress).Replace('/', '\/')))
+        $tokenParts += ConvertTo-Base64UrlEncode ([System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $tokenClaims -Depth 10 -Compress).Replace('/', '\/')))
+
+        $sha256Hash = ''
+        $sha256 = [System.Security.Cryptography.SHA256]::Create()
+        try
+        {
+            $sha256Hash = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($tokenParts -join '.'))
+        }
+        finally
+        {
+            if ($sha256) { $sha256.Dispose(); $sha256 = $null }
+        }
+
+        # Note - the default instance of the RSACryptoServiceProvider instantiated on the client certificate may only support SHA1.
+        # E.g. Even when "$($ClientCertificate.SignatureAlgorithm.FriendlyName)" evaluates to "sha256RSA", the value of
+        # "$($ClientCertificate.PrivateKey.SignatureAlgorithm)" may evaulate to "http://www.w3.org/2000/09/xmldsig#rsa-sha1".
+        # Furthermore, the private key is not marked as exportable, so we cannot "simply" instantiate a new RSACryptoServiceProvider instance.
+        # We must first create new CSP parameters with a "better" cryptographic service provider that supports SHA256, and use those parameters
+        # to instantiate a "better" RSACryptoServiceProvider which also supports SAH256. Failure to do this will result in the following error:
+        # "Exception calling "CreateSignature" with "1" argument(s): "Invalid algorithm specified."
+        # It may be possible to bypass this issue of the certificate is generated with the "correct" cryptographic service provider, but if the certificate
+        # was created by a CA or if the provider type was not the "correct" type, then this workaround must be used.
+        $csp = New-Object System.Security.Cryptography.CspParameters(
+            ($providerType=24),
+            ($providerName='Microsoft Enhanced RSA and AES Cryptographic Provider'),
+            $ClientCertificate.PrivateKey.CspKeyContainerInfo.KeyContainerName)
+        $csp.Flags = [System.Security.Cryptography.CspProviderFlags]::UseMachineKeyStore
+
+        $signatureBytes = $null
+        $rsa = New-Object System.Security.Cryptography.RSACryptoServiceProvider($csp)
+        try
+        {
+            $signatureBytes = $rsa.SignHash($sha256Hash, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+        }
+        finally
+        {
+            if ($rsa) { $rsa.Dispose(); $rsa = $null }
+        }
+
+        $tokenParts += ConvertTo-Base64UrlEncode $signatureBytes
+
+        $requestBody += @{
+            client_id             = $ClientId
+            grant_type            = 'client_credentials'
+            client_assertion_type = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
+            client_assertion      = $tokenParts -join '.'
+        }
+
+        Write-Verbose "Attempting to acquire a token for resource '$Resource' using a service principal credential (id='$($ClientId)', thumbprint='$($ClientCertificate.Thumbprint)')"
     }
     else
     {
@@ -389,7 +501,7 @@ function Update-GraphAccessToken
     $response = Get-GraphToken -UseEnvironmentData
 
     $Script:GraphEnvironment.User.AccessToken           = $response.access_token
-    $Script:GraphEnvironment.User.RefreshToken          = $response.refresh_token
+    $Script:GraphEnvironment.User.RefreshToken          = if ($response.refresh_token) { ConvertTo-SecureString $response.refresh_token -AsPlainText -Force } else { $null }
     $Script:GraphEnvironment.User.AccessTokenUpdateTime = [DateTime]::UtcNow
     $Script:GraphEnvironment.User.AccessTokenExpiresIn  = $response.expires_in
 }
@@ -461,7 +573,10 @@ function Invoke-GraphApi
     $graphApiRequest = @{
         Method      = $Method
         Uri         = '{0}/{1}' -f $BaseEndpoint.AbsoluteUri.TrimEnd('/'), $ApiPath.Trim('/')
-        Headers     = @{ "User-Agent" = "Microsoft AzureStack Graph PowerShell" }
+        Headers     = @{
+            "User-Agent"        = "Microsoft AzureStack Graph PowerShell"
+            "client-request-id" = $Script:GraphEnvironment.User.ClientRequestId
+        }
         ContentType = $ContentType
     }
 
@@ -762,7 +877,7 @@ function Get-GraphObjectWithRetry
         [ValidateRange(1, [int]::MaxValue)]
         [int] $DelayInSecondsBetweenAttempts,
 
-        # The minimal dealy in seconds that the script should sleep before returning successfully (if a fatal error is encountered, delay is not enforced).
+        # The minimal delay in seconds that the script should sleep before returning successfully (if a fatal error is encountered, delay is not enforced).
         [Parameter(Mandatory=$false)]
         [ValidateRange(1, [int]::MaxValue)]
         [int] $MinimumDelayInSeconds = 0
@@ -796,6 +911,41 @@ function Get-GraphObjectWithRetry
     }
 
     Write-Output $result
+}
+
+<#
+.Synopsis
+   Gets an existing Graph application service principal object (returns an error if the application service principal object is not found).
+#>
+function Get-GraphApplicationServicePrincipal
+{
+    [CmdletBinding(DefaultParameterSetName='ByApplicationId')]
+    [OutputType([pscustomobject])]
+    param
+    (
+        # The application identifier.
+        [Parameter(Mandatory=$true, ParameterSetName='ByApplicationId')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationId,
+
+        # The application identifier URI.
+        [Parameter(Mandatory=$true, ParameterSetName='ByApplicationIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationIdentifierUri
+    )
+
+    $filter = if ($ApplicationId) { "appId eq '$ApplicationId'" } else { "servicePrincipalNames/any(c:c eq '$ApplicationIdentifierUri')" }
+
+    $servicePrincipal = (Invoke-GraphApi -ApiPath servicePrincipals -QueryParameters @{ '$filter' = $filter }).value
+
+    if (-not $servicePrincipal)
+    {
+        Write-Error "Application service principal with identifier '${ApplicationId}${ApplicationIdentifierUri}' not found"
+    }
+    else
+    {
+        Write-Output $servicePrincipal
+    }
 }
 
 <#
@@ -842,11 +992,15 @@ function Initialize-GraphApplicationServicePrincipal
 
             # Note: we poll for the object after creating it to avoid issues with replication delay
             $primaryServicePrincipal = Invoke-GraphApi -Method Post -ApiPath servicePrincipals -Body (ConvertTo-Json $servicePrincipalRequestBody)
-            $primaryServicePrincipal = Get-GraphObjectWithRetry -GetScript $getScript -MaxAttempts 10 -DelayInSecondsBetweenAttempts 10 -MinimumDelayInSeconds 3
+            $primaryServicePrincipal = Get-GraphObjectWithRetry -GetScript $getScript -MaxAttempts 10 -DelayInSecondsBetweenAttempts 10 -MinimumDelayInSeconds 5
         }
         else
         {
             Write-Verbose "Service principal for application '$ApplicationId' already created in AAD directory tenant." -Verbose
+            if ($Tags)
+            {
+                Update-GraphApplicationServicePrincipalTags -ApplicationId $ApplicationId -Tags $Tags
+            }
         }
 
         Write-Output $primaryServicePrincipal
@@ -855,34 +1009,117 @@ function Initialize-GraphApplicationServicePrincipal
 
 <#
 .Synopsis
+   Updates the tags on an existing application service principal.
+#>
+function Update-GraphApplicationServicePrincipalTags
+{
+    [CmdletBinding(DefaultParameterSetName='ByApplicationId')]
+    [OutputType([pscustomobject])]
+    param
+    (
+        # The application identifier.
+        [Parameter(Mandatory=$true, ParameterSetName='ByApplicationId')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationId,
+
+        # The application identifier URI.
+        [Parameter(Mandatory=$true, ParameterSetName='ByApplicationIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationIdentifierUri,
+
+        # Additional tags to include in the application service principal (if not already present).
+        [Parameter(Mandatory=$true)]
+        [string[]] $Tags = @()
+    )
+
+    $params = if ($ApplicationId) { @{ ApplicationId = $ApplicationId } } else { @{ ApplicationIdentifierUri = $ApplicationIdentifierUri } }
+    $servicePrincipal = Get-GraphApplicationServicePrincipal @params
+
+    $updatedTags = New-Object System.Collections.Generic.HashSet[string](,[string[]]$servicePrincipal.tags)
+    foreach ($tag in $Tags)
+    {
+        if ($updatedTags.Add($tag))
+        {
+            Write-Verbose "Adding new tag to service principal: '$tag'"
+        }
+        else
+        {
+            Write-Verbose "Tag already present on service principal: '$tag'"
+        }
+    }
+
+    Invoke-GraphApi -Method Patch -ApiPath "servicePrincipals/$($ServicePrincipal.objectId)" -Body (ConvertTo-Json ([pscustomobject]@{
+        'tags@odata.type' = 'Collection(Edm.String)'
+        tags = $updatedTags
+    }))
+}
+
+<#
+.Synopsis
    Idempotently creates an OAuth2Permission grant for an application service principal against another application service principal in Graph with the specified properties (service principals are created if they do not exist).
 #>
 function Initialize-GraphOAuth2PermissionGrant
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='ClientAppId_ResourceAppId')]
     param
     (
         # The application identifier of the client application.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceIdentifierUri')]
         [ValidateNotNullOrEmpty()]
         [string] $ClientApplicationId,
 
+        # The application identifier URI of the client application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ClientApplicationIdentifierUri,
+
         # The application identifier of the resource application.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceAppId')]
         [ValidateNotNullOrEmpty()]
         [string] $ResourceApplicationId,
+
+        # The application identifier URI of the resource application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceApplicationIdentifierUri,
 
         # The scope of the permission to grant (e.g. 'user_impersonation' [default value]).
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string] $Scope = 'user_impersonation'
+        [string] $Scope = 'user_impersonation',
+
+        # The consent type of the permission to grant (e.g. 'AllPrincipals' [default value]).
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet('AllPrincipals', 'Principal')]
+        [string] $ConsentType = 'AllPrincipals'
     )
 
     # Ensure the application service principals exist in the directory tenant
-    $clientApplicationServicePrincipal   = Initialize-GraphApplicationServicePrincipal -ApplicationId $ClientApplicationId
-    $resourceApplicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceApplicationId
 
-    # TODO: Do we need to support updating expired permission grants? The documentation appears to say these properties should be ignored: "https://msdn.microsoft.com/en-us/library/azure/ad/graph/api/entity-and-complex-type-reference#OAuth2PermissionGrantEntity"
+    $clientApplicationServicePrincipal = if ($ClientApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ClientApplicationId
+    }
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ClientApplicationIdentifierUri
+    }
+
+    $resourceApplicationServicePrincipal = if ($ResourceApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceApplicationId
+    }
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ResourceApplicationIdentifierUri
+    }
+    
+    # TODO: Do we need to support updating expired permission grants? The documentation appears to say these properties should be ignored: "https://msdn.microsoft.com/en-us/library/azure/ad/graph/api/entity-and-complex-type-reference#oauth2permissiongrant-entity"
     $queryParameters = @{
         '$filter' = "resourceId eq '$($resourceApplicationServicePrincipal.objectId)' and clientId eq '$($clientApplicationServicePrincipal.objectId)'"
         '$top'    = '999'
@@ -894,7 +1131,7 @@ function Initialize-GraphOAuth2PermissionGrant
             'odata.type' = 'Microsoft.DirectoryServices.OAuth2PermissionGrant'
             clientId     = $clientApplicationServicePrincipal.objectId
             resourceId   = $resourceApplicationServicePrincipal.objectId
-            consentType  = "AllPrincipals"
+            consentType  = $ConsentType
             scope        = $Scope
             startTime    = [DateTime]::UtcNow.ToString('o')
             expiryTime   = [DateTime]::UtcNow.AddYears(1).ToString('o')
@@ -957,7 +1194,7 @@ function Initialize-GraphDirectoryRoleMembership
     $response = Invoke-GraphApi -Method Post -ApiPath $apiPath -Body (ConvertTo-Json ([pscustomobject]@{
         securityEnabledOnly = $false
     }))
-
+    
     if ($response.value -icontains $roleObjectId)
     {
         Write-Verbose "Membership already granted to directory role '$RoleDisplayName' ($($roleObjectId)) for application service principal '$($applicationServicePrincipal.appDisplayName)'." -Verbose
@@ -1055,6 +1292,11 @@ function Initialize-GraphApplication
         [ValidateNotNullOrEmpty()]
         [string[]] $OAuth2PermissionGrantsByAppUris = @(),
 
+        # A collection of Application Identifier URIs for known client applications which should be associated to this application.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string[]] $KnownClientApplicationsByAppUris = @(),
+
         # Tags to include in the application service principal.
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -1064,9 +1306,13 @@ function Initialize-GraphApplication
         [Parameter()]
         [Switch] $DeleteAndCreateNew,
 
-        # Indicates that the application should be available to other tenants (multi-tenanted).
+        # Indicates that the application should be available to other tenants (multi-tenanted). True by default.
         [Parameter()]
-        [Switch] $AvailableToOtherTenants
+        [Switch] $AvailableToOtherTenants = $true,
+
+        # Indicates that the application service principal should be given membership in the directory readers role to activate the role permission ReadDirectoryData. True by default.
+        [Parameter()]
+        [Switch] $UseDirectoryReadersRolePermission = $true
     )
 
     if ($ClientCertificateThumbprint)
@@ -1078,8 +1324,9 @@ function Initialize-GraphApplication
     {
         if ($DeleteAndCreateNew)
         {
-            # Very special case of updating multi-tenanted application before removing it
-            if ($existingApplication.availableToOtherTenants) {
+            # Very special case of updating multi-tenanted application before removing them
+            if ($existingApplication.availableToOtherTenants)
+            {
                 Write-Verbose "Disable multi-tenancy before removing the application..." -Verbose
                 $existingApplication.availableToOtherTenants = $false
                 $apiPath = "directoryObjects/$($existingApplication.objectId)/Microsoft.DirectoryServices.Application"
@@ -1121,13 +1368,18 @@ function Initialize-GraphApplication
         identifierUris              = @(@($existingApplication.identifierUris) + @($IdentifierUri) | Select -Unique | Where { $_ -ne $null })
     }
 
-    # Enable multi-tenancy if requested by the caller
-    if ($AvailableToOtherTenants) {
+    # Enable multi-tenancy if applicable
+    if ($AvailableToOtherTenants)
+    {
+        if ("$($existingApplication.availableToOtherTenants)" -ieq 'false')
+        {
+            Write-Warning "Existing application with identifier '$IdentifierUri' was previously created with configuration 'availableToOtherTenants = false'. Updating configuration to 'availableToOtherTenants = true'." -ErrorAction Stop
+        }
+
         $requestBody += @{
             availableToOtherTenants = $true
         }
     }
-
 
     # Initialize the application reply URLs, preserving any that already exist, and idempotently adding the specified URI into the collection
     if ($ReplyAddress.Count -gt 0)
@@ -1267,6 +1519,31 @@ function Initialize-GraphApplication
         }
     }
 
+    # Initialize KnownClientApplications
+    foreach ($appUri in $KnownClientApplicationsByAppUris)
+    {
+        if (-not ($clientApplication = Find-GraphApplication -AppUri $appUri))
+        {
+            Write-Error "Application '$appUri' does not exist. Unable to reference known client application relationship for this application to the target application."
+            continue
+        }
+
+        if (-not $requestBody['knownClientApplications'])
+        {
+            $requestBody['knownClientApplications'] = @(@($existingApplication.knownClientApplications) | Where { $_ -ne $null })
+        }
+
+        if ($requestBody['knownClientApplications'] -inotcontains $clientApplication.appId)
+        {
+            Write-Verbose "Known client application '$appUri' ($($clientApplication.appId)) added to this application ('$($IdentifierUri)')" -Verbose
+            $requestBody['knownClientApplications'] += $clientApplication.appId
+        }
+        else
+        {
+            Write-Verbose "Known client application '$appUri' ($($clientApplication.appId)) already added to this application ('$($IdentifierUri)')" -Verbose
+        }
+    }
+
     # Create or update the application
     $requestBodyAsJson = $requestBody | ConvertTo-Json -Depth 10
 
@@ -1282,7 +1559,7 @@ function Initialize-GraphApplication
         # Note: the post response does not always contain the accurate application state, so make a GET call to ensure it is accurate
         Write-Verbose "Creating application in AAD..." -Verbose
         $inaccurateResponse = Invoke-GraphApi -Method Post -ApiPath 'applications' -Body $requestBodyAsJson -ErrorAction Stop
-        $application = Get-GraphObjectWithRetry -GetScript {Find-GraphApplication -AppUri $IdentifierUri} -MaxAttempts 10 -DelayInSecondsBetweenAttempts 10 -MinimumDelayInSeconds 5
+        $application = Get-GraphObjectWithRetry -GetScript {Find-GraphApplication -AppUri $IdentifierUri} -MaxAttempts 10 -DelayInSecondsBetweenAttempts 10 -MinimumDelayInSeconds 20
     }
 
     # If the application does not have the user_impersonation permission, update it to include this permission
@@ -1344,7 +1621,7 @@ function Initialize-GraphApplication
     }
 
     # Initialize directory role membership
-    if ($ApplicationAadPermissions -icontains 'ReadDirectoryData')
+    if ($UseDirectoryReadersRolePermission -and ($ApplicationAadPermissions -icontains 'ReadDirectoryData'))
     {
         $params = @{
             ApplicationId   = $application.appId
@@ -1356,34 +1633,6 @@ function Initialize-GraphApplication
 
     # Return the application in its final (current) state
     Get-GraphApplication -AppUri $IdentifierUri | Write-Output
-}
-
-function Patch-GraphApplication
-{
-    [CmdletBinding()]
-    param
-    (
-       # The display name of the application.
-       [Parameter(Mandatory=$true)]
-       [ValidateNotNullOrEmpty()]
-       [string] $IdentifierUri,
-
-       # Known client applications to establish relationship between apps for consent framework purposes.
-       [Parameter()]
-       [ValidateNotNullOrEmpty()]
-       [string[]] $KnownClientApplications = @()
-    )
-
-    $existingApplication = Find-GraphApplication -AppUri $IdentifierUri -ErrorAction Stop
-
-    $requestBody = @{
-        knownClientApplications = $KnownClientApplications
-    }
-
-    Write-Verbose "Updating application in Azure Active Directory..." -Verbose
-    $requestBodyAsJson = ConvertTo-Json -Depth 10 $requestBody
-    $apiPath = "directoryObjects/$($existingApplication.objectId)/Microsoft.DirectoryServices.Application"
-    $noContentResponse = Invoke-GraphApi -Method Patch -ApiPath $apiPath -Body $requestBodyAsJson -ErrorAction Stop
 }
 
 [System.Reflection.Assembly]::LoadWithPartialName('System.Web') | Out-Null
@@ -1414,17 +1663,18 @@ Export-ModuleMember -Function @(
     #'Assert-GraphConnection'
     'Get-GraphToken'
     'Update-GraphAccessToken'
-    #'Invoke-GraphApi'
+    'Invoke-GraphApi'
     'Get-GraphDefaultVerifiedDomain'
     'Find-GraphApplication'
     'Get-GraphApplication'
     'Remove-GraphObject'
     'Find-GraphApplicationDataByServicePrincipalTag'
     #'Get-GraphObjectWithRetry'
+    'Get-GraphApplicationServicePrincipal'
     'Initialize-GraphApplicationServicePrincipal'
+    'Update-GraphApplicationServicePrincipalTags'
     'Initialize-GraphOAuth2PermissionGrant'
     'Initialize-GraphDirectoryRoleMembership'
     'Initialize-GraphApplication'
-    'Patch-GraphApplication'
     #'ConvertTo-QueryString'
 )
