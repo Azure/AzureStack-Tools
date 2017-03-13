@@ -15,7 +15,7 @@ param
     [Parameter(Mandatory=$true)]
     [ValidateNotNull()]
     [ValidateScript({$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
-    [uri] $ResourceManagerEndpoint,
+    [uri] $TenantResourceManagerEndpoint,
 
     # The name of the directory tenant being onboarded.
     [Parameter(Mandatory=$true)]
@@ -49,7 +49,7 @@ function Invoke-Main
     $applicationRegistrationParams = @{
         Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
         Headers = @{ Authorization = "Bearer $armAccessToken" }
-        Uri     = "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
+        Uri     = "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
     }
     $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select -ExpandProperty value
 
@@ -84,7 +84,7 @@ function Invoke-Main
 
 function Initialize-AzureRmEnvironment([string]$environmentName)
 {
-    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
     Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
 
     # resolve the directory tenant ID from the name
@@ -95,7 +95,7 @@ function Initialize-AzureRmEnvironment([string]$environmentName)
         ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
         ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
         AdTenant                                 = $directoryTenantId
-        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+        ResourceManagerEndpoint                  = $TenantResourceManagerEndpoint
         GalleryEndpoint                          = $endpoints.galleryEndpoint
         GraphEndpoint                            = $endpoints.graphEndpoint
         GraphAudience                            = $endpoints.graphEndpoint

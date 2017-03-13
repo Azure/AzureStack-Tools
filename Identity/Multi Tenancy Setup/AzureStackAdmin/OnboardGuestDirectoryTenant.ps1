@@ -15,7 +15,7 @@ param
     [Parameter(Mandatory=$true)]
     [ValidateNotNull()]
     [ValidateScript({$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
-    [uri] $ResourceManagerEndpoint,
+    [uri] $AdminResourceManagerEndpoint,
 
     # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
     [Parameter(Mandatory=$true)]
@@ -74,7 +74,7 @@ function Invoke-Main
 
 function Initialize-AzureRmEnvironment([string]$environmentName)
 {
-    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($AdminResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
     Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
 
     # resolve the directory tenant ID from the name
@@ -85,7 +85,7 @@ function Initialize-AzureRmEnvironment([string]$environmentName)
         ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
         ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
         AdTenant                                 = $directoryTenantId
-        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+        ResourceManagerEndpoint                  = $AdminResourceManagerEndpoint
         GalleryEndpoint                          = $endpoints.galleryEndpoint
         GraphEndpoint                            = $endpoints.graphEndpoint
         GraphAudience                            = $endpoints.graphEndpoint
