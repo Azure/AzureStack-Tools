@@ -54,6 +54,8 @@ Import-Module 'AzureRm.Profile' -RequiredVersion '1.0.4.2' -Force -Verbose:$fals
 
 function Invoke-Main
 {
+    Write-Warning "This script is intended to work only with the initial TP3 release of Azure Stack and will be deprecated."
+ 
     # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
     $azureEnvironment = Initialize-AzureRmEnvironment 'AzureStackAdmin'
     $azureAccount     = Initialize-AzureRmUserAccount $azureEnvironment
