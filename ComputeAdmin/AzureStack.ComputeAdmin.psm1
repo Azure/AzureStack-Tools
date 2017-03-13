@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
 #requires -Modules AzureStack.Connect
@@ -150,8 +150,7 @@ Function Add-VMImage{
         }
     }
 
-    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
-    $uri = $ArmEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
 
@@ -321,8 +320,7 @@ Function Remove-VMImage{
         Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
-    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
-    $uri = $ArmEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
     try{
@@ -373,9 +371,6 @@ function New-Server2016VMImage {
 
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
-        
-        [Parameter()]
-        [bool] $CreateGalleryItem = $true,
 
         [switch] $Net35
     )
@@ -536,16 +531,8 @@ function New-Server2016VMImage {
             try {
                 Write-Verbose -Message "Creating Server Core Image"
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
-                if ($CreateGalleryItem)
-                {
-                    $description = "This evaluation image should not be used for production workloads."
-                    Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem
-                }
-                else
-                {
-                    Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath -CreateGalleryItem $false @PublishArguments
-                }
-
+                $description = "This evaluation image should not be used for production workloads."
+                Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
@@ -555,15 +542,8 @@ function New-Server2016VMImage {
             Write-Verbose -Message "Creating Server Full Image" -Verbose
             try {
                 CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
-                if ($CreateGalleryItem)
-                {                
-                    $description = "This evaluation image should not be used for production workloads."
-                    Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem
-                }
-                else
-                {
-                    Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath -CreateGalleryItem $false @PublishArguments
-                }
+                $description = "This evaluation image should not be used for production workloads."
+                Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
@@ -662,3 +642,4 @@ Function CreateGalleyItem{
         $azpkg = '{0}\{1}' -f $workdir, $galleryItemName
         return Get-Item -LiteralPath $azpkg
     }
+
