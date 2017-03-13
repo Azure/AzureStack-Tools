@@ -12,13 +12,23 @@ Expand-Archive master.zip -DestinationPath . -Force
 Set-Location -Path ".\AzureStack-Tools-master\CanaryValidator" -PassThru
 ```
 
-# To execute Canary as Tenant Administrator
+# To execute Canary as Tenant Administrator (if Windows Server 2016 or Windows Server 2012-R2 images are already present in the PIR)
 ```powershell
 # Install-Module AzureRM -RequiredVersion 1.2.8 -Force
 # Install-Module AzureStack
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -AADTenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
+```
+
+# To execute Canary as Tenant Administrator (if Windows Server 2016 or Windows Server 2012-R2 images are not present in PIR)
+```powershell
+# Download the WS2016 ISO image from: https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016, and place it on your local machine
+# Install-Module AzureRM -RequiredVersion 1.2.8 -Force
+# Install-Module AzureStack
+$TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
+$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
+.\Canary.Tests.ps1  -AADTenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>" -WindowsISOPath "<Local ISO path>"
 ```
 
 # To execute Canary as Service Administrator
