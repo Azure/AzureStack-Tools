@@ -331,8 +331,8 @@ function NewStorageQuota
     )    
 
     $quotaName                  = "ascanarystoragequota"
-    $capacityInGb               = 100
-    $numberOfStorageAccounts    = 20
+    $capacityInGb               = 1000
+    $numberOfStorageAccounts    = 200
     $ApiVersion                 = "2015-12-01-preview"
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Storage.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
@@ -371,9 +371,9 @@ function NewComputeQuota
     )  
 
     $quotaName      = "ascanarycomputequota"
-    $vmCount        = 10
-    $memoryLimitMB  = 10240
-    $coresLimit     = 10
+    $vmCount        = 100
+    $memoryLimitMB  = 102400
+    $coresLimit     = 100
     $ApiVersion     = "2015-12-01-preview"
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Compute.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
