@@ -15,7 +15,7 @@ Set-Location -Path ".\AzureStack-Tools-master\CanaryValidator" -PassThru
 # To execute Canary as Tenant Administrator (if Windows Server 2016 or Windows Server 2012-R2 images are already present in the PIR)
 ```powershell
 # Install-Module AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-# Install-Module AzureStack
+# Install-Module AzureStack -RequiredVersion 1.2.8 -Force
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
@@ -25,7 +25,7 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 ```powershell
 # Download the WS2016 ISO image from: https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016, and place it on your local machine
 # Install-Module AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-# Install-Module AzureStack
+# Install-Module AzureStack-RequiredVersion 1.2.8 -Force
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>" -WindowsISOPath "<Local ISO path>"
@@ -34,7 +34,7 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 # To execute Canary as Service Administrator
 ```powershell
 # Install-Module AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-# Install-Module AzureStack
+# Install-Module AzureStack-RequiredVersion 1.2.8 -Force
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
 ```
