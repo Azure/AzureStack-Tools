@@ -13,7 +13,7 @@ https://github.com/Azure/Azure-QuickStart-Templates/
 # Usage
 ```powershell
 $TemplatePath = "<Provide Template(s) Path>"
-$CapabilitiesPath = ".\AzureStackCapabilities_TP2.json"
+$CapabilitiesPath = ".\AzureStackCapabilities_TP3.json"
 Test-AzureRMTemplate -TemplatePath $TemplatePath -CapabilitiesPath $CapabilitiesPath -Verbose #-IncludeComputeCapabilities -IncludeStorageCapabilities
 ```
 #Reporting Usage
