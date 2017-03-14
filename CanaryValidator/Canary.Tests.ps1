@@ -442,10 +442,10 @@ while ($runCount -le $NumberOfIterations)
                         "LinuxImagePublisher"   = $linuxImagePublisher;
                         "LinuxImageOffer"       = $linuxImageOffer;
                         "LinuxImageSku"         = $LinuxOSSku}   
-        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters
+        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
         if (-not $templateError)
         {
-            New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
+            New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
         }
         else 
         {
