@@ -2,7 +2,7 @@
 
 ```powershell
 Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-Install-Module -Name AzureStack -Scope CurrentUser
+Install-Module -Name AzureStack -RequiredVersion 1.2.8 -Scope CurrentUser
 ```
 Then make sure the following modules are imported:
 
