@@ -381,12 +381,17 @@ function Get-AzureStackAdminSubTokenHeader
 
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
 
+    $savedWarningPreference = $WarningPreference
+    $WarningPreference = 'SilentlyContinue' 
+
     $adminToken = Get-AzureStackToken `
     -Authority $authority `
     -Resource $activeDirectoryServiceEndpointResourceId `
     -AadTenantId $tenantID `
     -ClientId $powershellClientId `
-    -Credential $azureStackCredentials
+    -Credential $azureStackCredentials 
+
+    $WarningPreference = $savedWarningPreference
 
     $headers = @{ Authorization = ("Bearer $adminToken") }
     

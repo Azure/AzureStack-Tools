@@ -108,8 +108,10 @@ Function Add-VMImage{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     #pre validate if image is not already deployed
+    $VMImageAlreadyAvailable = $false
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue) {
-        Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present. Please remove it first or change on of the values' -f $publisher,$offer,$sku,$version) -ErrorAction Stop
+        $VMImageAlreadyAvailable = $true
+        Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
     }
 
     #potentially the RG was not cleaned up when exception happened in previous run. Test for exist
@@ -129,13 +131,12 @@ Function Add-VMImage{
         $container = New-AzureStorageContainer -Name $containerName -Permission Blob
     }
 
-    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
+    if(($pscmdlet.ParameterSetName -eq "VMImageFromLocal") -and (-not $VMImageAlreadyAvailable))
     {
         $storageAccount.PrimaryEndpoints.Blob
         $script:osDiskName = Split-Path $osDiskLocalPath -Leaf
         $script:osDiskBlobURIFromLocal = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$osDiskName
-        #Add-AzureRmVhd -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath -OverWrite
-        Set-AzureStorageBlobContent -File $osDiskLocalPath -Container $containerName -Blob $osDiskName
+        Add-AzureRmVhd -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath -OverWrite
 
         $script:dataDiskBlobURIsFromLocal = New-Object System.Collections.ArrayList
         if ($PSBoundParameters.ContainsKey('dataDisksLocalPaths'))
@@ -238,10 +239,13 @@ Function Add-VMImage{
 
     $RequestBody = '{"Properties":{'+$propertyBody+'}}'
 
-    Invoke-RestMethod -Method PUT -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $Headers
+    if(-not $VMImageAlreadyAvailable){
+        Invoke-RestMethod -Method PUT -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $Headers
+    }
 
     $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
 
+    $downloadingStatusCheckCount = 0
     while($platformImage.Properties.ProvisioningState -ne 'Succeeded')
     {
         if($platformImage.Properties.ProvisioningState -eq 'Failed')
@@ -255,12 +259,21 @@ Function Add-VMImage{
         }
 
         Write-Host "Downloading";
-        Start-Sleep -Seconds 4
+        Start-Sleep -Seconds 10
+        $downloadingStatusCheckCount++
+        if($downloadingStatusCheckCount % 30 -eq 0){
+            Write-Verbose -Message "Obtaining refreshed token..."
+            $subscription, $Headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+        }
         $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     }
 
     if($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded')
     {
+        #reaquire storage account context
+        Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
+        $container = Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue
+
         $GalleryItem = CreateGalleyItem -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -title $title -description $description 
         $blob = $container| Set-AzureStorageBlobContent  –File $GalleryItem.FullName  –Blob $galleryItem.Name
         $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$galleryItem.Name
@@ -295,10 +308,6 @@ Function Remove-VMImage{
         [String] $version,
 
         [Parameter(Mandatory=$true)]
-        [ValidateSet('Windows' ,'Linux')]
-        [String] $osType,
-
-        [Parameter(Mandatory=$true)]
         [ValidateNotNullorEmpty()]
         [String] $tenantID,
 
@@ -314,11 +323,13 @@ Function Remove-VMImage{
 
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
+    $VMImageExists = $false
     if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue -ov images) {
-        Write-Verbose "VM Image has been added to Azure Stack - continuing"
+        Write-Verbose "VM Image has been added to Azure Stack - continuing" -Verbose
+        $VMImageExists = $true
     }
     else{
-        Write-Error -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present.' -f $publisher,$offer,$sku) -ErrorAction Stop
+        Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present and will not be removed. Marketplace item may still be removed.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
     $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
@@ -326,13 +337,16 @@ Function Remove-VMImage{
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
     try{
-        Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
+        if($VMImageExists){
+            Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
+        }
     }
     catch{
         Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
     }
 
     if(-not $KeepMarketplaceItem){
+        Write-Verbose "Removing the marketplace item for the VM Image." -Verbose
         $name = "$offer$sku"
         #Remove periods so that the offer and sku can be retrieved from the Marketplace Item name
         $name =$name -replace "\.","-"
@@ -373,6 +387,8 @@ function New-Server2016VMImage {
 
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
+
+        [String] $location = 'local',
         
         [Parameter()]
         [bool] $CreateGalleryItem = $true,
@@ -404,12 +420,16 @@ function New-Server2016VMImage {
                     Write-Error -Message "VHD was not created" -ErrorAction Stop
                 }
                 Write-Verbose -Message "Preparing VHD"
-                $VHDMount = Mount-DiskImage -ImagePath $VHDPath -PassThru -ErrorAction Stop
-                $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
-                $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
-                $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
-                $volume = Format-Volume -Partition $partition -FileSystem NTFS -confirm:$false -ErrorAction Stop
-                $VHDDriveLetter = $volume.DriveLetter
+
+                $VHDDriveLetter = (Mount-VHD -Path  $VHDPath -Passthru |  `
+                get-disk -number {$_.DiskNumber} | `
+                Initialize-Disk -PartitionStyle MBR -PassThru | `
+                New-Partition -UseMaximumSize -AssignDriveLetter:$False -MbrType IFS | `
+                Format-Volume -Confirm:$false -FileSystem NTFS -force | `
+                get-partition | `
+                Add-PartitionAccessPath -AssignDriveLetter -PassThru | `
+                get-volume).DriveLetter  
+
                 Write-Verbose -Message "VHD is mounted at drive letter: $VHDDriveLetter"
 
                 Write-Verbose -Message "Mounting ISO"
@@ -441,11 +461,11 @@ function New-Server2016VMImage {
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             } finally {
-                if ($VHDMount) {
-                    $VHDMount | Dismount-DiskImage
+                if (Test-Path -Path "$VHDDriveLetter`:\") {
+                    $VHDPath | Dismount-DiskImage 
                 }
                 if ($IsoMount) {
-                    $IsoMount | Dismount-DiskImage
+                    $IsoMount | Dismount-DiskImage       
                 }
             }
         }
@@ -461,7 +481,7 @@ function New-Server2016VMImage {
     process {
         Write-Verbose -Message "Checking authorization against your Azure Stack environment" -Verbose
     
-        $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+        $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint -ErrorAction Stop)
 
         Write-Verbose -Message "Authorization verified" -Verbose
         
@@ -529,21 +549,37 @@ function New-Server2016VMImage {
             tenantID = $tenantID
             azureStackCredentials = $AzureStackCredentials
             ArmEndpoint = $ArmEndpoint
+            location = $location
         }
         
         if ($Version -eq 'Core' -or $Version -eq 'Both') {
+            
+            $sku = "2016-Datacenter-Core"
+
+            #Pre-validate that the VM Image is not already available
+            $VMImageAlreadyAvailable = $false
+            if (Get-AzureRmVMImage -Location $PublishArguments.location -PublisherName $PublishArguments.publisher -Offer $PublishArguments.offer -Skus $sku -Version $PublishArguments.version -ErrorAction SilentlyContinue) {
+                $VMImageAlreadyAvailable = $true
+                Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
+            }
+
             $ImagePath = "$ModulePath\Server2016DatacenterCoreEval.vhd" 
             try {
-                Write-Verbose -Message "Creating Server Core Image"
-                CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
+                if ((!(Test-Path -Path $ImagePath)) -and (!$VMImageAlreadyAvailable)) {
+                    Write-Verbose -Message "Creating Server Core Image"
+                    CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
+                }else{
+                    Write-Verbose -Message "Server Core VHD already found."
+                }
+
                 if ($CreateGalleryItem)
                 {
                     $description = "This evaluation image should not be used for production workloads."
-                    Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem
+                    Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem
                 }
                 else
                 {
-                    Add-VMImage -sku "2016-Datacenter-Core" -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
+                    Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
                 }
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
@@ -551,17 +587,31 @@ function New-Server2016VMImage {
         }
         if ($Version -eq 'Full' -or $Version -eq 'Both') {
             $ImagePath = "$ModulePath\Server2016DatacenterFullEval.vhd"
-            Write-Verbose -Message "Creating Server Full Image" -Verbose
+            
             try {
-                CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
+                $sku = "2016-Datacenter"
+
+                #Pre-validate that the VM Image is not already available
+                $VMImageAlreadyAvailable = $false
+                if (Get-AzureRmVMImage -Location $PublishArguments.location -PublisherName $PublishArguments.publisher -Offer $PublishArguments.offer -Skus $sku -Version $PublishArguments.version -ErrorAction SilentlyContinue) {
+                    $VMImageAlreadyAvailable = $true
+                    Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
+                }
+
+                if ((!(Test-Path -Path $ImagePath)) -and (!$VMImageAlreadyAvailable)) {
+                    Write-Verbose -Message "Creating Server Full Image" -Verbose
+                    CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
+                }else{
+                    Write-Verbose -Message "Server Full VHD already found."
+                }
                 if ($CreateGalleryItem)
                 {
                     $description = "This evaluation image should not be used for production workloads."
-                    Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem
+                    Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem
                 }
                 else
                 {
-                    Add-VMImage -sku "2016-Datacenter" -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
+                    Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
                 }
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
