@@ -74,7 +74,7 @@ function Log-JSONReport
             {
                 $CurrentUseCase.Add("Name", $name)
                 $CurrentUseCase.Add("StartTime", $time)
-                $UseCaseStack.Push($UseCase)
+                $UseCaseStack.Push($CurrentUseCase)
             }
         }
         elseif ($Message.Contains("[END]"))
