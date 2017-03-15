@@ -449,7 +449,7 @@ while ($runCount -le $NumberOfIterations)
         }
         else 
         {
-            throw [System.Exception] "Template validation failed. `n$templateError"
+            throw [System.Exception] "Template validation failed. `n$($templateError.Message)"
         }
     }
 
