@@ -8,8 +8,8 @@ if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
     $Global:wttLogFileName = (Join-Path $PSScriptRoot "AzureStack_CanaryValidation_Test.wtl")    
 }
 
-$UseCase = @{}
-[System.Collections.Stack] $AllUseCases = New-Object System.Collections.Stack
+$CurrentUseCase = @{}
+[System.Collections.Stack] $UseCaseStack = New-Object System.Collections.Stack
 filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
 
 
@@ -57,49 +57,57 @@ function Log-JSONReport
         if ($Message.Contains("[START]"))
         {
             $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim().Replace("######", "").Trim()
-            if ($AllUseCases.Count)
+            if ($UseCaseStack.Count)
             {
                 $nestedUseCase = @{
                 "Name" = $name
                 "StartTime" = $time
                 }
-                if (-not $AllUseCases.Peek().UseCase)
+                if (-not $UseCaseStack.Peek().UseCase)
                 {
-                    $AllUseCases.Peek().Add("UseCase", @())
+                    $UseCaseStack.Peek().Add("UseCase", @())
                 }
-                $AllUseCases.Peek().UseCase += , $nestedUseCase
-                $AllUseCases.Push($nestedUseCase)
+                $UseCaseStack.Peek().UseCase += , $nestedUseCase
+                $UseCaseStack.Push($nestedUseCase)
             }
             else
             {
-                $UseCase.Add("Name", $name)
-                $UseCase.Add("StartTime", $time)
-                $AllUseCases.Push($UseCase)
+                $CurrentUseCase.Add("Name", $name)
+                $CurrentUseCase.Add("StartTime", $time)
+                $UseCaseStack.Push($CurrentUseCase)
             }
         }
         elseif ($Message.Contains("[END]"))
         {
-            $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
-            $AllUseCases.Peek().Add("EndTime", $time)
-            $AllUseCases.Peek().Add("Result", $result)
-            $AllUseCases.Pop() | Out-Null
-            if (-not $AllUseCases.Count)
+            $result = ""            
+            if ($UseCaseStack.Peek().UseCase -and ($UseCaseStack.Peek().UseCase | Where-Object {$_.Result -eq "FAIL"}))
+            {
+                $result = "FAIL" 
+            }
+            else
+            {
+                $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
+            }
+            $UseCaseStack.Peek().Add("Result", $result)
+            $UseCaseStack.Peek().Add("EndTime", $time)            
+            $UseCaseStack.Pop() | Out-Null
+            if (-not $UseCaseStack.Count)
             {
                 $jsonReport = ConvertFrom-Json (Get-Content -Path $Global:JSONLogFile -Raw)
-                $jsonReport.UseCases += , $UseCase
+                $jsonReport.UseCases += , $CurrentUseCase
                 $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
-                $UseCase.Clear()
+                $CurrentUseCase.Clear()
             }
         }
         elseif ($Message.Contains("[DESCRIPTION]"))
         {
             $description = $Message.Substring($Message.IndexOf("[DESCRIPTION]") + "[DESCRIPTION]".Length).Trim()
-            $AllUseCases.Peek().Add("Description", $description)
+            $UseCaseStack.Peek().Add("Description", $description)
         }
         elseif ($Message.Contains("[EXCEPTION]"))
         {
             $exception = $Message.Substring($Message.IndexOf("[EXCEPTION]") + "[EXCEPTION]".Length).Trim()
-            $AllUseCases.Peek().Add("Exception", $exception)
+            $UseCaseStack.Peek().Add("Exception", $exception)
         }
     }
 }
