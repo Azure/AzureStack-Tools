@@ -20,7 +20,7 @@ Adding a VM Image requires that you obtain the GUID value of your Directory Tena
 $aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
 ```
 
-Otherwise, it can be retrieved directly from your Azure Stack deployment. First, add your host to the list of TrustedHosts:
+Otherwise, it can be retrieved directly from your Azure Stack deployment. This method can also be used for AD FS. First, add your host to the list of TrustedHosts:
 ```powershell
 Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
 ```
@@ -41,6 +41,8 @@ An example usage is the following:
 $ISOPath = "<Path to ISO>"
 New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant  
 ```
+
+This command may show a popup prompt that can be ignored without issue.
 
 To ensure that the Windows Server 2016 VM Image has the latest cumulative update, provide the -IncludeLatestCU parameter.
 

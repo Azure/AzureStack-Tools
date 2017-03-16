@@ -440,15 +440,12 @@ function New-Server2016VMImage {
                 }
                 Write-Verbose -Message "Preparing VHD"
 
-                Mount-DiskImage -ImagePath $VHDPath -Passthru
-                $disknum = (Get-DiskImage -ImagePath $VHDPath).Number
-                $VHDDriveLetter = (get-disk -number  $disknum| `
-                Initialize-Disk -PartitionStyle MBR -PassThru | `
-                New-Partition -UseMaximumSize -AssignDriveLetter:$False -IsActive:$true | `
-                Format-Volume -Confirm:$false -FileSystem NTFS -force | `
-                get-partition | `
-                Add-PartitionAccessPath -AssignDriveLetter -PassThru | `
-                get-volume).DriveLetter
+                $VHDMount = Mount-DiskImage -ImagePath $VHDPath -PassThru -ErrorAction Stop
+                $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
+                $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
+                $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
+                $volume = Format-Volume -Partition $partition -FileSystem NTFS -confirm:$false -ErrorAction Stop
+                $VHDDriveLetter = $volume.DriveLetter
 
                 Write-Verbose -Message "VHD is mounted at drive letter: $VHDDriveLetter"
 
@@ -481,12 +478,8 @@ function New-Server2016VMImage {
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             } finally {
-                $retryAttempts = 0;
-                while ((Test-Path -Path "$VHDDriveLetter`:\") -and ($retryAttempts -lt 5)) {
-                    Write-Verbose -Message "Attempting to dismount the VHD..."
-                    Get-DiskImage -ImagePath $VHDPath | Dismount-DiskImage
-                    $retryAttempts = $retryAttempts+1;
-                    sleep 1
+                if ($VHDMount) {
+                    $VHDMount | Dismount-DiskImage
                 }
                 if ($IsoMount) {
                     $IsoMount | Dismount-DiskImage       
