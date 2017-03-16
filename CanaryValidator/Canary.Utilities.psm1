@@ -198,28 +198,6 @@ function End-Scenario
     {
         CloseWTTLogger    
     }
-    if ($UseCaseStack.Count)
-    {
-        while($UseCaseStack.Count)
-        {
-            if ($UseCaseStack.Peek().UseCase)
-            {
-                if ($UseCaseStack.Peek().UseCase | Where-Object {$_.Result -eq "FAIL"})
-                {
-                    $UseCaseStack.Peek().Add("Result", "FAIL")
-                }
-                else
-                {
-                    $UseCaseStack.Peek().Add("Result", "PASS")
-                }
-            }
-            $UseCaseStack.Pop() | Out-Null
-        }                 
-        $jsonReport = ConvertFrom-Json (Get-Content -Path $Global:JSONLogFile -Raw)
-        $jsonReport.UseCases += , $CurrentUseCase
-        $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
-        $CurrentUseCase.Clear()
-    }
 }
 
 function Invoke-Usecase
@@ -271,7 +249,6 @@ function Invoke-Usecase
         }
         if (-not $Global:ContinueOnFailure)
         {
-            End-Scenario
             throw $_.Exception
         }
     }
