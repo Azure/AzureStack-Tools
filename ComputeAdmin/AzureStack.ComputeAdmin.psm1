@@ -90,6 +90,16 @@ Function Add-VMImage{
         [bool] $CreateGalleryItem = $true
     )
 
+    if(!$ARMEndpoint.Contains('https://')){
+        if($ARMEndpoint.Contains('http://')){
+            $ARMEndpoint = $ARMEndpoint.Substring(7)
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+
+        }else{
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }
+    }
+
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title'))
     {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
@@ -321,6 +331,15 @@ Function Remove-VMImage{
 
     )
 
+    if(!$ARMEndpoint.Contains('https://')){
+        if($ARMEndpoint.Contains('http://')){
+            $ARMEndpoint = $ARMEndpoint.Substring(7)
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }else{
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }
+    }
+
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     $VMImageExists = $false
@@ -479,6 +498,12 @@ function New-Server2016VMImage {
         }
     }
     process {
+
+        Write-Verbose -Message "Checking ISO path for a valid ISO." -Verbose
+        if(!$IsoPath.ToLower().contains('.iso')){
+            Write-Error -Message "ISO path is not a valid ISO file." -ErrorAction Stop
+        }
+
         Write-Verbose -Message "Checking authorization against your Azure Stack environment" -Verbose
     
         $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint -ErrorAction Stop)

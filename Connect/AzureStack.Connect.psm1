@@ -8,14 +8,12 @@
     .SYNOPSIS
     Registers all providers on the all subscription
 #>
-function Register-AllAzureRmProvidersOnAllSubscriptions
-{
-    foreach($s in (Get-AzureRmSubscription))
-    {
+function Register-AllAzureRmProvidersOnAllSubscriptions {
+    foreach($s in (Get-AzureRmSubscription)) {
         Select-AzureRmSubscription -SubscriptionId $s.SubscriptionId | Out-Null
         Write-Progress $($s.SubscriptionId + " : " + $s.SubscriptionName)
-        Register-AllAzureRmProviders
-    }
+    Register-AllAzureRmProviders
+}
 }
 
 Export-ModuleMember Register-AllAzureRmProvidersOnAllSubscriptions
@@ -24,8 +22,7 @@ Export-ModuleMember Register-AllAzureRmProvidersOnAllSubscriptions
     .SYNOPSIS
     Registers all providers on the newly created subscription
 #>
-function Register-AllAzureRmProviders
-{
+function Register-AllAzureRmProviders {
     Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force
 }
 
@@ -35,11 +32,10 @@ Export-ModuleMember Register-AllAzureRmProviders
     .SYNOPSIS
     Obtains Aazure Active Directory tenant that was used when deploying the Azure Stack instance
 #>
-function Get-AzureStackAadTenant
-{
+function Get-AzureStackAadTenant {
     param (
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
-	    [string] $HostComputer,        
+        [string] $HostComputer,        
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
@@ -70,16 +66,16 @@ function Get-AzureStackAadTenant
     Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
     return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         {            
-            Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
-            $configFile = Get-ChildItem -Path C:\EceStore -Recurse | ?{-not $_.PSIsContainer} | sort Length -Descending | select -First 1
-            $customerConfig = [xml] (Get-Content -Path $configFile.FullName)
+        Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
+        $configFile = Get-ChildItem -Path C:\EceStore -Recurse | ?{-not $_.PSIsContainer} | sort Length -Descending | select -First 1
+        $customerConfig = [xml] (Get-Content -Path $configFile.FullName)
 
-            $Parameters = $customerConfig.CustomerConfiguration
-            $fabricRole = $Parameters.Role.Roles.Role | ?{$_.Id -eq "Fabric"}
-            $allFabricRoles = $fabricRole.Roles.ChildNodes
-            $idProviderRole = $allFabricRoles | ?{$_.Id -eq "IdentityProvider"}
-            $idProviderRole.PublicInfo.AADTenant.Id
-        }
+        $Parameters = $customerConfig.CustomerConfiguration
+        $fabricRole = $Parameters.Role.Roles.Role | ?{$_.Id -eq "Fabric"}
+        $allFabricRoles = $fabricRole.Roles.ChildNodes
+        $idProviderRole = $allFabricRoles | ?{$_.Id -eq "IdentityProvider"}
+        $idProviderRole.PublicInfo.AADTenant.Id
+    }
 }
 
 Export-ModuleMember Get-AzureStackAadTenant
@@ -88,16 +84,25 @@ Export-ModuleMember Get-AzureStackAadTenant
     .SYNOPSIS
     Adds Azure Stack environment to use with AzureRM command-lets when targeting Azure Stack
 #>
-function Add-AzureStackAzureRmEnvironment
-{
+function Add-AzureStackAzureRmEnvironment {
     param (
         [parameter(mandatory=$true, HelpMessage="AAD Tenant name or ID used when deploying Azure Stack such as 'mydirectory.onmicrosoft.com'")]
-	    [string] $AadTenant,
+        [string] $AadTenant,
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
         [string] $Name = "AzureStack"
     )
+
+    if(!$ARMEndpoint.Contains('https://')){
+        if($ARMEndpoint.Contains('http://')){
+            $ARMEndpoint = $ARMEndpoint.Substring(7)
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+
+        }else{
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }
+    }
 
     $Domain = ""
     try {
@@ -117,36 +122,34 @@ function Add-AzureStackAzureRmEnvironment
 
     $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
     $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
-    $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
-    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
+$StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
+$aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
 
-    $azureEnvironmentParams = @{
-        Name                                     = $Name
-        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
-        ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-        AdTenant                                 = $AadTenant
-        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
-        GalleryEndpoint                          = $endpoints.galleryEndpoint
-        GraphEndpoint                            = $endpoints.graphEndpoint
-        GraphAudience                            = $endpoints.graphEndpoint
-        StorageEndpointSuffix                    = $StorageEndpointSuffix
-        AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
-        AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
-	    EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
-    }
+$azureEnvironmentParams = @{
+    Name                                     = $Name
+    ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+    ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+    AdTenant                                 = $AadTenant
+    ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+    GalleryEndpoint                          = $endpoints.galleryEndpoint
+    GraphEndpoint                            = $endpoints.graphEndpoint
+    GraphAudience                            = $endpoints.graphEndpoint
+    StorageEndpointSuffix                    = $StorageEndpointSuffix
+    AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
+    AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
+    EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
+}
 
-    $armEnv = Get-AzureRmEnvironment -Name $Name
-    if($armEnv -ne $null)
-    {
-        Write-Verbose "Updating AzureRm environment $Name" -Verbose
-        Remove-AzureRmEnvironment -Name $Name | Out-Null
-    }
-    else
-    {
-        Write-Verbose "Adding AzureRm environment $Name" -Verbose
-    }
+$armEnv = Get-AzureRmEnvironment -Name $Name
+if($armEnv -ne $null) {
+    Write-Verbose "Updating AzureRm environment $Name" -Verbose
+    Remove-AzureRmEnvironment -Name $Name | Out-Null
+}
+else {
+    Write-Verbose "Adding AzureRm environment $Name" -Verbose
+}
         
-    return Add-AzureRmEnvironment @azureEnvironmentParams
+return Add-AzureRmEnvironment @azureEnvironmentParams
 }
 
 Export-ModuleMember Add-AzureStackAzureRmEnvironment
@@ -155,11 +158,10 @@ Export-ModuleMember Add-AzureStackAzureRmEnvironment
     .SYNOPSIS
     Obtains Azure Stack NAT address from the Azure Stack One Node instance
 #>
-function Get-AzureStackNatServerAddress
-{
+function Get-AzureStackNatServerAddress {
     param (    
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
-	    [string] $HostComputer,
+        [string] $HostComputer,
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
@@ -194,13 +196,13 @@ function Get-AzureStackNatServerAddress
     Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
     return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         { 
-            Write-Verbose "Remoting to the Azure Stack NAT server $using:nat..." -Verbose
-            Invoke-Command -ComputerName "$using:nat"  -Credential $using:credential -ScriptBlock `
+        Write-Verbose "Remoting to the Azure Stack NAT server $using:nat..." -Verbose
+        Invoke-Command -ComputerName "$using:nat"  -Credential $using:credential -ScriptBlock `
                 { 
-                    Write-Verbose "Obtaining external IP..." -Verbose
-                    Get-NetIPConfiguration | ? { $_.IPv4DefaultGateway -ne $null } | foreach { $_.IPv4Address.IPAddress }
-                }
-        } 
+            Write-Verbose "Obtaining external IP..." -Verbose
+            Get-NetIPConfiguration | ? { $_.IPv4DefaultGateway -ne $null } | foreach { $_.IPv4Address.IPAddress }
+        }
+    } 
 }
 
 Export-ModuleMember Get-AzureStackNatServerAddress
@@ -209,14 +211,13 @@ Export-ModuleMember Get-AzureStackNatServerAddress
     .SYNOPSIS
     Add VPN connection to an Azure Stack instance
 #>
-function Add-AzureStackVpnConnection
-{
+function Add-AzureStackVpnConnection {
     param (
-	    [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
-	    [string] $ConnectionName = "azurestack",
+        [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
+        [string] $ConnectionName = "azurestack",
 	
-	    [parameter(mandatory=$true, HelpMessage="External IP of the Azure Stack NAT VM such as '1.2.3.4'")]
-	    [string] $ServerAddress,
+        [parameter(mandatory=$true, HelpMessage="External IP of the Azure Stack NAT VM such as '1.2.3.4'")]
+        [string] $ServerAddress,
 
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
         [securestring] $Password
@@ -228,8 +229,7 @@ function Add-AzureStackVpnConnection
         rasdial $ConnectionName /d
         Remove-VpnConnection -name $ConnectionName -Force -ErrorAction Ignore
     }
-    else
-    {
+    else {
         Write-Verbose "Creating Azure Stack VPN connection named $ConnectionName" -Verbose
     }
 
@@ -251,11 +251,10 @@ Export-ModuleMember Add-AzureStackVpnConnection
     .SYNOPSIS
     Connects to Azure Stack via VPN
 #>
-function Connect-AzureStackVpn
-{
+function Connect-AzureStackVpn {
     param (
-	    [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
-	    [string] $ConnectionName = "azurestack",
+        [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
+        [string] $ConnectionName = "azurestack",
         [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint = 'https://api.local.azurestack.external',
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
@@ -303,10 +302,8 @@ function Connect-AzureStackVpn
     Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
     $cert = Invoke-Command -ComputerName "$Remote.$Domain" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -eq "CN=AzureStackCertificationAuthority, DC=AzureStack, DC=local"} } -Credential $credential
 
-    if($cert -ne $null)
-    {
-        if($cert.GetType().IsArray)
-        {
+    if($cert -ne $null) {
+        if($cert.GetType().IsArray) {
             $cert = $cert[0] # take any that match the subject if multiple certs were deployed
         }
 
@@ -320,10 +317,9 @@ function Connect-AzureStackVpn
         
         Write-Progress "LOOK FOR CERT ACCEPTANCE PROMPT ON YOUR SCREEN!"
 
-	    Import-Certificate -CertStoreLocation cert:\currentuser\root -FilePath $certFilePath
+        Import-Certificate -CertStoreLocation cert:\currentuser\root -FilePath $certFilePath
     }
-    else
-    {
+    else {
         Write-Error "Certificate has not been retrieved!"
     }
 }
@@ -334,14 +330,13 @@ Export-ModuleMember Connect-AzureStackVpn
     .SYNOPSIS
     Retrieve the admin token and subscription ID needed to make REST calls directly to Azure Resource Manager
 #>
-function Get-AzureStackAdminSubTokenHeader
-{
+function Get-AzureStackAdminSubTokenHeader {
     param (
-	    [parameter(HelpMessage="Name of the Azure Stack Environment")]
-	    [string] $EnvironmentName = "AzureStack",
+        [parameter(HelpMessage="Name of the Azure Stack Environment")]
+        [string] $EnvironmentName = "AzureStack",
 	
-	    [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
-	    [string] $tenantID,
+        [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
+        [string] $tenantID,
 
         [parameter(HelpMessage="Credentials to retrieve token header for")]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
@@ -354,6 +349,15 @@ function Get-AzureStackAdminSubTokenHeader
         $azureStackCredentials = Get-Credential
     }
     
+    if(!$ARMEndpoint.Contains('https://')){
+        if($ARMEndpoint.Contains('http://')){
+            $ARMEndpoint = $ARMEndpoint.Substring(7)
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }else{
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }
+    }
+
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
@@ -400,13 +404,12 @@ function Get-AzureStackAdminSubTokenHeader
 
 Export-ModuleMember Get-AzureStackAdminSubTokenHeader
 
-function Get-AADTenantGUID ()
-{
+function Get-AADTenantGUID () {
     param(
         [parameter(mandatory=$true, HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
-       [string] $AADTenantName = "",
+        [string] $AADTenantName = "",
         [parameter(mandatory=$false, HelpMessage="Azure Cloud")]
-         [ValidateSet("AzureCloud","AzureChinaCloud","AzureUSGovernment","AzureGermanCloud")]
+        [ValidateSet("AzureCloud","AzureChinaCloud","AzureUSGovernment","AzureGermanCloud")]
         [string] $AzureCloud = "AzureCloud"
     )
     $ADauth = (Get-AzureRmEnvironment -Name $AzureCloud).ActiveDirectoryAuthority
