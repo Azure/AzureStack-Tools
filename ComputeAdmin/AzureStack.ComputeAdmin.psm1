@@ -481,8 +481,12 @@ function New-Server2016VMImage {
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             } finally {
-                if (Test-Path -Path "$VHDDriveLetter`:\") {
-                    $VHDPath | Dismount-DiskImage 
+                $retryAttempts = 0;
+                while ((Test-Path -Path "$VHDDriveLetter`:\") -and ($retryAttempts -lt 5)) {
+                    Write-Verbose -Message "Attempting to dismount the VHD..."
+                    Get-DiskImage -ImagePath $VHDPath | Dismount-DiskImage
+                    $retryAttempts = $retryAttempts+1;
+                    sleep 1
                 }
                 if ($IsoMount) {
                     $IsoMount | Dismount-DiskImage       
