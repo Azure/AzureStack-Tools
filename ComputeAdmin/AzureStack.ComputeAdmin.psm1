@@ -440,14 +440,15 @@ function New-Server2016VMImage {
                 }
                 Write-Verbose -Message "Preparing VHD"
 
-                $VHDDriveLetter = (Mount-VHD -Path  $VHDPath -Passthru |  `
-                get-disk -number {$_.DiskNumber} | `
+                Mount-DiskImage -ImagePath $VHDPath -Passthru
+                $disknum = (Get-DiskImage -ImagePath $VHDPath).Number
+                $VHDDriveLetter = (get-disk -number  $disknum| `
                 Initialize-Disk -PartitionStyle MBR -PassThru | `
-                New-Partition -UseMaximumSize -AssignDriveLetter:$False -MbrType IFS | `
+                New-Partition -UseMaximumSize -AssignDriveLetter:$False -IsActive:$true | `
                 Format-Volume -Confirm:$false -FileSystem NTFS -force | `
                 get-partition | `
                 Add-PartitionAccessPath -AssignDriveLetter -PassThru | `
-                get-volume).DriveLetter  
+                get-volume).DriveLetter
 
                 Write-Verbose -Message "VHD is mounted at drive letter: $VHDDriveLetter"
 
