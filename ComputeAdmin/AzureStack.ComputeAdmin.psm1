@@ -100,13 +100,11 @@ Function Add-VMImage{
         }
     }
 
-    if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title'))
-    {
+    if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title')) {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
     }
 
-    if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('description'))
-    {
+    if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('description')) {
         Write-Error -Message "The description parameter only applies to creating a gallery item." -ErrorAction Stop
     }
 
@@ -141,18 +139,15 @@ Function Add-VMImage{
         $container = New-AzureStorageContainer -Name $containerName -Permission Blob
     }
 
-    if(($pscmdlet.ParameterSetName -eq "VMImageFromLocal") -and (-not $VMImageAlreadyAvailable))
-    {
+    if(($pscmdlet.ParameterSetName -eq "VMImageFromLocal") -and (-not $VMImageAlreadyAvailable)) {
         $storageAccount.PrimaryEndpoints.Blob
         $script:osDiskName = Split-Path $osDiskLocalPath -Leaf
         $script:osDiskBlobURIFromLocal = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$osDiskName
         Add-AzureRmVhd -Destination $osDiskBlobURIFromLocal -ResourceGroupName $resourceGroupName -LocalFilePath $osDiskLocalPath -OverWrite
 
         $script:dataDiskBlobURIsFromLocal = New-Object System.Collections.ArrayList
-        if ($PSBoundParameters.ContainsKey('dataDisksLocalPaths'))
-        {
-            foreach($dataDiskLocalPath in $dataDisksLocalPaths)
-            {
+        if ($PSBoundParameters.ContainsKey('dataDisksLocalPaths')) {
+            foreach($dataDiskLocalPath in $dataDisksLocalPaths) {
                 $dataDiskName = Split-Path $dataDiskLocalPath -Leaf
                 $dataDiskBlobURI = "https://$storageAccountName.blob.$Domain/$containerName/$dataDiskName"
                 $dataDiskBlobURIsFromLocal.Add($dataDiskBlobURI) 
@@ -169,35 +164,28 @@ Function Add-VMImage{
     #building platform image JSON
 
     #building osDisk json
-    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
-    {
+    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal") {
         $osDiskJSON = '"OsDisk":{"OsType":"'+ $osType + '","Uri":"'+$osDiskBlobURIFromLocal+'"}'
     }
-    else
-    {
+    else {
         $osDiskJSON = '"OsDisk":{"OsType":"'+ $osType + '","Uri":"'+$osDiskBlobURI+'"}'
     }
 
     #building details JSON
     $detailsJSON = ''
-    if ($PSBoundParameters.ContainsKey('billingPartNumber'))
-    {
+    if ($PSBoundParameters.ContainsKey('billingPartNumber')) {
         $detailsJSON = '"Details":{"BillingPartNumber":"' + $billingPartNumber+'"}'
     }
 
     #building dataDisk JSON
     $dataDisksJSON = ''
 
-    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal")
-    {
-        if ($dataDiskBlobURIsFromLocal.Count -ne 0)
-        {
-             $dataDisksJSON = '"DataDisks":['
-             $i = 0
-             foreach($dataDiskBlobURI in $dataDiskBlobURIsFromLocal)
-             {
-                if($i -ne 0)
-                {
+    if($pscmdlet.ParameterSetName -eq "VMImageFromLocal") {
+        if ($dataDiskBlobURIsFromLocal.Count -ne 0) {
+            $dataDisksJSON = '"DataDisks":['
+            $i = 0
+            foreach($dataDiskBlobURI in $dataDiskBlobURIsFromLocal) {
+                if($i -ne 0) {
                     $dataDisksJSON = $dataDisksJSON +', '
                 }
 
@@ -205,21 +193,17 @@ Function Add-VMImage{
                 $dataDisksJSON = $dataDisksJSON + $newDataDisk;
             
                 ++$i
-             }
+            }
 
-             $dataDisksJSON = $dataDisksJSON +']'
-       }
+            $dataDisksJSON = $dataDisksJSON +']'
+        }
     }
-    else
-    {
-        if ($dataDiskBlobURIs.Count -ne 0)
-        {
+    else {
+        if ($dataDiskBlobURIs.Count -ne 0) {
             $dataDisksJSON = '"DataDisks":['
             $i = 0
-            foreach($dataDiskBlobURI in $dataDiskBlobURIs)
-            {
-                if($i -ne 0)
-                {
+            foreach($dataDiskBlobURI in $dataDiskBlobURIs) {
+                if($i -ne 0) {
                     $dataDisksJSON = $dataDisksJSON +', '
                 }
 
@@ -237,13 +221,11 @@ Function Add-VMImage{
 
     $propertyBody = $osDiskJSON 
 
-    if(![string]::IsNullOrEmpty($dataDisksJson))
-    {
+    if(![string]::IsNullOrEmpty($dataDisksJson)) {
         $propertyBody = $propertyBody + ', ' + $dataDisksJson
     }
 
-    if(![string]::IsNullOrEmpty($detailsJson))
-    {
+    if(![string]::IsNullOrEmpty($detailsJson)) {
         $propertyBody = $propertyBody + ', ' + $detailsJson
     }
 
@@ -256,15 +238,12 @@ Function Add-VMImage{
     $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
 
     $downloadingStatusCheckCount = 0
-    while($platformImage.Properties.ProvisioningState -ne 'Succeeded')
-    {
-        if($platformImage.Properties.ProvisioningState -eq 'Failed')
-        {
+    while($platformImage.Properties.ProvisioningState -ne 'Succeeded') {
+        if($platformImage.Properties.ProvisioningState -eq 'Failed') {
             Write-Error -Message "VM image download failed." -ErrorAction Stop
         }
 
-        if($platformImage.Properties.ProvisioningState -eq 'Canceled')
-        {
+        if($platformImage.Properties.ProvisioningState -eq 'Canceled') {
             Write-Error -Message "VM image download was canceled." -ErrorAction Stop
         }
 
@@ -278,8 +257,7 @@ Function Add-VMImage{
         $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     }
 
-    if($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded')
-    {
+    if($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded') {
         #reaquire storage account context
         Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
         $container = Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue
@@ -427,7 +405,7 @@ function New-Server2016VMImage {
             )
             $tmpfile = New-TemporaryFile
             "create vdisk FILE=`"$VHDPath`" TYPE=EXPANDABLE MAXIMUM=$VHDSizeInMB" | 
-                Out-File -FilePath $tmpfile.FullName -Encoding ascii
+            Out-File -FilePath $tmpfile.FullName -Encoding ascii
 
             Write-Verbose -Message "Creating VHD at: $VHDPath of size: $VHDSizeInMB MB"
             diskpart.exe /s $tmpfile.FullName | Out-Null
@@ -595,13 +573,11 @@ function New-Server2016VMImage {
                     Write-Verbose -Message "Server Core VHD already found."
                 }
 
-                if ($CreateGalleryItem)
-                {
+                if ($CreateGalleryItem) {
                     $description = "This evaluation image should not be used for production workloads."
                     Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem
                 }
-                else
-                {
+                else {
                     Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
                 }
             } catch {
@@ -627,13 +603,11 @@ function New-Server2016VMImage {
                 }else{
                     Write-Verbose -Message "Server Full VHD already found."
                 }
-                if ($CreateGalleryItem)
-                {
+                if ($CreateGalleryItem) {
                     $description = "This evaluation image should not be used for production workloads."
                     Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem
                 }
-                else
-                {
+                else {
                     Add-VMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
                 }
             } catch {
@@ -662,76 +636,88 @@ Function CreateGalleyItem{
         [string] $title,
         [string] $description
     )
-        $workdir = '{0}\{1}' -f $env:TEMP, [System.Guid]::NewGuid().ToString()
-        New-Item $workdir -ItemType Directory | Out-Null
-        $basePath = (Get-Module AzureStack.ComputeAdmin).ModuleBase
-        $compressedGalleryItemPath = Join-Path $basePath 'CustomizedVMGalleryItem.azpkg'
-        Copy-Item -Path $compressedGalleryItemPath -Destination "$workdir\CustomizedVMGalleryItem.zip"
-        $extractedGalleryItemPath = Join-Path $workdir 'galleryItem'
-        New-Item -ItemType directory -Path $extractedGalleryItemPath | Out-Null
-        expand-archive -Path "$workdir\CustomizedVMGalleryItem.zip" -DestinationPath $extractedGalleryItemPath -Force
+    $workdir = '{0}\{1}' -f $env:TEMP, [System.Guid]::NewGuid().ToString()
+    New-Item $workdir -ItemType Directory | Out-Null
+    $basePath = (Get-Module AzureStack.ComputeAdmin).ModuleBase
+    $compressedGalleryItemPath = Join-Path $basePath 'CustomizedVMGalleryItem.azpkg'
+    Copy-Item -Path $compressedGalleryItemPath -Destination "$workdir\CustomizedVMGalleryItem.zip"
+    $extractedGalleryItemPath = Join-Path $workdir 'galleryItem'
+    New-Item -ItemType directory -Path $extractedGalleryItemPath | Out-Null
+    expand-archive -Path "$workdir\CustomizedVMGalleryItem.zip" -DestinationPath $extractedGalleryItemPath -Force
         
-        $extractedName = 'MarketplaceItem.zip'
-        Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile "$workdir\MarketplaceItem.zip" 
-        Expand-Archive -Path "$workdir\MarketplaceItem.zip" -DestinationPath $workdir -Force
-
-#region UIDef
-        $createUIDefinitionPath = Join-Path $extractedGalleryItemPath 'DeploymentTemplates\CreateUIDefinition.json'
-        $JSON = Get-Content $createUIDefinitionPath | Out-String | ConvertFrom-Json
-        $JSON.parameters.osPlatform = $osType
-        $JSON.parameters.imageReference.publisher = $publisher
-        $JSON.parameters.imageReference.offer = $offer
-        $JSON.parameters.imageReference.sku = $sku
-        $JSON | ConvertTo-Json -Compress| set-content $createUIDefinitionPath
-#endregion
-
-#region Manifest
-        $manifestPath = Join-Path $extractedGalleryItemPath 'manifest.json'
-        $JSON = Get-Content $manifestPath | Out-String | ConvertFrom-Json
-
-        if (!$title)
-        {
-            $title = "{0}-{1}-{2}" -f $publisher, $offer, $sku
+    $extractedName = 'MarketplaceItem.zip'
+    $retryAttempts = 1
+    while ($retryAttempts -le 5) {
+        try {
+            Write-Verbose -Message "Downloading Azure Stack Marketplace Item Generator Attempt $retryAttempts" -Verbose
+            Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile "$workdir\MarketplaceItem.zip" 
+            break
         }
-        $name = "$offer$sku"
-        #Remove periods so that the offer and sku can be part of the MarketplaceItem name 
-        $name =$name -replace "\.","-"
-        $JSON.name = $name
-        $JSON.publisher = $publisher
-        $JSON.version = $version
-        $JSON.displayName = $title
-        $JSON.publisherDisplayName = $publisher
-        $JSON.publisherLegalName = $publisher
-        $JSON | ConvertTo-Json -Compress| set-content $manifestPath
-
-#endregion
-
-#region Strings
-        if (!$description)
-        {
-            $description = "Create a virtual machine from a VM image. Publisher: {0}, Offer: {1}, Sku:{2}, Version: {3}" -f $publisher, $offer, $sku, $version
+        catch {
+            $retryAttempts = $retryAttempts + 1
+            if($retryAttempts -ge 5){
+                Write-Error "Failed to download Azure Stack Marketplace Item Generator" -ErrorAction Stop
+            }
         }
-        $stringsPath = Join-Path $extractedGalleryItemPath 'strings\resources.resjson'
-        $JSON = Get-Content $stringsPath | Out-String | ConvertFrom-Json
-        $JSON.longSummary = $description
-        $JSON.description = $description
-        $JSON.summary = $description
-        $JSON | ConvertTo-Json -Compress | set-content $stringsPath
-#endregion
- 
-        $extractedGalleryPackagerExePath = Join-Path $workdir "Azure Stack Marketplace Item Generator and Sample\AzureGalleryPackageGenerator"
-        $galleryItemName = $publisher + "." + $name + "." + $version + ".azpkg"
-        $currentPath = $pwd
-        cd $extractedGalleryPackagerExePath
-        .\AzureGalleryPackager.exe package -m $manifestPath -o $workdir
-        cd $currentPath
-
-        #cleanup
-        Remove-Item $extractedGalleryItemPath -Recurse -Force
-        Remove-Item "$workdir\Azure Stack Marketplace Item Generator and Sample" -Recurse -Force
-        Remove-Item "$workdir\CustomizedVMGalleryItem.zip"
-        Remove-Item "$workdir\MarketplaceItem.zip"
-        $azpkg = '{0}\{1}' -f $workdir, $galleryItemName
-        return Get-Item -LiteralPath $azpkg
     }
+
+    Expand-Archive -Path "$workdir\MarketplaceItem.zip" -DestinationPath $workdir -Force
+
+    #region UIDef
+    $createUIDefinitionPath = Join-Path $extractedGalleryItemPath 'DeploymentTemplates\CreateUIDefinition.json'
+    $JSON = Get-Content $createUIDefinitionPath | Out-String | ConvertFrom-Json
+    $JSON.parameters.osPlatform = $osType
+    $JSON.parameters.imageReference.publisher = $publisher
+    $JSON.parameters.imageReference.offer = $offer
+    $JSON.parameters.imageReference.sku = $sku
+    $JSON | ConvertTo-Json -Compress| set-content $createUIDefinitionPath
+    #endregion
+
+    #region Manifest
+    $manifestPath = Join-Path $extractedGalleryItemPath 'manifest.json'
+    $JSON = Get-Content $manifestPath | Out-String | ConvertFrom-Json
+
+    if (!$title) {
+        $title = "{0}-{1}-{2}" -f $publisher, $offer, $sku
+    }
+    $name = "$offer$sku"
+    #Remove periods so that the offer and sku can be part of the MarketplaceItem name 
+    $name =$name -replace "\.","-"
+    $JSON.name = $name
+    $JSON.publisher = $publisher
+    $JSON.version = $version
+    $JSON.displayName = $title
+    $JSON.publisherDisplayName = $publisher
+    $JSON.publisherLegalName = $publisher
+    $JSON | ConvertTo-Json -Compress| set-content $manifestPath
+
+    #endregion
+
+    #region Strings
+    if (!$description) {
+        $description = "Create a virtual machine from a VM image. Publisher: {0}, Offer: {1}, Sku:{2}, Version: {3}" -f $publisher, $offer, $sku, $version
+    }
+    $stringsPath = Join-Path $extractedGalleryItemPath 'strings\resources.resjson'
+    $JSON = Get-Content $stringsPath | Out-String | ConvertFrom-Json
+    $JSON.longSummary = $description
+    $JSON.description = $description
+    $JSON.summary = $description
+    $JSON | ConvertTo-Json -Compress | set-content $stringsPath
+    #endregion
+ 
+    $extractedGalleryPackagerExePath = Join-Path $workdir "Azure Stack Marketplace Item Generator and Sample\AzureGalleryPackageGenerator"
+    $galleryItemName = $publisher + "." + $name + "." + $version + ".azpkg"
+    $currentPath = $pwd
+    cd $extractedGalleryPackagerExePath
+    .\AzureGalleryPackager.exe package -m $manifestPath -o $workdir
+    cd $currentPath
+
+    #cleanup
+    Remove-Item $extractedGalleryItemPath -Recurse -Force
+    Remove-Item "$workdir\Azure Stack Marketplace Item Generator and Sample" -Recurse -Force
+    Remove-Item "$workdir\CustomizedVMGalleryItem.zip"
+    Remove-Item "$workdir\MarketplaceItem.zip"
+    $azpkg = '{0}\{1}' -f $workdir, $galleryItemName
+    return Get-Item -LiteralPath $azpkg
+}
 
