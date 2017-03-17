@@ -44,7 +44,13 @@ function New-AzSTenantOfferAndQuotas
     New-AzureRmResourceGroup -Name $Name -Location $Location -ErrorAction Stop
 
     Write-Verbose "Creating plan..." -Verbose
-    $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $Location -ResourceGroup $Name -SubscriptionId $subscription -QuotaIds $Quotas
+    if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9")
+    {
+        $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $Location -ResourceGroup $Name -QuotaIds $Quotas
+    }
+    else {
+        $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $Location -ResourceGroup $Name -SubscriptionId $subscription -QuotaIds $Quotas        
+    }
 
     Write-Verbose "Creating public offer..." -Verbose
     $offer = New-AzureRMOffer -Name $Name -DisplayName $Name -State Public -BasePlanIds @($plan.Id) -ArmLocation $Location -ResourceGroup $Name
