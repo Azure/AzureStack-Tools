@@ -5,12 +5,13 @@
 
 <#
     .SYNOPSIS
-    Contains 3 functions.
+    Contains 4 functions.
     Add-VMImage: Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
     Remove-VMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any 
     maketplace items created by Add-VMImage.
     New-Server2016VMImage: Creates and Uploads a new Server 2016 Core and / or Full Image and
     creates a Marketplace item for it.
+    Get-VMImage: Gets a VM Image from your Azure Stack as an Administrator to view the provisioning state of the image.
 #>
 
 Function Add-VMImage{
@@ -99,7 +100,7 @@ Function Add-VMImage{
             $ARMEndpoint = 'https://' + $ARMEndpoint
         }
     }
-
+    
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title')) {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
     }
@@ -107,8 +108,7 @@ Function Add-VMImage{
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('description')) {
         Write-Error -Message "The description parameter only applies to creating a gallery item." -ErrorAction Stop
     }
-
-    
+   
     $resourceGroupName = "addvmimageresourcegroup"
     $storageAccountName = "addvmimagestorageaccount"
     $containerName = "addvmimagecontainer"
@@ -117,7 +117,7 @@ Function Add-VMImage{
 
     #pre validate if image is not already deployed
     $VMImageAlreadyAvailable = $false
-    if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue) {
+    if ($(Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
         $VMImageAlreadyAvailable = $true
         Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
     }
@@ -235,7 +235,7 @@ Function Add-VMImage{
         Invoke-RestMethod -Method PUT -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $Headers
     }
 
-    $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $platformImage = Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location
 
     $downloadingStatusCheckCount = 0
     while($platformImage.Properties.ProvisioningState -ne 'Succeeded') {
@@ -321,8 +321,8 @@ Function Remove-VMImage{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
 
     $VMImageExists = $false
-    if (Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -Skus $sku -Version $version -ErrorAction SilentlyContinue -ov images) {
-        Write-Verbose "VM Image has been added to Azure Stack - continuing" -Verbose
+    if (Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location -ErrorAction SilentlyContinue) {
+        Write-Verbose "VM Image is present in Azure Stack - continuing to remove" -Verbose
         $VMImageExists = $true
     }
     else{
@@ -333,13 +333,20 @@ Function Remove-VMImage{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
-    try{
-        if($VMImageExists){
-            Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
+    if($VMImageExists){
+        $maxAttempts = 5
+        for ($retryAttempts = 1; $retryAttempts -le $maxAttempts; $retryAttempts++) {
+            try {
+                Write-Verbose -Message "Deleting VM Image Attempt $retryAttempts" -Verbose
+                Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
+                break
+            }
+            catch {
+                if($retryAttempts -ge $maxAttempts){
+                    Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
+                }
+            }
         }
-    }
-    catch{
-        Write-Error -Message ('Deletion of VM Image with publisher "{0}", offer "{1}", sku "{2}" failed with Error:"{3}.' -f $publisher,$offer,$sku,$Error) -ErrorAction Stop
     }
 
     if(-not $KeepMarketplaceItem){
@@ -559,7 +566,7 @@ function New-Server2016VMImage {
 
             #Pre-validate that the VM Image is not already available
             $VMImageAlreadyAvailable = $false
-            if (Get-AzureRmVMImage -Location $PublishArguments.location -PublisherName $PublishArguments.publisher -Offer $PublishArguments.offer -Skus $sku -Version $PublishArguments.version -ErrorAction SilentlyContinue) {
+            if ($(Get-VMImage -publisher $PublishArguments.publisher -offer $PublishArguments.offer -sku $sku -version $PublishArguments.version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $PublishArguments.location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
                 $VMImageAlreadyAvailable = $true
                 Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
             }
@@ -592,7 +599,7 @@ function New-Server2016VMImage {
 
                 #Pre-validate that the VM Image is not already available
                 $VMImageAlreadyAvailable = $false
-                if (Get-AzureRmVMImage -Location $PublishArguments.location -PublisherName $PublishArguments.publisher -Offer $PublishArguments.offer -Skus $sku -Version $PublishArguments.version -ErrorAction SilentlyContinue) {
+                if ($(Get-VMImage -publisher $PublishArguments.publisher -offer $PublishArguments.offer -sku $sku -version $PublishArguments.version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $PublishArguments.location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
                     $VMImageAlreadyAvailable = $true
                     Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
                 }
@@ -646,16 +653,15 @@ Function CreateGalleyItem{
     expand-archive -Path "$workdir\CustomizedVMGalleryItem.zip" -DestinationPath $extractedGalleryItemPath -Force
         
     $extractedName = 'MarketplaceItem.zip'
-    $retryAttempts = 1
-    while ($retryAttempts -le 5) {
+    $maxAttempts = 5
+    for ($retryAttempts = 1; $retryAttempts -le $maxAttempts; $retryAttempts++) {
         try {
             Write-Verbose -Message "Downloading Azure Stack Marketplace Item Generator Attempt $retryAttempts" -Verbose
             Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile "$workdir\MarketplaceItem.zip" 
             break
         }
         catch {
-            $retryAttempts = $retryAttempts + 1
-            if($retryAttempts -ge 5){
+            if($retryAttempts -ge $maxAttempts){
                 Write-Error "Failed to download Azure Stack Marketplace Item Generator" -ErrorAction Stop
             }
         }
@@ -719,5 +725,60 @@ Function CreateGalleyItem{
     Remove-Item "$workdir\MarketplaceItem.zip"
     $azpkg = '{0}\{1}' -f $workdir, $galleryItemName
     return Get-Item -LiteralPath $azpkg
+}
+
+Function Get-VMImage{
+    Param(
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $publisher,
+       
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $offer,
+    
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $sku,
+    
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [String] $version,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullorEmpty()]
+        [String] $tenantID,
+
+        [String] $location = 'local',
+
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
+
+    )
+
+    if(!$ARMEndpoint.Contains('https://')){
+        if($ARMEndpoint.Contains('http://')){
+            $ARMEndpoint = $ARMEndpoint.Substring(7)
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }else{
+            $ARMEndpoint = 'https://' + $ARMEndpoint
+        }
+    }
+
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
+    $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
+
+    try{
+        $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+        return $platformImage
+    }catch{
+        return $null
+    }
+
 }
 

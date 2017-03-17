@@ -104,6 +104,8 @@ function Add-AzureStackAzureRmEnvironment {
         }
     }
 
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+
     $Domain = ""
     try {
         $uriARMEndpoint = [System.Uri] $ArmEndpoint
@@ -357,6 +359,14 @@ function Get-AzureStackAdminSubTokenHeader {
             $ARMEndpoint = 'https://' + $ARMEndpoint
         }
     }
+    
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+
+    try{
+        Invoke-RestMethod -Method Get -Uri "$($ARMEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop | Out-Null
+    }catch{
+        Write-Error "The specified ARM endpoint: $ArmEndpoint is not valid for this environment. Please make sure you are using the correct administrator ARM endpoint for this environment." -ErrorAction Stop
+    }
 
     $Domain = ""
     try {
@@ -380,7 +390,13 @@ function Get-AzureStackAdminSubTokenHeader {
 
     Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $tenantID -Credential $azureStackCredentials | Out-Null
 
-    $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName 
+    try {
+        $subscription = Get-AzureRmSubscription -SubscriptionName $subscriptionName 
+    }
+    catch {
+        Write-Error "Verify that the login credentials are for the administrator and that the specified ARM endpoint: $ArmEndpoint is the valid administrator ARM endpoint for this environment." -ErrorAction Stop
+    }
+
     $subscription | Select-AzureRmSubscription | Out-Null
 
     $powershellClientId = "0a7bdc5c-7b57-40be-9939-d4c5fc7cd417"
