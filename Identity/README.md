@@ -1,8 +1,9 @@
 # Azure Stack Identity
 
 ```powershell
-Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.8 -Scope CurrentUser
+Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
+Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
+Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
 ```
 Then make sure the following modules are imported:
 
