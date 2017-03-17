@@ -266,7 +266,12 @@ Function Add-VMImage{
         $blob = $container| Set-AzureStorageBlobContent  –File $GalleryItem.FullName  –Blob $galleryItem.Name
         $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$galleryItem.Name
 
-        Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
+        
+        if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
+            Add-AzureRMGalleryItem -GalleryItemUri $galleryItemURI
+        }else{
+            Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
+        }
 
         #cleanup
         Remove-Item $GalleryItem
@@ -354,7 +359,12 @@ Function Remove-VMImage{
         $name = "$offer$sku"
         #Remove periods so that the offer and sku can be retrieved from the Marketplace Item name
         $name =$name -replace "\.","-"
-        Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
+        if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
+            Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem 
+        }else{
+            Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
+        }
+        
     }
 
 }
