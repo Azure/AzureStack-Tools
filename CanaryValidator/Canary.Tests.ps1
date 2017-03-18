@@ -1,10 +1,10 @@
 [CmdletBinding(DefaultParameterSetName="default")]
 param (    
-    [parameter(HelpMessage="ADD Tenant ID value")]
+    [parameter(HelpMessage="Tenant ID value")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [string]$AADTenantID,
+    [string]$TenantID,
     [parameter(HelpMessage="Administrative ARM endpoint")]
     [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
@@ -21,9 +21,28 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
+    [parameter(HelpMessage="Local path where the windows 2016/2012R2 ISO image is stored")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateScript({Test-Path -Path $_})]
+    [string]$WindowsISOPath, 
+    [parameter(HelpMessage="Local path where the windows 2016/2012R2 VHD file is stored")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateScript({Test-Path -Path $_})]
+    [string]$WindowsVHDPath,
+    [parameter(HelpMessage="Path for Linux VHD")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [string] $LinuxImagePath = "https://partner-images.canonical.com/azure/azure_stack/ubuntu-14.04-LTS-microsoft_azure_stack-20161208-9.vhd.zip",
+    [parameter(HelpMessage="Linux OS sku")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [string] $LinuxOSSku = "14.04.3-LTS",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -42,12 +61,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "ascanutrg" + [Random]::new().Next(1,999),
+    [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "ascanvmrg" + [Random]::new().Next(1,999),
+    [string]$CanaryVMRG = "canvr" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -77,15 +96,21 @@ param (
 #Requires -Modules AzureRM
 #Requires -RunAsAdministrator
 Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
+Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
+Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
+Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
 
-$storageAccName     = $CanaryUtilitiesRG + "sa"
-$storageCtrName     = $CanaryUtilitiesRG + "sc"
-$keyvaultName       = $CanaryUtilitiesRG + "kv"
-$keyvaultCertName   = "ASCanaryVMCertificate"
-$kvSecretName       = $keyvaultName.ToLowerInvariant() + "secret"
-$VMAdminUserName    = "CanaryAdmin" 
-$VMAdminUserPass    = "CanaryAdmin@123"
-$canaryUtilPath     = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+$storageAccName         = $CanaryUtilitiesRG + "sa"
+$storageCtrName         = $CanaryUtilitiesRG + "sc"
+$keyvaultName           = $CanaryUtilitiesRG + "kv"
+$keyvaultCertName       = "ASCanaryVMCertificate"
+$kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
+$VMAdminUserName        = "CanaryAdmin" 
+$VMAdminUserPass        = "CanaryAdmin@123"
+$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+$linuxImagePublisher    = "Canonical"
+$linuxImageOffer        = "UbuntuServer"
+$linuxImageVersion      = "1.0.0"
 
 $runCount = 1
 while ($runCount -le $NumberOfIterations)
@@ -94,12 +119,18 @@ while ($runCount -le $NumberOfIterations)
     {
         Remove-Item -Path $canaryUtilPath -Force -Recurse 
     }
-    New-Item -Path $canaryUtilPath -ItemType Directory
+    New-Item -Path $canaryUtilPath -ItemType Directory | Out-Null
 
     #
     # Start Canary 
     #
     $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
+
+    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
+
+    $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
+    $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
+
     if(-not $EnvironmentDomainFQDN)
     {
         $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
@@ -107,34 +138,12 @@ while ($runCount -le $NumberOfIterations)
         $EnvironmentDomainFQDN = $EnvironmentDomainFQDN.Replace($EnvironmentDomainFQDN.Split(".")[0], "").TrimEnd("/").TrimStart(".") 
     }
 
-    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
-
-    $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
-    $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
-
     Invoke-Usecase -Name 'CreateAdminAzureStackEnv' -Description "Create Azure Stack environment $SvcAdminEnvironmentName" -UsecaseBlock `
     {
         $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $AdminArmEndpoint 
         Add-AzureRmEnvironment  -Name ($SvcAdminEnvironmentName) `
                                 -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
                                 -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
-                                -ADTenant $AADTenantID `
-                                -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
-                                -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
-                                -GraphEndpoint ($asEndpoints.GraphEndpoint) `
-                                -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
-                                -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
-                                -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
-                                -ErrorAction Stop
-    }
-
-    Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
-    {
-        $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $TenantArmEndpoint
-        Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
-                                -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
-                                -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
-                                -ADTenant $AADTenantID `
                                 -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
                                 -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
@@ -146,7 +155,7 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdmin' -Description "Login to $SvcAdminEnvironmentName as service administrator" -UsecaseBlock `
     {     
-        Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $AADTenantID -ErrorAction Stop
+        Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
     }
 
     Invoke-Usecase -Name 'SelectDefaultProviderSubscription' -Description "Select the Default Provider Subscription" -UsecaseBlock `
@@ -155,6 +164,33 @@ while ($runCount -le $NumberOfIterations)
         if ($defaultSubscription)
         {
             $defaultSubscription | Select-AzureRmSubscription
+        }
+    } 
+       
+    if ($WindowsISOPath)
+    {
+        Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
+        {
+            if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
+            {
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+            }
+        }
+    }
+
+    Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
+    {
+        if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+        {
+            $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+            if (Test-Path -Path $CanaryCustomImageFolder)
+            {
+                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+            }
+            New-Item -Path $CanaryCustomImageFolder -ItemType Directory
+            $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
+            Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
+            Remove-Item $CanaryCustomImageFolder -Recurse
         }
     }
 
@@ -166,6 +202,25 @@ while ($runCount -le $NumberOfIterations)
         $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
         $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription"
 
+        if (-not $TenantArmEndpoint)
+        {
+            throw [System.Exception] "Tenant ARM endpoint is required."
+        }
+
+        Invoke-Usecase -Name 'CreateTenantAzureStackEnv' -Description "Create Azure Stack environment $TntAdminEnvironmentName" -UsecaseBlock `
+        {
+            $asEndpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndpoint $TenantArmEndpoint
+            Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
+                                    -ActiveDirectoryEndpoint ($asEndpoints.ActiveDirectoryEndpoint) `
+                                    -ActiveDirectoryServiceEndpointResourceId ($asEndpoints.ActiveDirectoryServiceEndpointResourceId) `
+                                    -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
+                                    -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
+                                    -GraphEndpoint ($asEndpoints.GraphEndpoint) `
+                                    -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
+                                    -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
+                                    -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
+                                    -ErrorAction Stop
+        }
         Invoke-Usecase -Name 'CreateResourceGroupForTenantSubscription' -Description "Create a resource group $subscriptionRGName for the tenant subscription" -UsecaseBlock `
         {        
             if (Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction SilentlyContinue)
@@ -177,10 +232,11 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'CreateTenantPlan' -Description "Create a tenant plan" -UsecaseBlock `
         {      
-            $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
+            $asToken = NewAzureStackToken -AADTenantId $TenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndpoint
             $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop            
-            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $AADTenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
-            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $AdminArmEndPoint -Token $asToken -QuotaIds $asCanaryQuotas -ErrorAction Stop
+            $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $TenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
+            New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -QuotaIds $asCanaryQuotas -ErrorAction Stop
+
         }
 
         Invoke-Usecase -Name 'CreateTenantOffer' -Description "Create a tenant offer" -UsecaseBlock `
@@ -203,7 +259,7 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'LoginToAzureStackEnvAsTenantAdmin' -Description "Login to $TntAdminEnvironmentName as tenant administrator" -UsecaseBlock `
         {     
-            Add-AzureRmAccount -EnvironmentName $TntAdminEnvironmentName -Credential $TenantAdminCredentials -TenantId $AADTenantID -ErrorAction Stop
+            Add-AzureRmAccount -EnvironmentName $TntAdminEnvironmentName -Credential $TenantAdminCredentials -TenantId $TenantID -ErrorAction Stop
         }
 
         Invoke-Usecase -Name 'CreateTenantSubscription' -Description "Create a subcsription for the tenant and select it as the current subscription" -UsecaseBlock `
@@ -215,7 +271,7 @@ while ($runCount -le $NumberOfIterations)
             {
                 $asTenantSubscription | Select-AzureRmSubscription -ErrorAction Stop
             }           
-        }  
+        } 
 
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
         {
@@ -224,7 +280,7 @@ while ($runCount -le $NumberOfIterations)
             while($true)
             {
                 $sleepTime += 10
-                Start-Sleep 10
+                Start-Sleep -Seconds  10
                 $requiredRPs = Get-AzureRmResourceProvider -ListAvailable | Where-Object {$_.ProviderNamespace -in ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault")}
                 $notRegistered = $requiredRPs | Where-Object {$_.RegistrationState -ne "Registered"}
                 $registered = $requiredRPs | Where-Object {$_.RegistrationState -eq "Registered"}
@@ -239,7 +295,7 @@ while ($runCount -le $NumberOfIterations)
                 }
             }
             Get-AzureRmResourceProvider | Format-Table             
-        }
+        }         
     }
 
     Invoke-Usecase -Name 'CreateResourceGroupForUtilities' -Description "Create a resource group $CanaryUtilitiesRG for the placing the utility files" -UsecaseBlock `
@@ -360,25 +416,49 @@ while ($runCount -le $NumberOfIterations)
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {        
         $kvSecretId = (Get-AzureKeyVaultSecret -VaultName $keyVaultName -Name $kvSecretName -IncludeVersions -ErrorAction Stop).Id  
-        $templateDeploymentName = "CanaryVMDeployment"
-        $parameters = @{"VMAdminUserName"     = $VMAdminUserName;
-                        "VMAdminUserPassword" = $VMAdminUserPass;
-                        "ASCanaryUtilRG"      = $CanaryUtilitiesRG;
-                        "ASCanaryUtilSA"      = $storageAccName;
-                        "ASCanaryUtilSC"      = $storageCtrName;
-                        "vaultName"           = $keyvaultName;
-                        "secretUrlWithVersion"= $kvSecretId}   
-        if (-not (Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters))
+        $osVersion = ""
+        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue)
         {
-            New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile .\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
+            $osVersion = "2016-Datacenter-Core"
+        }
+        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter" -ErrorAction SilentlyContinue)
+        {
+            $osVersion = "2016-Datacenter"
+        }
+        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
+        {
+            $osVersion = "2012-R2-Datacenter"
+        }        
+        
+        $templateDeploymentName = "CanaryVMDeployment"
+        $parameters = @{"VMAdminUserName"       = $VMAdminUserName;
+                        "VMAdminUserPassword"   = $VMAdminUserPass;
+                        "ASCanaryUtilRG"        = $CanaryUtilitiesRG;
+                        "ASCanaryUtilSA"        = $storageAccName;
+                        "ASCanaryUtilSC"        = $storageCtrName;
+                        "vaultName"             = $keyvaultName;
+                        "windowsOSVersion"      = $osVersion;
+                        "secretUrlWithVersion"  = $kvSecretId;
+                        "LinuxImagePublisher"   = $linuxImagePublisher;
+                        "LinuxImageOffer"       = $linuxImageOffer;
+                        "LinuxImageSku"         = $LinuxOSSku}   
+        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
+        if (-not $templateError)
+        {
+            New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
+        }
+        else 
+        {
+            throw [System.Exception] "Template validation failed. `n$($templateError.Message)"
         }
     }
 
-    $canaryVMList = @()
-    $canaryVMList = Invoke-Usecase -Name 'QueryTheVMsDeployed' -Description "Queries for the VMs that were deployed using the ARM template" -UsecaseBlock `
+    $canaryWindowsVMList = @()
+    $canaryWindowsVMList = Invoke-Usecase -Name 'QueryTheVMsDeployed' -Description "Queries for the VMs that were deployed using the ARM template" -UsecaseBlock `
     {
-        $canaryVMList = @()
+        $canaryWindowsVMList = @()        
         $vmList = Get-AzureRmVm -ResourceGroupName $CanaryVMRG -ErrorAction Stop
+        $vmList = $vmList | Where-Object {$_.OSProfile.WindowsConfiguration}
         foreach ($vm in $vmList)
         {
             $vmObject = New-Object -TypeName System.Object
@@ -406,21 +486,21 @@ while ($runCount -le $NumberOfIterations)
             }
             $vmObject | Add-Member -Type NoteProperty -Name VMPrivateIP -Value $privateIP -Force
             $vmObject | Add-Member -Type NoteProperty -Name VMPublicIP -Value $publicIP -Force
-            $canaryVMList += $vmObject 
+            $canaryWindowsVMList += $vmObject 
         }
-        $canaryVMList
+        $canaryWindowsVMList
     }
-    if ($canaryVMList)
+    if ($canaryWindowsVMList)
     {   
-        $canaryVMList | Format-Table -AutoSize    
-        foreach($vm in $canaryVMList)
+        $canaryWindowsVMList | Format-Table -AutoSize    
+        foreach($vm in $canaryWindowsVMList)
         {
-            if ($vm.VMPublicIP)
+            if ($vm.VMPublicIP -and $vm.VMName.EndsWith("VM1", 'CurrentCultureIgnoreCase'))
             {
                 $publicVMName = $vm.VMName
                 $publicVMIP = $vm.VMPublicIP[0]
             }
-            if ((-not ($vm.VMPublicIP)) -and ($vm.VMPrivateIP))
+            if ((-not ($vm.VMPublicIP)) -and ($vm.VMPrivateIP) -and ($vm.VMName.EndsWith("VM2", 'CurrentCultureIgnoreCase')))
             {
                 $privateVMName = $vm.VMName
                 $privateVMIP = $vm.VMPrivateIP[0]
@@ -649,7 +729,7 @@ while ($runCount -le $NumberOfIterations)
 
                 Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
                 {     
-                    Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $AADTenantID -ErrorAction Stop
+                    Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
                 }
 
                 Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
