@@ -43,6 +43,8 @@ There are two personas involved in implementing this scenario.
 #### Step 0: Popoulate Azure Resource Manager with AzureStack Applications 
 - This step is a temporary workaround and needed only  for the TP3 (March) release of Azure Stack
 - Execute this cmdlet as the **Azure Stack Service Administrator**, from the Console VM or the DVM replacing ```$azureStackDirectoryTenant``` with the directory tenant that Azure Stack is registered to and ```$guestDirectoryTenant``` with the directory that needs to be onboarded to Azure Stack.
+
+__NOTE:__ This cmd needs to be run **only once** throughout the entire life cycle of that Azure Stack installation. You do **not** have to run this step every time you need to add a new directory.
 ```powershell
 $adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
 $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
