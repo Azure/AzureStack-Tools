@@ -21,7 +21,7 @@ Adding a VM Image requires that you obtain the GUID value of your Directory Tena
 $aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
 ```
 
-Otherwise, it can be retrieved directly from your Azure Stack deployment. First, add your host to the list of TrustedHosts:
+Otherwise, it can be retrieved directly from your Azure Stack deployment. This method can also be used for AD FS. First, add your host to the list of TrustedHosts:
 ```powershell
 Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
 ```
@@ -42,6 +42,8 @@ An example usage is the following:
 $ISOPath = "<Path to ISO>"
 New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant  
 ```
+
+This command may show a popup prompt that can be ignored without issue.
 
 To ensure that the Windows Server 2016 VM Image has the latest cumulative update, provide the -IncludeLatestCU parameter.
 
@@ -80,7 +82,7 @@ To verify that the command ran successfully, go to Marketplace in the portal, an
 Run the below command to remove an uploaded VM image. After removal, tenants will no longer be able to deploy virtual machines with this image.
 
 ```powershell
-Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -tenantID <GUID AADTenant>
+Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <GUID AADTenant>
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
