@@ -210,16 +210,16 @@ function Get-AzureRmUserRefreshToken([Microsoft.Azure.Commands.Profile.Models.PS
 }
 
 <#
-.Synopsis
-Adds a Guest Directory Tenant to Azure Stack.
-.DESCRIPTION
-Running this cmdlet will add the specified directory tenant to the Azure Stack whitelist.    
-.EXAMPLE
-$adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
-$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
-$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
+    .Synopsis
+    Adds a Guest Directory Tenant to Azure Stack.
+    .DESCRIPTION
+    Running this cmdlet will add the specified directory tenant to the Azure Stack whitelist.    
+    .EXAMPLE
+    $adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
+    $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
+    $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
 
-Register-GuestDirectoryTenantToAzureStack -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
+    Register-GuestDirectoryTenantToAzureStack -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
 #>
 function Register-GuestDirectoryTenantToAzureStack {
     [CmdletBinding()]
@@ -284,16 +284,16 @@ function Register-GuestDirectoryTenantToAzureStack {
 }
 
 <#
-.Synopsis
-Publishes the list of applications to the Azure Stack ARM. 
-.DESCRIPTION
-    
-.EXAMPLE
-$adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
-$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
-$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
+    .Synopsis
+    Publishes the list of applications to the Azure Stack ARM. 
+    .DESCRIPTION
+        
+    .EXAMPLE
+    $adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
+    $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
+    $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
 
-Publish-AzureStackApplicationsToARM -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant    
+    Publish-AzureStackApplicationsToARM -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant    
 #>
 function Publish-AzureStackApplicationsToARM {
     [CmdletBinding()]

@@ -4,12 +4,14 @@
 Install-Module -Name AzureRM -RequiredVersion 1.2.8 -Scope CurrentUser
 Install-Module -Name AzureStack -RequiredVersion 1.2.8 -Scope CurrentUser
 ```
+
 Then make sure the following modules are imported:
 
 ```powershell
 Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.Identity.psm1
 ```
+
 ## Getting the directory tenant identifier from the Identity System
 
 This function is used to get the Directory Tenant Guid. This method works for both AAD and AD FS.
@@ -17,10 +19,12 @@ This function is used to get the Directory Tenant Guid. This method works for bo
 ```powershell
 $directoryTenantId = Get-DirectoryTenantIdentifier -Authority "<DirectoryTenantUrl>"
 ```
+
 An example of an authority for AAD is `https://login.windows.net/microsoft.onmicrosoft.com`
 and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 
 ## Creating a Service Principal in a disconnected (AD FS) topology
+
 You can create a Service Principal by executing the following command after importing the Identity module
 
 ```powershell
@@ -34,17 +38,22 @@ Add-AzureRmAccount -EnvironmentName "<AzureStackEnvironmentName>" -ServicePrinci
 ```
 
 ## Enabling AAD Multi-Tenancy in Azure Stack
+
 Allowing users and service principals from multiple AAD directory tenants to sign in and create resources on Azure Stack.
 There are two personas involved in implementing this scenario.
+
 1. The Administrator of the Azure Stack installation
-2. The Directory Tenant Administrator of the directory that needs to be onboarded to Azure Stack
+1. The Directory Tenant Administrator of the directory that needs to be onboarded to Azure Stack
 
 ### Azure Stack Administrator
-#### Step 0: Popoulate Azure Resource Manager with AzureStack Applications 
+
+#### Pre-Requisite: Popoulate Azure Resource Manager with AzureStack Applications
+
 - This step is a temporary workaround and needed only  for the TP3 (March) release of Azure Stack
 - Execute this cmdlet as the **Azure Stack Service Administrator**, from the Console VM or the DVM replacing ```$azureStackDirectoryTenant``` with the directory tenant that Azure Stack is registered to and ```$guestDirectoryTenant``` with the directory that needs to be onboarded to Azure Stack.
 
 __NOTE:__ This cmd needs to be run **only once** throughout the entire life cycle of that Azure Stack installation. You do **not** have to run this step every time you need to add a new directory.
+
 ```powershell
 $adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
 $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
@@ -55,6 +64,7 @@ Publish-AzureStackApplicationsToARM -AdminResourceManagerEndpoint $adminARMEndpo
 ```
 
 #### Step 1: Onboard the Guest Directory Tenant to Azure Stack
+
 This step will let Azure Resource manager know that it can accept users and service principals from the guest directory tenant.
 
 ```powershell
@@ -65,16 +75,20 @@ $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com" # 
 Register-GuestDirectoryTenantToAzureStack -AdminResourceManagerEndpoint $adminARMEndpoint `
     -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
 ```
+
 With this step, the work of the Azure Stack administrator is done.
 
 ### Guest Directory Tenant Administrator
+
 The following steps need to be completed by the **Directory Tenant Administrator** of the directory that needs to be onboarded to Azure Stack.
 
 #### Step 3: Providing UI-based consent to Azure Stack Portal and ARM
+
 - This is an important step. Open up a web browser, and go to `https://portal.<region>.<domain>/guest/signup/<guestDirectoryName>`. Note that this is the directory tenant that needs to be onboarded to Azure Stack. 
 - This will take you to an AAD sign in page where you need to enter your credentials and click on 'Accept' on the consent screen.
 
 #### Step 4: Registering Azure Stack applications with the Guest Directory
+
 Execute the following cmdlet as the administrator of the directory that needs to be onboarded, replacing ```$guestDirectoryTenantName``` with your directory domain name
 
 ```powershell
