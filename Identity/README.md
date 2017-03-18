@@ -32,3 +32,45 @@ After the Service Principal is created, you should open your Azure Stack Portal 
 ```powershell
 Add-AzureRmAccount -EnvironmentName "<AzureStackEnvironmentName>" -ServicePrincipal -CertificateThumbprint $servicePrincipal.Thumbprint -ApplicationId $servicePrincipal.ApplicationId -TenantId $directoryTenantId
 ```
+
+## Enabling AAD Multi-Tenancy in Azure Stack
+Allowing users and service principals from multiple AAD directory tenants to sign in and create resources on Azure Stack.
+There are two personas involved in implementing this scenario.
+1. The Administrator of the Azure Stack installation
+2. The Directory Tenant Administrator of the directory that needs to be onboarded to Azure Stack.
+
+### Azure Stack Administrator
+#### Step 0: Popoulate Azure Resource Manager with AzureStack Applications 
+This step is a temporary workaround and needed only  for the TP3 (March) release of Azure Stack. 
+```powershell
+$adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
+$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
+$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
+
+Publish-AzureStackApplicationsToARM -AdminResourceManagerEndpoint $adminARMEndpoint `
+    -DirectoryTenantName $azureStackDirectoryTenant
+```
+
+#### Step 1: Onboard the Guest Directory Tenant to Azure Stack
+This step will let Azure Resource manager know that it can accept users and service principals from the guest directory tenant.
+
+```powershell
+$adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
+$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com" # this is the primary tenant Azure Stack is registered to
+$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com" # this is the new tenant that needs to be onboarded to Azure Stack
+
+Register-GuestDirectoryTenantToAzureStack -AdminResourceManagerEndpoint $adminARMEndpoint `
+    -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
+```
+With these steps, the work of the Azure Stack administrator is done.
+
+### Guest Directory Tenant Administrator
+
+```powershell
+tenantARMEndpoint = "https://management.<region>.<domain>"
+$myDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com" # this is the new tenant that needs to be onboarded to Azure Stack
+
+Register-AzureStackWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
+    -DirectoryTenantName $myDirectoryTenantName -Verbose -Debug
+```
+

@@ -407,8 +407,6 @@ $myDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com"
 
 Register-AzureStackWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
     -DirectoryTenantName $myDirectoryTenantName -Verbose -Debug
-
- 
 #>
 function Register-AzureStackWithMyDirectoryTenant {
     [CmdletBinding()]
