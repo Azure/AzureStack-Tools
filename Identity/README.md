@@ -9,7 +9,7 @@ Then make sure the following modules are imported:
 
 ```powershell
 Import-Module ..\Connect\AzureStack.Connect.psm1
-Import-Module ..\AzureStack.Identity.psm1
+Import-Module ..\Identity\AzureStack.Identity.psm1
 ```
 
 ## Getting the directory tenant identifier from the Identity System
