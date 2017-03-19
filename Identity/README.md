@@ -47,7 +47,7 @@ There are two personas involved in implementing this scenario.
 
 ### Azure Stack Administrator
 
-#### Pre-Requisite: Popoulate Azure Resource Manager with AzureStack Applications
+#### Pre-Requisite: Populate Azure Resource Manager with AzureStack Applications
 
 - This step is a temporary workaround and needed only  for the TP3 (March) release of Azure Stack
 - Execute this cmdlet as the **Azure Stack Service Administrator**, from the Console VM or the DVM replacing ```$azureStackDirectoryTenant``` with the directory tenant that Azure Stack is registered to and ```$guestDirectoryTenant``` with the directory that needs to be onboarded to Azure Stack.
