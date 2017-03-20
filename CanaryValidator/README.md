@@ -14,8 +14,9 @@ cd AzureStack-Tools-master\CanaryValidator
 
 # To execute Canary as Tenant Administrator
 ```powershell
-# Install-Module AzureRM -RequiredVersion 1.2.8 -Force
-# Install-Module AzureStack -RequiredVersion 1.2.8 -Force
+# Install-Module -Name 'AzureRm.Bootstrapper' -Force
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module AzureStack -RequiredVersion 1.2.9 -Force
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -AADTenantID "<TenantID from Azure Active Directory>"  -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds
@@ -23,8 +24,9 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 
 # To execute Canary as Service Administrator
 ```powershell
-# Install-Module AzureRM -RequiredVersion 1.2.8 -Force
-# Install-Module AzureStack -RequiredVersion 1.2.8 -Force
+# Install-Module -Name 'AzureRm.Bootstrapper' -Force
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module AzureStack -RequiredVersion 1.2.9 -Force
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -AADTenantID "<TenantID from Azure Active Directory>"  -AdminArmEndpoint "<Administrative ARM endpoint>"  -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" 
 ```
