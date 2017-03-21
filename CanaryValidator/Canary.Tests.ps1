@@ -681,6 +681,18 @@ while ($runCount -le $NumberOfIterations)
             }    
         }
     }
+    
+    Invoke-Usecase -Name 'CheckExistenceOfScreenShotForVMWithPrivateIP' -Description "Check if screen shots are available for Windows VM with private IP and store the screen shot in log folder" -UsecaseBlock `
+    {
+        $sa = Get-AzureRmStorageAccount -ResourceGroupName $CanaryVMRG -Name "$($CanaryVMRG)2sa"
+        $diagSC = $sa | Get-AzureStorageContainer | Where-Object {$_.Name -like "bootdiagnostics-$CanaryVMRG*"}
+        $screenShotBlob = $diagSC | Get-AzureStorageBlob | Where-Object {$_.Name -like "$privateVMName*screenshot.bmp"}
+        $sa | Get-AzureStorageBlobContent -Blob $screenShotBlob.Name -Container $diagSC.Name -Destination $CanaryLogPath -Force
+        if (-not (Get-ChildItem -Path $CanaryLogPath -File -Filter $screenShotBlob.name))
+        {
+            throw [System.Exception]"Unable to download screen shot for a Windows VM with private IP"
+        }
+    }
 
     if (-not $NoCleanup)
     {
