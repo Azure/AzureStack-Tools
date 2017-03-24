@@ -91,7 +91,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
+	[parameter(HelpMessage="Specifies the file name for canary log file")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CanaryLogFileName = "Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"    
 )
 
 #Requires -Modules AzureRM
@@ -125,7 +130,7 @@ while ($runCount -le $NumberOfIterations)
     #
     # Start Canary 
     #
-    $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
+    $CanaryLogFile      = $CanaryLogPath + "\$CanaryLogFileName"
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
