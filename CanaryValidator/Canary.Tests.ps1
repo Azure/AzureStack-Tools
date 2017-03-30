@@ -91,7 +91,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
+	[parameter(HelpMessage="Specifies the file name for canary log file")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CanaryLogFileName = "Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"    
 )
 
 #Requires -Modules AzureRM
@@ -125,7 +130,7 @@ while ($runCount -le $NumberOfIterations)
     #
     # Start Canary 
     #
-    $CanaryLogFile      = $CanaryLogPath + "\Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"
+    $CanaryLogFile      = $CanaryLogPath + "\$CanaryLogFileName"
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
@@ -237,7 +242,6 @@ while ($runCount -le $NumberOfIterations)
             $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription" -ErrorAction Stop            
             $asCanaryQuotas = NewAzureStackDefaultQuotas -ResourceLocation $ResourceLocation -SubscriptionId $defaultSubscription.SubscriptionId -AADTenantID $TenantID -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $ServiceAdminCredentials -ArmEndPoint $AdminArmEndPoint
             New-AzureRMPlan -Name $tenantPlanName -DisplayName $tenantPlanName -ArmLocation $ResourceLocation -ResourceGroup $subscriptionRGName -QuotaIds $asCanaryQuotas -ErrorAction Stop
-
         }
 
         Invoke-Usecase -Name 'CreateTenantOffer' -Description "Create a tenant offer" -UsecaseBlock `
@@ -679,6 +683,18 @@ while ($runCount -le $NumberOfIterations)
                     throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
                 }
             }    
+        }
+    }
+    
+    Invoke-Usecase -Name 'CheckExistenceOfScreenShotForVMWithPrivateIP' -Description "Check if screen shots are available for Windows VM with private IP and store the screen shot in log folder" -UsecaseBlock `
+    {
+        $sa = Get-AzureRmStorageAccount -ResourceGroupName $CanaryVMRG -Name "$($CanaryVMRG)2sa"
+        $diagSC = $sa | Get-AzureStorageContainer | Where-Object {$_.Name -like "bootdiagnostics-$CanaryVMRG*"}
+        $screenShotBlob = $diagSC | Get-AzureStorageBlob | Where-Object {$_.Name -like "$privateVMName*screenshot.bmp"}
+        $sa | Get-AzureStorageBlobContent -Blob $screenShotBlob.Name -Container $diagSC.Name -Destination $CanaryLogPath -Force
+        if (-not (Get-ChildItem -Path $CanaryLogPath -File -Filter $screenShotBlob.name))
+        {
+            throw [System.Exception]"Unable to download screen shot for a Windows VM with private IP"
         }
     }
 
