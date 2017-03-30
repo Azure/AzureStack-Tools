@@ -86,3 +86,17 @@ Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
+
+## Add a VM extension to the Compute with PowerShell
+An example usage is the following:
+```powershell
+$path = "<Path to vm extension zip>"
+Add-VMExtension -publisher $publisher -version $version -extensionLocalPath $path -osType Windows -tenantID $aadTenant -azureStackCredentials $azureStackCredentials -type "CustomVmExtension"  
+```
+
+# Remove a VM extension with PowerShell
+Run the below command to remove an uploaded VM extension.
+
+```powershell
+Remove-VMExtension -publisher $publisher -version $version -osType Windows -tenantID $tenantId -azureStackCredentials $azureStackCredentials -type "CustomVmExtension"
+```
