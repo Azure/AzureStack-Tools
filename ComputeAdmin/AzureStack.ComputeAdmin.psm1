@@ -156,6 +156,7 @@ Function Add-VMImage{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
+    Log-Info $uri
 
     #building platform image JSON
 
@@ -326,6 +327,8 @@ Function Remove-VMImage{
     $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
+
+    Log-Info $uri
 
     try{
         Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
@@ -697,11 +700,11 @@ Function Add-VMExtension{
 
         [Parameter(ParameterSetName='VMExtensionFromLocal')]
         [Parameter(ParameterSetName='VMExtesionFromAzure')]
-        [String] $vmScaleSetEnabled = "false",
+        [bool] $vmScaleSetEnabled = $false,
 
         [Parameter(ParameterSetName='VMExtensionFromLocal')]
         [Parameter(ParameterSetName='VMExtesionFromAzure')]
-        [String] $supportMultipleExtensions = "false",
+        [bool] $supportMultipleExtensions = $false,
     
         [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
@@ -758,6 +761,8 @@ Function Add-VMExtension{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
     $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
+    Log-Info $uri
+
     #building request body JSON
     if($pscmdlet.ParameterSetName -eq "VMExtensionFromLocal") {
         $sourceBlobJSON = '"SourceBlob" : {"Uri" :"' + $extensionBlobURIFromLocal + '"}'
@@ -786,7 +791,7 @@ Function Add-VMExtension{
     {
         if($extensionHandler.Properties.ProvisioningState -eq 'Failed')
         {
-            Write-Error -Message "VM extension download failed." -ErrorAction Stop
+            Write-Error -Message ('VM extension download failed with Error:"{0}.' -f $publisher, $_.Exception.Message ) -ErrorAction Stop
         }
 
         if($extensionHandler.Properties.ProvisioningState -eq 'Canceled')
@@ -837,10 +842,12 @@ Function Remove-VMExtension{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
     $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
+    Log-Info $uri
+
     try{
         Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
     }
     catch{
-        Write-Error -Message ('Deletion of VM extension with publisher "{0}" failed with Error:"{1}.' -f $publisher,$Error) -ErrorAction Stop
+        Write-Error -Message ('Deletion of VM extension with publisher "{0}" failed with Error:"{1}.' -f $publisher, $_.Exception.Message ) -ErrorAction Stop
     }
 }
