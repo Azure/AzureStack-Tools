@@ -17,6 +17,7 @@ Function Add-GalleryItem{
     Param(
         [Parameter(Mandatory=$true, ParameterSetName='GalleryItemFromLocal')]
         [ValidateNotNullorEmpty()]
+        [ValidateScript({Test-Path $_})]
         [String] $galleryItemLocalPath,
 
         [Parameter(Mandatory=$true, ParameterSetName='GalleryItemFromAzure')]
@@ -38,14 +39,15 @@ Function Add-GalleryItem{
 
         [Parameter(ParameterSetName='GalleryItemFromLocal')]
         [Parameter(ParameterSetName='GalleryItemFromAzure')]
-        [string] $ArmEndpoint = 'https://adminmanagement.local.azurestack.external'
+        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
     )
 
     $resourceGroupName = "addiresourcegroup"
     $storageAccountName = "addgistorageaccount"
     $containerName = "addgicontainer"
 
-    $subscription = (Get-AzureStackAdminSubscription -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+    $latestVer = "1.2.9"
+    $subscription = (Get-AzureStackAdminSubscription -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -armEndpoint $ArmEndpoint)
 
     #potentially the RG was not cleaned up when exception happened in previous run. Test for exist
     if (-not (Get-AzureRmResourceGroup -Name $resourceGroupName -Location $location -ErrorAction SilentlyContinue)) {
@@ -74,7 +76,7 @@ Function Add-GalleryItem{
         $galleryItemBlobURI = $galleryItemBlobURIFromLocal
     }
 
-    if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
+    if((Get-Module AzureStack).Version -ge [System.Version] $latestVer){
         Add-AzureRMGalleryItem -GalleryItemUri $galleryItemBlobURI
     }else{
         Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemBlobURI -ApiVersion 2015-04-01
@@ -95,9 +97,10 @@ Function Get-GalleryItem{
         [String] $GalleryItemName
     )
 
-    $subscription = (Get-AzureStackAdminSubscription -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+    $latestVer = "1.2.9"
+    $subscription = (Get-AzureStackAdminSubscription -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -armEndpoint $ArmEndpoint)
 
-    if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
+    if((Get-Module AzureStack).Version -ge [System.Version] $latestVer){
         Get-AzureRMGalleryItem -Name $GalleryItemName
     }else{
         Get-AzureRMGalleryItem -SubscriptionId $subscription -Name $GalleryItemName -ApiVersion '2015-04-01'
@@ -114,9 +117,10 @@ Function Remove-GalleryItem{
         [String] $GalleryItemName
     )
 
-    $subscription = (Get-AzureStackAdminSubscription -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+    $latestVer = "1.2.9"
+    $subscription = (Get-AzureStackAdminSubscription -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -armEndpoint $ArmEndpoint)
 
-    if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
+    if((Get-Module AzureStack).Version -ge [System.Version] $latestVer){
         Remove-AzureRMGalleryItem -Name $GalleryItemName
     }else{
         Remove-AzureRMGalleryItem -SubscriptionId $subscription -Name $GalleryItemName -ApiVersion '2015-04-01'
@@ -135,17 +139,16 @@ function Get-AzureStackAdminSubscription {
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
         [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint = 'https://adminmanagement.local.azurestack.external'
+        [string] $armEndpoint = 'https://api.local.azurestack.external'
     )
 
     if(-not $azureStackCredentials){
         $azureStackCredentials = Get-Credential
     }
     
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
-            $ARMEndpoint = $ARMEndpoint.Substring(7)
-            $ARMEndpoint = 'https://' + $ARMEndpoint
+    if(!$ARMEndpoint.StartsWith('https://')){
+        if($ARMEndpoint.StartsWith('http://')){
+           $ArmEndpoint.Replace('http://', 'https://')
         }else{
             $ARMEndpoint = 'https://' + $ARMEndpoint
         }
@@ -157,16 +160,6 @@ function Get-AzureStackAdminSubscription {
         Invoke-RestMethod -Method Get -Uri "$($ARMEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop | Out-Null
     }catch{
         Write-Error "The specified ARM endpoint: $ArmEndpoint is not valid for this environment. Please make sure you are using the correct administrator ARM endpoint for this environment." -ErrorAction Stop
-    }
-
-    $Domain = ""
-    try {
-        $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $i = $ArmEndpoint.IndexOf('.')
-        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
-    }
-    catch {
-        Write-Error "The specified ARM endpoint was invalid"
     }
 
     $subscriptionName = "Default Provider Subscription"
