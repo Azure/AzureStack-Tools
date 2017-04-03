@@ -59,8 +59,7 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$EnvironmentName = "AzureStackCanaryCloud",   
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
@@ -91,7 +90,7 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).Ticks)",
 	[parameter(HelpMessage="Specifies the file name for canary log file")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -113,7 +112,7 @@ $keyvaultCertName       = "ASCanaryVMCertificate"
 $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName        = "CanaryAdmin" 
 $VMAdminUserPass        = "CanaryAdmin@123"
-$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
 $linuxImagePublisher    = "Canonical"
 $linuxImageOffer        = "UbuntuServer"
 $linuxImageVersion      = "1.0.0"
