@@ -261,7 +261,7 @@ function Register-GuestDirectoryTenantToAzureStack {
     $VerbosePreference = 'Continue'
 
     # Install-Module AzureRm -RequiredVersion '1.2.8'
-    Import-Module 'AzureRm.Profile' -RequiredVersion '1.0.4.2' -Force -Verbose:$false 4> $null
+    Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
 
     # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
     $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint -DirectoryTenantName $DirectoryTenantName
@@ -337,7 +337,7 @@ function Publish-AzureStackApplicationsToARM {
     $VerbosePreference = 'Continue'
 
     # Install-Module AzureRm -RequiredVersion '1.2.8'
-    Import-Module 'AzureRm.Profile' -RequiredVersion '1.0.4.2' -Force -Verbose:$false 4> $null
+    Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
     Write-Warning "This script is intended to work only with the initial TP3 release of Azure Stack and will be deprecated."
  
     # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
@@ -428,7 +428,7 @@ function Register-AzureStackWithMyDirectoryTenant {
     $VerbosePreference = 'Continue'
 
     # Install-Module AzureRm -RequiredVersion '1.2.8'
-    Import-Module 'AzureRm.Profile' -RequiredVersion '1.0.4.2' -Force -Verbose:$false 4> $null
+    Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1"       -Force -Verbose:$false 4> $null
 
     # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager corresponding to their home Graph Service. Will prompt user for credentials.
