@@ -72,8 +72,6 @@ Export-ModuleMember Get-AzureStackAadTenant
 #>
 function Add-AzureStackAzureRmEnvironment {
     param (
-        [parameter(mandatory=$true, HelpMessage="AAD Tenant name or ID used when deploying Azure Stack such as 'mydirectory.onmicrosoft.com'")]
-        [string] $AadTenant,
         [Parameter(mandatory=$true, HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint,
         [parameter(mandatory=$true, HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
@@ -110,34 +108,33 @@ function Add-AzureStackAzureRmEnvironment {
 
     $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
     $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
-$StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
-$aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
+    $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
+    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
 
-$azureEnvironmentParams = @{
-    Name                                     = $Name
-    ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
-    ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-    AdTenant                                 = $AadTenant
-    ResourceManagerEndpoint                  = $ResourceManagerEndpoint
-    GalleryEndpoint                          = $endpoints.galleryEndpoint
-    GraphEndpoint                            = $endpoints.graphEndpoint
-    GraphAudience                            = $endpoints.graphEndpoint
-    StorageEndpointSuffix                    = $StorageEndpointSuffix
-    AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
-    AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
-    EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
-}
+    $azureEnvironmentParams = @{
+        Name                                     = $Name
+        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+        ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+        GalleryEndpoint                          = $endpoints.galleryEndpoint
+        GraphEndpoint                            = $endpoints.graphEndpoint
+        GraphAudience                            = $endpoints.graphEndpoint
+        StorageEndpointSuffix                    = $StorageEndpointSuffix
+        AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
+        AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
+        EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
+    }
 
-$armEnv = Get-AzureRmEnvironment -Name $Name
-if($armEnv -ne $null) {
-    Write-Verbose "Updating AzureRm environment $Name" -Verbose
-    Remove-AzureRmEnvironment -Name $Name | Out-Null
-}
-else {
-    Write-Verbose "Adding AzureRm environment $Name" -Verbose
-}
-        
-return Add-AzureRmEnvironment @azureEnvironmentParams
+    $armEnv = Get-AzureRmEnvironment -Name $Name
+    if($armEnv -ne $null) {
+        Write-Verbose "Updating AzureRm environment $Name" -Verbose
+        Remove-AzureRmEnvironment -Name $Name | Out-Null
+    }
+    else {
+        Write-Verbose "Adding AzureRm environment $Name" -Verbose
+    }
+            
+    return Add-AzureRmEnvironment @azureEnvironmentParams
 }
 
 Export-ModuleMember Add-AzureStackAzureRmEnvironment

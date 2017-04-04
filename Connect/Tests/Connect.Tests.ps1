@@ -94,7 +94,7 @@ InModuleScope $script:ModuleName {
 
         It 'Add-AzureStackAzureRmEnvironment should successfully add a an administrator environment' {
             Remove-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue 
-            Add-AzureStackAzureRmEnvironment -AadTenant $global:AadTenantID -ArmEndpoint $armEndpoint -Name $EnvironmentName
+            Add-AzureStackAzureRmEnvironment -ArmEndpoint $armEndpoint -Name $EnvironmentName
             Get-AzureRmEnvironment -Name $EnvironmentName | Should Not Be $null
         }
 
