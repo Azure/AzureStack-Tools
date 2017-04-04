@@ -131,7 +131,7 @@ while ($runCount -le $NumberOfIterations)
     # Start Canary 
     #  
     $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
-    $CanaryLogFile      = $CanaryLogPath + "\$CanaryLogFileName"
+    $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
@@ -205,7 +205,7 @@ while ($runCount -le $NumberOfIterations)
         catch
         {
             Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
-            throw [System.Exception]"Failed to upload the linux image to PIR. `n$_.Exception.Message"
+	    throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
         }
     }
 
