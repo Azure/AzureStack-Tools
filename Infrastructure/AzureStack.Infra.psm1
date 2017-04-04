@@ -19,8 +19,8 @@ Function Get-AzSAlert{
         [Parameter(ParameterSetName='GetAlert')]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
         
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetAlert')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetAlert')]
+        [string] $ArmEndpoint,
         
         [Parameter(ParameterSetName='GetAlert')]
         [string] $region = 'local'
@@ -50,8 +50,8 @@ Function Get-AzSScaleUnit{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
         
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='ScaleUnit')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='ScaleUnit')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='ScaleUnit')]
         [string] $region = 'local'
@@ -81,8 +81,8 @@ Function Get-AzSScaleUnitNode{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetNode')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetNode')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetNode')]
         [string] $region = 'local'
@@ -118,9 +118,9 @@ Function Get-AzSStorageCapacity{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetStorageCapacity')]
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetStorageCapacity')]
 
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [string] $ArmEndpoint,
 
 
         [Parameter(ParameterSetName='GetStorageCapacity')]
@@ -154,8 +154,8 @@ Function Get-AzSInfraRole{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetInfraRole')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetInfraRole')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetInfraRole')]
         [string] $region = 'local'
@@ -188,8 +188,8 @@ Function Get-AzSInfraRoleInstance{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetInfraRoleInstance')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetInfraRoleInstance')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetInfraRoleInstance')]
         [string] $region = 'local'
@@ -221,8 +221,8 @@ Function Get-AzSStorageShare{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetShare')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetShare')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetShare')]
         [string] $region = 'local'
@@ -254,8 +254,8 @@ Function Get-AzSLogicalNetwork{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='Getlogicalnetwork')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='Getlogicalnetwork')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='Getlogicalnetwork')]
         [string] $region = 'local'
@@ -287,8 +287,8 @@ Function Get-AzSUpdateSummary{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetUpdateSummary')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetUpdateSummary')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetUpdateSummary')]
         [string] $region = 'local'
@@ -320,8 +320,8 @@ Function Get-AzSUpdate{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetUpdate')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetUpdate')]
+        [string] $ArmEndpoint,
 
 
         [Parameter(ParameterSetName='GetUpdate')]
@@ -354,8 +354,8 @@ Function Get-AzSUpdateRun{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetUpdateRun')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetUpdateRun')]
+        [string] $ArmEndpoint,
 
 
         [Parameter(ParameterSetName='GetUpdateRun')]
@@ -392,8 +392,8 @@ Function Install-AzSUpdate{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='ApplyUpdate')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='ApplyUpdate')]
+        [string] $ArmEndpoint,
 
 
         [Parameter(ParameterSetName='ApplyUpdate')]
@@ -435,8 +435,8 @@ Function Close-AzSAlert{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='CloseAlert')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='CloseAlert')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='closealert')]
         [string] $region = 'local',
@@ -480,8 +480,8 @@ Function Get-AzSIPPool{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetIPPool')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetIPPool')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetIPPool')]
         [string] $region = 'local'
@@ -514,8 +514,8 @@ Function Get-AzSMaCPool{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetMaCPool')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetMaCPool')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetMaCPool')]
         [string] $region = 'local'
@@ -547,8 +547,8 @@ Function Get-AzSGatewayPool{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetGatewayPool')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetGatewayPool')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetGatewayPool')]
         [string] $region = 'local'
@@ -581,8 +581,8 @@ Function Get-AzSSLBMUX{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetSLBMUX')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetSLBMUX')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetSLBMUX')]
         [string] $region = 'local'
@@ -615,8 +615,8 @@ Function Get-AzSGateway{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetGateway')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='GetGateway')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='GetGateway')]
         [string] $region = 'local'
@@ -649,8 +649,8 @@ Function Start-AzSInfraRoleInstance{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='StartInfraRoleInstance')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='StartInfraRoleInstance')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='StartInfraRoleInstance')]
         [string] $region = 'local',
@@ -685,8 +685,8 @@ Function Stop-AzSInfraRoleInstance{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='StopInfraRoleInstance')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='StopInfraRoleInstance')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='StopInfraRoleInstance')]
         [string] $region = 'local',
@@ -721,8 +721,8 @@ Function Restart-AzSInfraRoleInstance{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='Restart-AzSInfraRoleInstance')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='Restart-AzSInfraRoleInstance')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='RestartInfraRoleInstance')]
         [string] $region = 'local',
@@ -757,8 +757,8 @@ Function Add-AzSIPPool{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='AddIPPool')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='AddIPPool')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='AddIPPool')]
         [string] $region = 'local',

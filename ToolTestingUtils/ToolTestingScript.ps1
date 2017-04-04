@@ -1,8 +1,8 @@
 param (    
     [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
     [string] $HostComputer,
-    [Parameter(HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
-    [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+    [Parameter(mandatory=$true, HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
+    [string] $ArmEndpoint,
     [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
     [string] $natServer = "MAS-BGPNAT01",
     [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
@@ -32,10 +32,10 @@ $global:VPNConnectionName = "AzureStackTestVPN"
 #Start running tests in correct order
 Set-Location ..\Connect
 Invoke-Pester 
-#Set-Location ..\ServiceAdmin
-#Invoke-Pester
-#Set-Location ..\Infrastructure
-#Invoke-Pester
+Set-Location ..\ServiceAdmin
+Invoke-Pester
+Set-Location ..\Infrastructure
+Invoke-Pester
 Set-Location ..\ComputeAdmin
 Invoke-Pester
 Set-Location ..\ToolTestingUtils\

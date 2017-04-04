@@ -40,10 +40,11 @@ As a prerequisite, you need to obtain the Windows Server 2016 Evaluation ISO whi
 An example usage is the following:
 ```powershell
 $ISOPath = "<Path to ISO>"
-New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant  
+New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
+Please make sure to specify the correct administrator ARM endpoint for your environment.
 
-This command may show a popup prompt that can be ignored without issue.
+This command may show a **popup prompt that can be ignored** without issue.
 
 To ensure that the Windows Server 2016 VM Image has the latest cumulative update, provide the -IncludeLatestCU parameter.
 

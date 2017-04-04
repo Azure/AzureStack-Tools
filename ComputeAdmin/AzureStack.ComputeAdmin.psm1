@@ -76,9 +76,9 @@ Function Add-VMImage{
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(ParameterSetName='VMImageFromLocal')]
-        [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
+        [string] $ArmEndpoint,
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
@@ -312,7 +312,8 @@ Function Remove-VMImage{
 
         [switch] $KeepMarketplaceItem,
 
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
+        [Parameter(Mandatory=$true)]
+        [string] $ArmEndpoint
 
     )
 
@@ -387,8 +388,8 @@ function New-Server2016VMImage {
         [Parameter(ParameterSetName = 'ManualCUPath')]
         [string] $CUPath,
         
-        [Parameter()]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory)]
+        [string] $ArmEndpoint,
 
         [Parameter()]
         [string] $VHDSizeInMB = 40960,
@@ -765,7 +766,8 @@ Function Get-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
+        [Parameter(Mandatory=$true)]
+        [string] $ArmEndpoint
 
     )
 
@@ -845,9 +847,9 @@ Function Add-VMExtension{
         [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(ParameterSetName='VMExtensionFromLocal')]
-        [Parameter(ParameterSetName='VMExtesionFromAzure')]
-        [string] $ArmEndpoint = 'https://adminmanagement.local.azurestack.external'
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [string] $ArmEndpoint
     )
 
     $resourceGroupName = "addvmextresourcegroup"
@@ -959,7 +961,8 @@ Function Remove-VMExtension{
         [Parameter(Mandatory=$true)]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $ArmEndpoint = 'https://adminmanagement.local.azurestack.external'
+        [Parameter(Mandatory=$true)]
+        [string] $ArmEndpoint
     )
 
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
