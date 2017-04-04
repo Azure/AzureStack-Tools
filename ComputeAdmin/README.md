@@ -112,7 +112,7 @@ VM Scale Set allows deployment of multi-VM collections. To add a gallery item wi
 3. Add VM Scale Set gallery item as follows
 
 ```powershell
-$Tenant = "<AAD Tenant Id used to connect to sazure stack>"
+$Tenant = "<AAD Tenant Id used to connect to AzureStack>"
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
 
 Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm -AadTenant $Tenant
