@@ -101,7 +101,7 @@ Run the below command to remove an uploaded VM extension.
 Remove-VMExtension -publisher $publisher -version $version -osType Windows -tenantID $tenantId -azureStackCredentials $azureStackCredentials -type "CustomVmExtension"
 ```
 
-## Add VM scale set gallery item
+## VM Scale Set gallery item
 
 VM Scale Set allows deployment of multi-VM collections. To add a gallery item with VM Scale Set:
 
@@ -127,3 +127,10 @@ Select-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
 
 Add-AzureStackVMSSGalleryItem
 ```
+To remove VM Scale Set gallery item run the following command:
+
+```powershell
+Remove-AzureStackVMSSGalleryItem
+```
+
+Note that gallery item is not removed immediately. You could run the above command several times to determine when the item is actually gone.
