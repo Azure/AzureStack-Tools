@@ -34,8 +34,14 @@ $AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password 
 
 ## Create default plan and quota for tenants
 
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
 ```powershell
-New-AzSTenantOfferAndQuotas -tenantID $aadTenant
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" -AadTenant $aadTenant
+```
+
+```powershell
+New-AzSTenantOfferAndQuotas -tenantID $aadTenant -EnvironmentName "AzureStackAdmin"
 ```
 
 Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and key vault usage. 

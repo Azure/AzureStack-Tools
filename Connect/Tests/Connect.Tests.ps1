@@ -65,6 +65,8 @@ InModuleScope $script:ModuleName {
 
     $VPNConnectionName = $global:VPNConnectionName
 
+    $EnvironmentName = $global:EnvironmentName
+
     Set-Item wsman:\localhost\Client\TrustedHosts -Value $HostComputer -Concatenate
     Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
 
@@ -91,15 +93,15 @@ InModuleScope $script:ModuleName {
         }
 
         It 'Add-AzureStackAzureRmEnvironment should successfully add a an administrator environment' {
-            Remove-AzureRmEnvironment -Name "AzureStackAdmin" -ErrorAction SilentlyContinue 
-            Add-AzureStackAzureRmEnvironment -AadTenant $global:AadTenantID -ArmEndpoint $armEndpoint -Name "AzureStackAdmin"
-            Get-AzureRmEnvironment -Name "AzureStackAdmin" | Should Not Be $null
+            Remove-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue 
+            Add-AzureStackAzureRmEnvironment -AadTenant $global:AadTenantID -ArmEndpoint $armEndpoint -Name $EnvironmentName
+            Get-AzureRmEnvironment -Name $EnvironmentName | Should Not Be $null
         }
 
         It 'User should be able to login to environment successfully created by Add-AzureStackAzureRmEnvironment' {
             Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
             Write-Verbose "Passing credential to Login-AzureRmAccount" -Verbose
-            {Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $global:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
+            {Login-AzureRmAccount -EnvironmentName $EnvironmentName -TenantId $global:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
         }
 
         It 'User should be able to list resource groups successfully in connected Azure Stack' {
@@ -107,7 +109,7 @@ InModuleScope $script:ModuleName {
         }
 
         It 'Get-AzureStackAdminSubTokenHeader should retrieve a valid admin token' {
-            $subID, $headers = Get-AzureStackAdminSubTokenHeader -TenantID $global:AadTenantID -ArmEndpoint $armEndpoint -AzureStackCredentials $stackLoginCreds 
+            $subID, $headers = Get-AzureStackAdminSubTokenHeader -TenantID $global:AadTenantID -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds 
             Write-Verbose "Admin subscription ID was $subID" -Verbose
             Write-Verbose "Acquired token was $headers.Authorization" -Verbose
             $headers.Authorization | Should Not Be $null

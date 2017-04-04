@@ -18,16 +18,24 @@ function New-AzSTenantOfferAndQuotas
         [Parameter(HelpMessage="If this parameter is not specified all quotas are assigned. Provide a sub selection of quotas in this parameter if you do not want all quotas assigned.")]
         [ValidateSet('Compute','Network','Storage','KeyVault','Subscriptions',IgnoreCase =$true)]
         [array]$ServiceQuotas,
-        [parameter(Mandatory=$true,HelpMessage="The administration ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint,
+        [parameter(Mandatory=$true,HelpMessage="The name of the AzureStack environment")]
+        [string] $EnvironmentName,
         [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential")]
         [pscredential] $azureStackCredential,
         [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
 	    [string] $tenantID
     )
 
+    $azureStackEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue
+    if($azureStackEnvironment -ne $null) {
+        $ARMEndpoint = $azureStackEnvironment.ResourceManagerUrl
+    }
+    else {
+        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzureStackAzureRmEnvironment." -ErrorAction Stop
+    }
+
     Write-Verbose "Obtaining token from AAD..." -Verbose
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredential -ArmEndpoint $ArmEndpoint)
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredential -EnvironmentName $EnvironmentName)
 
     Write-Verbose "Creating quotas..." -Verbose
     $Quotas = @()

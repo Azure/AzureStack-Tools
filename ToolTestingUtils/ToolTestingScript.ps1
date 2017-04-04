@@ -7,6 +7,8 @@ param (
     [string] $natServer = "MAS-BGPNAT01",
     [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
     [string] $AdminUser = "administrator",
+    [parameter(HelpMessage="Administrator Azure Stack Environment Name")]
+    [string] $EnvironmentName = "AzureStackAdmin",
     [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
     [securestring] $AdminPassword,
     [parameter(mandatory=$true, HelpMessage="The AAD service admin user name of this Azure Stack Instance")]
@@ -23,6 +25,7 @@ $global:AdminUser = $AdminUser
 $global:AdminPassword = $AdminPassword
 $global:AzureStackServiceAdmin = $AzureStackServiceAdmin
 $global:AzureStackServiceAdminPassword = $AzureStackServiceAdminPassword
+$global:EnvironmentName = $EnvironmentName
 
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "$global:AzureStackServiceAdmin", ($global:AzureStackServiceAdminPassword)
 $global:AzureStackLoginCredentials = $ServiceAdminCreds

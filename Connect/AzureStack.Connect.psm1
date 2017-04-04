@@ -291,8 +291,8 @@ Export-ModuleMember Connect-AzureStackVpn
 #>
 function Get-AzureStackAdminSubTokenHeader {
     param (
-        [parameter(HelpMessage="Name of the Azure Stack Environment")]
-        [string] $EnvironmentName = "AzureStackAdmin",
+        [parameter(mandatory=$true, HelpMessage="Name of the Azure Stack Environment")]
+        [string] $EnvironmentName,
 	
         [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
         [string] $tenantID,
@@ -300,24 +300,21 @@ function Get-AzureStackAdminSubTokenHeader {
         [parameter(HelpMessage="Credentials to retrieve token header for")]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(mandatory=$true, HelpMessage="The administration ARM endpoint of the Azure Stack Environment")]
-        [string] $ArmEndpoint
+        [parameter(HelpMessage="Name of the Administrator subscription")]
+        [string] $subscriptionName = "Default Provider Subscription"
     )
+    
+    $azureStackEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue
+    if($azureStackEnvironment -ne $null) {
+        $ARMEndpoint = $azureStackEnvironment.ResourceManagerUrl
+    }
+    else {
+        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzureStackAzureRmEnvironment." -ErrorAction Stop
+    }
 
     if(-not $azureStackCredentials){
         $azureStackCredentials = Get-Credential
     }
-    
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
-            $ARMEndpoint = $ARMEndpoint.Substring(7)
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }else{
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }
-    }
-    
-    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
 
     try{
         Invoke-RestMethod -Method Get -Uri "$($ARMEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop | Out-Null
@@ -325,23 +322,6 @@ function Get-AzureStackAdminSubTokenHeader {
         Write-Error "The specified ARM endpoint: $ArmEndpoint is not valid for this environment. Please make sure you are using the correct administrator ARM endpoint for this environment." -ErrorAction Stop
     }
 
-    $Domain = ""
-    try {
-        $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $i = $ArmEndpoint.IndexOf('.')
-        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
-    }
-    catch {
-        Write-Error "The specified ARM endpoint was invalid"
-    }
-
-    $subscriptionName = "Default Provider Subscription"
-
-    if (-not (Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue)){
-        Add-AzureStackAzureRmEnvironment -AadTenant $tenantID -ArmEndpoint $ArmEndpoint -Name $EnvironmentName | Out-Null
-    }
-
-    $azureStackEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue
     $authority = $azureStackEnvironment.ActiveDirectoryAuthority
     $activeDirectoryServiceEndpointResourceId = $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId
 

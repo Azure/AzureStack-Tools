@@ -35,9 +35,11 @@ InModuleScope $script:ModuleName {
 
     $AadTenant = $global:AadTenantID
 
+    $EnvironmentName = $global:EnvironmentName
+
     Describe 'ServiceAdmin - Functional Tests' {
         It 'New-AzSTenantOfferAndQuotas should create Quotas, Plan and Offer' {
-            { New-AzSTenantOfferAndQuotas -tenantID $AadTenant -AzureStackCredential $stackLoginCreds -ArmEndpoint $ArmEndpoint } |
+            { New-AzSTenantOfferAndQuotas -tenantID $AadTenant -AzureStackCredential $stackLoginCreds -EnvironmentName $EnvironmentName } |
                 Should Not Throw
         }
 
