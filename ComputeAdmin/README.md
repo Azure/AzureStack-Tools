@@ -37,13 +37,20 @@ The New-Server2016VMImage allows you to add a Windows Server 2016 Evaluation VM 
 
 As a prerequisite, you need to obtain the Windows Server 2016 Evaluation ISO which can be found [here](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016).
 
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
+
 An example usage is the following:
 ```powershell
 $ISOPath = "<Path to ISO>"
-New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant  
+New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant -EnvironmentName "AzureStackAdmin"
 ```
+Please make sure to specify the correct administrator ARM endpoint for your environment.
 
-This command may show a popup prompt that can be ignored without issue.
+This command may show a **popup prompt that can be ignored** without issue.
 
 To ensure that the Windows Server 2016 VM Image has the latest cumulative update, provide the -IncludeLatestCU parameter.
 
@@ -63,9 +70,15 @@ Please note that to use this image for **installing additional Azure Stack servi
 	-  Specify osType as Windows or Linux.
 	-  Include your Azure Active Directory tenant ID in the form *&lt;mydirectory&gt;*.onmicrosoft.com.
 	-  The following is an example invocation of the script:
-	
+
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
 ```powershell
-Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <GUID AADTenant>
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
+
+```powershell
+Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
 ```
 
 Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
@@ -81,24 +94,43 @@ To verify that the command ran successfully, go to Marketplace in the portal, an
 ## Remove a VM Image with PowerShell
 Run the below command to remove an uploaded VM image. After removal, tenants will no longer be able to deploy virtual machines with this image.
 
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
 ```powershell
-Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <GUID AADTenant>
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
+
+```powershell
+Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
 
 ## Add a VM extension to the Compute with PowerShell
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
 An example usage is the following:
+
 ```powershell
 $path = "<Path to vm extension zip>"
-Add-VMExtension -publisher $publisher -version $version -extensionLocalPath $path -osType Windows -tenantID $aadTenant -azureStackCredentials $azureStackCredentials -type "CustomVmExtension"  
+Add-VMExtension -publisher "Publisher" -type "Type" -version $version -extensionLocalPath $path -osType Windows -tenantID $aadTenant -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
 
-## Remove a VM extension with PowerShell
+
+# Remove a VM extension with PowerShell
+
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
+```
 Run the below command to remove an uploaded VM extension.
 
 ```powershell
-Remove-VMExtension -publisher $publisher -version $version -osType Windows -tenantID $tenantId -azureStackCredentials $azureStackCredentials -type "CustomVmExtension"
+Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows -tenantID $tenantId -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
 
 ## VM Scale Set gallery item
@@ -115,7 +147,7 @@ VM Scale Set allows deployment of multi-VM collections. To add a gallery item wi
 $Tenant = "<AAD Tenant Id used to connect to AzureStack>"
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
 
-Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm -AadTenant $Tenant
+Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm 
 
 $Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin user password>"
 $User = "<your AzureStack admin user name>"
@@ -134,3 +166,4 @@ Remove-AzureStackVMSSGalleryItem
 ```
 
 Note that gallery item is not removed immediately. You could run the above command several times to determine when the item is actually gone.
+
