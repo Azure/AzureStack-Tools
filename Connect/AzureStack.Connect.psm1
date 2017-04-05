@@ -67,14 +67,10 @@ function Get-AzureStackAadTenant {
     return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
         {            
         Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
-        $configFile = Get-ChildItem -Path C:\EceStore -Recurse | ?{-not $_.PSIsContainer} | sort Length -Descending | select -First 1
-        $customerConfig = [xml] (Get-Content -Path $configFile.FullName)
-
-        $Parameters = $customerConfig.CustomerConfiguration
-        $fabricRole = $Parameters.Role.Roles.Role | ?{$_.Id -eq "Fabric"}
-        $allFabricRoles = $fabricRole.Roles.ChildNodes
-        $idProviderRole = $allFabricRoles | ?{$_.Id -eq "IdentityProvider"}
-        $idProviderRole.PublicInfo.AADTenant.Id
+        import-module "$env:SystemDrive\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1"
+        $engine = New-Object CloudEngine.Engine.DefaultECEngine
+        $roles = $engine.GetRolesPublicInfo()
+        $roles["IdentityProvider"].PublicConfiguration.PublicInfo.AADTenant.Id
     }
 }
 
