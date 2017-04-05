@@ -207,7 +207,7 @@ while ($runCount -le $NumberOfIterations)
             catch
             {
                 Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
-            throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
+                throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
             }
         }
     }
@@ -474,7 +474,15 @@ while ($runCount -le $NumberOfIterations)
                         "LinuxImagePublisher"   = $linuxImagePublisher;
                         "LinuxImageOffer"       = $linuxImageOffer;
                         "LinuxImageSku"         = $LinuxOSSku}   
-        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
+        if (-not $linuxImgExists)
+        {
+            $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
+        }
+        elseif ($linuxImgExists) 
+        {
+            $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.nolinux.json -TemplateParameterObject $parameters
+        }
+        
         if ((-not $templateError) -and ($linuxImgExists))
         {
             New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
@@ -726,6 +734,11 @@ while ($runCount -le $NumberOfIterations)
         {
             throw [System.Exception]"Unable to download screen shot for a Windows VM with private IP"
         }
+    }
+
+    Invoke-Usecase -Name 'EnumerateAllResources' -Description "List out all the resources that have been deployed" -UsecaseBlock `
+    {
+        Get-AzureRmResource
     }
 
     if (-not $NoCleanup)
