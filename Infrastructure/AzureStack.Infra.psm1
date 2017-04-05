@@ -721,7 +721,7 @@ Function Restart-AzSInfraRoleInstance{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='Restart-AzSInfraRoleInstance')]
+        [Parameter(HelpMessage="The administration ARM endpoint of the Azure Stack Environment", ParameterSetName='RestartInfraRoleInstance')]
         [string] $ArmEndpoint = 'https://api.local.azurestack.external',
 
         [Parameter(ParameterSetName='RestartInfraRoleInstance')]
@@ -734,8 +734,8 @@ Function Restart-AzSInfraRoleInstance{
 
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraroleinstances/$name/reboot?api-version=2016-05-01"      
-    $PowerOff=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $PowerOff
+    $Restart=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Restart
 }
 export-modulemember -function Restart-AzSInfraRoleInstance
 
