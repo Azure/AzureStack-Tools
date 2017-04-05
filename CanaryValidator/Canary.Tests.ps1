@@ -72,7 +72,7 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceLocation = "local",
-    [parameter(HelpMessage="Flag to cleanup resources after exception")]
+    [parameter(HelpMessage="Flag to indicate whether to continue Canary after an exception")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [bool] $ContinueOnFailure = $false,
@@ -95,7 +95,7 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogFileName    
+    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log"   
 )
 
 #Requires -Modules AzureRM
@@ -118,6 +118,7 @@ $linuxImageOffer        = "UbuntuServer"
 $linuxImageVersion      = "1.0.0"
 
 $runCount = 1
+$tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
     if (Test-Path -Path $canaryUtilPath)
@@ -128,12 +129,9 @@ while ($runCount -le $NumberOfIterations)
 
     #
     # Start Canary 
-    #
-    if (-not $CanaryLogFileName)
-    {
-        $CanaryLogFileName  = "Canary-Basic-$runCount-$((Get-Date).Ticks).log"
-    }    
-    $CanaryLogFile      = $CanaryLogPath + "\$CanaryLogFileName"
+    #  
+    $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
+    $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
@@ -207,7 +205,7 @@ while ($runCount -le $NumberOfIterations)
         catch
         {
             Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
-            throw [System.Exception]"Failed to upload the linux image to PIR. `n$_.Exception.Message"
+	    throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
         }
     }
 
@@ -217,7 +215,7 @@ while ($runCount -le $NumberOfIterations)
         $tenantPlanName                     = "ascantenantplan" + [Random]::new().Next(1,999)        
         $tenantOfferName                    = "ascantenantoffer" + [Random]::new().Next(1,999)
         $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
-        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription"
+        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
         if (-not $TenantArmEndpoint)
         {

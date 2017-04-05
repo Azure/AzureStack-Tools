@@ -3,6 +3,42 @@
 
 #requires -Modules AzureStack.Connect
 
+function Add-AzureStackVMSSGalleryItem {
+
+    $rgName = "vmss.gallery"
+
+    New-AzureRmResourceGroup -Name $rgName -Location local -Force
+
+    $saName = "vmssgallery"
+
+    $sa = New-AzureRmStorageAccount -ResourceGroupName $rgName -Location local -Name $saName -Type Standard_LRS
+
+    $cName = "gallery"
+
+    Set-AzureRmCurrentStorageAccount -StorageAccountName $saName -ResourceGroupName $rgName
+
+    $container = Get-AzureStorageContainer -Name $cName -ErrorAction SilentlyContinue
+    if (-not ($container)) {
+        New-AzureStorageContainer -Name $cName -Permission Blob
+    }
+    
+    $fileName = "microsoft.vmss.1.3.6.azpkg"
+
+    $blob = $container| Set-AzureStorageBlobContent –File ([System.IO.Path]::GetDirectoryName($PSCommandPath) + "\" + $fileName)  –Blob $fileName -Force
+
+    $uri = $blob.Context.BlobEndPoint + $container.Name + "/" + $blob.Name    
+
+     Add-AzureRMGalleryItem -GalleryItemUri $uri
+}
+
+function Remove-AzureStackVMSSGalleryItem {
+    $item = Get-AzureRMGalleryItem -Name "microsoft.vmss.1.3.6"
+    if($item) {
+        $request = $item | Remove-AzureRMGalleryItem
+        $item
+    }
+}
+
 <#
     .SYNOPSIS
     Contains 6 functions.

@@ -119,6 +119,7 @@ $path = "<Path to vm extension zip>"
 Add-VMExtension -publisher "Publisher" -type "Type" -version $version -extensionLocalPath $path -osType Windows -tenantID $aadTenant -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
 
+
 # Remove a VM extension with PowerShell
 
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
@@ -131,3 +132,38 @@ Run the below command to remove an uploaded VM extension.
 ```powershell
 Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows -tenantID $tenantId -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
+
+## VM Scale Set gallery item
+
+VM Scale Set allows deployment of multi-VM collections. To add a gallery item with VM Scale Set:
+
+1. Add evaluation Windows Server 2016 image using New-Server2016VMImage as described above.
+
+2. For linux support, download Ubuntu Server 16.04 and add it using Add-VmImage with the following parameters -publisher "Canonical" -offer "UbuntuServer" -sku "16.04-LTS"
+
+3. Add VM Scale Set gallery item as follows
+
+```powershell
+$Tenant = "<AAD Tenant Id used to connect to AzureStack>"
+$Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
+
+Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm -AadTenant $Tenant
+
+$Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin user password>"
+$User = "<your AzureStack admin user name>"
+$Creds =  New-Object System.Management.Automation.PSCredential $User, $Password
+
+Login-AzureRmAccount -EnvironmentName AzureStackAdmin -Credential $Creds -TenantId $Tenant
+
+Select-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
+
+Add-AzureStackVMSSGalleryItem
+```
+To remove VM Scale Set gallery item run the following command:
+
+```powershell
+Remove-AzureStackVMSSGalleryItem
+```
+
+Note that gallery item is not removed immediately. You could run the above command several times to determine when the item is actually gone.
+

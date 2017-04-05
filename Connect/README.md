@@ -19,7 +19,7 @@ Import-Module .\AzureStack.Connect.psm1
 The [Connect to Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-azure-stack) document describes ways to connect to your Azure Stack Proof of Concept environment.
 
 One method is to establish a split tunnel VPN connection to an Azure Stack PoC. 
-This allows your client computer to become part of the Azure Stack PoC network system and therefore resolve [https://portal.azurestack.local](https://portal.azurestack.local), api.azurestack.local, *.blob.azurestack.local and so on. 
+This allows your client computer to become part of the Azure Stack PoC network system and therefore resolve Azure Stack endpoints. 
 
 The tool will also download root certificate of the targeted Azure Stack PoC instance locally to your client computer. 
 This will ensure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
