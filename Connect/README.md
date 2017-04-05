@@ -89,13 +89,13 @@ $AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password 
 To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external" -AadTenant $aadTenant
+Add-AzureStackAzureRmEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external" 
 ```
 
 To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" -AadTenant $aadTenant
+Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:

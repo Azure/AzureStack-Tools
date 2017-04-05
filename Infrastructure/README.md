@@ -21,7 +21,7 @@ Import-Module .\AzureStack.Infra.psm1
 Import-Module .\AzureStack.Connect.psm1
 $Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
 $AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
-Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $AadTenant
 ```
 
