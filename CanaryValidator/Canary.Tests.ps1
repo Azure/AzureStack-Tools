@@ -59,8 +59,7 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$EnvironmentName = "AzureStackCanaryCloud",   
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
@@ -73,7 +72,7 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceLocation = "local",
-    [parameter(HelpMessage="Flag to cleanup resources after exception")]
+    [parameter(HelpMessage="Flag to indicate whether to continue Canary after an exception")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [bool] $ContinueOnFailure = $false,
@@ -91,12 +90,12 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).Ticks)",
 	[parameter(HelpMessage="Specifies the file name for canary log file")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogFileName = "Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"    
+    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log"   
 )
 
 #Requires -Modules AzureRM
@@ -113,12 +112,13 @@ $keyvaultCertName       = "ASCanaryVMCertificate"
 $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
 $VMAdminUserName        = "CanaryAdmin" 
 $VMAdminUserPass        = "CanaryAdmin@123"
-$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
+$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
 $linuxImagePublisher    = "Canonical"
 $linuxImageOffer        = "UbuntuServer"
 $linuxImageVersion      = "1.0.0"
 
 $runCount = 1
+$tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
     if (Test-Path -Path $canaryUtilPath)
@@ -129,8 +129,9 @@ while ($runCount -le $NumberOfIterations)
 
     #
     # Start Canary 
-    #
-    $CanaryLogFile      = $CanaryLogPath + "\$CanaryLogFileName"
+    #  
+    $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
+    $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
 
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
 
@@ -179,24 +180,35 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
             }
         }
     }
 
-    Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
+    if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name)).SizeRemaining/1GB -gt 35)
     {
-        if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+        Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
         {
-            $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-            if (Test-Path -Path $CanaryCustomImageFolder)
+            try 
             {
-                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+                if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+                {
+                    $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).Ticks)"
+                    if (Test-Path -Path $CanaryCustomImageFolder)
+                    {
+                        Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+                    }
+                    New-Item -Path $CanaryCustomImageFolder -ItemType Directory
+                    $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
+                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                    Remove-Item $CanaryCustomImageFolder -Force -Recurse
+                }    
             }
-            New-Item -Path $CanaryCustomImageFolder -ItemType Directory
-            $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-            Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
-            Remove-Item $CanaryCustomImageFolder -Recurse
+            catch
+            {
+                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
+                throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
+            }
         }
     }
 
@@ -206,7 +218,7 @@ while ($runCount -le $NumberOfIterations)
         $tenantPlanName                     = "ascantenantplan" + [Random]::new().Next(1,999)        
         $tenantOfferName                    = "ascantenantoffer" + [Random]::new().Next(1,999)
         $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
-        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription"
+        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
         if (-not $TenantArmEndpoint)
         {
@@ -352,26 +364,36 @@ while ($runCount -le $NumberOfIterations)
     }
         
     Invoke-Usecase -Name 'UploadUtilitiesToBlobStorage' -Description "Upload the canary utilities to the blob storage" -UsecaseBlock `
-    {      
-        $asStorageAccountKey = Get-AzureRmStorageAccountKey -ResourceGroupName $CanaryUtilitiesRG -Name $storageAccName -ErrorAction Stop
-        if ($asStorageAccountKey)
-        {
-            $storageAccountKey = $asStorageAccountKey.Key1
-        }
-        $asStorageContext = New-AzureStorageContext -StorageAccountName $storageAccName -StorageAccountKey $storageAccountKey -ErrorAction Stop
-        if ($asStorageContext)
-        {
-            $files = Get-ChildItem -Path $canaryUtilPath -File
-            foreach ($file in $files)
+    {    
+        try
+        {  
+            $asStorageAccountKey = Get-AzureRmStorageAccountKey -ResourceGroupName $CanaryUtilitiesRG -Name $storageAccName -ErrorAction Stop
+            if ($asStorageAccountKey)
             {
-                if ($file.Extension -match "VHD")
+                $storageAccountKey = $asStorageAccountKey.Key1
+            }
+            $asStorageContext = New-AzureStorageContext -StorageAccountName $storageAccName -StorageAccountKey $storageAccountKey -ErrorAction Stop
+            if ($asStorageContext)
+            {
+                $files = Get-ChildItem -Path $canaryUtilPath -File
+                foreach ($file in $files)
                 {
-                    Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -BlobType Page -Context $asStorageContext -Force -ErrorAction Stop     
+                    if ($file.Extension -match "VHD")
+                    {
+                        Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -BlobType Page -Context $asStorageContext -Force -ErrorAction Stop     
+                    }
+                    else 
+                    {
+                        Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -Context $asStorageContext -Force -ErrorAction Stop             
+                    }
                 }
-                else 
-                {
-                    Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -Context $asStorageContext -Force -ErrorAction Stop             
-                }
+            }
+        }
+        finally
+        {
+            if (Test-Path -Path $canaryUtilPath)
+            {
+                Remove-Item -Path $canaryUtilPath -Recurse -Force
             }
         }
     }
@@ -433,8 +455,13 @@ while ($runCount -le $NumberOfIterations)
         elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
         {
             $osVersion = "2012-R2-Datacenter"
-        }        
-        
+        } 
+        $linuxImgExists = $false      
+        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "Canonical" -Offer "UbuntuServer" -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
+        {
+            $linuxImgExists = $true
+        }
+
         $templateDeploymentName = "CanaryVMDeployment"
         $parameters = @{"VMAdminUserName"       = $VMAdminUserName;
                         "VMAdminUserPassword"   = $VMAdminUserPass;
@@ -447,10 +474,21 @@ while ($runCount -le $NumberOfIterations)
                         "LinuxImagePublisher"   = $linuxImagePublisher;
                         "LinuxImageOffer"       = $linuxImageOffer;
                         "LinuxImageSku"         = $LinuxOSSku}   
-        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
-        if (-not $templateError)
+        if (-not $linuxImgExists)
+        {
+            $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
+        }
+        elseif ($linuxImgExists) 
+        {
+            $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.nolinux.json -TemplateParameterObject $parameters
+        }
+        
+        if ((-not $templateError) -and ($linuxImgExists))
         {
             New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
+        }
+        elseif (-not $templateError) {
+            New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.nolinux.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop    
         }
         else 
         {
@@ -684,6 +722,23 @@ while ($runCount -le $NumberOfIterations)
                 }
             }    
         }
+    }
+    
+    Invoke-Usecase -Name 'CheckExistenceOfScreenShotForVMWithPrivateIP' -Description "Check if screen shots are available for Windows VM with private IP and store the screen shot in log folder" -UsecaseBlock `
+    {
+        $sa = Get-AzureRmStorageAccount -ResourceGroupName $CanaryVMRG -Name "$($CanaryVMRG)2sa"
+        $diagSC = $sa | Get-AzureStorageContainer | Where-Object {$_.Name -like "bootdiagnostics-$CanaryVMRG*"}
+        $screenShotBlob = $diagSC | Get-AzureStorageBlob | Where-Object {$_.Name -like "$privateVMName*screenshot.bmp"}
+        $sa | Get-AzureStorageBlobContent -Blob $screenShotBlob.Name -Container $diagSC.Name -Destination $CanaryLogPath -Force
+        if (-not (Get-ChildItem -Path $CanaryLogPath -File -Filter $screenShotBlob.name))
+        {
+            throw [System.Exception]"Unable to download screen shot for a Windows VM with private IP"
+        }
+    }
+
+    Invoke-Usecase -Name 'EnumerateAllResources' -Description "List out all the resources that have been deployed" -UsecaseBlock `
+    {
+        Get-AzureRmResource
     }
 
     if (-not $NoCleanup)

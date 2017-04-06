@@ -242,6 +242,9 @@ function Invoke-Usecase
     catch [System.Exception]
     {        
         Log-Exception ($_.Exception)
+        Log-Info ("###### <FAULTING SCRIPTBLOCK> ######")
+        Log-Info ("$UsecaseBlock")
+        Log-Info ("###### </FAULTING SCRIPTBLOCK> ######")
         Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
         if ($Global:wttLogFileName)
         {
@@ -501,8 +504,12 @@ function NewAzureStackToken
     )
     
     $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndPoint $ArmEndpoint
-    $asToken = Get-AzureStackToken -Authority $endpoints.ActiveDirectoryEndpoint -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $aadTenantId -Credential $Credentials -ErrorAction Stop
-    return $asToken  
+    $clientId = "1950a258-227b-4e31-a9cf-717495945fc2"
+    
+    $contextAuthorityEndpoint = ([System.IO.Path]::Combine($endpoints.ActiveDirectoryEndpoint, $AADTenantID)).Replace('\','/')
+    $authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($contextAuthorityEndpoint, $false)
+    $userCredential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential($Credentials.UserName, $Credentials.Password)
+    return ($authContext.AcquireToken($endpoints.ActiveDirectoryServiceEndpointResourceId, $clientId, $userCredential)).AccessToken  
 }
 
 function NewAzureStackDefaultQuotas

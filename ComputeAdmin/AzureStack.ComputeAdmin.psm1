@@ -3,15 +3,53 @@
 
 #requires -Modules AzureStack.Connect
 
+function Add-AzureStackVMSSGalleryItem {
+
+    $rgName = "vmss.gallery"
+
+    New-AzureRmResourceGroup -Name $rgName -Location local -Force
+
+    $saName = "vmssgallery"
+
+    $sa = New-AzureRmStorageAccount -ResourceGroupName $rgName -Location local -Name $saName -Type Standard_LRS
+
+    $cName = "gallery"
+
+    Set-AzureRmCurrentStorageAccount -StorageAccountName $saName -ResourceGroupName $rgName
+
+    $container = Get-AzureStorageContainer -Name $cName -ErrorAction SilentlyContinue
+    if (-not ($container)) {
+        New-AzureStorageContainer -Name $cName -Permission Blob
+    }
+    
+    $fileName = "microsoft.vmss.1.3.6.azpkg"
+
+    $blob = $container| Set-AzureStorageBlobContent –File ([System.IO.Path]::GetDirectoryName($PSCommandPath) + "\" + $fileName)  –Blob $fileName -Force
+
+    $uri = $blob.Context.BlobEndPoint + $container.Name + "/" + $blob.Name    
+
+     Add-AzureRMGalleryItem -GalleryItemUri $uri
+}
+
+function Remove-AzureStackVMSSGalleryItem {
+    $item = Get-AzureRMGalleryItem -Name "microsoft.vmss.1.3.6"
+    if($item) {
+        $request = $item | Remove-AzureRMGalleryItem
+        $item
+    }
+}
+
 <#
     .SYNOPSIS
-    Contains 4 functions.
+    Contains 6 functions.
     Add-VMImage: Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
     Remove-VMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any 
     maketplace items created by Add-VMImage.
     New-Server2016VMImage: Creates and Uploads a new Server 2016 Core and / or Full Image and
     creates a Marketplace item for it.
     Get-VMImage: Gets a VM Image from your Azure Stack as an Administrator to view the provisioning state of the image.
+    Add-VMExtension: Uploads a VM extension to your Azure Stack.
+    Remove-VMExtension: Removes an existing VM extension from your Azure Stack.
 #>
 
 Function Add-VMImage{
@@ -74,9 +112,9 @@ Function Add-VMImage{
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(ParameterSetName='VMImageFromLocal')]
-        [Parameter(ParameterSetName='VMImageFromAzure')]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
+        [string] $EnvironmentName,
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
@@ -91,15 +129,7 @@ Function Add-VMImage{
         [bool] $CreateGalleryItem = $true
     )
 
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
-            $ARMEndpoint = $ARMEndpoint.Substring(7)
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-
-        }else{
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }
-    }
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
     
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title')) {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
@@ -113,11 +143,11 @@ Function Add-VMImage{
     $storageAccountName = "addvmimagestorageaccount"
     $containerName = "addvmimagecontainer"
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
 
     #pre validate if image is not already deployed
     $VMImageAlreadyAvailable = $false
-    if ($(Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
+    if ($(Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -EnvironmentName $EnvironmentName -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
         $VMImageAlreadyAvailable = $true
         Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
     }
@@ -235,7 +265,7 @@ Function Add-VMImage{
         Invoke-RestMethod -Method PUT -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $Headers
     }
 
-    $platformImage = Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location
+    $platformImage = Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -EnvironmentName $EnvironmentName -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location
 
     $downloadingStatusCheckCount = 0
     while($platformImage.Properties.ProvisioningState -ne 'Succeeded') {
@@ -252,7 +282,7 @@ Function Add-VMImage{
         $downloadingStatusCheckCount++
         if($downloadingStatusCheckCount % 30 -eq 0){
             Write-Verbose -Message "Obtaining refreshed token..."
-            $subscription, $Headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+            $subscription, $Headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
         }
         $platformImage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     }
@@ -310,23 +340,17 @@ Function Remove-VMImage{
 
         [switch] $KeepMarketplaceItem,
 
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
+        [Parameter(Mandatory=$true)]
+        [string] $EnvironmentName
 
     )
 
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
-            $ARMEndpoint = $ARMEndpoint.Substring(7)
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }else{
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }
-    }
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
 
     $VMImageExists = $false
-    if (Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location -ErrorAction SilentlyContinue) {
+    if (Get-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -EnvironmentName $EnvironmentName -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $location -ErrorAction SilentlyContinue) {
         Write-Verbose "VM Image is present in Azure Stack - continuing to remove" -Verbose
         $VMImageExists = $true
     }
@@ -385,8 +409,8 @@ function New-Server2016VMImage {
         [Parameter(ParameterSetName = 'ManualCUPath')]
         [string] $CUPath,
         
-        [Parameter()]
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external',
+        [Parameter(Mandatory)]
+        [string] $EnvironmentName,
 
         [Parameter()]
         [string] $VHDSizeInMB = 40960,
@@ -499,7 +523,7 @@ function New-Server2016VMImage {
 
         Write-Verbose -Message "Checking authorization against your Azure Stack environment" -Verbose
     
-        $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint -ErrorAction Stop)
+        $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName -ErrorAction Stop)
 
         Write-Verbose -Message "Authorization verified" -Verbose
         
@@ -566,7 +590,7 @@ function New-Server2016VMImage {
             osType = 'Windows'
             tenantID = $tenantID
             azureStackCredentials = $AzureStackCredentials
-            ArmEndpoint = $ArmEndpoint
+            EnvironmentName = $EnvironmentName
             location = $location
         }
         
@@ -576,7 +600,7 @@ function New-Server2016VMImage {
 
             #Pre-validate that the VM Image is not already available
             $VMImageAlreadyAvailable = $false
-            if ($(Get-VMImage -publisher $PublishArguments.publisher -offer $PublishArguments.offer -sku $sku -version $PublishArguments.version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $PublishArguments.location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
+            if ($(Get-VMImage -publisher $PublishArguments.publisher -offer $PublishArguments.offer -sku $sku -version $PublishArguments.version -EnvironmentName $EnvironmentName -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $PublishArguments.location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
                 $VMImageAlreadyAvailable = $true
                 Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
             }
@@ -609,7 +633,7 @@ function New-Server2016VMImage {
 
                 #Pre-validate that the VM Image is not already available
                 $VMImageAlreadyAvailable = $false
-                if ($(Get-VMImage -publisher $PublishArguments.publisher -offer $PublishArguments.offer -sku $sku -version $PublishArguments.version -ArmEndpoint $ArmEndpoint -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $PublishArguments.location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
+                if ($(Get-VMImage -publisher $PublishArguments.publisher -offer $PublishArguments.offer -sku $sku -version $PublishArguments.version -EnvironmentName $EnvironmentName -tenantID $tenantID -azureStackCredentials $azureStackCredentials -location $PublishArguments.location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
                     $VMImageAlreadyAvailable = $true
                     Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}", version "{3}" already is present.' -f $publisher,$offer,$sku,$version) -Verbose -ErrorAction Stop
                 }
@@ -763,22 +787,14 @@ Function Get-VMImage{
 
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [string] $ArmEndpoint = 'https://api.local.azurestack.external'
+        [Parameter(Mandatory=$true)]
+        [string] $EnvironmentName
 
     )
 
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
-            $ARMEndpoint = $ARMEndpoint.Substring(7)
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }else{
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }
-    }
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
-
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -ArmEndpoint $ArmEndpoint)
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
 
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/platformImage/publishers/' + $publisher
     $uri = $uri + '/offers/' + $offer + '/skus/' + $sku + '/versions/' + $version + '?api-version=2015-12-01-preview'
@@ -789,6 +805,215 @@ Function Get-VMImage{
     }catch{
         return $null
     }
-
 }
 
+Function Add-VMExtension{
+
+    [CmdletBinding(DefaultParameterSetName='VMExtensionFromLocal')]
+    Param(
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $publisher,
+
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [String] $version,
+
+        [Parameter(ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(ParameterSetName='VMExtesionFromAzure')]
+        [String] $type,
+
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [ValidateNotNullorEmpty()]
+        [String] $extensionLocalPath,
+
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [ValidateNotNullorEmpty()]
+        [String] $extensionBlobURI,
+
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [ValidateSet('Windows' ,'Linux')]
+        [String] $osType,
+
+        [Parameter(ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(ParameterSetName='VMExtesionFromAzure')]
+        [bool] $vmScaleSetEnabled = $false,
+
+        [Parameter(ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(ParameterSetName='VMExtesionFromAzure')]
+        [bool] $supportMultipleExtensions = $false,
+    
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [ValidateNotNullorEmpty()]
+        [String] $tenantID,
+
+        [Parameter(ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(ParameterSetName='VMExtesionFromAzure')]
+        [String] $location = 'local',
+
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
+        [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
+        [string] $EnvironmentName
+        
+    )
+
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
+
+    $resourceGroupName = "addvmextresourcegroup"
+    $storageAccountName = "addvmextstorageaccount"
+    $containerName = "addvmextensioncontainer"
+
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+
+    #potentially the RG was not cleaned up when exception happened in previous run. Test for exist
+    if (-not (Get-AzureRmResourceGroup -Name $resourceGroupName -Location $location -ErrorAction SilentlyContinue)) {
+        New-AzureRmResourceGroup -Name $resourceGroupName -Location $location 
+    }
+
+    #same for storage
+    $storageAccount = Get-AzureRmStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
+    if (-not ($storageAccount)) {
+        $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS
+    }
+
+    Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
+    
+    #same for container
+    $container = Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue
+    if (-not ($container)) {
+        $container = New-AzureStorageContainer -Name $containerName -Permission Blob
+    }
+
+    if($pscmdlet.ParameterSetName -eq "VMExtensionFromLocal")
+    {
+        $storageAccount.PrimaryEndpoints.Blob
+        $script:extensionName = Split-Path $extensionLocalPath -Leaf
+        $script:extensionBlobURIFromLocal = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$extensionName
+        Set-AzureStorageBlobContent -File $extensionLocalPath -Container $containerName -Blob $extensionName
+    }
+
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
+    $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
+
+    Log-Info $uri
+
+    #building request body JSON
+    if($pscmdlet.ParameterSetName -eq "VMExtensionFromLocal") {
+        $sourceBlobJSON = '"SourceBlob" : {"Uri" :"' + $extensionBlobURIFromLocal + '"}'
+    }
+    else {
+        $sourceBlobJSON = '"SourceBlob" : {"Uri" :"' + $extensionBlobURI + '"}'
+    }
+    
+    $osTypeJSON = '"VmOsType" : "' + $osType + '"'
+    $ComputeRoleJSON = '"ComputeRole" : "N/A"'
+    $VMScaleSetEnabledJSON = '"VMScaleSetEnabled" : "' + $vmScaleSetEnabled + '"'
+    $SupportMultipleExtensionsJSON = '"SupportMultipleExtensions" : "' + $supportMultipleExtensions + '"'
+    $IsSystemExtensionJSON = '"IsSystemExtension" : "false"'
+
+    $propertyBody = $sourceBlobJSON + "," + $osTypeJSON + ',' + $ComputeRoleJSON + "," + $VMScaleSetEnabledJSON + "," + $SupportMultipleExtensionsJSON + "," + $IsSystemExtensionJSON 
+
+    #building ARMResource
+
+    $RequestBody = '{"Properties":{'+$propertyBody+'}}'
+
+    Invoke-RestMethod -Method PUT -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $Headers
+
+    $extensionHandler = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+
+    while($extensionHandler.Properties.ProvisioningState -ne 'Succeeded')
+    {
+        if($extensionHandler.Properties.ProvisioningState -eq 'Failed')
+        {
+            Write-Error -Message ('VM extension download failed with Error:"{0}.' -f $publisher, $_.Exception.Message ) -ErrorAction Stop
+        }
+
+        if($extensionHandler.Properties.ProvisioningState -eq 'Canceled')
+        {
+            Write-Error -Message "VM extension download was canceled." -ErrorAction Stop
+        }
+
+        Write-Host "Downloading";
+        Start-Sleep -Seconds 4
+        $extensionHandler = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    }
+
+    Remove-AzureStorageContainer –Name $containerName -Force
+    Remove-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -AccountName $storageAccountName 
+    Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
+}
+
+Function Remove-VMExtension{
+    Param(
+        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [String] $publisher,
+
+        [Parameter(Mandatory=$true)]
+        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [String] $version,
+
+        [String] $type = "CustomScriptExtension",
+
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('Windows' ,'Linux')]
+        [String] $osType,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullorEmpty()]
+        [String] $tenantID,
+
+        [String] $location = 'local',
+
+        [Parameter(Mandatory=$true)]
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+        [Parameter(Mandatory=$true)]
+        [string] $EnvironmentName
+        
+    )
+
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
+
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+
+    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
+    $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
+    $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
+
+    Log-Info $uri
+
+    try{
+        Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
+    }
+    catch{
+        Write-Error -Message ('Deletion of VM extension with publisher "{0}" failed with Error:"{1}.' -f $publisher, $_.Exception.Message ) -ErrorAction Stop
+    }
+}
+
+Function GetARMEndpoint{
+    param(
+        # Azure Stack environment name
+        [Parameter(Mandatory=$true)]
+        [string] $EnvironmentName
+        
+    )
+
+    $armEnv = Get-AzureRmEnvironment -Name $EnvironmentName
+    if($armEnv -ne $null) {
+        $ARMEndpoint = $armEnv.ResourceManagerUrl
+    }
+    else {
+        Write-Error "The Azure Stack environment with the name $EnvironmentName does not exist. Create one with Add-AzureStackAzureRmEnvironment." -ErrorAction Stop
+    }
+
+    $ARMEndpoint
+}
