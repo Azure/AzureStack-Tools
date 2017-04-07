@@ -433,7 +433,8 @@ function New-Server2016VMImage {
         [Parameter()]
         [bool] $CreateGalleryItem = $true,
 
-        [switch] $Net35
+        [Parameter()]
+        [bool] $Net35 = $true
     )
     begin {
         function CreateWindowsVHD {
