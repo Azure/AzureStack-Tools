@@ -128,7 +128,7 @@ function Add-AzureStackAzureRmEnvironment {
     $armEnv = Get-AzureRmEnvironment -Name $Name
     if($armEnv -ne $null) {
         Write-Verbose "Updating AzureRm environment $Name" -Verbose
-        Remove-AzureRmEnvironment -Name $Name | Out-Null
+        Remove-AzureRmEnvironment -Name $Name -Force | Out-Null
     }
     else {
         Write-Verbose "Adding AzureRm environment $Name" -Verbose

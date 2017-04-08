@@ -16,20 +16,16 @@ Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.ServiceAdmin.psm1
 ```
 
-Creating quotas/offers/plans requires that you obtain the GUID value of your Directory Tenant. If you know the non-GUID form of the Azure Active Directory Tenant used to deploy your Azure Stack instance, you can retrieve the GUID value with the following:
+Creating quotas/offers/plans requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-$aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
 ```
 
-Otherwise, it can be retrieved directly from your Azure Stack deployment. First, add your host to the list of TrustedHosts:
+For **ADFS** environments use the following:
+
 ```powershell
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-```
-Then execute the following:
-```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
-$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 ## Create default plan and quota for tenants
@@ -41,7 +37,7 @@ Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://a
 ```
 
 ```powershell
-New-AzSTenantOfferAndQuotas -tenantID $aadTenant -EnvironmentName "AzureStackAdmin"
+New-AzSTenantOfferAndQuotas -tenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
 Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and key vault usage. 

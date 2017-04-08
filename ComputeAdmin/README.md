@@ -15,20 +15,16 @@ Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.ComputeAdmin.psm1
 ```
 
-Adding a VM Image requires that you obtain the GUID value of your Directory Tenant. If you know the non-GUID form of the Azure Active Directory Tenant used to deploy your Azure Stack instance, you can retrieve the GUID value with the following:
+Adding a VM Image requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-$aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
 ```
 
-Otherwise, it can be retrieved directly from your Azure Stack deployment. This method can also be used for AD FS. First, add your host to the list of TrustedHosts:
+For **ADFS** environments use the following:
+
 ```powershell
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-```
-Then execute the following:
-```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
-$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 ## Add the WS2016 Evaluation VM Image 
@@ -46,7 +42,7 @@ Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://a
 An example usage is the following:
 ```powershell
 $ISOPath = "<Path to ISO>"
-New-Server2016VMImage -ISOPath $ISOPath -TenantId $aadTenant -EnvironmentName "AzureStackAdmin"
+New-Server2016VMImage -ISOPath $ISOPath -TenantId $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 Please make sure to specify the correct administrator ARM endpoint for your environment.
 
@@ -116,7 +112,7 @@ An example usage is the following:
 
 ```powershell
 $path = "<Path to vm extension zip>"
-Add-VMExtension -publisher "Publisher" -type "Type" -version $version -extensionLocalPath $path -osType Windows -tenantID $aadTenant -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
+Add-VMExtension -publisher "Publisher" -type "Type" -version $version -extensionLocalPath $path -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
 
 
@@ -130,7 +126,7 @@ Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://a
 Run the below command to remove an uploaded VM extension.
 
 ```powershell
-Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows -tenantID $tenantId -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
+Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
 
 ## VM Scale Set gallery item

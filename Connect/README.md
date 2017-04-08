@@ -70,20 +70,16 @@ See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/
 
 AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
 
-Connecting requires that you obtain the GUID value of your Directory Tenant. If you know the non-GUID form of the Azure Active Directory Tenant used to deploy your Azure Stack instance, you can retrieve the GUID value with the following:
+Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-$aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
 ```
 
-Otherwise, your home directory can be retrieved directly from your Azure Stack deployment. This method can also be used for AD FS. First, add your host to the list of TrustedHosts:
+For **ADFS** environments use the following:
+
 ```powershell
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-```
-Then execute the following:
-```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
-$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
@@ -101,13 +97,13 @@ Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adm
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $TenantID
 ```
 
 Similarly, for targeting the administrator endpoints:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID
 ```
 
 ## Register Azure RM Providers on new subscriptions
