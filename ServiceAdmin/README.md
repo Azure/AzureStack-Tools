@@ -15,6 +15,11 @@ Then make sure the following modules are imported:
 Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.ServiceAdmin.psm1
 ```
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
 
 Creating quotas/offers/plans requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
@@ -29,12 +34,6 @@ $TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin
 ```
 
 ## Create default plan and quota for tenants
-
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
-```
 
 ```powershell
 New-AzSTenantOfferAndQuotas -tenantID $TenantID -EnvironmentName "AzureStackAdmin"

@@ -70,18 +70,6 @@ See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/
 
 AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
 
-Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
-
-```powershell
-$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
-```
-
-For **ADFS** environments use the following:
-
-```powershell
-$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
-```
-
 To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
 
 ```powershell
@@ -92,6 +80,18 @@ To create an administrator environment use the below. The ARM endpoint below is 
 
 ```powershell
 Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
+
+Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
+
+```powershell
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
+```
+
+For **ADFS** environments use the following:
+
+```powershell
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:

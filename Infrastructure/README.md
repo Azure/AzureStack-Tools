@@ -19,6 +19,13 @@ Import-Module .\AzureStack.Infra.psm1
 ## Add PowerShell environment
 ```powershell
 Import-Module .\AzureStack.Connect.psm1
+```
+
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+```
 
 Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
@@ -32,11 +39,9 @@ For **ADFS** environments use the following:
 $TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
-Then, add your Azure Stack environment and login: 
+Then login: 
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
-
 Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID
 ```
 
