@@ -1,6 +1,11 @@
 # Azure Stack Technical Preview Version
 
-These tools are meant for use with **Azure Stack Technical Preview 3**. Azure Stack Technical Preview 2 users can still use the tools in the [tp2-refresh branch](https://github.com/Azure/AzureStack-Tools/tree/tp2-refresh).
+These tools are meant for use with **Azure Stack Technical Preview 3 Refresh**. Azure Stack Technical Preview 3 (March build) users can still use the tools in the [TP3.N](https://github.com/Azure/AzureStack-Tools/tree/TP3.N).
+
+A few notes for this release:
+- Default ARM endpoints have changed in this release. 
+- Tools have been updated to include an EnvironmentName parameter. 
+- Make sure to use the the Net35 parameter when uploading a Server 2016 image for use with deploying the PaaS services
 
 # Tools for using Azure and Azure Stack
 

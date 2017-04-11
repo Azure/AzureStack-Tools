@@ -15,27 +15,28 @@ Then make sure the following modules are imported:
 Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.ServiceAdmin.psm1
 ```
-
-Creating quotas/offers/plans requires that you obtain the GUID value of your Directory Tenant. If you know the non-GUID form of the Azure Active Directory Tenant used to deploy your Azure Stack instance, you can retrieve the GUID value with the following:
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-$aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
-Otherwise, it can be retrieved directly from your Azure Stack deployment. First, add your host to the list of TrustedHosts:
+Creating quotas/offers/plans requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
+
 ```powershell
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
 ```
-Then execute the following:
+
+For **ADFS** environments use the following:
+
 ```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
-$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 ## Create default plan and quota for tenants
 
 ```powershell
-New-AzSTenantOfferAndQuotas -tenantID $aadTenant
+New-AzSTenantOfferAndQuotas -tenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
 Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and key vault usage. 

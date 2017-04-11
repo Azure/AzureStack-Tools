@@ -19,7 +19,7 @@ Import-Module .\AzureStack.Connect.psm1
 The [Connect to Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-azure-stack) document describes ways to connect to your Azure Stack Proof of Concept environment.
 
 One method is to establish a split tunnel VPN connection to an Azure Stack PoC. 
-This allows your client computer to become part of the Azure Stack PoC network system and therefore resolve [https://portal.azurestack.local](https://portal.azurestack.local), api.azurestack.local, *.blob.azurestack.local and so on. 
+This allows your client computer to become part of the Azure Stack PoC network system and therefore resolve Azure Stack endpoints. 
 
 The tool will also download root certificate of the targeted Azure Stack PoC instance locally to your client computer. 
 This will ensure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
@@ -70,43 +70,40 @@ See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/
 
 AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
 
-To retrieve your Azure Active Directory Tenant ID (this will be a GUID value), do the following:
+To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
 
-First, make sure that your host is added to the list of trusted hosts:
 ```powershell
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
+Add-AzureStackAzureRmEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external" 
 ```
 
-Then execute the following:
+To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
 ```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
-$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
+Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
-The AadTenant parameter specifies the directory that was used when deploying Azure Stack. 
-
-To target your Azure Stack instance, an AzureRM environment needs to be registered as follows. This will give you access to the administrative portal. 
+Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -AadTenant $AadTenant
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
 ```
 
-To get access to the tenant portal, run the following instead:
+For **ADFS** environments use the following:
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name AzureStackTenant -ArmEndpoint "https://publicapi.local.azurestack.external" -AadTenant $aadTenant
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $TenantID
 ```
 
-Similarly, for the tenant portal:
+Similarly, for targeting the administrator endpoints:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStackTenant" -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID
 ```
 
 ## Register Azure RM Providers on new subscriptions
