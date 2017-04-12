@@ -109,7 +109,7 @@ $runCount = 1
 $tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
-    if ($NumberOfIterations)
+    if ($NumberOfIterations -gt 1)
     {
         $CanaryUtilitiesRG      = $CanaryUtilitiesRG + $runCount
         $CanaryVMRG             = $CanaryVMRG + $runCount
