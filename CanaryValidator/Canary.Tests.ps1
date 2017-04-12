@@ -61,12 +61,12 @@ param (
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
+    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,99),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "canvr" + [Random]::new().Next(1,999),
+    [string]$CanaryVMRG = "cnvr" + [Random]::new().Next(1,99),
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -105,22 +105,23 @@ Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
 
-$storageAccName         = $CanaryUtilitiesRG + "sa"
-$storageCtrName         = $CanaryUtilitiesRG + "sc"
-$keyvaultName           = $CanaryUtilitiesRG + "kv"
-$keyvaultCertName       = "ASCanaryVMCertificate"
-$kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
-$VMAdminUserName        = "CanaryAdmin" 
-$VMAdminUserPass        = "CanaryAdmin@123"
-$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
-$linuxImagePublisher    = "Canonical"
-$linuxImageOffer        = "UbuntuServer"
-$linuxImageVersion      = "1.0.0"
-
 $runCount = 1
 $tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
+    $CanaryUtilitiesRG      = $CanaryUtilitiesRG + $runCount
+    $CanaryVMRG             = $CanaryVMRG + $runCount
+    $storageAccName         = $CanaryUtilitiesRG + "sa"
+    $storageCtrName         = $CanaryUtilitiesRG + "sc"
+    $keyvaultName           = $CanaryUtilitiesRG + "kv"
+    $keyvaultCertName       = "ASCanaryVMCertificate"
+    $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
+    $VMAdminUserName        = "CanaryAdmin" 
+    $VMAdminUserPass        = "CanaryAdmin@123"
+    $canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
+    $linuxImagePublisher    = "Canonical"
+    $linuxImageOffer        = "UbuntuServer"
+    $linuxImageVersion      = "1.0.0"
     if (Test-Path -Path $canaryUtilPath)
     {
         Remove-Item -Path $canaryUtilPath -Force -Recurse 
