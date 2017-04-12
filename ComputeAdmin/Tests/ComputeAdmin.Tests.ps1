@@ -85,13 +85,7 @@ InModuleScope $script:ModuleName {
         It 'Remove-VMImage and Removing Marketplace Item should successfully complete' {
             { 
                 Remove-VMImage -publisher $publisher -offer $offer -sku $gallerySku -version $version -tenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredential $stackLoginCreds
-                if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
-                    Get-AzureRMGalleryItem
-                    Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$offer$gallerySku.$version"} | Remove-AzureRMGalleryItem 
-                }else{
-                    Get-AzureRMGalleryItem -ApiVersion 2015-04-01
-                    Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$offer$gallerySku.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
-                }
+                Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$offer$gallerySku.$version"} | Remove-AzureRMGalleryItem 
             } | Should Not Throw
         }
 
@@ -109,11 +103,7 @@ InModuleScope $script:ModuleName {
                 Remove-VMImage -publisher $newPub -offer $newOffer -sku $newSKU -version $newVersion -tenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredential $stackLoginCreds
                 $GalleryItemName = "$newOffer$newSKU"
                 $GalleryItemName = $GalleryItemName -replace "\.","-"
-                if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
-                    Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem
-                }else{
-                    Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
-                }
+                Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem
             } | Should Not Throw
         }
 
