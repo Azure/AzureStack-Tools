@@ -109,8 +109,11 @@ $runCount = 1
 $tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
-    $CanaryUtilitiesRG      = $CanaryUtilitiesRG + $runCount
-    $CanaryVMRG             = $CanaryVMRG + $runCount
+    if ($NumberOfIterations)
+    {
+        $CanaryUtilitiesRG      = $CanaryUtilitiesRG + $runCount
+        $CanaryVMRG             = $CanaryVMRG + $runCount
+    }
     $storageAccName         = $CanaryUtilitiesRG + "sa"
     $storageCtrName         = $CanaryUtilitiesRG + "sc"
     $keyvaultName           = $CanaryUtilitiesRG + "kv"
