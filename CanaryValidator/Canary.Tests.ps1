@@ -98,7 +98,7 @@ param (
     [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log"   
 )
 
-#Requires -Modules AzureRM
+#requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
 #Requires -RunAsAdministrator
 Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
