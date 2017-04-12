@@ -463,7 +463,7 @@ function New-Server2016VMImage {
                 Write-Verbose -Message "Preparing VHD"
 
                 $VHDMount = Mount-DiskImage -ImagePath $VHDPath -PassThru -ErrorAction Stop
-                $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
+                $disk = $VHDMount | Get-DiskImage -ErrorAction Stop | Get-Disk -ErrorAction SilentlyContinue
                 $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
                 $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
                 $volume = Format-Volume -Partition $partition -FileSystem NTFS -confirm:$false -ErrorAction Stop
