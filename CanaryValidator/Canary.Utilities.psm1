@@ -1,9 +1,17 @@
 $Global:ContinueOnFailure = $false
 $Global:JSONLogFile  = "Run-Canary.JSON"
 $Global:TxtLogFile  = "AzureStackCanaryLog.Log"
-$UseCase = @{}
-[System.Collections.Stack] $AllUseCases = New-Object System.Collections.Stack
-filter timestamp {"$(Get-Date -Format G): $_"}
+$Global:wttLogFileName= ""
+if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
+{
+    Import-Module -Name "$PSScriptRoot\..\WTTLog.ps1" -Force
+    $Global:wttLogFileName = (Join-Path $PSScriptRoot "AzureStack_CanaryValidation_Test.wtl")    
+}
+
+$CurrentUseCase = @{}
+[System.Collections.Stack] $UseCaseStack = New-Object System.Collections.Stack
+filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
+
 
 function Log-Info
 {
@@ -49,51 +57,94 @@ function Log-JSONReport
         if ($Message.Contains("[START]"))
         {
             $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim().Replace("######", "").Trim()
-            if ($AllUseCases.Count)
+            if ($UseCaseStack.Count)
             {
                 $nestedUseCase = @{
                 "Name" = $name
                 "StartTime" = $time
                 }
-                if (-not $AllUseCases.Peek().UseCase)
+                if (-not $UseCaseStack.Peek().UseCase)
                 {
-                    $AllUseCases.Peek().Add("UseCase", @())
+                    $UseCaseStack.Peek().Add("UseCase", @())
                 }
-                $AllUseCases.Peek().UseCase += , $nestedUseCase
-                $AllUseCases.Push($nestedUseCase)
+                $UseCaseStack.Peek().UseCase += , $nestedUseCase
+                $UseCaseStack.Push($nestedUseCase)
             }
             else
             {
-                $UseCase.Add("Name", $name)
-                $UseCase.Add("StartTime", $time)
-                $AllUseCases.Push($UseCase)
+                $CurrentUseCase.Add("Name", $name)
+                $CurrentUseCase.Add("StartTime", $time)
+                $UseCaseStack.Push($CurrentUseCase)
             }
         }
         elseif ($Message.Contains("[END]"))
         {
-            $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
-            $AllUseCases.Peek().Add("EndTime", $time)
-            $AllUseCases.Peek().Add("Result", $result)
-            $AllUseCases.Pop() | Out-Null
-            if (-not $AllUseCases.Count)
+            $result = ""            
+            if ($UseCaseStack.Peek().UseCase -and ($UseCaseStack.Peek().UseCase | Where-Object {$_.Result -eq "FAIL"}))
+            {
+                $result = "FAIL" 
+            }
+            else
+            {
+                $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
+            }
+            $UseCaseStack.Peek().Add("Result", $result)
+            $UseCaseStack.Peek().Add("EndTime", $time)            
+            $UseCaseStack.Pop() | Out-Null
+            if (-not $UseCaseStack.Count)
             {
                 $jsonReport = ConvertFrom-Json (Get-Content -Path $Global:JSONLogFile -Raw)
-                $jsonReport.UseCases += , $UseCase
+                $jsonReport.UseCases += , $CurrentUseCase
                 $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
-                $UseCase.Clear()
+                $CurrentUseCase.Clear()
             }
         }
         elseif ($Message.Contains("[DESCRIPTION]"))
         {
             $description = $Message.Substring($Message.IndexOf("[DESCRIPTION]") + "[DESCRIPTION]".Length).Trim()
-            $AllUseCases.Peek().Add("Description", $description)
+            $UseCaseStack.Peek().Add("Description", $description)
         }
         elseif ($Message.Contains("[EXCEPTION]"))
         {
             $exception = $Message.Substring($Message.IndexOf("[EXCEPTION]") + "[EXCEPTION]".Length).Trim()
-            $AllUseCases.Peek().Add("Exception", $exception)
+            $UseCaseStack.Peek().Add("Exception", $exception)
         }
     }
+}
+
+function Get-CanaryResult
+{    
+    $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json
+    Log-Info ($logContent.UseCases | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"}, 
+                                                            @{Expression = {$_.Result}; Label="Result"; Align = "Left"}, 
+                                                            @{Expression = {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}; Label = "Duration`n[Seconds]"; Align = "Left"},
+                                                            @{Expression = {$_.Description}; Label = "Description"; Align = "Left"})                                                    
+}
+
+function Get-CanaryLonghaulResult
+{
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$true, Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]$LogPath
+    )
+
+    $logFiles = (Get-ChildItem -Path $LogPath -Filter *.JSON -File).FullName
+    $logContent = @()
+    foreach($file in $logFiles)
+    {
+        $logContent += (Get-Content -Raw -Path $file | ConvertFrom-Json).UseCases
+    }
+    $usecasesGroup = $logContent | Group-Object -Property Name
+    $usecasesGroup | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"},
+                                            @{Expression={$_.Count}; Label="Count"; Align = "Left"},
+                                            @{Expression={$passPct = [math]::Round(((($_.Group | Where-Object Result -eq "PASS" | Measure-Object).Count/$_.Count)*100), 0); $passPct.ToString()+"%"};Label="Pass`n[Goal: >99%]"; Align = "Left"},    
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Minimum).Minimum, 0)};Label="MinTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Maximum).Maximum, 0)};Label="MaxTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={[math]::Round(($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds} | Measure-Object -Average).Average, 0)};Label="AvgTime`n[msecs]"; Align = "Left"},
+                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round([math]::Sqrt($sd/$pCount), 0)};Label="StdDev"; Align = "Left"},
+                                            @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round(([math]::Round([math]::Sqrt($sd/$pCount), 0)/$avgTime), 0) * 100};Label="RelativeStdDev`n[Goal: <50%]"; Align = "Left"}
 }
 
 function Start-Scenario
@@ -126,6 +177,11 @@ function Start-Scenario
             $Global:TxtLogFile = $LogFileName + ".Log"               
         }        
     }
+    if ($Global:wttLogFileName)
+    {
+        OpenWTTLogger $Global:wttLogFileName    
+    }
+    
     New-Item -Path $Global:JSONLogFile -Type File -Force
     New-Item -Path $Global:TxtLogFile -Type File -Force
     $jsonReport = @{
@@ -137,7 +193,12 @@ function Start-Scenario
 }
 
 function End-Scenario
-{}
+{
+    if ($Global:wttLogFileName)
+    {
+        CloseWTTLogger    
+    }
+}
 
 function Invoke-Usecase
 {
@@ -154,6 +215,10 @@ function Invoke-Usecase
         [ScriptBlock]$UsecaseBlock    
     )
     Log-Info ("###### [START] Usecase: $Name ######`n") 
+    if ($Global:wttLogFileName)
+    {
+        StartTest "CanaryGate:$Name"
+    }
 
     if ($Description)
     {
@@ -167,14 +232,24 @@ function Invoke-Usecase
         {
             Log-Info ($result)
         }
-
+        if ($Global:wttLogFileName)
+        {
+            EndTest "CanaryGate:$Name" $true
+        }
         Log-Info ("###### [END] Usecase: $Name ###### [RESULT = PASS] ######`n")
         return $result | Out-Null
     }
     catch [System.Exception]
     {        
         Log-Exception ($_.Exception)
+        Log-Info ("###### <FAULTING SCRIPTBLOCK> ######")
+        Log-Info ("$UsecaseBlock")
+        Log-Info ("###### </FAULTING SCRIPTBLOCK> ######")
         Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
+        if ($Global:wttLogFileName)
+        {
+            EndTest "CanaryGate:$Name" $false
+        }
         if (-not $Global:ContinueOnFailure)
         {
             throw $_.Exception
@@ -188,13 +263,16 @@ function GetAzureStackEndpoints
     param( 
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string]$EnvironmentDomainFQDN      
+        [string]$EnvironmentDomainFQDN,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ArmEndpoint
+
     ) 
 
     $aadTenantId    = $AADTenantId
-    $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
     $endptres = Invoke-RestMethod "${armEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop    
-    $ActiveDirectoryEndpoint = $($endptres.authentication.loginEndpoint)
+    $ActiveDirectoryEndpoint = $($endptres.authentication.loginEndpoint).TrimEnd("/") + "/"
     $ActiveDirectoryServiceEndpointResourceId = $($endptres.authentication.audiences[0])
     $ResourceManagerEndpoint = $armEndpoint
     $GalleryEndpoint = $endptres.galleryEndpoint
@@ -264,8 +342,8 @@ function NewStorageQuota
     )    
 
     $quotaName                  = "ascanarystoragequota"
-    $capacityInGb               = 100
-    $numberOfStorageAccounts    = 20
+    $capacityInGb               = 1000
+    $numberOfStorageAccounts    = 200
     $ApiVersion                 = "2015-12-01-preview"
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Storage.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
@@ -304,9 +382,9 @@ function NewComputeQuota
     )  
 
     $quotaName      = "ascanarycomputequota"
-    $vmCount        = 10
-    $memoryLimitMB  = 10240
-    $coresLimit     = 10
+    $vmCount        = 100
+    $memoryLimitMB  = 102400
+    $coresLimit     = 100
     $ApiVersion     = "2015-12-01-preview"
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Compute.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
@@ -399,7 +477,7 @@ function NewKeyVaultQuota
         [string] $ArmLocation  
     ) 
 
-    $uri = "{0}/subscriptions/{1}/providers/Microsoft.Keyvault.Admin/locations/{2}/quotas?api-version=2014-04-01-preview" -f $AdminUri, $SubscriptionId, $ArmLocation
+    $uri = "{0}/subscriptions/{1}/providers/Microsoft.Keyvault.Admin/locations/{2}/quotas?api-version=2017-02-01-preview" -f $AdminUri, $SubscriptionId, $ArmLocation
     $headers = @{ "Authorization" = "Bearer "+ $AzureStackToken }
     $kvQuota = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers -ContentType 'application/json' -ErrorAction Stop
         
@@ -418,13 +496,20 @@ function NewAzureStackToken
         [string]$EnvironmentDomainFQDN,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.PSCredential]$Credentials
+        [System.Management.Automation.PSCredential]$Credentials,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ArmEndpoint
+
     )
     
-    $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN
-    #$asToken = Get-AzureStackToken -Authority ($endpoints.ActiveDirectoryEndpoint  + $aadTenantId + "/oauth2") -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $AADTenantID -Credential $Credentials -ErrorAction Stop
-    $asToken = Get-AzureStackToken -Authority $endpoints.ActiveDirectoryEndpoint -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $aadTenantId -Credential $Credentials -ErrorAction Stop
-    return $asToken  
+    $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndPoint $ArmEndpoint
+    $clientId = "1950a258-227b-4e31-a9cf-717495945fc2"
+    
+    $contextAuthorityEndpoint = ([System.IO.Path]::Combine($endpoints.ActiveDirectoryEndpoint, $AADTenantID)).Replace('\','/')
+    $authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($contextAuthorityEndpoint, $false)
+    $userCredential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential($Credentials.UserName, $Credentials.Password)
+    return ($authContext.AcquireToken($endpoints.ActiveDirectoryServiceEndpointResourceId, $clientId, $userCredential)).AccessToken  
 }
 
 function NewAzureStackDefaultQuotas
@@ -445,13 +530,15 @@ function NewAzureStackDefaultQuotas
         [string]$EnvironmentDomainFQDN,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.PSCredential]$Credentials
+        [System.Management.Automation.PSCredential]$Credentials,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ArmEndpoint
     ) 
 
     $aadTenantId    = $AADTenantId
     $serviceQuotas  = @()
-    $armEndpoint    = "https://api." + $EnvironmentDomainFQDN
-    $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $Credentials
+    $asToken = NewAzureStackToken -AADTenantId $AADTenantId -EnvironmentDomainFQDN $EnvironmentDomainFQDN -Credentials $Credentials -ArmEndpoint $ArmEndpoint
     #$serviceQuotas += NewSubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     $serviceQuotas += NewStorageQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
     $serviceQuotas += NewComputeQuota -AdminUri $armEndPoint -SubscriptionId $SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation
@@ -630,4 +717,74 @@ function GetAzureStackBlobUri
     {
         throw $_.Exception.Message    
     }
+}
+
+function DownloadFile
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $FileUrl,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+    $retries = 20
+    $lastException = $null
+    $success = $false
+    
+    while($success -eq $false -and $retries -ge 0)
+    {
+        $success = $true
+        try 
+        {
+            $outputFile = Join-Path $OutputFolder (Split-Path -Path $FileUrl -Leaf)
+            $wc = New-Object System.Net.WebClient
+            $wc.DownloadFile($FileUrl, $outputFile) | Out-Null
+        }
+        catch
+        {
+            $success = $false            
+            $lastException = $_
+        }
+        $retries--
+        if($success -eq $false)
+        {
+            Start-Sleep -Seconds 10                        
+        }
+    }
+
+    if($success -eq $false)
+    {
+        Write-Output "Timed out trying to download $FileUrl"
+        throw $lastException
+    }
+
+    return $outputFile
+}
+
+function CopyImage
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $ImagePath,
+        [Parameter(Mandatory=$true)]
+        [String] $OutputFolder
+    )
+
+    if (Test-Path $ImagePath)
+    {
+        Copy-Item $ImagePath $OutputFolder
+        $outputfile = Join-Path $OutputFolder (Split-Path $ImagePath -Leaf)
+    }
+    elseif ($ImagePath.StartsWith("http"))
+    {
+        $outputfile = DownloadFile -FileUrl $ImagePath -OutputFolder $OutputFolder
+    }
+    if (([System.IO.FileInfo]$outputfile).Extension -eq ".zip")
+    {
+        Expand-Archive -Path $outputfile -DestinationPath $OutputFolder -Force   
+    }
+
+    return (Get-ChildItem -Path $OutputFolder -File | Where-Object {$_.Extension -eq ".vhd" -or $_.Extension -eq ".vhdx"})[0].FullName
 }

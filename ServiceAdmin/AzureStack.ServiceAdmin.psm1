@@ -2,72 +2,66 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, AzureRm.AzureStackAdmin
+#requires -Modules AzureStack.Connect
 
 <#
     .SYNOPSIS
     Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
 #>
-function New-AzureStackTenantOfferAndQuotas
+function New-AzSTenantOfferAndQuotas
 {
     param (
         [parameter(HelpMessage="Name of the offer to be made advailable to tenants")]
         [string] $Name ="default",
-        [parameter(HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
-        [string] $EnvironmentName = "AzureStack",
         [parameter(HelpMessage="Azure Stack region in which to define plans and quotas")]
-        [string]$ResourceLocation = "local",
+        [string]$Location = "local",
         [Parameter(HelpMessage="If this parameter is not specified all quotas are assigned. Provide a sub selection of quotas in this parameter if you do not want all quotas assigned.")]
         [ValidateSet('Compute','Network','Storage','KeyVault','Subscriptions',IgnoreCase =$true)]
         [array]$ServiceQuotas,
-        [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential in Azure Active Directory")]
-        [pscredential] $ServiceAdminCredential
+        [parameter(Mandatory=$true,HelpMessage="The name of the AzureStack environment")]
+        [string] $EnvironmentName,
+        [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential")]
+        [pscredential] $azureStackCredential,
+        [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
+	    [string] $tenantID
     )
 
-    $envName = $EnvironmentName
-    $credentialObj = $ServiceAdminCredential
-
-    Write-Verbose "Logging service admin into Azure Active Directory..." -Verbose
-    Add-AzureRmAccount -EnvironmentName $envName -Credential $credentialObj -ErrorAction Stop
-
-    $defaultSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
-
-    $defaultSubscription | Select-AzureRmSubscription -ErrorAction Stop
-
-    $azEnv = Get-AzureRmEnvironment -Name $envName
-    $ActiveDirectoryEndpoint = $azEnv.ActiveDirectoryAuthority + $azEnv.AdTenant + "/"
-    $ActiveDirectoryServiceEndpointResourceId = $azEnv.ActiveDirectoryServiceEndpointResourceId
-    $AADTenantID = $azEnv.AdTenant
-    $armEndpoint = $azEnv.ResourceManagerUrl
+    $azureStackEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue
+    if($azureStackEnvironment -ne $null) {
+        $ARMEndpoint = $azureStackEnvironment.ResourceManagerUrl
+    }
+    else {
+        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzureStackAzureRmEnvironment." -ErrorAction Stop
+    }
 
     Write-Verbose "Obtaining token from AAD..." -Verbose
-    $asToken = Get-AzureStackToken -Authority ($ActiveDirectoryEndpoint + "oauth2") -Resource $ActiveDirectoryServiceEndpointResourceId -AadTenantId $AADTenantID -Credential $credentialObj
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredential -EnvironmentName $EnvironmentName)
 
     Write-Verbose "Creating quotas..." -Verbose
     $Quotas = @()
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')){ $Quotas += New-ComputeQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Network')){ $Quotas += New-NetworkQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Storage')){ $Quotas += New-StorageQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'KeyVault')){ $Quotas += Get-KeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Subscriptions')){ $Quotas += Get-SubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $defaultSubscription.SubscriptionId -AzureStackToken $asToken -ArmLocation $ResourceLocation }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')){ $Quotas += New-ComputeQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Network')){ $Quotas += New-NetworkQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Storage')){ $Quotas += New-StorageQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'KeyVault')){ $Quotas += Get-KeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Subscriptions')){ $Quotas += Get-SubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
 
     Write-Verbose "Creating resource group for plans and offers..." -Verbose
     if (Get-AzureRmResourceGroup -Name $Name -ErrorAction SilentlyContinue)
     {        
         Remove-AzureRmResourceGroup -Name $Name -Force -ErrorAction Stop
     }
-    New-AzureRmResourceGroup -Name $Name -Location $ResourceLocation -ErrorAction Stop
+    New-AzureRmResourceGroup -Name $Name -Location $Location -ErrorAction Stop
 
     Write-Verbose "Creating plan..." -Verbose
-    $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $ResourceLocation -ResourceGroup $Name -SubscriptionId $defaultSubscription.SubscriptionId -AdminUri $armEndpoint -Token $asToken -QuotaIds $Quotas
+    $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $Location -ResourceGroup $Name -QuotaIds $Quotas
 
     Write-Verbose "Creating public offer..." -Verbose
-    $offer = New-AzureRMOffer -Name $Name -DisplayName $Name -State Public -BasePlanIds @($plan.Id) -ArmLocation $ResourceLocation -ResourceGroup $Name
+    $offer = New-AzureRMOffer -Name $Name -DisplayName $Name -State Public -BasePlanIds @($plan.Id) -ArmLocation $Location -ResourceGroup $Name
 
     return $offer
 }
 
-Export-ModuleMember New-AzureStackTenantOfferAndQuotas
+Export-ModuleMember New-AzSTenantOfferAndQuotas
 
 function Get-SubscriptionsQuota
 {
@@ -80,7 +74,7 @@ function Get-SubscriptionsQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackToken,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -89,7 +83,7 @@ function Get-SubscriptionsQuota
     $getSubscriptionsQuota = @{
         Uri = "{0}/subscriptions/{1}/providers/Microsoft.Subscriptions.Admin/locations/{2}/quotas?api-version=2015-11-01" -f $AdminUri, $SubscriptionId, $ArmLocation
         Method = "GET"
-        Headers = @{ "Authorization" = "Bearer " + $AzureStackToken }
+        Headers = $AzureStackTokenHeader
         ContentType = "application/json"
     }
     $subscriptionsQuota = Invoke-RestMethod @getSubscriptionsQuota
@@ -110,7 +104,7 @@ function New-StorageQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackToken,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -129,8 +123,7 @@ function New-StorageQuota
         }
     }
 "@
-    $headers = @{ "Authorization" = "Bearer "+ $AzureStackToken }
-    $storageQuota = Invoke-RestMethod -Method Put -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $headers
+    $storageQuota = Invoke-RestMethod -Method Put -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $AzureStackTokenHeader
     $storageQuota.Id
 }
 
@@ -149,7 +142,7 @@ function New-ComputeQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackToken,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -170,8 +163,7 @@ function New-ComputeQuota
         }
     }
 "@
-    $headers = @{ "Authorization" = "Bearer "+ $AzureStackToken }
-    $computeQuota = Invoke-RestMethod -Method Put -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $headers
+    $computeQuota = Invoke-RestMethod -Method Put -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $AzureStackTokenHeader
     $computeQuota.Id
 }
 
@@ -194,7 +186,7 @@ function New-NetworkQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackToken,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
@@ -221,8 +213,7 @@ function New-NetworkQuota
         }
     }
 "@
-    $headers = @{ "Authorization" = "Bearer "+ $AzureStackToken}
-    $networkQuota = Invoke-RestMethod -Method Put -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $headers
+    $networkQuota = Invoke-RestMethod -Method Put -Uri $uri -Body $RequestBody -ContentType 'application/json' -Headers $AzureStackTokenHeader
     $networkQuota.Id
 }
 
@@ -237,14 +228,13 @@ function Get-KeyVaultQuota
         [string] $SubscriptionId,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
-        [string] $AzureStackToken,
+        [hashtable] $AzureStackTokenHeader,
         [parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]    
         [string] $ArmLocation  
     ) 
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Keyvault.Admin/locations/{2}/quotas?api-version=2014-04-01-preview" -f $AdminUri, $SubscriptionId, $ArmLocation
-    $headers = @{ "Authorization" = "Bearer "+ $AzureStackToken }
-    $kvQuota = Invoke-RestMethod -Method Get -Uri $uri -Headers $headers -ContentType 'application/json'
+    $kvQuota = Invoke-RestMethod -Method Get -Uri $uri -Headers $AzureStackTokenHeader -ContentType 'application/json'
     $kvQuota.Value.Id
 }

@@ -1,214 +1,424 @@
 # Azure Stack Infrastructure Administration
 
 Instructions below are relative to the .\Infrastructure folder of the [AzureStack-Tools repo](..).
+This also requires the Azure Stack Connect Module to be imported before running any of the commands. The Module can also be found in the [AzureStack-Tools repo](..).
+
+Whats new for TP3:
+
+- New Cmdlet Name Prefix
+- API Resource Name changes
+- New cmdlets
+- Use of Azure Stack Connect Module
+
+## Import the Module
 
 ```powershell
 Import-Module .\AzureStack.Infra.psm1
 ```
 
-##Retrieve Infrastructure Alerts
+## Add PowerShell environment
+```powershell
+Import-Module .\AzureStack.Connect.psm1
+```
+
+You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+
+```powershell
+Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
+```
+
+Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
+
+```powershell
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
+```
+
+For **ADFS** environments use the following:
+
+```powershell
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin
+```
+
+Then login:
+
+```powershell
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID
+```
+
+## Individual Command Usage
+
+Explains each individual command and shows how to use it
+
+### Retrieve Infrastructure Alerts
 
 List active and closed Infrastructure Alerts
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackAlert -AzureStackCredential $credential -TenantID "ID"
+Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Alerts. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Retrieves Active & Closed Alerts
 
 
-##Close Infrastructure Alerts
+### Close Infrastructure Alerts
 
  Close any active Infrastructure Alert. Run Get-AzureStackAlert to get the AlertID, required to close a specific Alert.
 
 ```powershell
 $credential = Get-Credential
-Close-AzureStackAlert -AzureStackCredential $credential -TenantID "ID" -AlertID "ID"
+Close-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -AlertID "ID" -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to close active Alert. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to close active Alert. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Close active Alert
 
 
-##Get Region Update Summary
+### Get Region Update Summary
 
  Review the Update Summary for a specified region.
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackUpdateSummary -AzureStackCredential $credential -TenantID "ID"
+Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Region Update Summary. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Region Update Summary. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Retrieves Region Update Summary
 
 
-##Get Azure Stack Update
+### Get Azure Stack Update
 
  Retrieves list of Azure Stack Updates
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackUpdate -AzureStackCredential $credential -TenantID "ID"
+Get-AzSUpdate -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Azure Stack Updates. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Azure Stack Updates. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - List Azure Stack Updates
 
 
-##Apply Azure Stack Update
+### Apply Azure Stack Update
 
  Applies a specific Azure Stack Update that is downloaded and applicable. Run Get-AzureStackUpdate to retrieve Update Version first
 
 ```powershell
 $credential = Get-Credential
-Apply-AzureStackUpdate -AzureStackCredential $credential -TenantID "ID" -vupdate "Update Version"
+Apply-AzSUpdate -AzureStackCredentials $credential -TenantID $TenantID -vupdate "Update Version" -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to apply a specific Update. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to apply a specific Update. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Applies specified Update
 
 
-##Get Azure Stack Update Run
+### Get Azure Stack Update Run
 
  Should be used to validate a specific Update Run or look at previous update runs
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackUpdateRun -AzureStackCredential $credential -TenantID "ID" -vupdate "Update Version"
+Get-AzSUpdateRun -AzureStackCredentials $credential -TenantID $TenantID -vupdate "Update Version" -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Update Run information. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Update Run information. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Lists Update Run information for a specific Azure Stack update
 
 
-##List Infrastructure Roles
+### List Infrastructure Roles
 
  Does list all Infrastructure Roles
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackInfraRole -AzureStackCredential $credential -TenantID "ID"
+Get-AzSInfraRole -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Infrastructure Roles. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Infrastructure Roles. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Lists Infrastructure Roles
 
 
-##List Infrastructure Virtual Machines
+### List Infrastructure Role Instance
 
  Does list all Infrastructure Role Instances (Note: Does not return Directory Management VM in One Node deployment)
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackInfraVM -AzureStackCredential $credential -TenantID "ID"
+Get-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Infrastructure Role Instances. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Infrastructure Role Instances. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Lists Infrastructure Role Instances
 
 
-##List Scale Unit
+### List Scale Unit
 
  Does list all Scale Units in a specified Region
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackScaleUnit -AzureStackCredential $credential -TenantID "ID"
+Get-AzSScaleUnit -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Scale Units. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Scale Units. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Lists Scale Units
 
 
-##List Nodes
+### List Scale Unit Nodes
 
- Does list Nodes in a Scale Unit
+ Does list all Scale Units Nodes
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackNode -AzureStackCredential $credential -TenantID "ID"
+Get-AzSScaleUnitNode -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Nodes. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve all Scale Unit Nodes. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
-- Lists Nodes
+- Lists Scale Unit Nodes
 
 
-##List Logical Networks
+### List Logical Networks
 
  Does list all logical Networks by ID
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackLogicalNetwork -AzureStackCredential $credential -TenantID "ID"
+Get-AzSLogicalNetwork -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve logical Networks. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve logical Networks. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Lists logical Networks
 
 
-##List Storage Capacity
+### List Storage Capacity
 
  Does return the total capacity of the storage subsystem
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackStorageCapacity -AzureStackCredential $credential -TenantID "ID"
+Get-AzSStorageCapacity -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve total storage capacity. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve total storage capacity. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Lists total storage capacity for the storage subsystem
 
 
-##List Storage Shares
+### List Storage Shares
 
  Does list all file shares in the storage subsystem
 
 ```powershell
 $credential = Get-Credential
-Get-AzureStackStorageShare -AzureStackCredential $credential -TenantID "ID"
+Get-AzSStorageShare -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve file shares. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+Note: The cmdlet requires credentials to retrieve file shares. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
 - Retrieves all file shares
+
+
+### List IP Pools
+
+ Does list all IP Pools
+
+```powershell
+$credential = Get-Credential
+Get-AzSIPPool -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to retrieve IP Pools. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Retrieves all IP Pools
+
+
+### List MAC Address Pools
+
+ Does list all MAC Address Pool
+
+```powershell
+$credential = Get-Credential
+Get-AzSMacPool -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to retrieve all MAC Address Pools. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Retrieves all MAC Address Pools
+
+
+### List Gateway Pools
+
+ Does list all Gateway Pools
+
+```powershell
+$credential = Get-Credential
+Get-AzSGatewayPool -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to retrieve the Gateway Pools. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Retrieves all Gateway Pools
+
+
+### List SLB MUX
+
+ Does list all SLB MUX Instances
+
+```powershell
+$credential = Get-Credential
+Get-AzSSLBMUX -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to retrieve all SLB MUX instances. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Retrieves all SLB MUX instances
+
+
+### List Gateway Instances
+
+ Does list all Gateway Instances
+
+```powershell
+$credential = Get-Credential
+Get-AzSGateway -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to retrieve all Gateway instances. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Retrieves all Gateway instances
+
+
+### Start Infra Role Instance
+
+ Does start an Infra Role Instance
+
+```powershell
+$credential = Get-Credential
+Start-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -Name "InfraRoleInstanceName" -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to start an infra role instance. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Starts an Infra Role instance
+
+
+### Stop Infra Role Instance
+
+ Does stop an Infra Role Instance
+
+```powershell
+$credential = Get-Credential
+Stop-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -Name "InfraRoleInstanceName" -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to stop an infra role instance. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Stops an Infra Role instance
+
+
+### Restart Infra Role Instance
+
+ Does restart an Infra Role Instance
+
+```powershell
+$credential = Get-Credential
+Restart-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -Name "InfraRoleInstanceName" -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to restart an infra role instance. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Restart an Infra Role instance
+
+
+### Add IP Pool
+
+ Does add an IP Pool
+
+```powershell
+$credential = Get-Credential
+Add-AzSIPPool -AzureStackCredentials $credential -TenantID $TenantID -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.0./24" -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to add an IP Pool. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Adds an IP Pool
+
+
+## Scenario Command Usage
+Demonstrates using multiple commands together for an end to end scenario.
+
+### Recover an Infrastructure Role Instance that has an Alert assigned.
+
+```powershell
+#Declare Credentials
+$credential = Get-Credential
+
+#Retrieve all Alerts and apply a filter to only show active Alerts
+$Active=Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
+
+#Stop Infra Role Instance
+Stop-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin" -Name $Active.resourceName
+
+#Start Infra Role Instance
+Start-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin" -Name $Active.resourceName
+
+#Validate if error is resolved (Can take up to 3min)
+Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
+```

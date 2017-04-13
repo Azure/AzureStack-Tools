@@ -70,20 +70,23 @@
             "type": "string",
             "metadata": {
                 "description": "Maps to the publisher in the Azure Stack Platform Image Repository manifest file Eg: Canonical, Suse, OpenLogic"
-            }
+            },
+            "defaultValue": "Canonical"
         },
         "LinuxImageOffer": {
             "type": "string",
             "metadata": {
                 "description": "Maps to the Offer in the Azure Stack Platform Image Repository manifest file Eg: UbuntuServer, SlesServer, CentOS "
-            }
+            },
+            "defaultValue": "UbuntuServer"
         },
         "LinuxImageSku": {
             "type": "string",
             "metadata": {
                 "description": "Maps to the sku in the Azure Stack Platform Image Repository manifest file Eg: 12.SP1, 6.7 , 7.2"
-            }
-        }
+            },
+            "defaultValue": "14.04.3-LTS"
+        }        
     },
 
     "variables": {
@@ -106,28 +109,20 @@
         "storageAccountName3": "[toLower(concat(resourceGroup().name, '3SA'))]",
         "storageAccountName3ID": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Storage/storageAccounts/', variables('storageAccountName3'))]",
         "storageAccountName4": "[toLower(concat(resourceGroup().name, '4SA'))]",
-        "storageAccountContainerName4": "[toLower(concat(resourceGroup().name, '4SC'))]",
-        "storageAccountName5": "[toLower(concat(resourceGroup().name, '5SA'))]",
-        "storageAccountContainerName5": "[toLower(concat(resourceGroup().name, '5SC'))]",
-        "publicIPAddressName1": "[toLower(concat(resourceGroup().name, 'PubIP1'))]",
-        "publicIPAddressName2": "[toLower(concat(resourceGroup().name, 'PubIP2'))]",
+        "storageAccountContainerName4": "[toLower(concat(resourceGroup().name, '4SC'))]",                
+        "publicIPAddressName1": "[toLower(concat(resourceGroup().name, 'PubIP1'))]",        
         "publicIPAddressName3": "[toLower(concat(resourceGroup().name, 'PubIP3'))]",
         "publicIPAddressType": "Dynamic",
         "vmssDomainName": "[concat(toLower(resourceGroup().name), 'pubdns')]",
         "virtualNetworkName1": "[concat(resourceGroup().name, 'vNet1')]",        
         "vNet1addressPrefix": "15.15.15.0/16",
         "vNet1subnetName": "[concat(resourceGroup().name, 'vNet1Sub')]",
-        "vNet1subnetPrefix": "15.15.15.0/24",        
-        "virtualNetworkName2": "[concat(resourceGroup().name, 'vNet2')]",
-        "vNet2addressPrefix": "16.16.16.0/16",
-        "vNet2subnetName": "[concat(resourceGroup().name, 'vNet2Sub')]",
-        "vNet2subnetPrefix": "16.16.16.0/24",
+        "vNet1subnetPrefix": "15.15.15.0/24",                        
         "virtualNetworkName3": "[concat(resourceGroup().name, 'vNet3')]",
         "vNet3addressPrefix": "17.17.17.0/17",
         "vNet3subnetName": "[concat(resourceGroup().name, 'vNet3Sub')]",
         "vNet3subnetPrefix": "17.17.17.0/24",        
-        "networkInterfacePrefix": "[concat(resourceGroup().name, 'NIC')]",
-        "NIC4vNet2PrivateIP": "16.16.16.98",
+        "networkInterfacePrefix": "[concat(resourceGroup().name, 'NIC')]",        
         "NIC5vNet1PrivateIP": "15.15.15.98",
         "ASCanaryCustomScriptName": "ASCheckDataDiskUtil.ps1",
         "ASCanaryDisableFWScript": "ASDisableFirewall.ps1",
@@ -223,16 +218,7 @@
             "properties": {
                 "accountType": "[variables('storageAccountType')]"
             }
-        },
-        {
-            "apiVersion": "[variables('apiVersionSRP')]",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('storageAccountName5')]",
-            "location": "[variables('location')]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
+        },        
         {
             "apiVersion": "[variables('apiVersionNRP')]",
             "type": "Microsoft.Network/publicIPAddresses",
@@ -241,16 +227,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
             }
-        },
-        {
-            "apiVersion": "[variables('apiVersionNRP')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIPAddressName2')]",
-            "location": "[variables('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
-            }
-        },
+        },        
         {
             "apiVersion": "[variables('apiVersionNRP')]",
             "type": "Microsoft.Network/publicIPAddresses",
@@ -289,34 +266,7 @@
                     }
                 ]
             }
-        },
-        {
-            "apiVersion": "[variables('apiVersionNRP')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName2')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
-            ],
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('vNet2addressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('vNet2subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('vNet2subnetPrefix')]",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
+        },        
         {            
             "apiVersion": "[variables('apiVersionNRP')]",
             "type": "Microsoft.Network/virtualNetworks",
@@ -404,34 +354,7 @@
                     }
                 ]
             }
-        },
-        {
-            "apiVersion": "[variables('apiVersionNRP')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(variables('networkInterfacePrefix'), '2')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName2'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName2'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfigpublicandprivatedynamic",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName2')),'/subnets/',variables('vNet2subnetName'))]"
-                            },                       
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName2'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
+        },        
         {
             "apiVersion": "[variables('apiVersionNRP')]",
             "type": "Microsoft.Network/networkInterfaces",
@@ -454,31 +377,7 @@
                     }
                 ]
             }
-        },
-        {
-            "apiVersion": "[variables('apiVersionNRP')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(variables('networkInterfacePrefix'), '4')]",
-            "location": "[variables('location')]",
-            "dependsOn": [                
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName2'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfigprivatestatic",
-                        "properties": {
-                            "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[variables('NIC4vNet2PrivateIP')]",
-                            "subnet": {
-                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName2')),'/subnets/',variables('vNet2subnetName'))]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
+        },        
         {
             "apiVersion": "[variables('apiVersionNRP')]",
             "type": "Microsoft.Network/networkInterfaces",
@@ -811,65 +710,6 @@
                                 }
                             }
                         ]
-                    }
-                }
-            }
-        },
-        {
-            "apiVersion": "[variables('apiVersionCRP')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(variables('VMNamePrefix'), '3')]",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName5'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '2'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', concat(variables('networkInterfacePrefix'), '4'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[variables('vmSizeD2')]"
-                },
-                "osProfile": {
-                    "computerName": "[concat(variables('VMNamePrefix'), '3')]",
-                    "adminUsername": "[parameters('VMAdminUserName')]",
-                    "adminPassword": "[parameters('VMAdminUserPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[parameters('LinuxImagePublisher')]",
-                        "offer": "[parameters('LinuxImageOffer')]",
-                        "sku": "[parameters('LinuxImageSku')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName5')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName5'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },                
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "properties": {
-                                "primary": true
-                            },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '2'))]"                           
-                        },
-                        {
-                            "properties": {
-                                "primary": false
-                            },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfacePrefix'), '4'))]"
-                        }
-                    ]
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": "true",
-                        "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName5')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob]"
                     }
                 }
             }

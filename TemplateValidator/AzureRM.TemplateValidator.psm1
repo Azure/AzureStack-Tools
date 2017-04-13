@@ -219,6 +219,15 @@ table td:nth-child(3){white-space:pre-line}
 		$reportHtml = $title + $validationSummary + $reportXml.OuterXml|Out-String
 		ConvertTo-Html  $postContent -head $head -Body $reportHtml | out-File $Report
 	}
+	$reportFilePath = Join-Path $PSScriptRoot $Report
+	Write-Output "Validation Summary:
+	`Passed: $passedCount
+	`NotSupported: $notSupportedCount
+	`Exception: $exceptionCount
+	`Warning: $warningCount
+	`Recommend: $recommendCount
+	`Total Templates: $totalCount"
+	Write-Output "Report available at - $reportFilePath"
 }
 
 function Get-NestedTemplates
@@ -835,30 +844,32 @@ function ValidateResource
 							}
 							else
 							{
-								$supportedVersions = @()
-								foreach ($ver in $supportedType.versions)
-								{
-									$supportedVersions +=[version]$ver 
-								}
+								$supportedVersions = $supportedType.versions
 								if ($templateextVersion -notin $supportedVersions)
 								{
-									if ($templateextVersion.Split(".").Count -eq 2) {$templateextVersion = $templateextVersion + ".0.0" }
-									$v = [version]$templateextVersion
-									if ($v -notin $supportedVersions)
+									if ($templateextVersion.Split(".").Count -eq 2) 
 									{
-										$autoupgradeSupported = $supportedVersions| Where-Object { ($_.Major -eq $v.Major) -and ($_.Minor -gt $v.Minor) }
+										$templateextVersion = $templateextVersion + ".0.0" 
+									}
+									elseif ($templateextVersion.Split(".").Count -eq 3) 
+									{
+										$templateextVersion = $templateextVersion + ".0" 
+									}
+									if ($templateextVersion -notin $supportedVersions)
+									{
+										$autoupgradeSupported = $supportedVersions | Where-Object { (([version]$_).Major -eq ([version]$templateextVersion).Major) -and (([version]$_).Minor -ge ([version]$templateextVersion).Minor) }
 										if ($autoupgradeSupported)
 										{
 											if ((-not $resource.properties.autoupgrademinorversion) -or ($resource.properties.autoupgrademinorversion -eq $false))
 											{
-												$msg = "Warning: Exact Match for VMExtension version: $templateextPublisher\$templateextType\$templateextVersion not found in $supportedVersions. It is recommended to set autoupgrademinorversion property to true"
+												$msg = "Warning: Exact Match for VMExtension version ($templateextPublisher\$templateextType\$templateextVersion) not found in supported versions ($supportedVersions). It is recommended to set autoupgrademinorversion property to true."
 												Write-warning $msg
 												$resourceOutput += $msg
 											}
 										}
 										else
 										{
-											$msg = "Warning: VMExtension version: $templateextPublisher\$templateextType\$templateextVersion not found in $supportedVersions."
+											$msg = "Warning: VMExtension version ($templateextPublisher\$templateextType\$templateextVersion) not found in supported versions ($supportedVersions)."
 											Write-Warning $msg
 											$resourceOutput += $msg
 										}
