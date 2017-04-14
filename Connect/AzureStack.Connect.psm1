@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, VpnClient, AzureStack
+#requires -Modules AzureRM.Profile, VpnClient, AzureRM.AzureStackAdmin
 
 <#
     .SYNOPSIS
