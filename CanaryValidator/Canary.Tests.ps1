@@ -302,11 +302,11 @@ while ($runCount -le $NumberOfIterations)
 
     if ($TenantAdminCredentials)
     {
-        $subscriptionRGName                 = "ascansubscrrg" + [Random]::new().Next(1,999)
-        $tenantPlanName                     = "ascantenantplan" + [Random]::new().Next(1,999)        
-        $tenantOfferName                    = "ascantenantoffer" + [Random]::new().Next(1,999)
-        $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
-        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription" + [Random]::new().Next(1,999) 
+        $subscriptionRGName                 = $CanaryUtilitiesRG + "subscrrg" + [Random]::new().Next(1,999)
+        $tenantPlanName                     = $CanaryUtilitiesRG + "tenantplan" + [Random]::new().Next(1,999)        
+        $tenantOfferName                    = $CanaryUtilitiesRG + "tenantoffer" + [Random]::new().Next(1,999)
+        $tenantSubscriptionName             = $CanaryUtilitiesRG + "tenantsubscription" + [Random]::new().Next(1,999)            
+        $canaryDefaultTenantSubscription    = $CanaryUtilitiesRG + "tenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
         if (-not $TenantArmEndpoint)
         {
