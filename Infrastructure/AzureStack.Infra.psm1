@@ -724,7 +724,7 @@ Function Restart-AzSInfraRoleInstance{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='Restart-AzSInfraRoleInstance')]
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='RestartInfraRoleInstance')]
         [string] $EnvironmentName,
 
         [Parameter(ParameterSetName='RestartInfraRoleInstance')]
