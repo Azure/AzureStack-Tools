@@ -61,7 +61,7 @@ Function Get-AzSScaleUnit{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)   
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/ScaleUnits?api-version=2016-05-01"
     $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Cluster.value |select name,location,properties |fl 
+    $Cluster.value |select name,location,properties
    
 }       
 export-modulemember -function Get-AzSScaleUnit
