@@ -82,7 +82,7 @@ InModuleScope $script:ModuleName {
         }
         It 'Set-AzSLocationInformation should not throw' {
 
-            { Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds -Region 'local' -Latitude '12.972442' -Longitude '77.580643'}
+            { Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds -Region 'local' -Latitude '12.972442' -Longitude '77.580643'} |
                 Shrould Not Throw
         }
 
