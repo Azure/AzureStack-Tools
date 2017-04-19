@@ -430,6 +430,7 @@ This command modifies an Azure Stack instance's latitude and longitude location
 
 ```powershell
 $EnvironmentName = "AzureStackAdmin"
+$directoryName = "<<yourDirectoryName>>.onmicrosoft.com"
 $credential = Get-Credential
 $latitude = '12.972442'
 $longitude = '77.580643'
