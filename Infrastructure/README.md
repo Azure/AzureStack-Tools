@@ -422,3 +422,16 @@ Start-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantI
 #Validate if error is resolved (Can take up to 3min)
 Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
 ```
+
+
+### Set Azure Stack's Latitude and Longitude
+
+This command modifies an Azure Stack instance's latitude and longitude location
+
+```powershell
+$credential = Get-Credential
+$latitude = '12.972442'
+$longitude = '77.580643'
+$regionName = 'local'
+Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $credential -Region $regionName -Latitude $latitude -Longitude $longitude
+```
