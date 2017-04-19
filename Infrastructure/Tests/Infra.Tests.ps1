@@ -37,7 +37,6 @@ InModuleScope $script:ModuleName {
     $EnvironmentName = $global:EnvironmentName
 
 
-
     Describe 'Infra - Functional Tests' {
         It 'Get-AzSAlert should not throw' {
             { Get-AzSAlert -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
@@ -82,8 +81,13 @@ InModuleScope $script:ModuleName {
         }
         It 'Set-AzSLocationInformation should not throw' {
 
+<<<<<<< HEAD
             { Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds -Region 'local' -Latitude '12.972442' -Longitude '77.580643'} |
                 Shrould Not Throw
+=======
+            { Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds -Region 'local' -Latitude '12.972442' -Longitude '77.580643'}
+                Should Not Throw
+>>>>>>> c5c074a1429717424e1a58e6618a366177309fb8
         }
 
 
