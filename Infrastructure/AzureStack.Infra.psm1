@@ -799,6 +799,39 @@ $IPPoolBodyJson =$IPPoolBody |ConvertTo-Json
 }
 export-modulemember -function Add-AzSIPPool
 
+Function Set-AzSLocationInformation {
+    Param(    
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String] $TenantId,
+
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.PSCredential] $AzureStackCredentials,
+
+        [Parameter(Mandatory = $true)]
+        [string] $EnvironmentName,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Region = 'local',
+
+        [Parameter(Mandatory = $true)]
+        [string] $Latitude = '47.608013',
+
+        [Parameter(Mandatory = $true)]
+        [string] $Longitude = '-122.335167'
+    )
+    $ArmEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $TenantId -AzureStackCredentials $AzureStackCredentials -EnvironmentName $EnvironmentName)
+    $uri = "{0}/subscriptions/{1}/providers/Microsoft.Subscriptions.Admin/locations/{2}?api-version=2015-11-01" -f $ArmEndpoint, $subscription, $Region
+
+    $obtainedRegion = Invoke-RestMethod -Method GET -Uri $URI `-ContentType 'application/json' -Headers $headers
+    $obtainedRegion.latitude = $Latitude
+    $obtainedRegion.longitude = $Longitude
+
+    Invoke-WebRequest -Uri $URI -Method PUT -Body $(Convertto-Json $obtainedRegion) -ContentType 'application/json' -Headers $headers
+}
+Export-ModuleMember -function Set-AzSLocationInformation
+
 Function GetARMEndpoint{
     param(
         # Azure Stack environment name
