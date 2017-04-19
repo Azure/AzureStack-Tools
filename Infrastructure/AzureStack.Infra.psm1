@@ -61,7 +61,7 @@ Function Get-AzSScaleUnit{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)   
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/ScaleUnits?api-version=2016-05-01"
     $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Cluster.value |select name,location |fl 
+    $Cluster.value |select name,location,properties
    
 }       
 export-modulemember -function Get-AzSScaleUnit
@@ -94,7 +94,7 @@ Function Get-AzSScaleUnitNode{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/scaleunitnodes?api-version=2016-05-01"
     $nodes=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $nodesprop=$nodes.value
-    $nodesprop.name
+    $nodesprop|select name,location,properties
 }
        
 export-modulemember -function Get-AzSScaleUnitNode
@@ -130,7 +130,7 @@ Function Get-AzSStorageCapacity{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/storagesubSystems?api-version=2016-05-01"
     $Storage=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Storageprop=$storage.value
-    $storageprop.properties|select totalcapacityGB|fl
+    $storageprop|select name,location,properties
     
 }
 export-modulemember -function Get-AzSStorageCapacity
@@ -163,8 +163,7 @@ Function Get-AzSInfraRole{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/InfraRoles?api-version=2016-05-01"
     $Roles=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Roleprop=$roles.value
-    $Roleprop.Name|fl 
+    $roles.value
     
 }      
 export-modulemember -function Get-AzSInfraRole
@@ -198,7 +197,7 @@ Function Get-AzSInfraRoleInstance{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraRoleInstances?api-version=2016-05-01"
     $VMs=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $VMprop=$VMs.value
-    $VMprop|ft name 
+    $VMprop|select name,properties 
     
 }       
 export-modulemember -function Get-AzSInfraRoleInstance
@@ -231,7 +230,7 @@ Function Get-AzSStorageShare{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/fileShares?api-version=2016-05-01"
     $Shares=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Shareprop=$Shares.value
-    $Shareprop.properties|select uncPath|fl
+    $Shareprop|select name,location,properties
     
 }
 export-modulemember -function Get-AzSStorageShare
@@ -264,7 +263,7 @@ Function Get-AzSLogicalNetwork{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/logicalNetworks?api-version=2016-05-01"
     $LNetworks=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $LNetworkprop=$LNetworks.value
-    $LNetworkprop|ft name
+    $LNetworkprop|select name,location,properties
     
 }
 export-modulemember -function Get-AzSLogicalNetwork
@@ -297,7 +296,7 @@ Function Get-AzSUpdateSummary{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/regionUpdateStatus?api-version=2016-05-01"
     $USummary=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $USummaryprop=$USummary.value
-    $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state|fl 
+    $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state
     
 }
 export-modulemember -function Get-AzSUpdateSummary
@@ -331,7 +330,7 @@ Function Get-AzSUpdate{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates?api-version=2016-05-01"
     $Updates=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Updateprop=$Updates.value
-    $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink|fl
+    $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink
     
 }
 export-modulemember -function Get-AzSUpdate
@@ -369,7 +368,7 @@ Function Get-AzSUpdateRun{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate/updateRuns?api-version=2016-05-01"
     $UpdateRuns=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Updaterunprop=$UpdateRuns.value
-    $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration|fl 
+    $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration
     
 }
 export-modulemember -function Get-AzSUpdateRun
@@ -491,7 +490,7 @@ Function Get-AzSIPPool{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/IPPools?api-version=2016-05-01"
     $IPPools=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $IPPoolprop=$IPPools.value
-    $IPPoolprop.properties|select startIpAddress,endIpAddress,numberOfIpAddresses,numberOfAllocatedIpAddresses |fl
+    $IPPoolprop.properties|select startIpAddress,endIpAddress,numberOfIpAddresses,numberOfAllocatedIpAddresses
 }
 export-modulemember -function Get-AzSIPPool
 
@@ -525,7 +524,7 @@ Function Get-AzSMaCPool{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/MacAddressPools?api-version=2016-05-01"
     $MACPools=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $MaCPoolsprop=$MaCPools.value
-    $MaCPoolsprop.properties|select startmacAddress,endmacAddress,numberOfmacAddresses,numberOfAllocatedmacAddresses |fl
+    $MaCPoolsprop.properties|select startmacAddress,endmacAddress,numberOfmacAddresses,numberOfAllocatedmacAddresses
 }
 export-modulemember -function Get-AzSMaCPool
 
@@ -559,7 +558,7 @@ Function Get-AzSGatewayPool{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/edgeGatewayPools?api-version=2016-05-01"
     $GatewayPools=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $MGatewaysprop=$GatewayPools.value
-    $MGatewaysprop.properties|select Gatewaytype,numberofgateways,redundantGatewayCount,gatewayCapacityKiloBitsPerSecond,publicIpAddress |fl
+    $MGatewaysprop.properties|select Gatewaytype,numberofgateways,redundantGatewayCount,gatewayCapacityKiloBitsPerSecond,publicIpAddress
 }
 export-modulemember -function Get-AzSGatewayPool
 
@@ -594,7 +593,7 @@ Function Get-AzSSLBMUX{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/SlbMuxInstances?api-version=2016-05-01"
     $SLBMUX=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $SLBMUXprop=$SLBMUX.value
-    $SLBMUXprop.properties|select VirtualServer,ConfigurationState |fl
+    $SLBMUXprop.properties|select VirtualServer,ConfigurationState
 }
 export-modulemember -function Get-AzSSLBMUX
 
@@ -628,7 +627,7 @@ Function Get-AzSGateway{
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/edgegateways?api-version=2016-05-01"
     $Gateways=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Gatewaysprop=$Gateways.value
-    $Gatewaysprop.properties|select state, numberofconnections,totalcapacity,availablecapacity |fl
+    $Gatewaysprop.properties|select state, numberofconnections,totalcapacity,availablecapacity
 }
 export-modulemember -function Get-AzSGateway
 
