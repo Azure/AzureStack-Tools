@@ -429,9 +429,12 @@ Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -Environment
 This command modifies an Azure Stack instance's latitude and longitude location
 
 ```powershell
+$EnvironmentName = "AzureStackAdmin"
 $credential = Get-Credential
 $latitude = '12.972442'
 $longitude = '77.580643'
 $regionName = 'local'
+
+$TenantID = Get-DirectoryTenantID -AADTenantName $directoryName -EnvironmentName AzureStackAdmin
 Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $credential -Region $regionName -Latitude $latitude -Longitude $longitude
 ```
