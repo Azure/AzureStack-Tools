@@ -421,6 +421,7 @@ Start-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantI
 Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
 ```
 
+
 ### Increase Public IP Pool Capacity
 ```powershell
 #Retrieve all Alerts and apply a filter to only show active Alerts
@@ -453,4 +454,21 @@ Get-AzSUpdateRun -AzureStackCredentials $credential -TenantID $TenantID -Environ
 
 #Review Region Update Summary after successful run
 Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+
+
+### Set Azure Stack's Latitude and Longitude
+
+This command modifies an Azure Stack instance's latitude and longitude location
+
+```powershell
+$EnvironmentName = "AzureStackAdmin"
+$directoryName = "<<yourDirectoryName>>.onmicrosoft.com"
+$credential = Get-Credential
+$latitude = '12.972442'
+$longitude = '77.580643'
+$regionName = 'local'
+
+$TenantID = Get-DirectoryTenantID -AADTenantName $directoryName -EnvironmentName AzureStackAdmin
+Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $credential -Region $regionName -Latitude $latitude -Longitude $longitude
+
 ```
