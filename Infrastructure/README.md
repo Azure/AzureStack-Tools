@@ -407,11 +407,9 @@ Demonstrates using multiple commands together for an end to end scenario.
 ### Recover an Infrastructure Role Instance that has an Alert assigned.
 
 ```powershell
-#Declare Credentials
-$credential = Get-Credential
-
 #Retrieve all Alerts and apply a filter to only show active Alerts
 $Active=Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
+$Active
 
 #Stop Infra Role Instance
 Stop-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin" -Name $Active.resourceName
@@ -421,4 +419,38 @@ Start-AzSInfraRoleInstance -AzureStackCredentials $credential -TenantID $TenantI
 
 #Validate if error is resolved (Can take up to 3min)
 Get-AzSAlert -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
+```
+
+### Increase Public IP Pool Capacity
+```powershell
+#Retrieve all Alerts and apply a filter to only show active Alerts
+$Active=Get-AzSAlert -AzureStackCredentials $cred -TenantID $TenantID -EnvironmentName "AzureStackAdmin"|where {$_.state -eq "active"}
+$Active
+
+#Review IP Pool Allocation
+Get-AzSIPPool -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+
+#Add New Public IP Pool
+Add-AzSIPPool -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin" -Name "NewPublicIPPool" -StartIPAddress "192.168.80.0" -EndIPAddress "192.168.80.255" -AddressPrefix "192.168.80.0/24"
+
+#Validate new IP Pool
+Get-AzSIPPool -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+```
+
+### Apply Update to Azure Stack
+```powershell
+#Review Current Region Update Summary
+Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+
+#Check for available and applicable updates
+Get-AzSUpdate -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+
+#Apply Update
+Install-AzSUpdate -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin" -vupdate "2.0.0.0"
+
+#Check Update Run
+Get-AzSUpdateRun -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin" -vupdate "2.0.0.0"
+
+#Review Region Update Summary after successful run
+Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
