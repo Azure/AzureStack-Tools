@@ -35,12 +35,12 @@ The AdminPassword parameter is only used when the ApplyUnnatend parameter is set
 .EXAMPLE 
  
 Prepare the host to boot from cloudbuilder.vhdx. This requires KVM access to the host for configuring the Operating System.
-.\PrepareBootFromVHD.ps1 -CloudBuilderPath c:\CloudBuilder.vhdx -DriverPath c:\VhdDrivers
+.\PrepareBootFromVHD.ps1 -CloudBuilderDiskPath c:\CloudBuilder.vhdx -DriverPath c:\VhdDrivers
  
 .EXAMPLE  
  
 Prepare the host to boot from cloudbuilder.vhdx. The Operating System is automatically configured with an unattend.xml.
-.\PrepareBootFromVHD.ps1 -CloudBuilderPath c:\CloudBuilder.vhdx -ApplyUnattend
+.\PrepareBootFromVHD.ps1 -CloudBuilderDiskPath c:\CloudBuilder.vhdx -ApplyUnattend
   
 .NOTES 
  
