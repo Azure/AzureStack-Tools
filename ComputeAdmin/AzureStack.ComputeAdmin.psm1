@@ -162,9 +162,9 @@ Function Add-VMImage{
     #same for storage
     $storageAccount = Get-AzureRmStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
     if (-not ($storageAccount)) {
-        $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS
+        $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS 
     }
-    Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
+    Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName 
     #same for container
     $container = Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue
     if (-not ($container)) {
@@ -812,7 +812,6 @@ Function Add-VMExtension{
 
         [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
 
         [Parameter(ParameterSetName='VMExtensionFromLocal')]
@@ -898,7 +897,7 @@ Function Add-VMExtension{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
     $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
-    Log-Info $uri
+    Write-Verbose $uri
 
     #building request body JSON
     if($pscmdlet.ParameterSetName -eq "VMExtensionFromLocal") {
@@ -952,10 +951,9 @@ Function Remove-VMExtension{
         [String] $publisher,
 
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
 
-        [String] $type = "CustomScriptExtension",
+        [String] $type,
 
         [Parameter(Mandatory=$true)]
         [ValidateSet('Windows' ,'Linux')]
@@ -983,7 +981,7 @@ Function Remove-VMExtension{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
     $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
-    Log-Info $uri
+    Write-Verbose $uri
 
     try{
         Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
