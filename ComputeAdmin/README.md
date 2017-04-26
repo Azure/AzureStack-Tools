@@ -112,7 +112,7 @@ An example usage is the following:
 
 ```powershell
 $path = "<Path to vm extension zip>"
-Add-VMExtension -publisher "Publisher" -type "Type" -version $version -extensionLocalPath $path -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
+Add-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -extensionLocalPath $path -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
 ```
 
 
