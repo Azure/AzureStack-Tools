@@ -150,7 +150,7 @@ function Get-AzureStackNatServerAddress {
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
-        [string] $natServer = "mas-bgpnat01",
+        [string] $natServer = "azs-bgpnat01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
@@ -229,7 +229,7 @@ function Connect-AzureStackVpn {
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="Certificate Authority computer name in this Azure Stack Instance")]
-        [string] $Remote = "mas-ca01",
+        [string] $Remote = "azs-ca01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
