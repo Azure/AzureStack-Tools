@@ -119,7 +119,7 @@ The command does the following:
 
 ```powershell
 $credential = Get-Credential
-Apply-AzSUpdate -AzureStackCredentials $credential -TenantID $TenantID -vupdate "Update Version" -EnvironmentName "AzureStackAdmin"
+Install-AzSUpdate -AzureStackCredentials $credential -TenantID $TenantID -vupdate "Update Version" -EnvironmentName "AzureStackAdmin"
 ```
 
 Note: The cmdlet requires credentials to apply a specific Update. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
@@ -454,7 +454,7 @@ Get-AzSUpdateRun -AzureStackCredentials $credential -TenantID $TenantID -Environ
 
 #Review Region Update Summary after successful run
 Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
-
+```
 
 ### Set Azure Stack's Latitude and Longitude
 
