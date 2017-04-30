@@ -237,16 +237,16 @@ function Invoke-Usecase
         $parentUsecase = $Name
         if ((Get-PSCallStack)[1].Arguments.Contains($parentUsecase))
         {
-            "      |--" + $Name
+            "  `t"*([math]::Floor((Get-PSCallStack).Count/3)) + "|--" + $Name
         }
         else
         {
 
-            "    " + $Name
+            "`t" + $Name
         }
         if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
         {
-            Invoke-Command -ScriptBlock $UsecaseBlock 
+            Invoke-Command -ScriptBlock $UsecaseBlock -ErrorAction SilentlyContinue
         }
         return
     }
