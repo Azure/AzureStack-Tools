@@ -1,7 +1,9 @@
-$Global:ContinueOnFailure = $false
-$Global:JSONLogFile  = "Run-Canary.JSON"
-$Global:TxtLogFile  = "AzureStackCanaryLog.Log"
-$Global:wttLogFileName= ""
+$Global:ContinueOnFailure       = $false
+$Global:JSONLogFile             = "Run-Canary.JSON"
+$Global:TxtLogFile              = "AzureStackCanaryLog.Log"
+$Global:wttLogFileName          = ""
+$Global:listAvailableUsecases   = $false
+$Global:exclusionList           = @()
 if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 {
     Import-Module -Name "$PSScriptRoot\..\WTTLog.ps1" -Force
@@ -161,7 +163,11 @@ function Start-Scenario
         [ValidateNotNullOrEmpty()]
         [string]$LogFilename,
         [parameter(Mandatory=$false)]
-        [bool] $ContinueOnFailure = $false
+        [bool]$ContinueOnFailure = $false,
+        [parameter(Mandatory=$false)]
+        [bool]$ListAvailable = $false,
+        [parameter(Mandatory=$false)]
+        [string[]]$ExclusionList
     )
 
     if ($LogFileName)
@@ -181,14 +187,25 @@ function Start-Scenario
     {
         OpenWTTLogger $Global:wttLogFileName    
     }
-    
-    New-Item -Path $Global:JSONLogFile -Type File -Force
-    New-Item -Path $Global:TxtLogFile -Type File -Force
-    $jsonReport = @{
-    "Scenario" = ($Name + "-" + $Type)
-    "UseCases" = @()
-    }    
-    $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    if ($ListAvailable)
+    {
+        $Global:listAvailableUsecases = $true
+    }
+    if ($ExclusionList)
+    {
+        $Global:exclusionList = $ExclusionList
+    }
+    if (-not $ListAvailable)
+    {
+        New-Item -Path $Global:JSONLogFile -Type File -Force
+        New-Item -Path $Global:TxtLogFile -Type File -Force
+        $jsonReport = @{
+        "Scenario" = ($Name + "-" + $Type)
+        "UseCases" = @()
+        }    
+        $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    }
+
     $Global:ContinueOnFailure = $ContinueOnFailure
 }
 
@@ -214,6 +231,31 @@ function Invoke-Usecase
         [ValidateNotNullOrEmpty()]
         [ScriptBlock]$UsecaseBlock    
     )
+
+    if ($Global:listAvailableUsecases)
+    {
+        $parentUsecase = $Name
+        if ((Get-PSCallStack)[1].Arguments.Contains($parentUsecase))
+        {
+            "      |--" + $Name
+        }
+        else
+        {
+
+            "    " + $Name
+        }
+        if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
+        {
+            Invoke-Command -ScriptBlock $UsecaseBlock 
+        }
+        return
+    }
+
+    if (($Global:exclusionList).Contains($Name))
+    {
+        Log-Info ("Skipping Usecase: $Name")
+        return
+    }
     Log-Info ("###### [START] Usecase: $Name ######`n") 
     if ($Global:wttLogFileName)
     {
