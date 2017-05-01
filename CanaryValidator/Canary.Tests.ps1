@@ -95,12 +95,20 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log"   
+    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log",
+    [parameter(HelpMessage="List of usecases to be excluded from execution")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
+    [string[]]$ExclusionList = @(),
+    [parameter(HelpMessage="Lists the available usecases in Canary")]
+    [Parameter(ParameterSetName="listavl", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]  
+    [switch]$ListAvailable     
 )
 
 #Requires -Modules AzureRM
 #Requires -RunAsAdministrator
-Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
+Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force -DisableNameChecking
 Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
@@ -134,15 +142,15 @@ while ($runCount -le $NumberOfIterations)
     #
     # Start Canary 
     #  
+    if($ListAvailable){$listAvl = $true} else{$listAvl = $false}
     $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
     $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
-
-    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
+    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure -ListAvailable $listAvl -ExclusionList $ExclusionList
 
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
     $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
 
-    if(-not $EnvironmentDomainFQDN)
+    if((-not $EnvironmentDomainFQDN) -and (-not $listAvl))
     {
         $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
         $EnvironmentDomainFQDN = $endptres.portalEndpoint
@@ -251,12 +259,12 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'ListUpdatesResourceProviderInfo' -Description "List URP information like summary of updates available, update to be applied, last update applied etc." -UsecaseBlock `
     {        
-	    Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
         {
             Get-AzSUpdateSummary -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }
 
-	    Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
         {
             Get-AzSUpdate -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }         
@@ -893,7 +901,10 @@ while ($runCount -le $NumberOfIterations)
 
     End-Scenario
     $runCount += 1
-    Get-CanaryResult
+    if (-not $ListAvailable)
+    {
+        Get-CanaryResult
+    }    
 }
 
 if ($NumberOfIterations -gt 1)
