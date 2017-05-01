@@ -867,7 +867,7 @@ while ($runCount -le $NumberOfIterations)
             }
         }
 
-        if ($TenantAdminCredentials)
+        if (($TenantAdminCredentials) -or ($listAvl))
         {
             Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
             {
