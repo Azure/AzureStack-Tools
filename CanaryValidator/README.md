@@ -105,6 +105,7 @@ Sample output:
 # Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
 # Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+# A new paramter called ExclusionList has been added which is a string array. Pass in the list of usecases you don't want to execute to this parameter.
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -ExclusionList "ListFabricResourceProviderInfo","ListUpdateResourceProviderInfo"
 ```
