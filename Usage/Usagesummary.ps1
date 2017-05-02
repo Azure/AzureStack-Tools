@@ -61,8 +61,8 @@ function Export-AzureStackUsage {
         'E518E809-E369-4A45-9274-2017B29FFF25' = 'QueueDataTransIn'
         'DD0A10BA-A5D6-4CB6-88C0-7D585CEF9FC2' = 'QueueDataTransOut'
         'FAB6EB84-500B-4A09-A8CA-7358F8BBAEA5' = 'Base VM Size Hours'
+        '9CD92D4C-BAFD-4492-B278-BEDC2DE8232A' = 'Windows VM Size Hours'
         '6DAB500F-A4FD-49C4-956D-229BB9C8C793' = 'VM size hours'
-        '9cd92d4c-bafd-4492-b278-bedc2de8232a' = 'Windows VM Size Hours'
     }
 
     #Output Files
