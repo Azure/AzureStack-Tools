@@ -17,6 +17,8 @@ Function Get-AzSAlert{
         [ValidateNotNullorEmpty()]
         [String] $tenantId,
         
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
         
         [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name")]
