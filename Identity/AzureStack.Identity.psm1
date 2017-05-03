@@ -48,7 +48,7 @@ function New-ADGraphServicePrincipal {
         # Adfs Machine name
         [Parameter(Mandatory = $true , Position = 1)]
         [string]
-        $AdfsMachineName = "mas-adfs01.azurestack.local",
+        $AdfsMachineName = "azs-adfs01.azurestack.local",
 
         # Domain Administrator Credential to create Service Principal
         [Parameter(Mandatory = $true,

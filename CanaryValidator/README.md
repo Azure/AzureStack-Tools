@@ -40,6 +40,76 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds
 ```
+
+# To list the usecases in Canary
+```powershell
+# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
+# Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+.\Canary.Tests.ps1 -ListAvailable
+Sample output:
+    PS C:\AzureStack-Tools\CanaryValidator> .\Canary.Tests.ps1 -ListAvailable
+        CreateAdminAzureStackEnv
+        LoginToAzureStackEnvAsSvcAdmin
+        SelectDefaultProviderSubscription
+        ListFabricResourceProviderInfo
+        |--GetAzureStackInfraRole
+        |--GetAzureStackInfraRoleInstance
+        |--GetAzureStackLogicalNetwork
+        |--GetAzureStackStorageCapacity
+        |--GetAzureStackStorageShare
+        |--GetAzureStackScaleUnit
+        |--GetAzureStackScaleUnitNode
+        |--GetAzureStackIPPool
+        |--GetAzureStackMacPool
+        |--GetAzureStackGatewayPool
+        |--GetAzureStackSLBMux
+        |--GetAzureStackGateway
+        ListHealthResourceProviderAlerts
+        |--GetAzureStackAlert
+        ListUpdatesResourceProviderInfo
+        |--GetAzureStackUpdateSummary
+        |--GetAzureStackUpdateToApply
+        CreateResourceGroupForUtilities
+        CreateStorageAccountForUtilities
+        CreateStorageContainerForUtilities
+        CreateDSCScriptResourceUtility
+        CreateCustomScriptResourceUtility
+        CreateDataDiskForVM
+        UploadUtilitiesToBlobStorage
+        CreateKeyVaultStoreForCertSecret
+        CreateResourceGroupForVMs
+        DeployARMTemplate
+        QueryTheVMsDeployed
+        CheckVMCommunicationPreVMReboot
+        AddDatadiskToVMWithPrivateIP
+        |--StopDeallocateVMWithPrivateIPBeforeAddingDatadisk
+        |--AddTheDataDiskToVMWithPrivateIP
+        |--StartVMWithPrivateIPAfterAddingDatadisk
+        ApplyDataDiskCheckCustomScriptExtensionToVMWithPrivateIP
+        |--CheckForExistingCustomScriptExtensionOnVMWithPrivateIP
+        |--ApplyCustomScriptExtensionToVMWithPrivateIP
+        RestartVMWithPublicIP
+        StopDeallocateVMWithPrivateIP
+        StartVMWithPrivateIP
+        CheckVMCommunicationPostVMReboot
+        CheckExistenceOfScreenShotForVMWithPrivateIP
+        EnumerateAllResources
+        DeleteVMWithPrivateIP
+        DeleteVMResourceGroup
+        DeleteUtilitiesResourceGroup
+```
+
+# To exclude certain usecases from getting executed
+```powershell
+# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
+# Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+# A new paramter called ExclusionList has been added which is a string array. Pass in the list of usecases you don't want to execute to this parameter.
+$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
+.\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -ExclusionList "ListFabricResourceProviderInfo","ListUpdateResourceProviderInfo"
+```
+
 # Reading the results & logs
 Canary generates log files in the TMP directory ($env:TMP). The logs can be found under the directory "CanaryLogs[DATETIME]". There are two types of logs generated, a text log and a JSON log. JSON log provides a quick and easy view of all the usecases and their corresponding results. Text log provides a more detailed output of each usecase execution, its output and results.
 
