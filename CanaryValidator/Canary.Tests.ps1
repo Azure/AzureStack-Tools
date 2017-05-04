@@ -99,7 +99,7 @@ param (
     [parameter(HelpMessage="List of usecases to be excluded from execution")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
-    [string[]]$ExclusionList = @(),
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "GetAzureStackScaleUnitNode"),
     [parameter(HelpMessage="Lists the available usecases in Canary")]
     [Parameter(ParameterSetName="listavl", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]  
