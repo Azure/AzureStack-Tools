@@ -140,8 +140,9 @@ VM Scale Set allows deployment of multi-VM collections. To add a gallery item wi
 3. Add VM Scale Set gallery item as follows
 
 ```powershell
-$Tenant = "<AAD Tenant Id used to connect to AzureStack>"
+$TenantId = "<AAD Tenant Id used to connect to AzureStack>"
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
+$Location = "<The location name of your AzureStack Environment>"
 
 Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm 
 
@@ -149,11 +150,11 @@ $Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin u
 $User = "<your AzureStack admin user name>"
 $Creds =  New-Object System.Management.Automation.PSCredential $User, $Password
 
-Login-AzureRmAccount -EnvironmentName AzureStackAdmin -Credential $Creds -TenantId $Tenant
+Login-AzureRmAccount -EnvironmentName AzureStackAdmin -Credential $Creds -TenantId $TenantId
 
 Select-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
 
-Add-AzureStackVMSSGalleryItem
+Add-AzureStackVMSSGalleryItem -Location $Location
 ```
 To remove VM Scale Set gallery item run the following command:
 
