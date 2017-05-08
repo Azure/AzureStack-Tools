@@ -12,7 +12,7 @@ if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 
 $CurrentUseCase = @{}
 [System.Collections.Stack] $UseCaseStack = New-Object System.Collections.Stack
-filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
+filter timestamp {"$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ffff") $_"}
 
 
 function Log-Info
@@ -51,14 +51,11 @@ function Log-JSONReport
         [string] $Message
     )
     if ($Message)
-    {
-        if ($Message.Contains(": ["))
-        {
-            $time = $Message.Substring(0, $Message.IndexOf(": ["))
-        }    
+    {    
         if ($Message.Contains("[START]"))
         {
-            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim().Replace("######", "").Trim()
+            $time = $Message.Substring(0, $Message.IndexOf("[")).Trim()
+            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim()
             if ($UseCaseStack.Count)
             {
                 $nestedUseCase = @{
@@ -81,14 +78,19 @@ function Log-JSONReport
         }
         elseif ($Message.Contains("[END]"))
         {
+            $time = $Message.Substring(0, $Message.IndexOf("[")).Trim()
             $result = ""            
             if ($UseCaseStack.Peek().UseCase -and ($UseCaseStack.Peek().UseCase | Where-Object {$_.Result -eq "FAIL"}))
             {
                 $result = "FAIL" 
             }
-            else
+            elseif ($Message.Contains("[RESULT = PASS]"))
             {
-                $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
+                $result = "PASS"
+            }
+            elseif ($Message.Contains("[RESULT = FAIL]"))
+            {
+                $result = "FAIL"
             }
             $UseCaseStack.Peek().Add("Result", $result)
             $UseCaseStack.Peek().Add("EndTime", $time)            
@@ -256,7 +258,7 @@ function Invoke-Usecase
         Log-Info ("Skipping Usecase: $Name")
         return
     }
-    Log-Info ("###### [START] Usecase: $Name ######`n") 
+    Log-Info ("[START] Usecase: $Name`n") 
     if ($Global:wttLogFileName)
     {
         StartTest "CanaryGate:$Name"
@@ -278,7 +280,7 @@ function Invoke-Usecase
         {
             EndTest "CanaryGate:$Name" $true
         }
-        Log-Info ("###### [END] Usecase: $Name ###### [RESULT = PASS] ######`n")
+        Log-Info ("[END] [RESULT = PASS] Usecase: $Name`n")
         return $result | Out-Null
     }
     catch [System.Exception]
@@ -287,7 +289,7 @@ function Invoke-Usecase
         Log-Info ("###### <FAULTING SCRIPTBLOCK> ######")
         Log-Info ("$UsecaseBlock")
         Log-Info ("###### </FAULTING SCRIPTBLOCK> ######")
-        Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
+        Log-Error ("[END] [RESULT = FAIL] Usecase: $Name`n")
         if ($Global:wttLogFileName)
         {
             EndTest "CanaryGate:$Name" $false
