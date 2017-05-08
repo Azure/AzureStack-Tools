@@ -34,7 +34,7 @@ The commands below need to access the Azure Stack PoC host computer and Azure St
 ```powershell
 # Add Azure Stack PoC host to the trusted hosts on your client computer
 Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
+Set-Item wsman:\localhost\Client\TrustedHosts -Value azs-ca01.azurestack.local -Concatenate
 ```  
 
 For the VPN connection, use the admin password provided at the time of the Azure Stack deployment.

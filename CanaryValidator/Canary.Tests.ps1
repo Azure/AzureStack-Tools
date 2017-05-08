@@ -61,12 +61,12 @@ param (
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
+    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,99),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "canvr" + [Random]::new().Next(1,999),
+    [string]$CanaryVMRG = "cnvr" + [Random]::new().Next(1,99),
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -95,32 +95,44 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log"   
+    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log",
+    [parameter(HelpMessage="List of usecases to be excluded from execution")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "GetAzureStackScaleUnitNode"),
+    [parameter(HelpMessage="Lists the available usecases in Canary")]
+    [Parameter(ParameterSetName="listavl", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]  
+    [switch]$ListAvailable     
 )
 
 #requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
 #Requires -RunAsAdministrator
-Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
+Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force -DisableNameChecking
 Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
-
-$storageAccName         = $CanaryUtilitiesRG + "sa"
-$storageCtrName         = $CanaryUtilitiesRG + "sc"
-$keyvaultName           = $CanaryUtilitiesRG + "kv"
-$keyvaultCertName       = "ASCanaryVMCertificate"
-$kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
-$VMAdminUserName        = "CanaryAdmin" 
-$VMAdminUserPass        = "CanaryAdmin@123"
-$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
-$linuxImagePublisher    = "Canonical"
-$linuxImageOffer        = "UbuntuServer"
-$linuxImageVersion      = "1.0.0"
 
 $runCount = 1
 $tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
+    if ($NumberOfIterations -gt 1)
+    {
+        $CanaryUtilitiesRG      = $CanaryUtilitiesRG + $runCount
+        $CanaryVMRG             = $CanaryVMRG + $runCount
+    }
+    $storageAccName         = $CanaryUtilitiesRG + "sa"
+    $storageCtrName         = $CanaryUtilitiesRG + "sc"
+    $keyvaultName           = $CanaryUtilitiesRG + "kv"
+    $keyvaultCertName       = "ASCanaryVMCertificate"
+    $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
+    $VMAdminUserName        = "CanaryAdmin" 
+    $VMAdminUserPass        = "CanaryAdmin@123"
+    $canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
+    $linuxImagePublisher    = "Canonical"
+    $linuxImageOffer        = "UbuntuServer"
+    $linuxImageVersion      = "1.0.0"
     if (Test-Path -Path $canaryUtilPath)
     {
         Remove-Item -Path $canaryUtilPath -Force -Recurse 
@@ -130,15 +142,15 @@ while ($runCount -le $NumberOfIterations)
     #
     # Start Canary 
     #  
+    if($ListAvailable){$listAvl = $true} else{$listAvl = $false}
     $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
     $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
-
-    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
+    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure -ListAvailable $listAvl -ExclusionList $ExclusionList
 
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
     $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
 
-    if(-not $EnvironmentDomainFQDN)
+    if((-not $EnvironmentDomainFQDN) -and (-not $listAvl))
     {
         $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
         $EnvironmentDomainFQDN = $endptres.portalEndpoint
@@ -173,6 +185,90 @@ while ($runCount -le $NumberOfIterations)
             $defaultSubscription | Select-AzureRmSubscription
         }
     } 
+    
+    Invoke-Usecase -Name 'ListFabricResourceProviderInfo' -Description "List FabricResourceProvider(FRP) information like storage shares, capacity, logical networks etc." -UsecaseBlock `
+    {
+        Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
+        {
+	        Get-AzSInfraRole -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackInfraRoleInstance' -Description "List all infrastructure role instances" -UsecaseBlock `
+        {
+	        Get-AzSInfraRoleInstance -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackLogicalNetwork' -Description "List all logical networks" -UsecaseBlock `
+        {
+	        Get-AzSLogicalNetwork -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackStorageCapacity' -Description "List storage capacity" -UsecaseBlock `
+        {
+	        Get-AzSStorageCapacity -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackStorageShare' -Description "List all storage file shares" -UsecaseBlock `
+        {
+	        Get-AzSStorageShare -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
+        {
+	        Get-AzSScaleUnit -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
+        {
+	        Get-AzSScaleUnitNode -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
+        {
+	        Get-AzSIPPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackMacPool' -Description "List all MAC address pools " -UsecaseBlock `
+        {
+	        Get-AzSMacPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackGatewayPool' -Description "List all gateway pools" -UsecaseBlock `
+        {
+	        Get-AzSGatewayPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackSLBMux' -Description "List all SLB MUX instances" -UsecaseBlock `
+        {
+	        Get-AzSSLBMUX -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackGateway' -Description "List all gateway" -UsecaseBlock `
+        {
+	        Get-AzSGateway -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }            
+    }
+   
+    Invoke-Usecase -Name 'ListHealthResourceProviderAlerts' -Description "List all HealthResourceProvider(HRP) alerts " -UsecaseBlock `
+    {     
+        Invoke-Usecase -Name 'GetAzureStackAlert' -Description "List all alerts" -UsecaseBlock `
+        {
+            Get-AzSAlert -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+    }
+
+    Invoke-Usecase -Name 'ListUpdatesResourceProviderInfo' -Description "List URP information like summary of updates available, update to be applied, last update applied etc." -UsecaseBlock `
+    {        
+        Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
+        {
+            Get-AzSUpdateSummary -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
+        {
+            Get-AzSUpdate -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+        }         
+    }
        
     if ($WindowsISOPath)
     {
@@ -180,7 +276,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
             }
         }
     }
@@ -200,7 +296,7 @@ while ($runCount -le $NumberOfIterations)
                     }
                     New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                     $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
                     Remove-Item $CanaryCustomImageFolder -Force -Recurse
                 }    
             }
@@ -214,11 +310,11 @@ while ($runCount -le $NumberOfIterations)
 
     if ($TenantAdminCredentials)
     {
-        $subscriptionRGName                 = "ascansubscrrg" + [Random]::new().Next(1,999)
-        $tenantPlanName                     = "ascantenantplan" + [Random]::new().Next(1,999)        
-        $tenantOfferName                    = "ascantenantoffer" + [Random]::new().Next(1,999)
-        $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
-        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription" + [Random]::new().Next(1,999) 
+        $subscriptionRGName                 = $CanaryUtilitiesRG + "subscrrg" + [Random]::new().Next(1,999)
+        $tenantPlanName                     = $CanaryUtilitiesRG + "tenantplan" + [Random]::new().Next(1,999)        
+        $tenantOfferName                    = $CanaryUtilitiesRG + "tenantoffer" + [Random]::new().Next(1,999)
+        $tenantSubscriptionName             = $CanaryUtilitiesRG + "tenantsubscription" + [Random]::new().Next(1,999)            
+        $canaryDefaultTenantSubscription    = $CanaryUtilitiesRG + "tenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
         if (-not $TenantArmEndpoint)
         {
@@ -771,7 +867,7 @@ while ($runCount -le $NumberOfIterations)
             }
         }
 
-        if ($TenantAdminCredentials)
+        if (($TenantAdminCredentials) -or ($listAvl))
         {
             Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
             {
@@ -805,7 +901,10 @@ while ($runCount -le $NumberOfIterations)
 
     End-Scenario
     $runCount += 1
-    Get-CanaryResult
+    if (-not $ListAvailable)
+    {
+        Get-CanaryResult
+    }    
 }
 
 if ($NumberOfIterations -gt 1)

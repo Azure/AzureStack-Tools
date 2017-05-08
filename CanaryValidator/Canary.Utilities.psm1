@@ -1,7 +1,9 @@
-$Global:ContinueOnFailure = $false
-$Global:JSONLogFile  = "Run-Canary.JSON"
-$Global:TxtLogFile  = "AzureStackCanaryLog.Log"
-$Global:wttLogFileName= ""
+$Global:ContinueOnFailure       = $false
+$Global:JSONLogFile             = "Run-Canary.JSON"
+$Global:TxtLogFile              = "AzureStackCanaryLog.Log"
+$Global:wttLogFileName          = ""
+$Global:listAvailableUsecases   = $false
+$Global:exclusionList           = @()
 if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 {
     Import-Module -Name "$PSScriptRoot\..\WTTLog.ps1" -Force
@@ -10,7 +12,7 @@ if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 
 $CurrentUseCase = @{}
 [System.Collections.Stack] $UseCaseStack = New-Object System.Collections.Stack
-filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
+filter timestamp {"$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ffff") $_"}
 
 
 function Log-Info
@@ -49,14 +51,11 @@ function Log-JSONReport
         [string] $Message
     )
     if ($Message)
-    {
-        if ($Message.Contains(": ["))
-        {
-            $time = $Message.Substring(0, $Message.IndexOf(": ["))
-        }    
+    {    
         if ($Message.Contains("[START]"))
         {
-            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim().Replace("######", "").Trim()
+            $time = $Message.Substring(0, $Message.IndexOf("[")).Trim()
+            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim()
             if ($UseCaseStack.Count)
             {
                 $nestedUseCase = @{
@@ -79,14 +78,19 @@ function Log-JSONReport
         }
         elseif ($Message.Contains("[END]"))
         {
+            $time = $Message.Substring(0, $Message.IndexOf("[")).Trim()
             $result = ""            
             if ($UseCaseStack.Peek().UseCase -and ($UseCaseStack.Peek().UseCase | Where-Object {$_.Result -eq "FAIL"}))
             {
                 $result = "FAIL" 
             }
-            else
+            elseif ($Message.Contains("[RESULT = PASS]"))
             {
-                $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
+                $result = "PASS"
+            }
+            elseif ($Message.Contains("[RESULT = FAIL]"))
+            {
+                $result = "FAIL"
             }
             $UseCaseStack.Peek().Add("Result", $result)
             $UseCaseStack.Peek().Add("EndTime", $time)            
@@ -161,7 +165,11 @@ function Start-Scenario
         [ValidateNotNullOrEmpty()]
         [string]$LogFilename,
         [parameter(Mandatory=$false)]
-        [bool] $ContinueOnFailure = $false
+        [bool]$ContinueOnFailure = $false,
+        [parameter(Mandatory=$false)]
+        [bool]$ListAvailable = $false,
+        [parameter(Mandatory=$false)]
+        [string[]]$ExclusionList
     )
 
     if ($LogFileName)
@@ -181,14 +189,25 @@ function Start-Scenario
     {
         OpenWTTLogger $Global:wttLogFileName    
     }
-    
-    New-Item -Path $Global:JSONLogFile -Type File -Force
-    New-Item -Path $Global:TxtLogFile -Type File -Force
-    $jsonReport = @{
-    "Scenario" = ($Name + "-" + $Type)
-    "UseCases" = @()
-    }    
-    $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    if ($ListAvailable)
+    {
+        $Global:listAvailableUsecases = $true
+    }
+    if ($ExclusionList)
+    {
+        $Global:exclusionList = $ExclusionList
+    }
+    if (-not $ListAvailable)
+    {
+        New-Item -Path $Global:JSONLogFile -Type File -Force
+        New-Item -Path $Global:TxtLogFile -Type File -Force
+        $jsonReport = @{
+        "Scenario" = ($Name + "-" + $Type)
+        "UseCases" = @()
+        }    
+        $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    }
+
     $Global:ContinueOnFailure = $ContinueOnFailure
 }
 
@@ -214,7 +233,32 @@ function Invoke-Usecase
         [ValidateNotNullOrEmpty()]
         [ScriptBlock]$UsecaseBlock    
     )
-    Log-Info ("###### [START] Usecase: $Name ######`n") 
+
+    if ($Global:listAvailableUsecases)
+    {
+        $parentUsecase = $Name
+        if ((Get-PSCallStack)[1].Arguments.Contains($parentUsecase))
+        {
+            "  `t"*([math]::Floor((Get-PSCallStack).Count/3)) + "|--" + $Name
+        }
+        else
+        {
+
+            "`t" + $Name
+        }
+        if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
+        {
+            Invoke-Command -ScriptBlock $UsecaseBlock -ErrorAction SilentlyContinue
+        }
+        return
+    }
+
+    if (($Global:exclusionList).Contains($Name))
+    {
+        Log-Info ("Skipping Usecase: $Name")
+        return
+    }
+    Log-Info ("[START] Usecase: $Name`n") 
     if ($Global:wttLogFileName)
     {
         StartTest "CanaryGate:$Name"
@@ -236,7 +280,7 @@ function Invoke-Usecase
         {
             EndTest "CanaryGate:$Name" $true
         }
-        Log-Info ("###### [END] Usecase: $Name ###### [RESULT = PASS] ######`n")
+        Log-Info ("[END] [RESULT = PASS] Usecase: $Name`n")
         return $result | Out-Null
     }
     catch [System.Exception]
@@ -245,7 +289,7 @@ function Invoke-Usecase
         Log-Info ("###### <FAULTING SCRIPTBLOCK> ######")
         Log-Info ("$UsecaseBlock")
         Log-Info ("###### </FAULTING SCRIPTBLOCK> ######")
-        Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
+        Log-Error ("[END] [RESULT = FAIL] Usecase: $Name`n")
         if ($Global:wttLogFileName)
         {
             EndTest "CanaryGate:$Name" $false

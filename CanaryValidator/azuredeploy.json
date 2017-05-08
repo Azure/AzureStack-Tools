@@ -764,7 +764,7 @@
                     "storageProfile": {
                         "osDisk": {
                             "vhdContainers": [
-                                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName4')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName4'),'/',variables('OSDiskName'),'.vhd')]"
+                                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName4')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName4'),'/',variables('OSDiskName'),'vhd')]"
                             ],
                             "name": "osdisk",
                             "caching": "ReadOnly",
