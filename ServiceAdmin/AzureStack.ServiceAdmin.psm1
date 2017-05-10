@@ -21,7 +21,7 @@ function New-AzSTenantOfferAndQuotas
         [parameter(Mandatory=$true,HelpMessage="The name of the AzureStack environment")]
         [string] $EnvironmentName,
         [parameter(Mandatory=$true,HelpMessage="Azure Stack service administrator credential")]
-        [pscredential] $azureStackCredential,
+        [pscredential] $azureStackCredentials,
         [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
 	    [string] $tenantID
     )
@@ -35,7 +35,7 @@ function New-AzSTenantOfferAndQuotas
     }
 
     Write-Verbose "Obtaining token from AAD..." -Verbose
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredential -EnvironmentName $EnvironmentName)
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
 
     Write-Verbose "Creating quotas..." -Verbose
     $Quotas = @()

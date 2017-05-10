@@ -106,7 +106,7 @@ param (
     [switch]$ListAvailable     
 )
 
-#Requires -Modules AzureRM
+#requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
 #Requires -RunAsAdministrator
 Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force -DisableNameChecking
 Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force

@@ -23,8 +23,10 @@ function Add-AzureStackVMSSGalleryItem {
     }
     
     $fileName = "microsoft.vmss.1.3.6.azpkg"
+    $basePath = (Get-Module AzureStack.ComputeAdmin).ModuleBase
 
-    $blob = $container| Set-AzureStorageBlobContent –File ([System.IO.Path]::GetDirectoryName($PSCommandPath) + "\" + $fileName)  –Blob $fileName -Force
+    $blob = Set-AzureStorageBlobContent –File ($basePath + "\" + $fileName) –Blob $fileName -Container $cName -Force
+    $container = Get-AzureStorageContainer -Name $cName -ErrorAction SilentlyContinue
 
     $uri = $blob.Context.BlobEndPoint + $container.Name + "/" + $blob.Name    
 
@@ -160,9 +162,9 @@ Function Add-VMImage{
     #same for storage
     $storageAccount = Get-AzureRmStorageAccount -Name $storageAccountName -ResourceGroupName $resourceGroupName -ErrorAction SilentlyContinue
     if (-not ($storageAccount)) {
-        $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS
+        $storageAccount = New-AzureRmStorageAccount -Name $storageAccountName -Location $location -ResourceGroupName $resourceGroupName -Type Standard_LRS 
     }
-    Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
+    Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName 
     #same for container
     $container = Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue
     if (-not ($container)) {
@@ -297,11 +299,7 @@ Function Add-VMImage{
         $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$galleryItem.Name
 
         
-        if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
-            Add-AzureRMGalleryItem -GalleryItemUri $galleryItemURI
-        }else{
-            Add-AzureRMGalleryItem -SubscriptionId $subscription -GalleryItemUri $galleryItemURI -ApiVersion 2015-04-01
-        }
+        Add-AzureRMGalleryItem -GalleryItemUri $galleryItemURI
 
         #cleanup
         Remove-Item $GalleryItem
@@ -383,12 +381,7 @@ Function Remove-VMImage{
         $name = "$offer$sku"
         #Remove periods so that the offer and sku can be retrieved from the Marketplace Item name
         $name =$name -replace "\.","-"
-        if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
-            Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem 
-        }else{
-            Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
-        }
-        
+        Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem 
     }
 
 }
@@ -431,7 +424,8 @@ function New-Server2016VMImage {
         [Parameter()]
         [bool] $CreateGalleryItem = $true,
 
-        [switch] $Net35
+        [Parameter()]
+        [bool] $Net35 = $true
     )
     begin {
         function CreateWindowsVHD {
@@ -460,7 +454,7 @@ function New-Server2016VMImage {
                 Write-Verbose -Message "Preparing VHD"
 
                 $VHDMount = Mount-DiskImage -ImagePath $VHDPath -PassThru -ErrorAction Stop
-                $disk = $VHDMount | Get-DiskImage | Get-Disk -ErrorAction Stop
+                $disk = $VHDMount | Get-DiskImage -ErrorAction Stop | Get-Disk -ErrorAction SilentlyContinue
                 $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction Stop
                 $partition = New-Partition -UseMaximumSize -Disknumber $disk.DiskNumber -IsActive:$True -AssignDriveLetter -ErrorAction Stop
                 $volume = Format-Volume -Partition $partition -FileSystem NTFS -confirm:$false -ErrorAction Stop
@@ -818,7 +812,6 @@ Function Add-VMExtension{
 
         [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
 
         [Parameter(ParameterSetName='VMExtensionFromLocal')]
@@ -904,7 +897,7 @@ Function Add-VMExtension{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
     $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
-    Log-Info $uri
+    Write-Verbose $uri
 
     #building request body JSON
     if($pscmdlet.ParameterSetName -eq "VMExtensionFromLocal") {
@@ -958,10 +951,9 @@ Function Remove-VMExtension{
         [String] $publisher,
 
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
 
-        [String] $type = "CustomScriptExtension",
+        [String] $type,
 
         [Parameter(Mandatory=$true)]
         [ValidateSet('Windows' ,'Linux')]
@@ -989,7 +981,7 @@ Function Remove-VMExtension{
     $uri = $armEndpoint + '/subscriptions/' + $subscription + '/providers/Microsoft.Compute.Admin/locations/' + $location + '/artifactTypes/VMExtension/publishers/' + $publisher
     $uri = $uri + '/types/' + $type + '/versions/' + $version + '?api-version=2015-12-01-preview'
 
-    Log-Info $uri
+    Write-Verbose $uri
 
     try{
         Invoke-RestMethod -Method DELETE -Uri $uri -ContentType 'application/json' -Headers $headers
