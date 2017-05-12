@@ -22,31 +22,30 @@ Activate Azure Stack: final step in connecting Azure Stack to be able to call ou
  
 Azure subscription ID that you want to register your Azure Stack with. This parameter is mandatory.
 
-.PARAMETER azureDirectory  
+.PARAMETER azureDirectoryTenantName  
  
 Name of your AAD Tenant which your Azure subscription is a part of. This parameter is mandatory.
 
-.PARAMETER azureSubscriptionOwner
+.PARAMETER azureAccountId
  
 Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
 
-.PARAMETER azureSubscriptionPassword
+.PARAMETER azureCredentialPassword
 
 Password for the Azure subscription. You will be prompted to type in this password. This parameter is mandatory.
 
-.PARAMETER marketplaceSyndication
+.PARAMETER azureEnvironment
 
-Flag (ON/OFF) whether to enable downloading items from the Azure marketplace on this environment. Defaults to "ON".
+Environment name for use in retrieving tenant details and running several of the activation scripts. Defaults to "AzureCloud".
 
-.PARAMETER reportUsage
+.PARAMETER azureResourceManagerEndpoint
 
-Flag (ON/OFF) whether to enable pushing usage data to Azure on this environment. Defaults to "ON".
-
+URI used for ActivateBridge.ps1 that refers to the endpoint for Azure Resource Manager. Defaults to "https://management.azure.com"
 
 .EXAMPLE
 
 This script must be run from the Host machine of the POC. 
-.\RegisterWithAzure.ps1 -azureSubscriptionId "5e0ae55d-0b7a-47a3-afbc-8b372650abd3" -azureDirectory "contoso.onmicrosoft.com" -azureSubscriptionOwner "serviceadmin@contoso.onmicrosoft.com"
+.\RegisterWithAzure.ps1 -azureSubscriptionId "5e0ae55d-0b7a-47a3-afbc-8b372650abd3" -azureDirectoryTenantId "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com" -azureCredentialPassword "password"
 
  
 .NOTES 
@@ -54,140 +53,114 @@ This script must be run from the Host machine of the POC.
 #>
 
 [CmdletBinding()]
-Param     (
-    [Parameter(Mandatory = $true)]
-    [string]$azureDirectory,
+param(
 
-    [Parameter(Mandatory = $true)]
-    [String]$azureSubscriptionId,
+    [Parameter(Mandatory=$true)]
+    [String] $azureCredentialPassword,
 
-    [Parameter(Mandatory = $true)]
-    [String]$azureSubscriptionOwner,
+    [Parameter(Mandatory=$true)]
+    [String] $azureAccountId,
 
-    [Parameter(Mandatory = $true)]
-    [securestring]$azureSubscriptionPassword,
-    
-    [Parameter(Mandatory=$false)]
-    [ValidateSet('On', 'Off')]
-    [string] $marketplaceSyndication = 'On',
+    [Parameter(Mandatory=$true)]
+    [String] $azureSubscriptionId,
+
+    [Parameter(Mandatory=$true)]
+    [String] $AzureDirectoryTenantName,
 
     [Parameter(Mandatory=$false)]
-    [ValidateSet('On', 'Off')]
-    [string] $reportUsage = 'On'
-)
+    [String] $AzureEnvironment = "AzureCloud",
 
-#requires -Module AzureRM.Profile
-#requires -Module AzureRM.Resources
-#requires -RunAsAdministrator
+    [Parameter(Mandatory=$false)]
+    [String] $AzureResourceManagerEndpoint = "https://management.azure.com"
 
-Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psm1 -Force 
+    )
+
+
+#
+# Wrapper script to test registration and activation
+# Uses refresh tokens and supports 2fa,  MSA accounts
+#
+
+$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+$VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
+
+Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -Force
 cd  C:\CloudDeployment\Setup\Activation\Bridge
 
-Read-Host "This script will turn marketplace syndication $marketplaceSyndication and usage reporting $reportUsage. You can change this by running the script using different flags. Press Enter to continue."
+#
+# Pre-req: Obtain refresh token for Azure identity
+#
+Import-Module C:\CloudDeployment\Setup\Common\AzureADConfiguration.psm1 -ErrorAction Stop
 
-# Determine version of TP3 and set values accordingly
- $versionInfo = [xml] (Get-Content -Path C:\CloudDeployment\Configuration\Version\version.xml) 
-if($versionInfo.Version -ge "1.0.170308.2") 
-{ 
-    Write-Verbose -Message "Using TP3.N release" -Verbose
-    $bridgeAppConfigFile = "\\SU1FileServer\SU1_Infrastructure_1\ASResourceProvider\Config\AzureBridge.IdentityApplication.Configuration.json" 
-} 
-elseif($versionInfo.Version -eq "1.0.170225.2") 
-{ 
-    Write-Verbose -Message "Using TP3.O release" -Verbose
-    $bridgeAppConfigFile = "\\SU1FileServer\SU1_Infrastructure_1\ASResourceProvider\Config\ConnectionAzureArm.IdentityApplication.Configuration.json"
-} 
-else 
-{ 
-    Write-Error -Message "Unsupported TP3 release" -Verbose 
-} 
+$AzureCredential = New-Object System.Management.Automation.PSCredential($AzureAccountId, (ConvertTo-SecureString -String $AzureCredentialPassword -AsPlainText -Force))
+$AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $AzureEnvironment -tenantName $AzureDirectoryTenantName
 
+if($AzureCredential)
+{
+    Write-Verbose "Using provided Azure Credentials to get refresh token"
+    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $AzureEnvironment -AADDirectoryTenantName $AzureDirectoryTenantName -AADAdminCredential $AzureCredential
+}
+else
+{
+    Write-Verbose "Prompt user to enter Azure Credentials to get refresh token"
+    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $AzureEnvironment -AADDirectoryTenantName $AzureDirectoryTenantName
+}
+
+$refreshToken = (ConvertTo-SecureString -string $tenantDetails["RefreshToken"] -AsPlainText -Force)
 
 #
 # Step 1: Configure Bridge identity
 #
 
-$azureCreds = New-Object System.Management.Automation.PSCredential($azureSubscriptionOwner, $azureSubscriptionPassword)
-.\Configure-BridgeIdentity.ps1 -AzureCredential $azureCreds -AzureDirectoryTenantId $azureDirectory -AzureEnvironment AzureCloud -Verbose
-Write-Host "STEP 1: Configure local identity completed"
+.\Configure-BridgeIdentity.ps1 -RefreshToken $refreshToken -AzureAccountId $AzureAccountId -AzureDirectoryTenantName $AzureDirectoryTenantName -AzureEnvironment "AzureCloud" -Verbose
+Write-Verbose "Configure Bridge identity completed"
 
 #
 # Step 2: Create new registration request
 #
 
+$bridgeAppConfigFile = "\\SU1FileServer\SU1_Infrastructure_1\ASResourceProvider\Config\AzureBridge.IdentityApplication.Configuration.json"
 $registrationOutputFile = "c:\temp\registration.json"
 .\New-RegistrationRequest.ps1 -BridgeAppConfigFile $bridgeAppConfigFile -RegistrationRequestOutputFile $registrationOutputFile -Verbose
-Read-Host "STEP 2: Registration request completed. Re-enter your Azure subscription credentials in the next step. Note: Step 3 can be run from a different machine that is connected to Azure. Press Enter to continue and run step 3 from this machine."
+Write-Verbose "New registration request completed"
 
 #
 # Step 3: Register Azure Stack with Azure
 #
-New-Item -ItemType Directory -Force -Path "C:\temp"
+
 $registrationRequestFile = "c:\temp\registration.json"
 $registrationOutputFile = "c:\temp\registrationOutput.json"
+.\Register-AzureStack.ps1 -BillingModel PayAsYouUse -EnableSyndication -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
+                            -RefreshToken $refreshToken -AzureAccountId $AzureAccountId -AzureEnvironmentName AzureCloud -RegistrationRequestFile $registrationRequestFile `
+                            -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
+Write-Verbose "Register Azure Stack with Azure completed"
 
-Login-AzureRmAccount -EnvironmentName AzureCloud
-Select-AzureRmSubscription -SubscriptionId $azureSubscriptionId
+#
+# workaround to enable syndication and usage
+#
 
-# Ensure subscription is registered to Microsoft.AzureStack namespace in Azure
-Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack'
-$result                        = $null
-$attempts                      = 0
-$maxAttempts                   = 20
-$delayInSecondsBetweenAttempts = 10
-do
-{
-    $attempts++
-    Write-Verbose "[CHECK] Checking for resource provider registration... (attempt $attempts of $maxAttempts)"
-    $result = $(Get-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack')[0].RegistrationState -EQ 'Registered'
-    $result
-    if ((-not $result) -and ($attempts -lt $maxAttempts))
-    {
-        Write-Verbose "[DELAY] Attempt $attempts failed to see provider registration, delaying for $delayInSecondsBetweenAttempts seconds before retry"
-        Start-Sleep -Seconds $delayInSecondsBetweenAttempts
-    }
-}
-while ((-not $result) -and ($attempts -lt $maxAttempts))
-
-if (-not $result)
-{
-    throw New-Object System.InvalidOperationException("Azure Bridge Resource Provider was registered but did not become routable within the alloted time")
+$activationDataFile = "c:\temp\regOutput2.json"
+$reg = Get-Content $registrationOutputFile | ConvertFrom-Json
+$enablesyndication = $true
+$reportusage = $true
+$newProps = @{
+    ObjectId          = $reg.properties.ObjectId
+    ProvisioningState = $reg.properties.provisioningState
+    enablesyndication = $enablesyndication
+    reportusage       = $reportusage
 }
 
-.\Register-AzureStack.ps1 -BillingModel Consumption -Syndication $marketplaceSyndication -ReportUsage $reportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $azureDirectory `
-  -AzureCredential $azureCreds -AzureEnvironmentName AzureCloud -RegistrationRequestFile $registrationRequestFile -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
-Read-Host "STEP 3: Register Azure Stack with Azure completed. Press Enter to continue."
+$reg.properties = $newProps
+$reg | ConvertTo-Json -Depth 4 | Out-File -FilePath $activationDataFile
+
+Write-Verbose "Activation file is at : $activationDataFile"
 
 #
 # Step 4: Activate Azure Stack
 #
+$regResponse = Get-Content -path  $activationDataFile
+$bytes = [System.Text.Encoding]::UTF8.GetBytes($regResponse)
+$activationCode = [Convert]::ToBase64String($bytes)
 
-# temporary step to adjust registration output to expected format
-$reg = Get-Content $registrationOutputFile | ConvertFrom-Json
-$newProps = @{
-ObjectId = $reg.properties.ObjectId
-ProvisioningState = $reg.properties.provisioningState
-syndication = $marketplaceSyndication
-usagebridge = $reportUsage
-}
-$reg.properties = $newProps
-$reg | ConvertTo-Json -Depth 4 | Out-File -FilePath $registrationOutputFile
-
-$regResponse = Get-Content -path  $registrationOutputFile
-$AzureResourceManagerEndpoint = "https://management.azure.com"
-
-if($versionInfo.Version -ge "1.0.170308.2") 
-{ 
-    $bytes = [System.Text.Encoding]::UTF8.GetBytes($regResponse)
-    $activationCode = [Convert]::ToBase64String($bytes)
-    .\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $AzureResourceManagerEndpoint -Verbose
-}
-elseif($versionInfo.Version -eq "1.0.170225.2") 
-{ 
-    $bytes = [System.Text.Encoding]::Unicode.GetBytes($regResponse)
-    $activationCode = [Convert]::ToBase64String($bytes)
-    .\Activate-Bridge.ps1 -activationCode $activationCode -Verbose
-} 
-
-Write-Host "STEP 4: Activate Azure Stack completed"
-Write-Host "Registration complete. Close and re-open the Marketplace Management blade in the admin portal."
+.\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $AzureResourceManagerEndpoint -Verbose
+Write-Verbose "Azure Stack activation completed"
