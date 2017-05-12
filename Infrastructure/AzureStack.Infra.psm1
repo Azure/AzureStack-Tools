@@ -163,7 +163,7 @@ Function Get-AzSInfraRole{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/InfraRoles?api-version=2016-05-01"
     $Roles=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $roles.value
+    $roles.value|select name,properties
     
 }      
 export-modulemember -function Get-AzSInfraRole
@@ -432,7 +432,7 @@ Function Close-AzSAlert{
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='CloseAlert')]
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='closealert')]
         [string] $EnvironmentName,
 
         [Parameter(ParameterSetName='closealert')]
@@ -452,7 +452,6 @@ Function Close-AzSAlert{
     $Alerts.properties.state = "Closed"
     $AlertUpdateBody = $Alerts | ConvertTo-Json
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts/${alertname}?api-version=2016-05-01"
-    $URI
     $Close=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $AlertUpdateBody
     $CloseRun=$Close.value
     $closeRun 
