@@ -65,24 +65,27 @@ param(
     [String] $azureSubscriptionId,
 
     [Parameter(Mandatory=$true)]
-    [String] $AzureDirectoryTenantName,
+    [String] $azureDirectoryTenantName,
 
     [Parameter(Mandatory=$false)]
-    [String] $AzureEnvironment = "AzureCloud",
+    [String] $azureEnvironment = "AzureCloud",
 
     [Parameter(Mandatory=$false)]
-    [String] $AzureResourceManagerEndpoint = "https://management.azure.com"
+    [String] $azureResourceManagerEndpoint = "https://management.azure.com"
 
     )
 
+#requires -Module AzureRM.Profile
+#requires -Module AzureRM.Resources
+#requires -RunAsAdministrator
 
 #
 # Wrapper script to test registration and activation
 # Uses refresh tokens and supports 2fa,  MSA accounts
 #
 
-$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
-$VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
+#$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+#$VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
 
 Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -Force
 cd  C:\CloudDeployment\Setup\Activation\Bridge
@@ -92,18 +95,18 @@ cd  C:\CloudDeployment\Setup\Activation\Bridge
 #
 Import-Module C:\CloudDeployment\Setup\Common\AzureADConfiguration.psm1 -ErrorAction Stop
 
-$AzureCredential = New-Object System.Management.Automation.PSCredential($AzureAccountId, (ConvertTo-SecureString -String $AzureCredentialPassword -AsPlainText -Force))
-$AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $AzureEnvironment -tenantName $AzureDirectoryTenantName
+$AzureCredential = New-Object System.Management.Automation.PSCredential($azureAccountId, (ConvertTo-SecureString -String $azureCredentialPassword -AsPlainText -Force))
+$AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $azureEnvironment -tenantName $azureDirectoryTenantName
 
 if($AzureCredential)
 {
     Write-Verbose "Using provided Azure Credentials to get refresh token"
-    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $AzureEnvironment -AADDirectoryTenantName $AzureDirectoryTenantName -AADAdminCredential $AzureCredential
+    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName -AADAdminCredential $AzureCredential
 }
 else
 {
     Write-Verbose "Prompt user to enter Azure Credentials to get refresh token"
-    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $AzureEnvironment -AADDirectoryTenantName $AzureDirectoryTenantName
+    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName
 }
 
 $refreshToken = (ConvertTo-SecureString -string $tenantDetails["RefreshToken"] -AsPlainText -Force)
@@ -112,7 +115,7 @@ $refreshToken = (ConvertTo-SecureString -string $tenantDetails["RefreshToken"] -
 # Step 1: Configure Bridge identity
 #
 
-.\Configure-BridgeIdentity.ps1 -RefreshToken $refreshToken -AzureAccountId $AzureAccountId -AzureDirectoryTenantName $AzureDirectoryTenantName -AzureEnvironment "AzureCloud" -Verbose
+.\Configure-BridgeIdentity.ps1 -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureDirectoryTenantName $azureDirectoryTenantName -AzureEnvironment $azureEnvironment -Verbose
 Write-Verbose "Configure Bridge identity completed"
 
 #
@@ -131,7 +134,7 @@ Write-Verbose "New registration request completed"
 $registrationRequestFile = "c:\temp\registration.json"
 $registrationOutputFile = "c:\temp\registrationOutput.json"
 .\Register-AzureStack.ps1 -BillingModel PayAsYouUse -EnableSyndication -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
-                            -RefreshToken $refreshToken -AzureAccountId $AzureAccountId -AzureEnvironmentName AzureCloud -RegistrationRequestFile $registrationRequestFile `
+                            -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
                             -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
 Write-Verbose "Register Azure Stack with Azure completed"
 
@@ -162,5 +165,5 @@ $regResponse = Get-Content -path  $activationDataFile
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($regResponse)
 $activationCode = [Convert]::ToBase64String($bytes)
 
-.\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $AzureResourceManagerEndpoint -Verbose
+.\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $azureResourceManagerEndpoint -Verbose
 Write-Verbose "Azure Stack activation completed"
