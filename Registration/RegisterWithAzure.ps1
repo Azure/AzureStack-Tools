@@ -74,7 +74,7 @@ param(
     [Parameter(Mandatory=$false)]
     [String] $azureResourceManagerEndpoint = "https://management.azure.com",
     
-    [Parameter(Manadator=$false)]
+    [Parameter(Manadatory=$false)]
     [Switch] $reportUsage = $false
     )
 
