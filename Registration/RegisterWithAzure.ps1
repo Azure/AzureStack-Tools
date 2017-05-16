@@ -20,6 +20,7 @@ Activate Azure Stack: final step in connecting Azure Stack to be able to call ou
 
 .PARAMETER azureSubscriptionId  
  
+
 Azure subscription ID that you want to register your Azure Stack with. This parameter is mandatory.
 
 .PARAMETER azureDirectoryTenantName  
@@ -71,8 +72,10 @@ param(
     [String] $azureEnvironment = "AzureCloud",
 
     [Parameter(Mandatory=$false)]
-    [String] $azureResourceManagerEndpoint = "https://management.azure.com"
-
+    [String] $azureResourceManagerEndpoint = "https://management.azure.com",
+    
+    [Parameter(Manadator=$false)]
+    [Switch] $reportUsage = $false
     )
 
 #requires -Module AzureRM.Profile
@@ -145,12 +148,11 @@ Write-Verbose "Register Azure Stack with Azure completed"
 $activationDataFile = "c:\temp\regOutput2.json"
 $reg = Get-Content $registrationOutputFile | ConvertFrom-Json
 $enablesyndication = $true
-$reportusage = $true
 $newProps = @{
     ObjectId          = $reg.properties.ObjectId
     ProvisioningState = $reg.properties.provisioningState
     enablesyndication = $enablesyndication
-    reportusage       = $reportusage
+    reportusage       = $reportUsage
 }
 
 $reg.properties = $newProps
