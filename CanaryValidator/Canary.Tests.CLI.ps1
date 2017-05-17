@@ -66,7 +66,7 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "canvr",
+    [string]$CanaryVMRG = "canvr25",
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -105,7 +105,7 @@ Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
 
-$storageAccName         = $CanaryUtilitiesRG + "sa"
+$storageAccName         = $CanaryUtilitiesRG + "sa25"
 $storageCtrName         = $CanaryUtilitiesRG + "sc"
 $keyvaultName           = $CanaryUtilitiesRG + "kv"
 $keyvaultCertName       = "ASCanaryVMCertificate"
@@ -158,11 +158,18 @@ while ($runCount -le $NumberOfIterations)
                                 -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
                                 -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                 -ErrorAction Stop
+
+        #cmd /c az cloud register --name $SvcAdminEnvironmentName --endpoint-active-directory $asEndpoints.ActiveDirectoryEndpoint --endpoint-active-directory-resource-id $asEndpoints.ActiveDirectoryServiceEndpointResourceId --endpoint-resource-manager $asEndpoints.ResourceManagerEndpoint --endpoint-gallery $asEndpoints.GalleryEndpoint --endpoint-active-directory-graph-resource-id $asEndpoints.GraphEndpoint --suffix-storage-endpoint $asEndpoints.StorageEndpointSuffix --suffix-keyvault-dns $asEndpoints.AzureKeyVaultDnsSuffix --debug
+
+
     }
 
     Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdmin' -Description "Login to $SvcAdminEnvironmentName as service administrator" -UsecaseBlock `
     {     
         Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
+        #cmd /c az cloud set --name $SvcAdminEnvironmentName
+        #cmd /c az cloud update --profile 2017-03-09-profile-preview
+        #cmd /c az login -u $ServiceAdminCredentials.UserName -p $ServiceAdminCredentials.Password --tenant $TenantID
     }
 
     Invoke-Usecase -Name 'SelectDefaultProviderSubscription' -Description "Select the Default Provider Subscription" -UsecaseBlock `
@@ -172,6 +179,7 @@ while ($runCount -le $NumberOfIterations)
         {
             $defaultSubscription | Select-AzureRmSubscription
         }
+        #cmd /c az account set --subscription "Default Provider Subscription"
     } 
        
     if ($WindowsISOPath)
@@ -270,7 +278,7 @@ while ($runCount -le $NumberOfIterations)
                  --endpoint-gallery $asEndpoints.GalleryEndpoint `
                  --endpoint-active-directory-graph-resource-id $asEndpoints.GraphEndpoint `
                  --suffix-storage-endpoint $asEndpoints.StorageEndpointSuffix `
-                 --suffix-keyvault-dns $asEndpoints.AzureKeyVaultDnsSuffix 
+                 --suffix-keyvault-dns ("." + $asEndpoints.AzureKeyVaultDnsSuffix) 
 
             # Register using Powershell
             Add-AzureRmEnvironment  -Name ($TntAdminEnvironmentName) `
@@ -287,28 +295,32 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'LoginToAzureStackEnvAsTenantAdmin' -Description "Login to $TntAdminEnvironmentName as tenant administrator" -UsecaseBlock `
         {     
-            az cloud set --name $TntAdminEnvironmentName
-            az cloud update --profile 2015-sample 
-            cmd /c az login -u $TenantAdminCredentials.UserName -p $TenantAdminCredentials.Password --tenant $TenantID
             Add-AzureRmAccount -EnvironmentName $TntAdminEnvironmentName -Credential $TenantAdminCredentials -TenantId $TenantID -ErrorAction Stop
+            az cloud set --name $TntAdminEnvironmentName
+            az cloud update --profile 2017-03-09-profile-preview
+            az login -u $TenantAdminCredentials.UserName -p "User@123" --tenant $TenantID
         }
 
         Invoke-Usecase -Name 'CreateTenantSubscription' -Description "Create a subcsription for the tenant and select it as the current subscription" -UsecaseBlock `
         {
             Set-AzureRmContext -SubscriptionName $canaryDefaultTenantSubscription
+            az account set --subscription $canaryDefaultTenantSubscription
             $asCanaryOffer = Get-AzureRmOffer -Provider "Default" -ErrorAction Stop | Where-Object Name -eq $tenantOfferName
             $asTenantSubscription = New-AzureRmTenantSubscription -OfferId $asCanaryOffer.Id -DisplayName $tenantSubscriptionName -ErrorAction Stop
             if ($asTenantSubscription)
             {
+                az account clear
+                az login -u $TenantAdminCredentials.UserName -p "User@123" --tenant $TenantID
                 $asTenantSubscription | Select-AzureRmSubscription -ErrorAction Stop
-            }           
+                az account set --subscription $tenantSubscriptionName
+            }       
         } 
 
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register Resouce providers" -UsecaseBlock `
         {
             cmd /c set ADAL_PYTHON_SSL_NO_VERIFY=1
             cmd /c set AZURE_CLI_DISABLE_CONNECTION_VERIFICATION=1
-            $providerList = cmd /c az provider list
+            $providerList = cmd /c az provider list -ojson
             $providerList = $providerList | ConvertFrom-Json
             $providerList | ForEach-Object { cmd /c az provider register --namespace $_.namespace }
 
@@ -317,7 +329,7 @@ while ($runCount -le $NumberOfIterations)
             {
                 $sleepTime += 10
                 Start-Sleep -Seconds  10
-                $requiredRPs = az provider list 
+                $requiredRPs = az provider list -ojson
                 $requiredRPs = $requiredRPs | ConvertFrom-Json 
                 $requiredRPs = $requiredRPs | Where-Object {$_.Namespace -in ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault")}
                 $notRegistered = $requiredRPs | Where-Object {$_.RegistrationState -ne "Registered"}
@@ -346,7 +358,115 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'CreateStorageAccountForUtilities' -Description "Create a storage account for placing the utility files" -UsecaseBlock `
     {    
+        $storageAccExists = (az storage account check-name --name $storageAccName -ojson)
+        $storageAccExists = $storageAccExists | ConvertFrom-Json
+        if (-not $storageAccExists.nameAvailable)
+        {
+            az storage account delete -n $storageAccName -g $CanaryUtilitiesRG --yes
+        }
         cmd /c az storage account create --location $ResourceLocation --name $storageAccName --resource-group $CanaryUtilitiesRG --account-type Standard_LRS
+    }
+
+    Invoke-Usecase -Name 'CreateStorageContainerForUtilities' -Description "Create a storage container for the placing the utility files" -UsecaseBlock `
+    {
+        $asStorageAccountKey = az storage account keys list -n $storageAccName -g $CanaryUtilitiesRG -ojson
+        if ($asStorageAccountKey)
+        {
+            $asStorageAccountKey = $asStorageAccountKey | ConvertFrom-Json
+            $storageAccountKey = $asStorageAccountKey.key1
+        }
+        $storageCtrExists = (az storage container exists -n $storageCtrName --account-key $storageAccountKey --account-name $storageAccName -ojson)
+        $storageCtrExists = $storageCtrExists | ConvertFrom-Json
+        if ($storageCtrExists.exists)
+        {
+            az storage container delete --name $storageCtrName --account-key $storageAccountKey --account-name $storageAccName
+        }
+        az storage container create -n $storageCtrName --account-name $storageAccName --account-key $storageAccountKey --public-access container
+    }
+
+    Invoke-Usecase -Name 'CreateDSCScriptResourceUtility' -Description "Create a DSC script resource that checks for internet connection" -UsecaseBlock `
+    {      
+        $dscScriptPath = Join-Path -Path $canaryUtilPath -ChildPath "DSCScriptResource"
+        $dscScriptName = "ASCheckNetworkConnectivityUtil.ps1"
+        NewAzureStackDSCScriptResource -DSCScriptResourceName $dscScriptName -DestinationPath $dscScriptPath
+    }
+
+    Invoke-Usecase -Name 'CreateCustomScriptResourceUtility' -Description "Create a custom script resource that checks for the presence of data disks" -UsecaseBlock `
+    {      
+        $customScriptPath = $canaryUtilPath
+        $customScriptName = "ASCheckDataDiskUtil.ps1"
+        NewAzureStackCustomScriptResource -CustomScriptResourceName $customScriptName -DestinationPath $customScriptPath
+    }
+
+    Invoke-Usecase -Name 'CreateDataDiskForVM' -Description "Create a data disk to be attached to the VMs" -UsecaseBlock `
+    {      
+        $vhdPath = Join-Path -Path $canaryUtilPath -Childpath "VMDataDisk.VHD"
+        NewAzureStackDataVHD -FilePath $vhdPath -VHDSizeInGB 1
+    }
+        
+    Invoke-Usecase -Name 'UploadUtilitiesToBlobStorage' -Description "Upload the canary utilities to the blob storage" -UsecaseBlock `
+    {    
+        try
+        {  
+            $asStorageAccountKey = az storage account keys list -n $storageAccName -g $CanaryUtilitiesRG -ojson
+            if ($asStorageAccountKey)
+            {
+                $asStorageAccountKey = $asStorageAccountKey | ConvertFrom-Json
+                $storageAccountKey = $asStorageAccountKey.key1
+            }
+
+            $files = Get-ChildItem -Path $canaryUtilPath -File
+            foreach ($file in $files)
+            {
+                if ($file.Extension -match "VHD")
+                {
+                    az storage blob upload --container-name $storageCtrName --file $file.FullName --name $file.Name --account-name $storageAccName --account-key $storageAccountKey --debug --type page
+                }
+                else {
+                    az storage blob upload --container-name $storageCtrName --file $file.FullName --name $file.Name --account-name $storageAccName --account-key $storageAccountKey --debug
+                }
+            }
+        }
+        finally
+        {
+            if (Test-Path -Path $canaryUtilPath)
+            {
+                Remove-Item -Path $canaryUtilPath -Recurse -Force
+            }
+        }
+    }
+
+    Invoke-Usecase -Name 'CreateKeyVaultStoreForCertSecret' -Description "Create a key vault store to put the certificate secret" -UsecaseBlock `
+    {      
+        if ($certExists = Get-ChildItem -Path "cert:\LocalMachine\My" | Where-Object Subject -Match $keyvaultCertName)
+        {
+            $certExists | Remove-Item -Force
+        }
+        New-SelfSignedCertificate -DnsName $keyvaultCertName -CertStoreLocation "cert:\LocalMachine\My" -ErrorAction Stop | Out-Null
+        Add-Type -AssemblyName System.Web
+        $certPasswordString = [System.Web.Security.Membership]::GeneratePassword(12,2)
+        $certPassword = ConvertTo-SecureString -String $certPasswordString -AsPlainText -Force
+        $kvCertificateName = $keyvaultCertName + ".pfx"
+        $kvCertificatePath = "$env:TEMP\$kvCertificateName" 
+        Get-ChildItem -Path "cert:\localMachine\my" | Where-Object Subject -Match $keyvaultCertName | Export-PfxCertificate -FilePath $kvCertificatePath -Password $certPassword | Out-Null
+        $fileContentBytes     = get-content $kvCertificatePath -Encoding Byte
+        $fileContentEncoded   = [System.Convert]::ToBase64String($fileContentBytes)
+        $jsonObject = @"
+        {
+        "data": "$filecontentencoded",
+        "dataType" :"pfx",
+        "password": "$certPasswordString"
+        }
+"@ 
+        $jsonObjectBytes = [System.Text.Encoding]::UTF8.GetBytes($jsonObject)
+        $jsonEncoded     = [System.Convert]::ToBase64String($jsonObjectBytes)
+        cmd /c az keyvault create --name $keyvaultName --resource-group $CanaryUtilitiesRG --location $ResourceLocation --sku standard --enabled-for-deployment true --enabled-for-template-deployment true
+        if (-not [string]::IsNullOrWhiteSpace($TenantAdminObjectId)) 
+        {
+            az keyvault set-policy --name $keyvaultName --resource-group $CanaryUtilitiesRG --object-id $TenantAdminObjectId --key-permissions all --secret-permissions all
+        }
+        $kvSecret = ConvertTo-SecureString -String $jsonEncoded -AsPlainText -Force
+        az keyvault secret set --name $kvSecretName --vault-name $keyvaultName --value $kvSecret
     }
 
     Invoke-Usecase -Name 'CreateResourceGroupForVMs' -Description "Create a resource group $CanaryVMRG for placing the VMs and corresponding resources" -UsecaseBlock `
@@ -361,20 +481,20 @@ while ($runCount -le $NumberOfIterations)
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {
         $osVersion = ""
-        if (cmd /c az vm image list --location $ResourceLocation --publisher "MicrosoftWindowsServer" --offer "WindowsServer" --sku "2016-Datacenter-Core")
+        if (cmd /c az vm image list --location $ResourceLocation --publisher "MicrosoftWindowsServer" --offer "WindowsServer" --sku "2016-Datacenter-Core" --all)
         {
             $osVersion = "2016-Datacenter-Core"
         }
-        elseif (cmd /c az vm image list --location $ResourceLocation --publisher "MicrosoftWindowsServer" --offer "WindowsServer" --sku "2016-Datacenter")
+        elseif (cmd /c az vm image list --location $ResourceLocation --publisher "MicrosoftWindowsServer" --offer "WindowsServer" --sku "2016-Datacenter" --all)
         {
             $osVersion = "2016-Datacenter"
         }
-        elseif (cmd /c az vm image list --location $ResourceLocation --publisher "MicrosoftWindowsServer" --offer "WindowsServer" --sku "2012-R2-Datacenter")
+        elseif (cmd /c az vm image list --location $ResourceLocation --publisher "MicrosoftWindowsServer" --offer "WindowsServer" --sku "2012-R2-Datacenter" --all)
         {
             $osVersion = "2012-R2-Datacenter"
         } 
         $linuxImgExists = $false      
-        if (cmd /c az vm image list --location $ResourceLocation --publisher "Canonical" --offer "UbuntuServer" --sku $LinuxOSSku)
+        if (cmd /c az vm image list --location $ResourceLocation --publisher "Canonical" --offer "UbuntuServer" --sku $LinuxOSSku --all)
         {
             $linuxImgExists = $true
         }
@@ -383,18 +503,20 @@ while ($runCount -le $NumberOfIterations)
 
         if (-not $linuxImgExists)
         {
-            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose
+            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose -ojson
+            $templateError = $templateError | convertfrom-json
         }
         elseif ($linuxImgExists) 
         {
-            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --verbose
+            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --verbose -ojson
+            $templateError = $templateError | convertfrom-json
         }
-        $templateError = $false
-        if ((-not $templateError) -and ($linuxImgExists))
+
+        if ((-not $templateError.Error) -and ($linuxImgExists))
         {
-            cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose
+            cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose #testdeploytemplate.json --verbose # 
         }
-        elseif (-not $templateError) {
+        elseif (-not $templateError.Error) {
             cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --verbose
         }
         else 
@@ -407,7 +529,7 @@ while ($runCount -le $NumberOfIterations)
     $canaryWindowsVMList = Invoke-Usecase -Name 'QueryTheVMsDeployed' -Description "Queries for the VMs that were deployed using the ARM template" -UsecaseBlock `
     {
         $canaryWindowsVMList = @()        
-        $vmList = cmd /c az vm list -g $CanaryVMRG -d 
+        $vmList = cmd /c az vm list -g $CanaryVMRG -d -ojson
         $vmList = $vmList | ConvertFrom-Json
         $vmList = $vmList | Where-Object {$_.OSProfile.WindowsConfiguration}
         foreach ($vm in $vmList)
@@ -419,7 +541,9 @@ while ($runCount -le $NumberOfIterations)
             $vmObject | Add-Member -Type NoteProperty -Name VMName -Value $vm.Name 
             foreach ($nic in $vm.networkProfile.networkInterfaces.Id)
             {
-                $vmIPConfig += (Get-AzureRmNetworkInterface -ResourceGroupName $CanaryVMRG | Where-Object Id -match $nic).IpConfigurations
+                $vmNic = az vm nic show -g $canaryvmrg --vm-name $vm.Name --nic $nic -ojson
+                $vmNic = $vmNic | ConvertFrom-Json
+                $vmIPConfig += $vmNic.IpConfigurations
             } 
             foreach ($ipConfig in $vmIPConfig)
             {
@@ -429,10 +553,10 @@ while ($runCount -le $NumberOfIterations)
                 }
                 if ($pubIP = $ipConfig.PublicIPAddress)
                 {
-                    if ($pubIPId = $pubIP.Id)
-                    {
-                        $publicIP += (Get-AzureRmPublicIpAddress -ResourceGroupName $CanaryVMRG | Where-Object Id -eq $pubIPId).IpAddress 
-                    }
+                    $pubIPId = $pubIP.Id
+                    $pubIP = az vm list-ip-addresses -g $canaryvmrg -n $vm.Name -ojson
+                    $pubIp = $pubIP | ConvertFrom-Json
+                    $publicIP += ($pubIp.virtualMachine.network.publicIpAddresses | Where-Object {$_.Id -eq $pubIPId}).IpAddress
                 }
             }
             $vmObject | Add-Member -Type NoteProperty -Name VMPrivateIP -Value $privateIP -Force
@@ -463,8 +587,83 @@ while ($runCount -le $NumberOfIterations)
     {
         $vmUser = ".\$VMAdminUserName"
         $vmCreds = New-Object System.Management.Automation.PSCredential $vmUser, (ConvertTo-SecureString $VMAdminUserPass -AsPlainText -Force)
-        $vmCommsScriptBlock = "Get-Childitem -Path `"cert:\LocalMachine\My`" | Where-Object Subject -Match $keyvaultCertName"
-        if (($pubVMObject = cmd /c az vm show -g $CanaryVMRG -d -n $publicVMName) -and ($pvtVMObject = cmd /c az vm list -g $CanaryVMRG -d -n $privateVMName))
+        $vmCommsScriptBlock = "hostname"
+        if (($pubVMObject = cmd /c az vm show -g $CanaryVMRG -d -n $publicVMName) -and ($pvtVMObject = cmd /c az vm show -g $CanaryVMRG -d -n $privateVMName))
+        {
+            Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
+            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            {
+                Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                if ($privateVMResponseFromRemoteSession)
+                {
+                    $publicVMSession | Remove-PSSession -Confirm:$false
+                    $privateVMResponseFromRemoteSession
+                }
+                else 
+                {
+                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                }
+            }    
+        }
+
+    }
+
+    Invoke-Usecase -Name 'RestartVMWithPublicIP' -Description "Restart the VM which has a public IP address" -UsecaseBlock `
+    {
+        if ($vmObject = az vm show -g $CanaryVMRG -n $publicVMName -ErrorAction Stop)
+        {
+            $restartVM = az vm restart -g $CanaryVMRG -n $publicVMName -ojson
+            $restartVM = $restartVM | ConvertFrom-Json
+            if (-not ($restartVM.Status -eq "Succeeded"))
+            {
+                throw [System.Exception]"Failed to restart the VM $publicVMName"
+            }
+        }
+    }
+
+    Invoke-Usecase -Name 'StopDeallocateVMWithPrivateIP' -Description "Stop/Dellocate the VM with private IP" -UsecaseBlock `
+    {
+        if ($vmObject = az vm show -g $CanaryVMRG -n $privateVMName)
+        {
+            $stopVM = az vm stop -g $CanaryVMRG -n $privateVMName -ojson
+            $stopVM = $stopVM | ConvertFrom-Json
+            if ($stopVM.Status -eq "Succeeded") 
+            {
+                $vmInstanceView =  az vm get-instance-view -g $CanaryVMRG -n $privateVMName -ojson
+                $vmInstanceView = $vmInstanceView | ConvertFrom-Json
+                $powerState = ($vmInstanceView.instanceView.statuses | Where-Object Code -match "PowerState").DisplayStatus
+                if (-not (($powerState -eq "VM stopped") -or ($powerState -eq "VM deallocated")))
+                {
+                    throw [System.Exception]"Unexpected PowerState $powerState"
+                }
+            }
+            else 
+            {
+                throw [System.Exception]"Unexpected StatusCode/IsSuccessStatusCode: $stopVM.StatusCode/$stopVM.IsSuccessStatusCode"
+            }  
+        }
+    }
+
+    Invoke-Usecase -Name 'StartVMWithPrivateIP' -Description "Start the VM with private IP" -UsecaseBlock `
+    {
+        if ($vmObject = az vm show -g $CanaryVMRG -n $privateVMName)
+        {
+            $startVM = az vm start -g $CanaryVMRG -n $privateVMName -ojson
+            $startVM = $startVM | ConvertFrom-Json
+            if (-not ($startVM.Status -eq "Succeeded"))
+            {
+                throw [System.Exception]"Failed to start the VM $privateVMName"
+            }
+        }
+    }
+
+    Invoke-Usecase -Name 'CheckVMCommunicationPostVMReboot' -Description "Check if the VMs deployed can talk to each other after they are rebooted" -UsecaseBlock `
+    {
+        $vmUser = ".\$VMAdminUserName"
+        $vmCreds = New-Object System.Management.Automation.PSCredential $vmUser, (ConvertTo-SecureString $VMAdminUserPass -AsPlainText -Force)
+        $vmCommsScriptBlock = "hostname"
+        if (($pubVMObject = cmd /c az vm show -g $CanaryVMRG -d -n $publicVMName) -and ($pvtVMObject = cmd /c az vm show -g $CanaryVMRG -d -n $privateVMName))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
             if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
@@ -483,6 +682,49 @@ while ($runCount -le $NumberOfIterations)
             }    
         }
     }
+    
+    Invoke-Usecase -Name 'CheckExistenceOfScreenShotForVMWithPrivateIP' -Description "Check if screen shots are available for Windows VM with private IP and store the screen shot in log folder" -UsecaseBlock `
+    {
+        $asVmStorageAccountKey = az storage account keys list -n "$($CanaryVMRG)2sa" -g $CanaryVMRG -ojson
+        if ($asVmStorageAccountKey)
+        {
+            $asVmStorageAccountKey = $asVmStorageAccountKey | ConvertFrom-Json
+            $vmStorageAccountKey = $asVmStorageAccountKey.key1
+        }
+
+        $SCs = az storage container list --account-name "$($CanaryVMRG)2sa" --account-key $vmStorageAccountKey -ojson
+        $SCs = $SCs | ConvertFrom-Json
+        foreach ($sc in $SCs)
+        {
+            if ($sc.Name -like "bootdiagnostics-$CanaryVMRG*")
+            {
+                $diagSC = $sc
+            }
+        }
+
+        if ($diagSC)
+        {
+            $blobs = az storage blob list --container-name $diagSC.Name --account-name "$($CanaryVMRG)2sa" --account-key $vmStorageAccountKey -ojson
+            $blobs = $blobs | ConvertFrom-Json
+            foreach ($blob in $blobs)
+            {
+                if ($blob.name -like "$privateVMName*screenshot.bmp")
+                {
+                    $screenShotBlob = $blob
+                }
+            }
+        }
+
+        if ($screenShotBlob)
+        {
+            az storage blob download --name $screenShotBlob.Name --container-name $diagSC.Name --account-name "$($CanaryVMRG)2sa" --account-key $vmStorageAccountKey --file "$CanaryLogPath\$($screenShotBlob.Name)"
+        }
+
+        if (-not (Get-ChildItem -Path $CanaryLogPath -File -Filter $screenShotBlob.name))
+        {
+            throw [System.Exception]"Unable to download screen shot for a Windows VM with private IP"
+        }
+    }
 
     Invoke-Usecase -Name 'EnumerateAllResources' -Description "List out all the resources that have been deployed" -UsecaseBlock `
     {
@@ -495,8 +737,9 @@ while ($runCount -le $NumberOfIterations)
         {
             if ($vmObject = az vm show -g $CanaryVMRG -n $privateVMName)
             {
-                $deleteVM = az vm delete -g $CanaryVMRG -n $privateVMName --yes
-                if (-not (($deleteVM.StatusCode -eq "OK") -and ($deleteVM.IsSuccessStatusCode)))
+                $deleteVM = az vm delete -g $CanaryVMRG -n $privateVMName --yes -ojson
+                $deleteVM = $deleteVM | ConvertFrom-Json
+                if (-not ($deleteVM.Status -eq "Succeeded"))
                 {
                     throw [System.Exception]"Failed to delete the VM $privateVMName"
                 }
