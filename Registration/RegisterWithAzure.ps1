@@ -1,16 +1,16 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# See LICENSE.txt in the project root for license information. 
+﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+# See LICENSE.txt in the project root for license information.
 
-<# 
- 
-.SYNOPSIS 
- 
-This script can be used to register Azure Stack POC with Azure. To run this script, you must have a public Azure subscription of any type. 
-There must also be an account that is an owner or contributor of the subscription. This account cannot be an MSA (i.e. cannot be live.com or hotmail.com) or 2FA account. 
+<#
 
-.DESCRIPTION 
- 
-RegisterToAzure runs local scripts to connect your Azure Stack to Azure. After connecting with Azure, you can test marketplace syndication. 
+.SYNOPSIS
+
+This script can be used to register Azure Stack POC with Azure. To run this script, you must have a public Azure subscription of any type.
+There must also be an account that is an owner or contributor of the subscription. This account cannot be an MSA (i.e. cannot be live.com or hotmail.com) or 2FA account.
+
+.DESCRIPTION
+
+RegisterToAzure runs local scripts to connect your Azure Stack to Azure. After connecting with Azure, you can test marketplace syndication.
 
 The script will follow four steps:
 Configure bridge identity: configures Azure Stack so that it can call to Azure via your Azure subscription
@@ -18,17 +18,17 @@ Get registration request: get Azure Stack environment information to create a re
 Register with Azure: uses Azure powershell to create an "Azure Stack Registration" resource on your Azure subscription
 Activate Azure Stack: final step in connecting Azure Stack to be able to call out to Azure
 
-.PARAMETER azureSubscriptionId  
- 
+.PARAMETER azureSubscriptionId
+
 
 Azure subscription ID that you want to register your Azure Stack with. This parameter is mandatory.
 
-.PARAMETER azureDirectoryTenantName  
- 
+.PARAMETER azureDirectoryTenantName
+
 Name of your AAD Tenant which your Azure subscription is a part of. This parameter is mandatory.
 
 .PARAMETER azureAccountId
- 
+
 Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
 
 .PARAMETER azureCredentialPassword
@@ -45,19 +45,19 @@ URI used for ActivateBridge.ps1 that refers to the endpoint for Azure Resource M
 
 .EXAMPLE
 
-This script must be run from the Host machine of the POC. 
+This script must be run from the Host machine of the POC.
 .\RegisterWithAzure.ps1 -azureSubscriptionId "5e0ae55d-0b7a-47a3-afbc-8b372650abd3" -azureDirectoryTenantId "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com" -azureCredentialPassword "password"
 
- 
-.NOTES 
- Ensure that you have an Azure subscription 
+
+.NOTES
+ Ensure that you have an Azure subscription
 #>
 
 [CmdletBinding()]
 param(
 
     [Parameter(Mandatory=$true)]
-    [String] $azureCredentialPassword,
+    [SecureString] $azureCredentialPassword,
 
     [Parameter(Mandatory=$true)]
     [String] $azureAccountId,
@@ -73,8 +73,11 @@ param(
 
     [Parameter(Mandatory=$false)]
     [String] $azureResourceManagerEndpoint = "https://management.azure.com",
-    
-    [Parameter(Manadatory=$false)]
+
+    [Parameter(Mandatory=$false)]
+    [Switch] $enableSyndication = $true,
+
+    [Parameter(Mandatory=$false)]
     [Switch] $reportUsage = $false
     )
 
@@ -87,18 +90,19 @@ param(
 # Uses refresh tokens and supports 2fa,  MSA accounts
 #
 
-#$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
-#$VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
+$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+$VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
 
 Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -Force
-cd  C:\CloudDeployment\Setup\Activation\Bridge
+Set-Location  C:\CloudDeployment\Setup\Activation\Bridge
 
 #
 # Pre-req: Obtain refresh token for Azure identity
 #
 Import-Module C:\CloudDeployment\Setup\Common\AzureADConfiguration.psm1 -ErrorAction Stop
 
-$AzureCredential = New-Object System.Management.Automation.PSCredential($azureAccountId, (ConvertTo-SecureString -String $azureCredentialPassword -AsPlainText -Force))
+$AzureCredential = New-Object System.Management.Automation.PSCredential($azureAccountId, $azureCredentialPassword)
+
 $AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $azureEnvironment -tenantName $azureDirectoryTenantName
 
 if($AzureCredential)
@@ -147,11 +151,11 @@ Write-Verbose "Register Azure Stack with Azure completed"
 
 $activationDataFile = "c:\temp\regOutput2.json"
 $reg = Get-Content $registrationOutputFile | ConvertFrom-Json
-$enablesyndication = $true
+
 $newProps = @{
     ObjectId          = $reg.properties.ObjectId
     ProvisioningState = $reg.properties.provisioningState
-    enablesyndication = $enablesyndication
+    enablesyndication = $enableSyndication
     reportusage       = $reportUsage
 }
 
