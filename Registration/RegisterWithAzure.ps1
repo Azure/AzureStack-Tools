@@ -58,7 +58,7 @@ This script must be run from the Host machine of the POC.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$false)]
-    [SecureString] $azureAccountPassword,
+    [PSCredential] $azureCredential,
 
     [Parameter(Mandatory=$true)]
     [String] $azureAccountId,
@@ -114,16 +114,15 @@ else
 Import-Module C:\CloudDeployment\Setup\Common\AzureADConfiguration.psm1 -ErrorAction Stop
 $AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $azureEnvironment -tenantName $azureDirectoryTenantName
 
-if($azureAccountPassword)
-{
-    Write-Verbose "Using provided Azure Credentials to get refresh token"
-    $AzureCredential = New-Object System.Management.Automation.PSCredential($azureAccountId, $azureAccountPassword)
-    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName -AADAdminCredential $AzureCredential
-}
-else
+if(-not $azureCredential)
 {
     Write-Verbose "Prompt user to enter Azure Credentials to get refresh token"
     $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName
+}
+else
+{
+    Write-Verbose "Using provided Azure Credentials to get refresh token"
+    $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName -AADAdminCredential $azureCredential
 }
 
 $refreshToken = (ConvertTo-SecureString -string $tenantDetails["RefreshToken"] -AsPlainText -Force)
