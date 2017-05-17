@@ -4,35 +4,30 @@
     "parameters": {
         "VMAdminUserName": {
             "type": "string",
-            "defaultValue": "CanaryAdmin",
             "metadata": {
                 "description": "Administrator username for Virtul Machine 1"
             }
         },
         "VMAdminUserPassword": {
             "type": "securestring",
-            "defaultValue": "CanaryAdmin@123",
             "metadata": {
                 "description": "Administrator user password for Virtul Machine 1"
             }
         },
         "ASCanaryUtilRG": {
             "type": "string",
-            "defaultValue": "canur",
             "metadata": {
                 "description": "Resource Group name where the canary utilities are present"
             }
         },
         "ASCanaryUtilSA": {
             "type": "string",
-            "defaultValue": "canursa25",
             "metadata": {
                 "description": "Storage account name where the canary utilities are present"
             }
         },
         "ASCanaryUtilSC": {
             "type": "string",
-            "defaultValue": "canursc",
             "metadata": {
                 "description": "Storage container name where the canary utilities are present"
             }
@@ -53,7 +48,6 @@
         },
         "vaultName": {
             "type": "string",
-            "defaultValue": "canurkv",
             "metadata": {
                 "description": "Name of Key Vault that has a secret"
             }
@@ -62,22 +56,19 @@
             "type": "string",
             "metadata": {
                 "description": "Maps to the publisher in the Azure Stack Platform Image Repository manifest file Eg: Canonical, Suse, OpenLogic"
-            },
-            "defaultValue": "Canonical"
+            }
         },
         "LinuxImageOffer": {
             "type": "string",
             "metadata": {
                 "description": "Maps to the Offer in the Azure Stack Platform Image Repository manifest file Eg: UbuntuServer, SlesServer, CentOS "
-            },
-            "defaultValue": "UbuntuServer"
+            }
         },
         "LinuxImageSku": {
             "type": "string",
             "metadata": {
                 "description": "Maps to the sku in the Azure Stack Platform Image Repository manifest file Eg: 12.SP1, 6.7 , 7.2"
-            },
-            "defaultValue": "14.04.3-LTS"
+            }
         }
     },
 

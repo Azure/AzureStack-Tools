@@ -16,12 +16,12 @@ param (
     [ValidateNotNullOrEmpty()]
     [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="Tenant ARM endpoint")]
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="default", Mandatory=$true)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
@@ -61,12 +61,12 @@ param (
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "canur",
+    [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "canvr25",
+    [string]$CanaryVMRG = "canvr" + [Random]::new().Next(1,999),
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -105,7 +105,7 @@ Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
 
-$storageAccName         = $CanaryUtilitiesRG + "sa25"
+$storageAccName         = $CanaryUtilitiesRG + "sa"
 $storageCtrName         = $CanaryUtilitiesRG + "sc"
 $keyvaultName           = $CanaryUtilitiesRG + "kv"
 $keyvaultCertName       = "ASCanaryVMCertificate"
@@ -336,7 +336,7 @@ while ($runCount -le $NumberOfIterations)
                 $registered = $requiredRPs | Where-Object {$_.RegistrationState -eq "Registered"}
                 if (($sleepTime -ge 120) -and $notRegistered)
                 {
-                    Get-AzureRmResourceProvider | Format-Table
+                    az provider list -otable
                     throw [System.Exception] "Resource providers did not get registered in time."
                 }
                 elseif ($registered.Count -eq $requiredRPs.Count)
@@ -344,6 +344,7 @@ while ($runCount -le $NumberOfIterations)
                     break
                 }
             }
+            az provider list -otable
         }
     }
 
@@ -500,24 +501,60 @@ while ($runCount -le $NumberOfIterations)
         }
 
         $templateDeploymentName = "CanaryVMDeployment"
-
+        $parametersJson = @"
+{
+    "parameters": {    
+        "VMAdminUserName": {
+            "value": "$VMAdminUserName"
+        },
+        "VMAdminUserPassword": {
+            "value": "$VMAdminUserPass"
+        },
+        "ASCanaryUtilRG": {
+            "value": "$CanaryUtilitiesRG"
+        },
+        "ASCanaryUtilSA": {
+            "value": "$storageAccName"
+        },
+        "ASCanaryUtilSC": {
+            "value": "$storageCtrName"
+        },
+        "vaultName": {
+            "value": "$keyvaultName"
+        },
+        "windowsOSVersion": {
+            "value": "$osVersion"
+        },
+        "LinuxImagePublisher": {
+            "value": "$linuxImagePublisher"
+        },
+        "LinuxImageOffer": {
+            "value": "$linuxImageOffer"
+        },
+        "LinuxImageSku": {
+            "value": "$LinuxOSSku"
+        }
+    }
+}
+"@ 
+        Set-Content -Path parameters.json -value $parametersJson -Force
         if (-not $linuxImgExists)
         {
-            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose -ojson
+            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose --parameters `@parameters.json -ojson
             $templateError = $templateError | convertfrom-json
         }
         elseif ($linuxImgExists) 
         {
-            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --verbose -ojson
+            $templateError = cmd /c az group deployment validate --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --parameters `@parameters.json --verbose -ojson
             $templateError = $templateError | convertfrom-json
         }
 
         if ((-not $templateError.Error) -and ($linuxImgExists))
         {
-            cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --verbose #testdeploytemplate.json --verbose # 
+            cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.CLI.json --parameters `@parameters.json --verbose 
         }
         elseif (-not $templateError.Error) {
-            cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --verbose
+            cmd /c az group deployment create --name $templateDeploymentName --resource-group $CanaryVMRG --template-file $PSScriptRoot\azuredeploy.nolinux.CLI.json --parameters `@parameters.json --verbose
         }
         else 
         {
@@ -793,7 +830,13 @@ while ($runCount -le $NumberOfIterations)
             }   
         }
     }
+    
     End-Scenario
     $runCount += 1
     Get-CanaryResult
+}
+
+if ($NumberOfIterations -gt 1)
+{
+    Get-CanaryLonghaulResult -LogPath $CanaryLogPath
 }

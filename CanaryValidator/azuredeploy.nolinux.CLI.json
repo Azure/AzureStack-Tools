@@ -4,42 +4,37 @@
     "parameters": {
         "VMAdminUserName": {
             "type": "string",
-            "defaultValue": "CanaryAdmin",
             "metadata": {
                 "description": "Administrator username for Virtul Machine 1"
             }
         },
         "VMAdminUserPassword": {
             "type": "securestring",
-            "defaultValue": "CanaryAdmin@123",
             "metadata": {
                 "description": "Administrator user password for Virtul Machine 1"
             }
         },
         "ASCanaryUtilRG": {
             "type": "string",
-            "defaultValue": "canur",
             "metadata": {
                 "description": "Resource Group name where the canary utilities are present"
             }
         },
         "ASCanaryUtilSA": {
             "type": "string",
-            "defaultValue": "canursa",
             "metadata": {
                 "description": "Storage account name where the canary utilities are present"
             }
         },
         "ASCanaryUtilSC": {
             "type": "string",
-            "defaultValue": "canursc",
             "metadata": {
                 "description": "Storage container name where the canary utilities are present"
             }
         },
         "windowsOSVersion": {
             "type": "string",
-            "defaultValue": "2016-Datacenter",
+            "defaultValue": "2016-Datacenter-Core",
             "allowedValues": [
                 "2008-R2-SP1",
                 "2012-Datacenter",
@@ -53,7 +48,6 @@
         },
         "vaultName": {
             "type": "string",
-            "defaultValue": "canurkv",
             "metadata": {
                 "description": "Name of Key Vault that has a secret"
             }
@@ -85,7 +79,7 @@
             "metadata": {
                 "description": "Maps to the sku in the Azure Stack Platform Image Repository manifest file Eg: 12.SP1, 6.7 , 7.2"
             },
-            "defaultValue": "16.04-LTS"
+            "defaultValue": "14.04.3-LTS"
         }        
     },
 
