@@ -6,7 +6,7 @@
 .SYNOPSIS
 
 This script can be used to register Azure Stack POC with Azure. To run this script, you must have a public Azure subscription of any type.
-There must also be an account that is an owner or contributor of the subscription. This account cannot be an MSA (i.e. cannot be live.com or hotmail.com) or 2FA account.
+There must also be an account that is an owner or contributor of the subscription. 
 
 .DESCRIPTION
 
@@ -31,9 +31,9 @@ Name of your AAD Tenant which your Azure subscription is a part of. This paramet
 
 Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
 
-.PARAMETER azureCredentialPassword
+.PARAMETER azureAccountPassword
 
-Password for the Azure subscription. You will be prompted to type in this password. This parameter is mandatory.
+Password for the Azure subscription. You will be prompted to type in this password if its not specified.  Make sure JavaScript is enabled for the browser.
 
 .PARAMETER azureEnvironment
 
@@ -50,14 +50,15 @@ This script must be run from the Host machine of the POC.
 
 
 .NOTES
- Ensure that you have an Azure subscription
+ Ensure that you have an Azure subscription and it is registered for Microsoft.AzureStack namespace in Azure.
+ Namespace can be registered with the following command:
+ Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack' 
 #>
 
 [CmdletBinding()]
 param(
-
-    [Parameter(Mandatory=$true)]
-    [SecureString] $azureCredentialPassword,
+    [Parameter(Mandatory=$false)]
+    [SecureString] $azureAccountPassword,
 
     [Parameter(Mandatory=$true)]
     [String] $azureAccountId,
@@ -79,16 +80,11 @@ param(
 
     [Parameter(Mandatory=$false)]
     [Switch] $reportUsage = $false
-    )
+)
 
 #requires -Module AzureRM.Profile
 #requires -Module AzureRM.Resources
 #requires -RunAsAdministrator
-
-#
-# Wrapper script to test registration and activation
-# Uses refresh tokens and supports 2fa,  MSA accounts
-#
 
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
@@ -97,17 +93,31 @@ Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -Force
 Set-Location  C:\CloudDeployment\Setup\Activation\Bridge
 
 #
-# Pre-req: Obtain refresh token for Azure identity
+# Pre-req: Version check
 #
+
+$versionInfo = [xml] (Get-Content -Path C:\CloudDeployment\Configuration\Version\version.xml) 
+$minVersion  = "1.0.170501.1"
+if($versionInfo.Version -lt $minVersion)
+{
+    Write-Error -Message "Script only applicable for Azure Stack builds $minVersion or later"
+}
+else
+{
+    Write-Verbose -Message "Running registration on build $($versionInfo.Version)" -Verbose
+}
+
+#
+# Obtain refresh token for Azure identity
+#
+
 Import-Module C:\CloudDeployment\Setup\Common\AzureADConfiguration.psm1 -ErrorAction Stop
-
-$AzureCredential = New-Object System.Management.Automation.PSCredential($azureAccountId, $azureCredentialPassword)
-
 $AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $azureEnvironment -tenantName $azureDirectoryTenantName
 
-if($AzureCredential)
+if($azureAccountPassword)
 {
     Write-Verbose "Using provided Azure Credentials to get refresh token"
+    $AzureCredential = New-Object System.Management.Automation.PSCredential($azureAccountId, $azureAccountPassword)
     $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName -AADAdminCredential $AzureCredential
 }
 else
@@ -138,11 +148,13 @@ Write-Verbose "New registration request completed"
 # Step 3: Register Azure Stack with Azure
 #
 
+New-Item -ItemType Directory -Force -Path "C:\temp"
 $registrationRequestFile = "c:\temp\registration.json"
 $registrationOutputFile = "c:\temp\registrationOutput.json"
+
 .\Register-AzureStack.ps1 -BillingModel PayAsYouUse -EnableSyndication -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
-                            -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
-                            -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
+                          -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
+                          -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
 Write-Verbose "Register Azure Stack with Azure completed"
 
 #
