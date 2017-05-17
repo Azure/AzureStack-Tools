@@ -31,9 +31,9 @@ Name of your AAD Tenant which your Azure subscription is a part of. This paramet
 
 Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
 
-.PARAMETER azureAccountPassword
+.PARAMETER azureCredential
 
-Password for the Azure subscription. You will be prompted to type in this password if its not specified.  Make sure JavaScript is enabled for the browser.
+Powershell object that contains credential information such as user name and password. If not supplied script will request login via gui
 
 .PARAMETER azureEnvironment
 
