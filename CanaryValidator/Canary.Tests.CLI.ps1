@@ -611,7 +611,7 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'RestartVMWithPublicIP' -Description "Restart the VM which has a public IP address" -UsecaseBlock `
     {
-        if ($vmObject = az vm show -g $CanaryVMRG -n $publicVMName -ErrorAction Stop)
+        if ($vmObject = az vm show -g $CanaryVMRG -n $publicVMName)
         {
             $restartVM = az vm restart -g $CanaryVMRG -n $publicVMName -ojson
             $restartVM = $restartVM | ConvertFrom-Json
