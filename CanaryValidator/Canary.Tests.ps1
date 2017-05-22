@@ -655,18 +655,24 @@ while ($runCount -le $NumberOfIterations)
         if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
-            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
             {
                 Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
-                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock -ErrorVariable remoteExecError 2>$null
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
                 if ($privateVMResponseFromRemoteSession)
                 {
-                    $publicVMSession | Remove-PSSession -Confirm:$false
                     $privateVMResponseFromRemoteSession
                 }
                 else 
                 {
-                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                    throw [System.Exception]"The expected certificate from KV was not found on the tenant VM with private IP: $privateVMIP"
                 }
             }    
         }
@@ -803,18 +809,24 @@ while ($runCount -le $NumberOfIterations)
         if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
-            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
             {
                 Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
-                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock -ErrorVariable remoteExecError 2>$null
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
                 if ($privateVMResponseFromRemoteSession)
                 {
-                    $publicVMSession | Remove-PSSession -Confirm:$false
                     $privateVMResponseFromRemoteSession
                 }
                 else 
                 {
-                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                    throw [System.Exception]"Host name could not be retrieved from the tenant VM with private IP: $privateVMIP"
                 }
             }    
         }
