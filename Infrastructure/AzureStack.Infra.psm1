@@ -28,11 +28,11 @@ Function Get-AzSAlert{
 
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
-    $Alert=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Alerts=$Alert.value
-    $Alertsprop=$Alerts.properties 
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
+    $Alert = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Alerts = $Alert.value
+    $Alertsprop = $Alerts.properties 
     $Alertsprop 
 }
 export-modulemember -function Get-AzSAlert
@@ -60,11 +60,10 @@ Function Get-AzSScaleUnit{
 
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)   
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/ScaleUnits?api-version=2016-05-01"
-    $Cluster=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Cluster.value |select name,location,properties
-   
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)   
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/ScaleUnits?api-version=2016-05-01"
+    $Cluster = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Cluster.value | Select-Object name,location,properties
 }       
 export-modulemember -function Get-AzSScaleUnit
 
@@ -91,11 +90,11 @@ Function Get-AzSScaleUnitNode{
 
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/scaleunitnodes?api-version=2016-05-01"
-    $nodes=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $nodesprop=$nodes.value
-    $nodesprop|select name,location,properties
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/scaleunitnodes?api-version=2016-05-01"
+    $nodes = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $nodesprop = $nodes.value
+    $nodesprop | Select-Object name,location,properties
 }
        
 export-modulemember -function Get-AzSScaleUnitNode
@@ -124,13 +123,12 @@ Function Get-AzSStorageCapacity{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
 
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/storagesubSystems?api-version=2016-05-01"
-    $Storage=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Storageprop=$storage.value
-    $storageprop|select name,location,properties
-    
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/storagesubSystems?api-version=2016-05-01"
+    $Storage = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Storageprop = $storage.value
+    $storageprop | Select-Object name,location,properties
 }
 export-modulemember -function Get-AzSStorageCapacity
 
@@ -192,12 +190,11 @@ Function Get-AzSInfraRoleInstance{
     )
 
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraRoleInstances?api-version=2016-05-01"
-    $VMs=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $VMprop=$VMs.value
-    $VMprop|select name,properties 
-    
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraRoleInstances?api-version=2016-05-01"
+    $VMs = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $VMprop = $VMs.value
+    $VMprop | Select-Object name,properties 
 }       
 export-modulemember -function Get-AzSInfraRoleInstance
 
@@ -225,11 +222,11 @@ Function Get-AzSStorageShare{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/fileShares?api-version=2016-05-01"
-    $Shares=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Shareprop=$Shares.value
-    $Shareprop|select name,location,properties
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/fileShares?api-version=2016-05-01"
+    $Shares = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Shareprop = $Shares.value
+    $Shareprop | Select-Object name,location,properties
     
 }
 export-modulemember -function Get-AzSStorageShare
@@ -258,11 +255,11 @@ Function Get-AzSLogicalNetwork{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/logicalNetworks?api-version=2016-05-01"
-    $LNetworks=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $LNetworkprop=$LNetworks.value
-    $LNetworkprop|select name,location,properties
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/logicalNetworks?api-version=2016-05-01"
+    $LNetworks = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $LNetworkprop = $LNetworks.value
+    $LNetworkprop | Select-Object name,location,properties
     
 }
 export-modulemember -function Get-AzSLogicalNetwork
@@ -291,12 +288,11 @@ Function Get-AzSUpdateSummary{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/regionUpdateStatus?api-version=2016-05-01"
-    $USummary=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $USummaryprop=$USummary.value
-    $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state
-    
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/regionUpdateStatus?api-version=2016-05-01"
+    $USummary = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $USummaryprop = $USummary.value
+    $USummaryprop.properties | Select-Object locationName,currentversion,lastUpdated,lastChecked,state
 }
 export-modulemember -function Get-AzSUpdateSummary
 
@@ -324,11 +320,11 @@ Function Get-AzSUpdate{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates?api-version=2016-05-01"
-    $Updates=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Updateprop=$Updates.value
-    $Updateprop.properties|select updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates?api-version=2016-05-01"
+    $Updates = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Updateprop = $Updates.value
+    $Updateprop.properties | Select-Object updateName,version,isApplicable,description,state,isDownloaded,packageSizeInMb,kblink
     
 }
 export-modulemember -function Get-AzSUpdate
@@ -361,11 +357,11 @@ Function Get-AzSUpdateRun{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate/updateRuns?api-version=2016-05-01"
-    $UpdateRuns=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Updaterunprop=$UpdateRuns.value
-    $Updaterunprop.properties|select updateLocation,updateversion,state,timeStarted,duration
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate/updateRuns?api-version=2016-05-01"
+    $UpdateRuns = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Updaterunprop = $UpdateRuns.value
+    $Updaterunprop.properties | Select-Object updateLocation,updateversion,state,timeStarted,duration
     
 }
 export-modulemember -function Get-AzSUpdateRun
@@ -441,20 +437,18 @@ Function Close-AzSAlert{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts?api-version=2016-05-01"
     $Alert=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Alerts=$Alert.value |where-object {$_.properties.alertid -eq "$alertid"}
-    $alertname=$alerts.name
+    $Alerts = $Alert.value |where-object {$_.properties.alertid -eq "$alertid"}
+    $alertname = $alerts.name
     $Alerts.properties.state = "Closed"
     $AlertUpdateBody = $Alerts | ConvertTo-Json
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts/${alertname}?api-version=2016-05-01"
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts/${alertname}?api-version=2016-05-01"
     $URI
-    $Close=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $AlertUpdateBody
-    $CloseRun=$Close.value
+    $Close = Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $AlertUpdateBody
+    $CloseRun = $Close.value
     $closeRun 
-    
-
 }
 export-modulemember -function Close-AzSAlert
 
@@ -482,11 +476,11 @@ Function Get-AzSIPPool{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/IPPools?api-version=2016-05-01"
-    $IPPools=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $IPPoolprop=$IPPools.value
-    $IPPoolprop.properties|select startIpAddress,endIpAddress,numberOfIpAddresses,numberOfAllocatedIpAddresses
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/IPPools?api-version=2016-05-01"
+    $IPPools = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $IPPoolprop = $IPPools.value
+    $IPPoolprop.properties | Select-Object startIpAddress,endIpAddress,numberOfIpAddresses,numberOfAllocatedIpAddresses
 }
 export-modulemember -function Get-AzSIPPool
 
@@ -515,11 +509,11 @@ Function Get-AzSMaCPool{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/MacAddressPools?api-version=2016-05-01"
-    $MACPools=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $MaCPoolsprop=$MaCPools.value
-    $MaCPoolsprop.properties|select startmacAddress,endmacAddress,numberOfmacAddresses,numberOfAllocatedmacAddresses
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/MacAddressPools?api-version=2016-05-01"
+    $MACPools = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $MaCPoolsprop = $MaCPools.value
+    $MaCPoolsprop.properties | Select-Object startmacAddress,endmacAddress,numberOfmacAddresses,numberOfAllocatedmacAddresses
 }
 export-modulemember -function Get-AzSMaCPool
 
@@ -548,11 +542,11 @@ Function Get-AzSGatewayPool{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/edgeGatewayPools?api-version=2016-05-01"
-    $GatewayPools=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $MGatewaysprop=$GatewayPools.value
-    $MGatewaysprop.properties|select Gatewaytype,numberofgateways,redundantGatewayCount,gatewayCapacityKiloBitsPerSecond,publicIpAddress
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/edgeGatewayPools?api-version=2016-05-01"
+    $GatewayPools = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $MGatewaysprop = $GatewayPools.value
+    $MGatewaysprop.properties | Select-Object Gatewaytype,numberofgateways,redundantGatewayCount,gatewayCapacityKiloBitsPerSecond,publicIpAddress
 }
 export-modulemember -function Get-AzSGatewayPool
 
@@ -560,7 +554,6 @@ export-modulemember -function Get-AzSGatewayPool
     .SYNOPSIS
     List SLB MUX
 #>
-
 
 Function Get-AzSSLBMUX{
     [CmdletBinding()]
@@ -582,11 +575,11 @@ Function Get-AzSSLBMUX{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/SlbMuxInstances?api-version=2016-05-01"
-    $SLBMUX=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $SLBMUXprop=$SLBMUX.value
-    $SLBMUXprop.properties|select VirtualServer,ConfigurationState
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/SlbMuxInstances?api-version=2016-05-01"
+    $SLBMUX = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $SLBMUXprop = $SLBMUX.value
+    $SLBMUXprop.properties | Select-Object VirtualServer,ConfigurationState
 }
 export-modulemember -function Get-AzSSLBMUX
 
@@ -615,11 +608,11 @@ Function Get-AzSGateway{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/edgegateways?api-version=2016-05-01"
-    $Gateways=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $Gatewaysprop=$Gateways.value
-    $Gatewaysprop.properties|select state, numberofconnections,totalcapacity,availablecapacity
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/edgegateways?api-version=2016-05-01"
+    $Gateways = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Gatewaysprop = $Gateways.value
+    $Gatewaysprop.properties | Select-Object state, numberofconnections, totalcapacity, availablecapacity
 }
 export-modulemember -function Get-AzSGateway
 
@@ -688,9 +681,9 @@ Function Stop-AzSInfraRoleInstance{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraroleinstances/$name/shutdown?api-version=2016-05-01"      
-    $PowerOff=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraroleinstances/$name/shutdown?api-version=2016-05-01"      
+    $PowerOff = Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
     $PowerOff
 }
 export-modulemember -function Stop-AzSInfraRoleInstance
@@ -724,9 +717,9 @@ Function Restart-AzSInfraRoleInstance{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraroleinstances/$name/reboot?api-version=2016-05-01"      
-    $Restart=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/infraroleinstances/$name/reboot?api-version=2016-05-01"      
+    $Restart = Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
     $Restart
 }
 export-modulemember -function Restart-AzSInfraRoleInstance
@@ -769,23 +762,27 @@ Function Add-AzSIPPool{
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)      
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/IPPools/'$Name'?api-version=2016-05-01"
-    $IPPoolBody=@{
-    name=$name
-    properties=@{"StartIpAddress"="$StartIPAddress";"EndIpAddress"="$EndIPAddress";"AddressPrefix"="$AddressPrefix"}
-    subscription=$subscription
-    location=$region
-    type='Microsoft.Fabric.Admin/fabricLocations/ipPools'
-    id='subscriptions/$subscription/resourcegroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/ipPools/$name'
-    tags=''
-}
+    $subscription, $headers = (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)      
+    $URI = "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/IPPools/'$Name'?api-version=2016-05-01"
+    $IPPoolBody = @{
+        name = $name
+        properties = @{"StartIpAddress"="$StartIPAddress";"EndIpAddress"="$EndIPAddress";"AddressPrefix"="$AddressPrefix"}
+        subscription = $subscription
+        location = $region
+        type = 'Microsoft.Fabric.Admin/fabricLocations/ipPools'
+        id = 'subscriptions/$subscription/resourcegroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/ipPools/$name'
+        tags = ''
+    }
 
-$IPPoolBodyJson =$IPPoolBody |ConvertTo-Json
-    $NewIPPool=Invoke-RestMethod -Method Put -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $IPPoolBodyJson
-
+    $IPPoolBodyJson = $IPPoolBody | ConvertTo-Json
+    Invoke-RestMethod -Method Put -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $IPPoolBodyJson
 }
 export-modulemember -function Add-AzSIPPool
+
+<#
+    .SYNOPSIS
+    Set location information
+#>
 
 Function Set-AzSLocationInformation {
     Param(    

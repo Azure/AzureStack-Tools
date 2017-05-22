@@ -11,7 +11,7 @@ function Add-AzureStackVMSSGalleryItem {
 
     $saName = "vmssgallery"
 
-    $sa = New-AzureRmStorageAccount -ResourceGroupName $rgName -Location local -Name $saName -Type Standard_LRS
+    New-AzureRmStorageAccount -ResourceGroupName $rgName -Location local -Name $saName -Type Standard_LRS
 
     $cName = "gallery"
 
@@ -36,7 +36,7 @@ function Add-AzureStackVMSSGalleryItem {
 function Remove-AzureStackVMSSGalleryItem {
     $item = Get-AzureRMGalleryItem -Name "microsoft.vmss.1.3.6"
     if($item) {
-        $request = $item | Remove-AzureRMGalleryItem
+        $item | Remove-AzureRMGalleryItem
         $item
     }
 }
@@ -279,7 +279,7 @@ Function Add-VMImage{
             Write-Error -Message "VM image download was canceled." -ErrorAction Stop
         }
 
-        Write-Host "Downloading";
+        Write-Information "Downloading";
         Start-Sleep -Seconds 10
         $downloadingStatusCheckCount++
         if($downloadingStatusCheckCount % 30 -eq 0){
@@ -295,8 +295,8 @@ Function Add-VMImage{
 
     if($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded') {
         $GalleryItem = CreateGalleyItem -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -title $title -description $description 
-        $blob = $container| Set-AzureStorageBlobContent  –File $GalleryItem.FullName  –Blob $galleryItem.Name
-        $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName,$galleryItem.Name
+        $container | Set-AzureStorageBlobContent –File $GalleryItem.FullName –Blob $galleryItem.Name 
+        $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName, $galleryItem.Name
 
         
         Add-AzureRMGalleryItem -GalleryItemUri $galleryItemURI
@@ -487,7 +487,8 @@ function New-Server2016VMImage {
                 }
 
                 Write-Verbose -Message "Making VHD bootable"
-                $null = Invoke-Expression -Command "$VHDDriveLetter`:\Windows\System32\bcdboot.exe $VHDDriveLetter`:\windows /s $VHDDriveLetter`: /f BIOS" -ErrorAction Stop
+                $bcdbootParams = @("$VHDDriveLetter`:\windows", "/s", "$VHDDriveLetter`:", "/f", "BIOS")
+                $null = & "$VHDDriveLetter`:\Windows\System32\bcdboot.exe" $bcdbootParams
             } catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             } finally {
@@ -680,7 +681,6 @@ Function CreateGalleyItem{
     New-Item -ItemType directory -Path $extractedGalleryItemPath | Out-Null
     expand-archive -Path "$workdir\CustomizedVMGalleryItem.zip" -DestinationPath $extractedGalleryItemPath -Force
         
-    $extractedName = 'MarketplaceItem.zip'
     $maxAttempts = 5
     for ($retryAttempts = 1; $retryAttempts -le $maxAttempts; $retryAttempts++) {
         try {
@@ -742,9 +742,9 @@ Function CreateGalleyItem{
     $extractedGalleryPackagerExePath = Join-Path $workdir "Azure Stack Marketplace Item Generator and Sample\AzureGalleryPackageGenerator"
     $galleryItemName = $publisher + "." + $name + "." + $version + ".azpkg"
     $currentPath = $pwd
-    cd $extractedGalleryPackagerExePath
+    Set-Location $extractedGalleryPackagerExePath
     .\AzureGalleryPackager.exe package -m $manifestPath -o $workdir
-    cd $currentPath
+    Set-Location $currentPath
 
     #cleanup
     Remove-Item $extractedGalleryItemPath -Recurse -Force
@@ -935,7 +935,7 @@ Function Add-VMExtension{
             Write-Error -Message "VM extension download was canceled." -ErrorAction Stop
         }
 
-        Write-Host "Downloading";
+        Write-Information "Downloading";
         Start-Sleep -Seconds 4
         $extensionHandler = Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
     }
@@ -1000,7 +1000,7 @@ Function GetARMEndpoint{
     )
 
     $armEnv = Get-AzureRmEnvironment -Name $EnvironmentName
-    if($armEnv -ne $null) {
+    if($null -ne $armEnv) {
         $ARMEndpoint = $armEnv.ResourceManagerUrl
     }
     else {
