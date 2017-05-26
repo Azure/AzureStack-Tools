@@ -21,7 +21,7 @@ To install the Azure Stack Development Kit you require
 - The latest cloudbuilder.vhdx
 - The installer UI script
 
-The Azure Stack Development Kit installer UI script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request. To better understand the usage of the tool we gather minimal generic usage data that does contain any customer specific information.
+The Azure Stack Development Kit installer UI script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
 #>
 
 #requires –runasadministrator
@@ -1234,8 +1234,6 @@ $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
 $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
 
 Write-Host "." -NoNewline -ForegroundColor Cyan
-F_ASTT_I
-Write-Host "." -NoNewline -ForegroundColor Cyan
 
 # Get environment details
 # CloudBuilder
@@ -1247,8 +1245,6 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
         $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
         $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
         $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
-        $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-        F_ASTT_S -tags $tags
         }
     else{
         # Import module to check current deployment status
@@ -1260,8 +1256,6 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
             $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
             $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
             $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
-            $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-            F_ASTT_S -tags $tags
             }
         # Deployment in progress
         elseif($actionProgress.LastAttribute.Value -eq 'InProgress'){
@@ -1273,8 +1267,6 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
                 $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
                 $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
                 $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
-                $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-                F_ASTT_S -tags $tags
                 }
             # Deployed with deployment UI
             else {
@@ -1285,8 +1277,6 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
                     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
                     $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
                     $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
-                    $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-                    F_ASTT_S -tags $tags
                     }
                 # Contains 2 or more deplployment logs
                 else {
@@ -1294,8 +1284,6 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
                     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
                     $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle_Logs 
                     $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent_Logs
-                    $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-                    F_ASTT_S -tags $tags
                     }
                 }
             }
@@ -1305,8 +1293,6 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
             $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
             $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Completed.Mode_LeftTitle
             $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Completed.Mode_LeftContent
-            $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-            F_ASTT_S -tags $tags
         }
 
     }
@@ -1330,8 +1316,6 @@ else {
     $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_SafeOS.Mode_LeftContent
     $syncHash.Control_Mode_Tbl_RightTitle.Text = $Text_SafeOS.Mode_RightTitle
     $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_SafeOS.Mode_RightContent
-    $tags=@{"tag1"="Initialize";"tag2"=$Script:Initialized}
-    F_ASTT_S -tags $tags
     }
 
 Write-Host "." -ForegroundColor Cyan
@@ -1427,11 +1411,6 @@ $bootOptions | foreach {
 }
 
 Function F_Reboot {
-    #region ASST
-    $tags=@{"tag1"="Execute";"tag2"=$Script:Initialized;"tag3"="Reboot"}
-    F_ASTT_S -tags $tags
-    #endregion
-
     #region Boot
     $BootID = '"' + $syncHash.Control_Reboot_Lvw_Options.SelectedItem.ID + '"'
     bcdedit /bootsequence $BootID
@@ -1730,11 +1709,6 @@ Function F_Install {
     '<config status="rerun" run="0"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
     #endregion Rerun Count
 
-    #region ASST
-    $tags=@{"tag1"="Execute";"tag2"=$Script:Initialized;"tag3"=$synchash.Control_Creds_Cbx_Idp.SelectedItem}
-    F_ASTT_S -tags $tags
-    #endregion
-
     #region Install
     Start-Process powershell $filepath
     #endregion
@@ -1748,11 +1722,6 @@ Function F_Rerun {
     '<config status="rerun" run="' + ($Run+1) + '"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
     #endregion
 
-    #region ASST
-    $tags=@{"tag1"="Execute";"tag2"=$Script:Initialized;"tag3"=[string]($Run+1)}
-    F_ASTT_S -tags $tags
-    #endregion
-
     #region Rerun
     cd C:\CloudDeployment\Setup
     .\InstallAzureStackPOC.ps1 -Rerun
@@ -1760,55 +1729,12 @@ Function F_Rerun {
 }
 
 Function F_GetAzureStackLogs {
-    #region ASST
-    $tags=@{"tag1"="Execute";"tag2"=$Script:Initialized}
-    F_ASTT_S -tags $tags
-    #endregion
-
     #region Logs
     cd C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
     Import-Module .\Microsoft.AzureStack.Diagnostics.DataCollection.psd1
     Get-AzureStackLogs -OutputPath C:\AzureStackLogs
     #endregion
 }
-
-function F_ASTT_I {
-try {
-    $ASTT_Uri = "https://aka.ms/azurestacktools-ts"
-    $ASTT_Req = [System.Net.WebRequest]::Create($ASTT_Uri)
-    $ASTT_Req.AllowAutoRedirect=$false
-    $ASTT_Rsp = $ASTT_Req.GetResponse()
-    $syncHash.Add("ASTT_RE",$ASTT_Rsp)
-}
-catch {}
-try {
-    $ASTT_Md5 = new-object System.Security.Cryptography.MD5CryptoServiceProvider
-    $ASTT_Obj = Get-WmiObject win32_bios
-    $ASTT_Enc = [System.Text.Encoding]::UTF8.GetBytes($ASTT_Obj.SerialNumber)
-    $ASTT_Cha = $ASTT_Md5.ComputeHash($ASTT_Enc)
-    $ASTT_Cid = $null
-    foreach($byte in $ASTT_Cha)
-    {
-        $ASTT_Cid += "{0:X2}" -f $byte
-    }
-    $syncHash.Add("ASTT_CID",$ASTT_Cid)
-}
-catch {}
-}
-
-function F_ASTT_S {
-param(
-$tags
-)
-    $body = @{"id" = "asdk";"cid"=$syncHash.ASTT_CID}
-    $tags | ForEach-Object {$body += $_}
-
-try {
-    Invoke-RestMethod -Method Post -Uri $syncHash.ASTT_RE.GetResponseHeader("Location") -Body ($body | ConvertTo-Json) -ContentType "application/json" | out-null}
-catch {}
-}
-
-
 #endregion Functions
 
 #region Events
@@ -2326,11 +2252,6 @@ ElseIf ($Script:Initialized -eq "SafeOS"){
 $syncHash.Control_Summary_Btn_Next.Add_Click({
 
 If ($Script:Initialized -eq "SafeOS"){
-    #region ASST
-    $tags=@{"tag1"="Execute";"tag2"=$Script:Initialized}
-    F_ASTT_S -tags $tags
-    #endregion
-
     $Form.Close()
     Restart-Computer -Force
 }
