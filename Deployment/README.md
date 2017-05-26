@@ -86,4 +86,4 @@ If the installation completed succesfully, but you ran into an issue that requir
 The installer script allows you to easily initiate a reboot to the SafeOS to start a redeployment of your Azure Stack Development Kit. Start the installer script and select Reboot. You will be presented with the current boot options. Select the entry for the SafeOS and select Reboot. This creates a onetime override in the boot order. The SafeOS boot entry will be select automatically. The next reboot the boot configuration will resume its normal order and the host will boot into the cloudbuilder.vhdx again.
 
 ### Note
-The Azure Stack Development Kit installer script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request. To better understand the usage of the tool we gather minimal generic usage data that does contain any customer specific information.
+The Azure Stack Development Kit installer script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
