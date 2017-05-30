@@ -1678,7 +1678,7 @@ Function F_Install {
     }
 
     If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
-        ' -UseADFS $true' |  Add-Content $filepath -NoNewline
+        ' -UseADFS:$true' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Rbt_Static.IsChecked){
