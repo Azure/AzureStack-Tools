@@ -95,12 +95,20 @@ param (
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log"   
+    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log",
+    [parameter(HelpMessage="List of usecases to be excluded from execution")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "GetAzureStackScaleUnitNode"),
+    [parameter(HelpMessage="Lists the available usecases in Canary")]
+    [Parameter(ParameterSetName="listavl", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]  
+    [switch]$ListAvailable     
 )
 
-#Requires -Modules AzureRM
+#requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
 #Requires -RunAsAdministrator
-Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
+Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force -DisableNameChecking
 Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
 Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
@@ -134,15 +142,15 @@ while ($runCount -le $NumberOfIterations)
     #
     # Start Canary 
     #  
+    if($ListAvailable){$listAvl = $true} else{$listAvl = $false}
     $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
     $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
-
-    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
+    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure -ListAvailable $listAvl -ExclusionList $ExclusionList
 
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
     $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
 
-    if(-not $EnvironmentDomainFQDN)
+    if((-not $EnvironmentDomainFQDN) -and (-not $listAvl))
     {
         $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
         $EnvironmentDomainFQDN = $endptres.portalEndpoint
@@ -251,12 +259,12 @@ while ($runCount -le $NumberOfIterations)
 
     Invoke-Usecase -Name 'ListUpdatesResourceProviderInfo' -Description "List URP information like summary of updates available, update to be applied, last update applied etc." -UsecaseBlock `
     {        
-	    Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
         {
             Get-AzSUpdateSummary -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }
 
-	    Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
         {
             Get-AzSUpdate -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }         
@@ -268,7 +276,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
             }
         }
     }
@@ -288,7 +296,7 @@ while ($runCount -le $NumberOfIterations)
                     }
                     New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                     $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
                     Remove-Item $CanaryCustomImageFolder -Force -Recurse
                 }    
             }
@@ -647,18 +655,24 @@ while ($runCount -le $NumberOfIterations)
         if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
-            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
             {
                 Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
-                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock -ErrorVariable remoteExecError 2>$null
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
                 if ($privateVMResponseFromRemoteSession)
                 {
-                    $publicVMSession | Remove-PSSession -Confirm:$false
                     $privateVMResponseFromRemoteSession
                 }
                 else 
                 {
-                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                    throw [System.Exception]"The expected certificate from KV was not found on the tenant VM with private IP: $privateVMIP"
                 }
             }    
         }
@@ -795,18 +809,24 @@ while ($runCount -le $NumberOfIterations)
         if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
-            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
             {
                 Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
-                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock -ErrorVariable remoteExecError 2>$null
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
                 if ($privateVMResponseFromRemoteSession)
                 {
-                    $publicVMSession | Remove-PSSession -Confirm:$false
                     $privateVMResponseFromRemoteSession
                 }
                 else 
                 {
-                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                    throw [System.Exception]"Host name could not be retrieved from the tenant VM with private IP: $privateVMIP"
                 }
             }    
         }
@@ -859,7 +879,7 @@ while ($runCount -le $NumberOfIterations)
             }
         }
 
-        if ($TenantAdminCredentials)
+        if (($TenantAdminCredentials) -or ($listAvl))
         {
             Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
             {
@@ -893,7 +913,10 @@ while ($runCount -le $NumberOfIterations)
 
     End-Scenario
     $runCount += 1
-    Get-CanaryResult
+    if (-not $ListAvailable)
+    {
+        Get-CanaryResult
+    }    
 }
 
 if ($NumberOfIterations -gt 1)

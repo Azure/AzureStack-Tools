@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, VpnClient, AzureStack
+#requires -Modules AzureRM.Profile, VpnClient, AzureRM.AzureStackAdmin
 
 <#
     .SYNOPSIS
@@ -128,7 +128,7 @@ function Add-AzureStackAzureRmEnvironment {
     $armEnv = Get-AzureRmEnvironment -Name $Name
     if($armEnv -ne $null) {
         Write-Verbose "Updating AzureRm environment $Name" -Verbose
-        Remove-AzureRmEnvironment -Name $Name | Out-Null
+        Remove-AzureRmEnvironment -Name $Name -Force | Out-Null
     }
     else {
         Write-Verbose "Adding AzureRm environment $Name" -Verbose
@@ -150,7 +150,7 @@ function Get-AzureStackNatServerAddress {
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
-        [string] $natServer = "mas-bgpnat01",
+        [string] $natServer = "azs-bgpnat01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
@@ -229,7 +229,7 @@ function Connect-AzureStackVpn {
         [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
         [string] $DomainSuffix = 'azurestack.local',
         [parameter(HelpMessage="Certificate Authority computer name in this Azure Stack Instance")]
-        [string] $Remote = "mas-ca01",
+        [string] $Remote = "azs-ca01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]

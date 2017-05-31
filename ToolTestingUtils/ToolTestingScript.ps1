@@ -4,7 +4,7 @@ param (
     [Parameter(mandatory=$true, HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
     [string] $ArmEndpoint,
     [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
-    [string] $natServer = "MAS-BGPNAT01",
+    [string] $natServer = "AzS-BGPNAT01",
     [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
     [string] $AdminUser = "administrator",
     [parameter(HelpMessage="Administrator Azure Stack Environment Name")]

@@ -487,6 +487,7 @@ Get-AzSUpdateRun -AzureStackCredentials $credential -TenantID $TenantID -Environ
 Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
+
 ### Perfmon FRU procedure
 ```powershell
 #Review current ScaleUnitNode State
@@ -509,6 +510,7 @@ Enable-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credential -
 $node=Get-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credentials-EnvironmentName AzureStackAdmin
 $node.properties | fl
 ```
+
 
 ### Set Azure Stack's Latitude and Longitude
 
