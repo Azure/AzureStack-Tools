@@ -162,7 +162,9 @@ Function Get-AzSInfraRole{
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/InfraRoles?api-version=2016-05-01"
     $Roles=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $roles.value
+
+    $roles.value|select name,properties
+
     
 }      
 export-modulemember -function Get-AzSInfraRole
@@ -428,7 +430,9 @@ Function Close-AzSAlert{
         [ValidateNotNull()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name")]
+
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='closealert')]
+
         [string] $EnvironmentName,
 
         [Parameter(Mandatory=$false)]
@@ -449,7 +453,6 @@ Function Close-AzSAlert{
     $Alerts.properties.state = "Closed"
     $AlertUpdateBody = $Alerts | ConvertTo-Json
     $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths/$region/Alerts/${alertname}?api-version=2016-05-01"
-    $URI
     $Close=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $AlertUpdateBody
     $CloseRun=$Close.value
     $closeRun 
@@ -713,7 +716,9 @@ Function Restart-AzSInfraRoleInstance{
         [ValidateNotNull()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 	
-        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name")]
+
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='RestartInfraRoleInstance')]
+
         [string] $EnvironmentName,
 
         [string] $region = 'local',
@@ -786,6 +791,83 @@ $IPPoolBodyJson =$IPPoolBody |ConvertTo-Json
 
 }
 export-modulemember -function Add-AzSIPPool
+
+
+<#
+    .SYNOPSIS
+    Enable Maintenance Mode
+#>
+
+Function Disable-AzSScaleUnitNode{
+    [CmdletBinding(DefaultParameterSetName='DisableAzSScaleUnitNode')]
+    Param(
+    
+        [Parameter(Mandatory=$true, ParameterSetName='DisableAzSScaleUnitNode')]
+        [ValidateNotNullorEmpty()]
+        [String] $TenantId,
+        
+        [Parameter(Mandatory=$true, ParameterSetName='DisableAzSScaleUnitNode')]
+        [ValidateNotNullorEmpty()]
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='DisableAzSScaleUnitNode')]
+        [string] $EnvironmentName,
+
+        [Parameter(ParameterSetName='DisableAzSScaleUnitNode')]
+        [string] $region = 'local',
+
+        [Parameter(Mandatory=$true, ParameterSetName='DisableAzSScaleUnitNode')]
+        [string] $Name
+
+    )
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
+ 
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/scaleunitnodes/$name/StartMaintenanceMode?api-version=2016-05-01"      
+    $Drain=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Drain
+   
+}
+export-modulemember -function Disable-AzSScaleUnitNode
+
+
+<#
+    .SYNOPSIS
+    Disable Maintenance Mode
+#>
+
+Function Enable-AzSScaleUnitNode{
+    [CmdletBinding(DefaultParameterSetName='EnableAzSScaleUnitNode')]
+    Param(
+    
+        [Parameter(Mandatory=$true, ParameterSetName='EnableAzSScaleUnitNode')]
+        [ValidateNotNullorEmpty()]
+        [String] $TenantId,
+        
+        [Parameter(Mandatory=$true, ParameterSetName='EnableAzSScaleUnitNode')]
+        [ValidateNotNullorEmpty()]
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+	    [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='EnableAzSScaleUnitNode')]
+        [string] $EnvironmentName,
+
+        [Parameter(ParameterSetName='EnableAzSScaleUnitNode')]
+        [string] $region = 'local',
+
+        [Parameter(Mandatory=$true, ParameterSetName='EnableAzSScaleUnitNode')]
+        [string] $Name
+
+    )
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
+   
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Fabric.Admin/fabricLocations/$region/scaleunitnodes/$name/StopMaintenanceMode?api-version=2016-05-01"      
+    $Resume=Invoke-RestMethod -Method Post -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $Resume
+    
+}
+export-modulemember -function Enable-AzSScaleUnitNode
+
 
 Function Set-AzSLocationInformation {
     Param(    

@@ -401,6 +401,37 @@ The command does the following:
 - Adds an IP Pool
 
 
+### Enable Maintenance Mode
+
+ Does put a ScaleUnitNode in Maintenance Mode
+
+```powershell
+$credential = Get-Credential
+Disable-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credential -EnvironmentName "AzureStackAdmin" -Name NodeName
+```
+
+Note: The cmdlet requires credentials to enable Maintenance Mode. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Enables Maintenance Mode for a specified ScaleUnitNode
+
+
+### Disable Maintenance Mode
+
+ Does resume a ScaleUnitNode from Maintenance Mode
+
+```powershell
+$credential = Get-Credential
+Enable-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credential -EnvironmentName "AzureStackAdmin" -Name NodeName
+```
+
+Note: The cmdlet requires credentials to disable Maintenance Mode. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Resume from Maintenance Mode for a specified ScaleUnitNode
+
 ## Scenario Command Usage
 Demonstrates using multiple commands together for an end to end scenario.
 
@@ -455,6 +486,31 @@ Get-AzSUpdateRun -AzureStackCredentials $credential -TenantID $TenantID -Environ
 #Review Region Update Summary after successful run
 Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
+
+
+### Perfmon FRU procedure
+```powershell
+#Review current ScaleUnitNode State
+$node=Get-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credentials-EnvironmentName AzureStackAdmin
+$node.properties | fl
+
+
+#Enable Maintenance Mode for that node which drains all active resources
+Disable-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credential -EnvironmentName "AzureStackAdmin" -Name $node.name
+
+#Power Off Server using build in KVN or physical power button
+#BMC IP Address is returned by previous command $node.properties | fl
+#Apply FRU Procedure
+#Power On Server using build in KVN or physical power button
+
+#Resume ScaleUnitNode from Maintenance Mode
+Enable-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credential -EnvironmentName "AzureStackAdmin" -Name $node.name
+
+#Validate ScaleUnitNode Status
+$node=Get-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credentials-EnvironmentName AzureStackAdmin
+$node.properties | fl
+```
+
 
 ### Set Azure Stack's Latitude and Longitude
 
