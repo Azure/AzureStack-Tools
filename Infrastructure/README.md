@@ -432,6 +432,22 @@ The command does the following:
 - Authenticates to the Azure Stack environment
 - Resume from Maintenance Mode for a specified ScaleUnitNode
 
+
+### Show Region Capacity
+
+ Does show capacity for specified Region
+
+```powershell
+$credential = Get-Credential
+Get-AzSRegionCapacity -TenantId $TenantID -AzureStackCredentials $credential -EnvironmentName "AzureStackAdmin"
+```
+
+Note: The cmdlet requires credentials to display region capacity information. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+
+The command does the following:
+- Authenticates to the Azure Stack environment
+- Retrieves Region Capacity information
+
 ## Scenario Command Usage
 Demonstrates using multiple commands together for an end to end scenario.
 
@@ -488,7 +504,7 @@ Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -Env
 ```
 
 
-### Perfmon FRU procedure
+### Perform FRU procedure
 ```powershell
 #Review current ScaleUnitNode State
 $node=Get-AzSScaleUnitNode -TenantId $TenantID -AzureStackCredentials $credentials-EnvironmentName AzureStackAdmin
