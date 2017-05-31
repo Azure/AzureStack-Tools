@@ -839,7 +839,7 @@ export-modulemember -function Disable-AzSScaleUnitNode
 
 <#
     .SYNOPSIS
-    Disable Maintenance Mode
+    Enable Maintenance Mode
 #>
 
 Function Enable-AzSScaleUnitNode{
@@ -873,6 +873,45 @@ Function Enable-AzSScaleUnitNode{
     
 }
 export-modulemember -function Enable-AzSScaleUnitNode
+
+
+<#
+    .SYNOPSIS
+    Get Region Capacity
+#>
+
+Function Get-AzSRegionCapacity{
+    [CmdletBinding(DefaultParameterSetName='GetRegionCapacity')]
+    Param(
+    
+        [Parameter(Mandatory=$true, ParameterSetName='GetRegionCapacity')]
+        [ValidateNotNullorEmpty()]
+        [String] $TenantId,
+        
+        [Parameter(Mandatory=$true, ParameterSetName='GetRegionCapacity')]
+        [ValidateNotNullorEmpty()]
+        [System.Management.Automation.PSCredential] $azureStackCredentials,
+
+	    [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='GetRegionCapacity')]
+        [string] $EnvironmentName,
+
+        [Parameter(ParameterSetName='GetRegionCapacity')]
+        [string] $region = 'local'
+
+        
+
+    )
+    $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
+   
+    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.InfrastructureInsights.Admin/regionHealths?api-version=2016-05-01"
+    $Capacity=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $RCapacity=$Capacity.value
+    $RCapacity| select name,properties
+
+    
+}
+export-modulemember -function Get-AzSRegionCapacity
 
 
 Function Set-AzSLocationInformation {
