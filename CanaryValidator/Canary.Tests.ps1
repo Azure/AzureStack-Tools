@@ -86,6 +86,11 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [switch]$NoCleanup,
+    [parameter(HelpMessage="Specifies whether Canary needs to clean up resources when a failure is encountered")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [switch]$NoCleanupOnFailure,        
     [parameter(HelpMessage="Specifies the path for log files")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -851,63 +856,66 @@ while ($runCount -le $NumberOfIterations)
 
     if (-not $NoCleanup)
     {
-        Invoke-Usecase -Name 'DeleteVMWithPrivateIP' -Description "Delete the VM with private IP" -UsecaseBlock `
+        if (-not ($NoCleanupOnFailure -and (Get-CanaryFailureStatus)))
         {
-            if ($vmObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop)
+            Invoke-Usecase -Name 'DeleteVMWithPrivateIP' -Description "Delete the VM with private IP" -UsecaseBlock `
             {
-                $deleteVM = $vmObject | Remove-AzureRmVM -Force -ErrorAction Stop
-                if (-not (($deleteVM.StatusCode -eq "OK") -and ($deleteVM.IsSuccessStatusCode)))
+                if ($vmObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop)
                 {
-                    throw [System.Exception]"Failed to delete the VM $privateVMName"
-                }
-            }
-        }
-
-        Invoke-Usecase -Name 'DeleteVMResourceGroup' -Description "Delete the resource group that contains all the VMs and corresponding resources" -UsecaseBlock `
-        {
-            if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryVMRG -ErrorAction Stop)
-            {
-                $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
-            }
-        }
-
-        Invoke-Usecase -Name 'DeleteUtilitiesResourceGroup' -Description "Delete the resource group that contains all the utilities and corresponding resources" -UsecaseBlock `
-        {
-            if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryUtilitiesRG -ErrorAction Stop)
-            {
-                $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
-            }
-        }
-
-        if (($TenantAdminCredentials) -or ($listAvl))
-        {
-            Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
-            {
-                Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
-                {
-                    if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
+                    $deleteVM = $vmObject | Remove-AzureRmVM -Force -ErrorAction Stop
+                    if (-not (($deleteVM.StatusCode -eq "OK") -and ($deleteVM.IsSuccessStatusCode)))
                     {
-                        Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
-                    } 
-                    if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
-                    {
-                        Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
-                    } 
-                }
-
-                Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
-                {     
-                    Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
-                }
-
-                Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
-                {
-                    if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
-                    {
-                        $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                        throw [System.Exception]"Failed to delete the VM $privateVMName"
                     }
-                } 
-            }   
+                }
+            }
+
+            Invoke-Usecase -Name 'DeleteVMResourceGroup' -Description "Delete the resource group that contains all the VMs and corresponding resources" -UsecaseBlock `
+            {
+                if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryVMRG -ErrorAction Stop)
+                {
+                    $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                }
+            }
+
+            Invoke-Usecase -Name 'DeleteUtilitiesResourceGroup' -Description "Delete the resource group that contains all the utilities and corresponding resources" -UsecaseBlock `
+            {
+                if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryUtilitiesRG -ErrorAction Stop)
+                {
+                    $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                }
+            }
+
+            if (($TenantAdminCredentials) -or ($listAvl))
+            {
+                Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
+                {
+                    Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
+                    {
+                        if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
+                        {
+                            Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                        } 
+                        if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
+                        {
+                            Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                        } 
+                    }
+
+                    Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
+                    {     
+                        Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
+                    }
+
+                    Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
+                    {
+                        if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
+                        {
+                            $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                        }
+                    } 
+                }   
+            }
         }
     }
 

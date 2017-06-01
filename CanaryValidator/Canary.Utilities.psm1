@@ -151,6 +151,16 @@ function Get-CanaryLonghaulResult
                                             @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round(([math]::Round([math]::Sqrt($sd/$pCount), 0)/$avgTime), 0) * 100};Label="RelativeStdDev`n[Goal: <50%]"; Align = "Left"}
 }
 
+function Get-CanaryFailureStatus
+{
+    $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json
+    if ($logContent.Usecases.Result -contains "FAIL")
+    {
+        return $true
+    }
+    return $false
+}
+
 function Start-Scenario
 {
     [CmdletBinding()]
