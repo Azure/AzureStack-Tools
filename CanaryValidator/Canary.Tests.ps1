@@ -91,7 +91,7 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).Ticks)",
-	[parameter(HelpMessage="Specifies the file name for canary log file")]
+    [parameter(HelpMessage="Specifies the file name for canary log file")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -180,7 +180,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
             }
         }
     }
@@ -200,7 +200,7 @@ while ($runCount -le $NumberOfIterations)
                     }
                     New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                     $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+	 Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
                     Remove-Item $CanaryCustomImageFolder -Force -Recurse
                 }    
             }
