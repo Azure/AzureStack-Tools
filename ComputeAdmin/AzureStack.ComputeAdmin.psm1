@@ -679,7 +679,7 @@ Function CreateGalleyItem{
         [string] $title,
         [string] $description
     )
-    $workdir = '{0}\{1}' -f $env:TEMP, [System.Guid]::NewGuid().ToString()
+    $workdir = '{0}{1}' -f [System.IO.Path]::GetTempPath(), [System.Guid]::NewGuid().ToString() 
     New-Item $workdir -ItemType Directory | Out-Null
     $basePath = (Get-Module AzureStack.ComputeAdmin).ModuleBase
     $compressedGalleryItemPath = Join-Path $basePath 'CustomizedVMGalleryItem.azpkg'
