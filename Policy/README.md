@@ -11,7 +11,7 @@ Login-AzureRmAccount
 $s = Select-AzureRmSubscription -SubscriptionName "<sub name>"
 $subId = $s.Subscription.SubscriptionId
 
-$policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzureStackRmPolicy)
+$policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzSPolicy)
 
 New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subId
 ```

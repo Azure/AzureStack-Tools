@@ -195,12 +195,12 @@ while ($runCount -le $NumberOfIterations)
     {
         Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
         {
-	        Get-AzSInfraRole -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzSInfrastructureRole -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackInfraRoleInstance' -Description "List all infrastructure role instances" -UsecaseBlock `
         {
-	        Get-AzSInfraRoleInstance -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzSInfrastructureRoleInstance -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackLogicalNetwork' -Description "List all logical networks" -UsecaseBlock `
@@ -230,7 +230,7 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
         {
-	        Get-AzSIPPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzSIpPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackMacPool' -Description "List all MAC address pools " -UsecaseBlock `
@@ -245,7 +245,7 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'GetAzureStackSLBMux' -Description "List all SLB MUX instances" -UsecaseBlock `
         {
-	        Get-AzSSLBMUX -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzSSlbMux -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGateway' -Description "List all gateway" -UsecaseBlock `
@@ -281,7 +281,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
             }
         }
     }
@@ -301,7 +301,7 @@ while ($runCount -le $NumberOfIterations)
                     }
                     New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                     $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                    Add-AzSVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
                     Remove-Item $CanaryCustomImageFolder -Force -Recurse
                 }    
             }
