@@ -11,8 +11,8 @@ Describe $script:ModuleName {
                 Should Not Be $null
         }
 
-        It 'New-AzSTenantOfferAndQuotas should be exported' {
-            Get-Command -Name New-AzSTenantOfferAndQuotas -ErrorAction SilentlyContinue | 
+        It 'Add-AzSTenantOfferAndQuotas should be exported' {
+            Get-Command -Name Add-AzSTenantOfferAndQuotas -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
 
@@ -38,8 +38,8 @@ InModuleScope $script:ModuleName {
     $EnvironmentName = $global:EnvironmentName
 
     Describe 'ServiceAdmin - Functional Tests' {
-        It 'New-AzSTenantOfferAndQuotas should create Quotas, Plan and Offer' {
-            { New-AzSTenantOfferAndQuotas -tenantID $AadTenant -AzureStackCredentials $stackLoginCreds -EnvironmentName $EnvironmentName } |
+        It 'Add-AzSTenantOfferAndQuotas should create Quotas, Plan and Offer' {
+            { Add-AzSTenantOfferAndQuotas -tenantID $AadTenant -AzureStackCredentials $stackLoginCreds -EnvironmentName $EnvironmentName } |
                 Should Not Throw
         }
 

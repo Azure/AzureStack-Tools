@@ -8,7 +8,11 @@
     .SYNOPSIS
     Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
 #>
-function New-AzSTenantOfferAndQuotas
+
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-AzSTenantOfferAndQuotas' -Value 'Add-AzSTenantOfferAndQuotas' -ErrorAction SilentlyContinue
+
+function Add-AzSTenantOfferAndQuotas
 {
     param (
         [parameter(HelpMessage="Name of the offer to be made advailable to tenants")]
@@ -26,23 +30,25 @@ function New-AzSTenantOfferAndQuotas
 	    [string] $tenantID
     )
 
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
+
     $azureStackEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue
     if($azureStackEnvironment -ne $null) {
         $ARMEndpoint = $azureStackEnvironment.ResourceManagerUrl
     }
     else {
-        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzureStackAzureRmEnvironment." -ErrorAction Stop
+        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzSEnvironment." -ErrorAction Stop
     }
 
     Write-Verbose "Obtaining token from AAD..." -Verbose
-    $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
+    $subscription, $headers =  (Get-AzSAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
 
     Write-Verbose "Creating quotas..." -Verbose
     $Quotas = @()
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')){ $Quotas += New-ComputeQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Network')){ $Quotas += New-NetworkQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Storage')){ $Quotas += New-StorageQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'KeyVault')){ $Quotas += Get-KeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')){ $Quotas += Add-AzSComputeQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Network')){ $Quotas += Add-AzSNetworkQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Storage')){ $Quotas += Add-AzSStorageQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
+    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'KeyVault')){ $Quotas += Add-AzSKeyVaultQuota -AdminUri $armEndPoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
     if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Subscriptions')){ $Quotas += Get-SubscriptionsQuota -AdminUri $armEndpoint -SubscriptionId $subscription -AzureStackTokenHeader $headers -ArmLocation $Location }
 
     Write-Verbose "Creating resource group for plans and offers..." -Verbose
@@ -61,7 +67,7 @@ function New-AzSTenantOfferAndQuotas
     return $offer
 }
 
-Export-ModuleMember New-AzSTenantOfferAndQuotas
+Export-ModuleMember Add-AzSTenantOfferAndQuotas
 
 function Get-SubscriptionsQuota
 {
@@ -90,7 +96,10 @@ function Get-SubscriptionsQuota
     $subscriptionsQuota.value.Id
 }
 
-function New-StorageQuota
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-StorageQuota' -Value 'Add-AzSStorageQuota' -ErrorAction SilentlyContinue
+
+function Add-AzSStorageQuota
 {
     param(
         [string] $Name ="default",
@@ -127,7 +136,10 @@ function New-StorageQuota
     $storageQuota.Id
 }
 
-function New-ComputeQuota
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-ComputeQuota' -Value 'Add-AzSComputeQuota' -ErrorAction SilentlyContinue
+
+function Add-AzSComputeQuota
 {
     param(
         [string] $Name ="default",
@@ -167,7 +179,10 @@ function New-ComputeQuota
     $computeQuota.Id
 }
 
-function New-NetworkQuota
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-NetworkQuota'-Value 'Add-AzSNetworkQuota' -ErrorAction SilentlyContinue
+    
+function Add-AzSNetworkQuota
 {
     param(
         [string] $Name ="default",
@@ -217,7 +232,10 @@ function New-NetworkQuota
     $networkQuota.Id
 }
 
-function Get-KeyVaultQuota
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Get-KeyVaultQuota' -Value 'Get-AzSKeyVaultQuota' -ErrorAction SilentlyContinue
+
+function Get-AzSKeyVaultQuota
 {
     param(
         [parameter(Mandatory=$true)]

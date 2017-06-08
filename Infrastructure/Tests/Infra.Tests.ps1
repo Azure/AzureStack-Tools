@@ -54,12 +54,12 @@ InModuleScope $script:ModuleName {
             { Get-AzSStorageCapacity -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSInfraRole should not throw' {
-            { Get-AzSInfraRole -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzSInfrastructureRole should not throw' {
+            { Get-AzSInfrastructureRole -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSInfraRoleInstance should not throw' {
-            { Get-AzSInfraRoleInstance -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzSInfrastructureRoleInstance should not throw' {
+            { Get-AzSInfrastructureRoleInstance -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
         It 'Get-AzSStorageShare should not throw' {

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation. All rights reserved.
+﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
@@ -8,31 +8,49 @@
     .SYNOPSIS
     Registers all providers on the all subscription
 #>
-function Register-AllAzureRmProvidersOnAllSubscriptions {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Register-AllAzureRMProvidersOnAllSubscriptions' -Value 'Register-AzSProvidersOnAllSubscriptions' -ErrorAction SilentlyContinue
+
+function Register-AzSProvidersOnAllSubscriptions {
+
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
+
     foreach($s in (Get-AzureRmSubscription)) {
-        Select-AzureRmSubscription -SubscriptionId $s.SubscriptionId | Out-Null
-        Write-Progress $($s.SubscriptionId + " : " + $s.SubscriptionName)
-    Register-AllAzureRmProviders
-}
+            Select-AzureRmSubscription -SubscriptionId $s.SubscriptionId | Out-Null
+            Write-Progress $($s.SubscriptionId + " : " + $s.SubscriptionName)
+        Register-AzSProviders
+    }
 }
 
-Export-ModuleMember Register-AllAzureRmProvidersOnAllSubscriptions
+Export-ModuleMember Register-AzSProvidersOnAllSubscriptions
 
 <#
     .SYNOPSIS
     Registers all providers on the newly created subscription
 #>
-function Register-AllAzureRmProviders {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Register-AllAzureRmProviders' -Value 'Register-AzSProviders' -ErrorAction SilentlyContinue
+
+function Register-AzSProviders {
+
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
+
     Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force
 }
 
-Export-ModuleMember Register-AllAzureRmProviders
+Export-ModuleMember Register-AzSProviders
 
 <#
     .SYNOPSIS
     Obtains Aazure Active Directory tenant that was used when deploying the Azure Stack instance
 #>
-function Get-AzureStackAadTenant {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Get-AzureStackAadTenant' -Value 'Get-AzsAADTenant' -ErrorAction SilentlyContinue
+
+function Get-AzsAADTenant {
     param (
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
         [string] $HostComputer,        
@@ -43,6 +61,8 @@ function Get-AzureStackAadTenant {
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
         [securestring] $Password
     )
+
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
 
     $Domain = $DomainSuffix
 
@@ -64,13 +84,17 @@ function Get-AzureStackAadTenant {
     }
 }
 
-Export-ModuleMember Get-AzureStackAadTenant
+Export-ModuleMember Get-AzsAADTenant
 
 <#
     .SYNOPSIS
     Adds Azure Stack environment to use with AzureRM command-lets when targeting Azure Stack
 #>
-function Add-AzureStackAzureRmEnvironment {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Add-AzureStackAzureRmEnvironment' -Value 'Add-AzSEnvironment' -ErrorAction SilentlyContinue
+
+function Add-AzSEnvironment {
     param (
         [Parameter(mandatory=$true, HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint,
@@ -137,13 +161,17 @@ function Add-AzureStackAzureRmEnvironment {
     return Add-AzureRmEnvironment @azureEnvironmentParams
 }
 
-Export-ModuleMember Add-AzureStackAzureRmEnvironment
+Export-ModuleMember Add-AzSEnvironment
 
 <#
     .SYNOPSIS
     Obtains Azure Stack NAT address from the Azure Stack One Node instance
 #>
-function Get-AzureStackNatServerAddress {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Get-AzureStackNatServerAddress' -Value 'Get-AzSNatServerAddress' -ErrorAction SilentlyContinue
+
+function Get-AzSNatServerAddress {
     param (    
         [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
         [string] $HostComputer,
@@ -156,6 +184,8 @@ function Get-AzureStackNatServerAddress {
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
         [securestring] $Password
     )
+
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
 
     $Domain = $DomainSuffix
 
@@ -176,13 +206,17 @@ function Get-AzureStackNatServerAddress {
     } 
 }
 
-Export-ModuleMember Get-AzureStackNatServerAddress
+Export-ModuleMember Get-AzSNatServerAddress
 
 <#
     .SYNOPSIS
     Add VPN connection to an Azure Stack instance
 #>
-function Add-AzureStackVpnConnection {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Add-AzureStackVpnConnection' -Value 'Add-AzSVpnConnection' -ErrorAction SilentlyContinue
+
+function Add-AzSVpnConnection {
     param (
         [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
         [string] $ConnectionName = "azurestack",
@@ -216,13 +250,17 @@ function Add-AzureStackVpnConnection {
     return $connection
 }
 
-Export-ModuleMember Add-AzureStackVpnConnection
+Export-ModuleMember Add-AzSVpnConnection
 
 <#
     .SYNOPSIS
     Connects to Azure Stack via VPN
 #>
-function Connect-AzureStackVpn {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Connect-AzureStackVpn' -Value 'Connect-AzSVpn' -ErrorAction SilentlyContinue
+
+function Connect-AzSVpn {
     param (
         [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
         [string] $ConnectionName = "azurestack",
@@ -280,17 +318,21 @@ function Connect-AzureStackVpn {
     }
 }
 
-Export-ModuleMember Connect-AzureStackVpn
+Export-ModuleMember Connect-AzSVpn
 
 <#
     .SYNOPSIS
     Retrieve the admin token and subscription ID needed to make REST calls directly to Azure Resource Manager
 #>
-function Get-AzureStackAdminSubTokenHeader {
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Get-AzureStackAdminSubTokenHeader' -Value 'Get-AzSAdminSubTokenHeader' -ErrorAction SilentlyContinue
+
+function Get-AzSAdminSubTokenHeader {
     param (
         [parameter(mandatory=$true, HelpMessage="Name of the Azure Stack Environment")]
         [string] $EnvironmentName,
-	
+
         [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
         [string] $tenantID,
 
@@ -306,7 +348,7 @@ function Get-AzureStackAdminSubTokenHeader {
         $ARMEndpoint = $azureStackEnvironment.ResourceManagerUrl
     }
     else {
-        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzureStackAzureRmEnvironment." -ErrorAction Stop
+        Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzSEnvironment." -ErrorAction Stop
     }
 
     if(-not $azureStackCredentials){
@@ -352,9 +394,12 @@ function Get-AzureStackAdminSubTokenHeader {
     return $subscription.SubscriptionId, $headers
 }
 
-Export-ModuleMember Get-AzureStackAdminSubTokenHeader
+Export-ModuleMember Get-AzSAdminSubTokenHeader
 
-function Get-AADTenantGUID () {
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Get-AADTenantGUID' -Value 'Get-AzSAADTenantGuid' -ErrorAction SilentlyContinue
+
+function Get-AzSAADTenantGuid () {
     param(
         [parameter(mandatory=$true, HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
         [string] $AADTenantName = "",
@@ -362,6 +407,9 @@ function Get-AADTenantGUID () {
         [ValidateSet("AzureCloud","AzureChinaCloud","AzureUSGovernment","AzureGermanCloud")]
         [string] $AzureCloud = "AzureCloud"
     )
+
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
+
     $ADauth = (Get-AzureRmEnvironment -Name $AzureCloud).ActiveDirectoryAuthority
     $endpt = "{0}{1}/.well-known/openid-configuration" -f $ADauth, $AADTenantName
     $OauthMetadata = (Invoke-WebRequest -UseBasicParsing $endpt).Content | ConvertFrom-Json
@@ -369,9 +417,12 @@ function Get-AADTenantGUID () {
     $AADid
 } 
 
-Export-ModuleMember Get-AADTenantGUID
+Export-ModuleMember Get-AzSAADTenantGuid
 
-function Get-DirectoryTenantID () {
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Get-DirectoryTenantID' -Value 'Get-AzSDirectoryTenantId' -ErrorAction SilentlyContinue
+
+function Get-AzSDirectoryTenantId () {
     [CmdletBinding(DefaultParameterSetName='AzureActiveDirectory')]
     param(
         [Parameter(Mandatory=$true, ParameterSetName='ADFS')]
@@ -399,4 +450,4 @@ function Get-DirectoryTenantID () {
     }
 } 
 
-Export-ModuleMember Get-DirectoryTenantID
+Export-ModuleMember Get-AzSDirectoryTenantId
