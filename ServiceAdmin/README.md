@@ -36,7 +36,7 @@ $TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin
 ## Create default plan and quota for tenants
 
 ```powershell
-New-AzSTenantOfferAndQuotas -tenantID $TenantID -EnvironmentName "AzureStackAdmin"
+New-AzSTenantOfferAndQuota -tenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
 Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and key vault usage. 
