@@ -121,31 +121,29 @@ function Get-AzureRMCloudCapabilities()
 					$publisherDict = @{ "publisherName" = $publisher; "offers"= $offerList;"location" = $location }
 					$imageList.Add($publisherDict) | Out-Null
 				}
-				else
+				$types = Get-AzureRmVMExtensionImageType  -Location $location -PublisherName $publisher
+				$typeList = New-Object System.Collections.ArrayList
+				if ($types -ne $null)
 				{
-					$types = Get-AzureRmVMExtensionImageType  -Location $location -PublisherName $publisher
-					$typeList = New-Object System.Collections.ArrayList
-					if ($types -ne $null)
+					foreach ($type in $types.Type)
 					{
-						foreach ($type in $types.Type)
+						Write-Verbose "Getting VMExtension for publisher:$publisher , Type:$type , location: $location"
+						$extensions = Get-AzureRmVMExtensionImage -Location $location -PublisherName $publisher -Type $type
+						$versions = $extensions.Version
+						if ($versions.Count -le 1)
 						{
-							Write-Verbose "Getting VMExtension for publisher:$publisher , Type:$type , location: $location"
-							$extensions = Get-AzureRmVMExtensionImage -Location $location -PublisherName $publisher -Type $type
-							$versions = $extensions.Version
-							if ($versions.Count -le 1)
-							{
-								$versions = @($versions)
-							}
-							$typeDict = @{ "type" = $type; "versions" = $versions }
-							$typeList.Add($typeDict) | Out-Null
+							$versions = @($versions)
 						}
-						$publisherDict = @{ "publisher" = $publisher; "types" = $typeList;"location" = $location }
-						$extensionList.Add($publisherDict) | Out-Null
+						$typeDict = @{ "type" = $type; "versions" = $versions }
+						$typeList.Add($typeDict) | Out-Null
 					}
-					else
-					{
-						"none @ " + $publisher
-					}
+					$publisherDict = @{ "publisher" = $publisher; "types" = $typeList;"location" = $location }
+					$extensionList.Add($publisherDict) | Out-Null
+				}
+				
+				if ($offers -eq $null-and $types -eq $null)
+				{
+					"none @ " + $publisher
 				}
 			}
 			$capabilities.Add("VMExtensions", $extensionList)
