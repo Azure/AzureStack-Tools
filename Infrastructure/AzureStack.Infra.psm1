@@ -272,34 +272,34 @@ export-modulemember -function Get-AzSLogicalNetwork
     .SYNOPSIS
     List Region Update Summary
 #>
-Function Get-AzSUpdateSummary{
-    [CmdletBinding(DefaultParameterSetName='GetUpdateSummary')]
+Function Get-AzSUpdateLocation{
+    [CmdletBinding(DefaultParameterSetName='GetUpdateLocation')]
     Param(
     
-        [Parameter(Mandatory=$true, ParameterSetName='GetUpdateSummary')]
+        [Parameter(Mandatory=$true, ParameterSetName='GetUpdateLocation')]
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-        [Parameter(Mandatory=$true, ParameterSetName='GetUpdateSummary')]
+        [Parameter(Mandatory=$true, ParameterSetName='GetUpdateLocation')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='GetUpdateSummary')]
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='GetUpdateLocation')]
         [string] $EnvironmentName,
 
-        [Parameter(ParameterSetName='GetUpdateSummary')]
+        [Parameter(ParameterSetName='GetUpdateLocation')]
         [string] $region = 'local'
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
 
     $subscription, $headers =  (Get-AzureStackAdminSubTokenHeader -TenantId $tenantId -AzureStackCredentials $azureStackCredentials -EnvironmentName $EnvironmentName)
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/regionUpdateStatus?api-version=2016-05-01"
-    $USummary=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
-    $USummaryprop=$USummary.value
-    $USummaryprop.properties|select locationName,currentversion,lastUpdated,lastChecked,state
+    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations?api-version=2016-05-01"
+    $ULocation=Invoke-RestMethod -Method GET -Uri $uri -ContentType 'application/json' -Headers $Headers
+    $ULocationprop=$ULocation.value
+    $ULocationprop
     
 }
-export-modulemember -function Get-AzSUpdateSummary
+export-modulemember -function Get-AzSUpdateLocation
 
 <#
     .SYNOPSIS
