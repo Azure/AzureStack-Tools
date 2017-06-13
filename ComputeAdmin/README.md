@@ -35,14 +35,14 @@ $TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin
 
 ## Add the WS2016 Evaluation VM Image 
 
-The New-Server2016VMImage allows you to add a Windows Server 2016 Evaluation VM Image to your Azure Stack Marketplace. 
+The New-AzSServer2016VMImage allows you to add a Windows Server 2016 Evaluation VM Image to your Azure Stack Marketplace. 
 
 As a prerequisite, you need to obtain the Windows Server 2016 Evaluation ISO which can be found [here](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016).
 
 An example usage is the following:
 ```powershell
 $ISOPath = "<Path to ISO>"
-New-Server2016VMImage -ISOPath $ISOPath -TenantId $TenantID -EnvironmentName "AzureStackAdmin"
+New-AzSServer2016VMImage -ISOPath $ISOPath
 ```
 Please make sure to specify the correct administrator ARM endpoint for your environment.
 
@@ -74,10 +74,8 @@ Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://a
 ```
 
 ```powershell
-Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
+Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd'
 ```
-
-Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
@@ -97,7 +95,7 @@ Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://a
 ```
 
 ```powershell
-Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
+Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0"
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
@@ -112,7 +110,7 @@ An example usage is the following:
 
 ```powershell
 $path = "<Path to vm extension zip>"
-Add-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -extensionLocalPath $path -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
+Add-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -extensionLocalPath $path -osType Windows
 ```
 
 
@@ -126,14 +124,14 @@ Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://a
 Run the below command to remove an uploaded VM extension.
 
 ```powershell
-Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
+Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows
 ```
 
 ## VM Scale Set gallery item
 
 VM Scale Set allows deployment of multi-VM collections. To add a gallery item with VM Scale Set:
 
-1. Add evaluation Windows Server 2016 image using New-Server2016VMImage as described above.
+1. Add evaluation Windows Server 2016 image using New-AzSServer2016VMImage as described above.
 
 2. For linux support, download Ubuntu Server 16.04 and add it using Add-VmImage with the following parameters -publisher "Canonical" -offer "UbuntuServer" -sku "16.04-LTS"
 

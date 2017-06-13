@@ -11,8 +11,8 @@ Describe $script:ModuleName {
                 Should Not Be $null
         }
 
-        It 'New-AzSTenantOfferAndQuotas should be exported' {
-            Get-Command -Name New-AzSTenantOfferAndQuotas -ErrorAction SilentlyContinue | 
+        It 'Add-AzSTenantOfferAndQuota should be exported' {
+            Get-Command -Name Add-AzSTenantOfferAndQuotas -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
 
@@ -21,25 +21,9 @@ Describe $script:ModuleName {
 
 InModuleScope $script:ModuleName {
 
-    $HostComputer = $global:HostComputer
-    $ArmEndpoint = $global:ArmEndpoint
-    $natServer = $global:natServer 
-    $AdminUser= $global:AdminUser 
-    $AadServiceAdmin = $global:AadServiceAdmin 
-
-    $AdminPassword = $global:AdminPassword
-    $AadServiceAdminPassword = $global:AadServiceAdminPassword
-    $stackLoginCreds = $global:AzureStackLoginCredentials
-
-    $VPNConnectionName = $global:VPNConnectionName
-
-    $AadTenant = $global:AadTenantID
-
-    $EnvironmentName = $global:EnvironmentName
-
     Describe 'ServiceAdmin - Functional Tests' {
-        It 'New-AzSTenantOfferAndQuotas should create Quotas, Plan and Offer' {
-            { New-AzSTenantOfferAndQuotas -tenantID $AadTenant -AzureStackCredentials $stackLoginCreds -EnvironmentName $EnvironmentName } |
+        It 'Add-AzSTenantOfferAndQuota should create Quotas, Plan and Offer' {
+            { Add-AzSTenantOfferAndQuotas } |
                 Should Not Throw
         }
 
