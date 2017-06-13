@@ -44,9 +44,8 @@ function Add-AzureStackVMSSGalleryItem {
     }
     
     $fileName = "microsoft.vmss.1.3.6.azpkg"
-    $basePath = (Get-Module AzureStack.ComputeAdmin).ModuleBase
 
-    $blob = Set-AzureStorageBlobContent –File ($basePath + "\" + $fileName) –Blob $fileName -Container $cName -Force
+    $blob = Set-AzureStorageBlobContent –File ($PSScriptRoot + "\" + $fileName) –Blob $fileName -Container $cName -Force
     $container = Get-AzureStorageContainer -Name $cName -ErrorAction SilentlyContinue
 
     $uri = $blob.Context.BlobEndPoint + $container.Name + "/" + $blob.Name    
