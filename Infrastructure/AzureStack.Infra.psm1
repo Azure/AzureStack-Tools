@@ -103,24 +103,24 @@ export-modulemember -function Get-AzSScaleUnitNode
     .SYNOPSIS
     List total storage capacity 
 #>
-Function Get-AzSStorageCapacity{
+Function Get-AzSStorageSubsystem{
     [CmdletBinding(DefaultParameterSetName='GetStorageCapacity')]
     Param(
     
-        [Parameter(Mandatory=$true, ParameterSetName='GetStorageCapacity')]
+        [Parameter(Mandatory=$true, ParameterSetName='GetStorageSubsystem')]
         [ValidateNotNullorEmpty()]
         [String] $TenantId,
         
-        [Parameter(Mandatory=$true, ParameterSetName='GetStorageCapacity')]
+        [Parameter(Mandatory=$true, ParameterSetName='GetStorageSubsystem')]
         [ValidateNotNullorEmpty()]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='GetStorageCapacity')]
+        [Parameter(Mandatory=$true, HelpMessage="The Azure Stack Administrator Environment Name", ParameterSetName='GetStorageSubsystem')]
 
         [string] $EnvironmentName,
 
 
-        [Parameter(ParameterSetName='GetStorageCapacity')]
+        [Parameter(ParameterSetName='GetStorageSubsystem')]
         [string] $region = 'local'
     )
     $ARMEndpoint = GetARMEndpoint -EnvironmentName $EnvironmentName -ErrorAction Stop
@@ -133,7 +133,7 @@ Function Get-AzSStorageCapacity{
     $storageprop|select name,location,properties
     
 }
-export-modulemember -function Get-AzSStorageCapacity
+export-modulemember -function Get-AzSStorageSubsystem
 
 <#
     .SYNOPSIS

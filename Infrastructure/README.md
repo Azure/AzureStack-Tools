@@ -81,20 +81,20 @@ The command does the following:
 - Close active Alert
 
 
-### Get Region Update Summary
+### Get Update Location
 
- Review the Update Summary for a specified region.
+ Review details about the Region related to updates.
 
 ```powershell
 $credential = Get-Credential
-Get-AzSUpdateSummary -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+Get-AzSUpdateLocation -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve Region Update Summary. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+Note: The cmdlet requires credentials to retrieve Update Location. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
-- Retrieves Region Update Summary
+- Retrieves details about the update location
 
 
 ### Get Azure Stack Update
@@ -225,20 +225,20 @@ The command does the following:
 - Lists logical Networks
 
 
-### List Storage Capacity
+### List Storage Subsystem
 
- Does return the total capacity of the storage subsystem
+ Does return details about the Storage Subsystem
 
 ```powershell
 $credential = Get-Credential
-Get-AzSStorageCapacity -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
+Get-AzSStorageSubsystem -AzureStackCredentials $credential -TenantID $TenantID -EnvironmentName "AzureStackAdmin"
 ```
 
-Note: The cmdlet requires credentials to retrieve total storage capacity. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
+Note: The cmdlet requires credentials to retrieve storage subsystem details. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com or the ADFS credentials, to the prompt.  
 
 The command does the following:
 - Authenticates to the Azure Stack environment
-- Lists total storage capacity for the storage subsystem
+- Lists detail about the storage subsystem
 
 
 ### List Storage Shares
