@@ -78,63 +78,7 @@ function Add-AzureStackAzureRmEnvironment {
         [string] $Name
     )
 
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
-            $ARMEndpoint = $ARMEndpoint.Substring(7)
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-
-        }else{
-            $ARMEndpoint = 'https://' + $ARMEndpoint
-        }
-    }
-
-    $ArmEndpoint = $ArmEndpoint.TrimEnd("/")
-
-    $Domain = ""
-    try {
-        $uriARMEndpoint = [System.Uri] $ArmEndpoint
-        $i = $ArmEndpoint.IndexOf('.')
-        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
-    }
-    catch {
-        Write-Error "The specified ARM endpoint was invalid"
-    }
-
-    $ResourceManagerEndpoint = $ArmEndpoint 
-    $stackdomain = $Domain         
-
-    Write-Verbose "Retrieving endpoints from the $ResourceManagerEndpoint..." -Verbose
-    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop
-
-    $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
-    $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
-    $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
-    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
-
-    $azureEnvironmentParams = @{
-        Name                                     = $Name
-        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
-        ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
-        GalleryEndpoint                          = $endpoints.galleryEndpoint
-        GraphEndpoint                            = $endpoints.graphEndpoint
-        GraphAudience                            = $endpoints.graphEndpoint
-        StorageEndpointSuffix                    = $StorageEndpointSuffix
-        AzureKeyVaultDnsSuffix                   = $AzureKeyVaultDnsSuffix
-        AzureKeyVaultServiceEndpointResourceId   = $AzureKeyVaultServiceEndpointResourceId
-        EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
-    }
-
-    $armEnv = Get-AzureRmEnvironment -Name $Name
-    if($armEnv -ne $null) {
-        Write-Verbose "Updating AzureRm environment $Name" -Verbose
-        Remove-AzureRmEnvironment -Name $Name -Force | Out-Null
-    }
-    else {
-        Write-Verbose "Adding AzureRm environment $Name" -Verbose
-    }
-            
-    return Add-AzureRmEnvironment @azureEnvironmentParams
+     return (Add-AzureRmEnvironment -ResourceManagerEndpoint $ArmEndpoint -Name $Name)
 }
 
 Export-ModuleMember Add-AzureStackAzureRmEnvironment
