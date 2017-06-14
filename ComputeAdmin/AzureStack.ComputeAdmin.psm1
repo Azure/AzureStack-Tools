@@ -6,10 +6,8 @@
     Add-AzSVMSSGalleryItem: Adds the VMSS Gallery Item to your Azure Stack Marketplace.
     Remove-AzSVMSSGalleryItem: Adds the VMSS Gallery Item from your Azure Stack Marketplace.
     Add-AzSVMImage: Uploads a VM Image to your Azure Stack and creates a Marketplace item for it.
-    Remove-AzSVMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any 
-    maketplace items created by Add-AzSVMImage.
-    New-AzSServer2016VMImage: Creates and Uploads a new Server 2016 Core and / or Full Image and
-    creates a Marketplace item for it.
+    Remove-AzSVMImage: Removes an existing VM Image from your Azure Stack.  Does not delete any maketplace items created by Add-AzSVMImage.
+    New-AzSServer2016VMImage: Creates and Uploads a new Server 2016 Core and / or Full Image and creates a Marketplace item for it.
     Get-AzsVMImage: Gets a VM Image from your Azure Stack as an Administrator to view the provisioning state of the image.
     Add-AzSVMExtension: Uploads a VM extension to your Azure Stack.
     Remove-AzSVMExtension: Removes an existing VM extension from your Azure Stack.
@@ -21,9 +19,10 @@ Function Add-AzSVMSSGalleryItem {
         [Parameter(Mandatory=$false)]
         [ValidatePattern("^[0-9a-zA-Z]+$")]
         [ValidateLength(1,128)]
-        [String] $Location = 'local'
+        [String] $Location = $null
     )
-
+    
+    $Location = Get-AzSLocation -Location $Location
     $rgName = "vmss.gallery"
 
     New-AzureRmResourceGroup -Name $rgName -Location $Location -Force
@@ -99,7 +98,7 @@ Function Add-AzSVMImage
         
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [Parameter(ParameterSetName='VMImageFromAzure')]
-        [String] $location = 'local',
+        [String] $location = $null,
 
         [Parameter(ParameterSetName='VMImageFromLocal')]
         [string[]] $dataDisksLocalPaths,
@@ -125,6 +124,8 @@ Function Add-AzSVMImage
 
         [switch] $Force
     )
+        
+    $location = Get-AzSLocation -Location $location
 
     if($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title')) {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
@@ -246,19 +247,22 @@ Function Add-AzSVMImage
     if(![string]::IsNullOrEmpty($detailsJson)) {
         $propertyBody = $propertyBody + ', ' + $detailsJson
     }
-
-    $propertyBody = "{" + $propertyBody + "}"
-    $vhdProperty = ConvertFrom-Json $propertyBody
-    
-    $resourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
-    $resourceName = "{0}/platformImage/{1}/{2}/{3}/{4}" -f $location, $publisher, $offer, $sku, $version
     
     if(-not $VMImageAlreadyAvailable){
         $imageDescription = "publisher: {0}, offer: {1}, sku: {2}, version: {3}" -f $publisher, $offer, $sku, $version
+        
+        $propertyBody = "{" + $propertyBody + "}"
+        $params = @{
+            ResourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
+            ResourceName = "{0}/platformImage/{1}/{2}/{3}/{4}" -f $location, $publisher, $offer, $sku, $version
+            ApiVersion = "2015-12-01-preview"
+            Properties = ConvertFrom-Json $propertyBody
+        }
+
         if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to create VM image with $imageDescription ?",""))
         {
             Write-Verbose "Creating VM Image..."
-            New-AzureRmResource -ResourceType $resourceType -ResourceName $resourceName -ApiVersion "2015-12-01-preview" -Properties $vhdProperty -ErrorAction Stop -Force
+            New-AzureRmResource @params -ErrorAction Stop -Force
         }
     }
 
@@ -319,12 +323,14 @@ function Remove-AzSVMImage
         [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
         
-        [String] $location = 'local',
+        [String] $location = $null,
 
         [switch] $KeepMarketplaceItem,
 
         [switch] $Force
     )
+        
+    $location = Get-AzSLocation -Location $location
         
     $VMImageExists = $false
     if (Get-AzSVMImage -publisher $publisher -offer $offer -sku $sku -version $version -location $location -ErrorAction SilentlyContinue)
@@ -337,18 +343,21 @@ function Remove-AzSVMImage
         Write-Verbose -Message ('VM Image with publisher "{0}", offer "{1}", sku "{2}" is not present and will not be removed. Marketplace item may still be removed.' -f $publisher,$offer,$sku) -ErrorAction Stop
     }
 
-    $resourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
-    $resourceName = "{0}/platformImage/{1}/{2}/{3}/{4}" -f $location, $publisher, $offer, $sku, $version
-
     if($VMImageExists)
     {
         $imageDescription = "publisher: {0}, offer: {1}, sku: {2}, version: {3}" -f $publisher, $offer, $sku, $version
         if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to delete VM image with $imageDescription ?",""))
-        {        
+        {
             try
             {
+                $params = @{
+                    ResourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
+                    ResourceName = "{0}/platformImage/{1}/{2}/{3}/{4}" -f $location, $publisher, $offer, $sku, $version
+                    ApiVersion = "2015-12-01-preview"
+                }
+
                 Write-Verbose -Message "Deleting VM Image" -Verbose
-                Remove-AzureRmResource -ResourceType $resourceType -ResourceName $resourceName -ApiVersion "2015-12-01-preview" -Force
+                Remove-AzureRmResource @params -Force
             }
             catch 
             {                
@@ -390,7 +399,7 @@ function New-AzSServer2016VMImage {
         [ValidateScript({Test-Path -Path $_})]
         [string] $ISOPath,
 
-        [String] $location = 'local',
+        [String] $location = $null,
         
         [Parameter()]
         [bool] $CreateGalleryItem = $true,
@@ -480,7 +489,8 @@ function New-AzSServer2016VMImage {
         }
     }
     process {
-
+    
+        $location = Get-AzSLocation -Location $location
         Write-Verbose -Message "Checking ISO path for a valid ISO." -Verbose
         if(!$IsoPath.ToLower().contains('.iso')){
             Write-Error -Message "ISO path is not a valid ISO file." -ErrorAction Stop
@@ -735,15 +745,20 @@ Function Get-AzSVMImage{
         [ValidatePattern(“\d+\.\d+\.\d+”)]
         [String] $version,
 
-        [String] $location = 'local'
+        [String] $location = $null
     )
 
-    $resourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
-    $resourceName = "{0}/platformImage/{1}/{2}/{3}/{4}" -f $location, $publisher, $offer, $sku, $version
+    $location = Get-AzSLocation -Location $location
+
+    $params = @{
+        ResourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
+        ResourceName = "{0}/platformImage/{1}/{2}/{3}/{4}" -f $location, $publisher, $offer, $sku, $version
+        ApiVersion = "2015-12-01-preview"
+    }
 
     try
     {
-        $platformImage = Get-AzureRmResource  -ResourceType $resourceType -ResourceName $resourceName -ApiVersion "2015-12-01-preview"
+        $platformImage = Get-AzureRmResource @params
         return $platformImage
     }
     catch
@@ -792,8 +807,10 @@ Function Add-AzSVMExtension
     
         [Parameter(ParameterSetName='VMExtensionFromLocal')]
         [Parameter(ParameterSetName='VMExtesionFromAzure')]
-        [String] $location = 'local'        
+        [String] $location = $null
     )
+        
+    $location = Get-AzSLocation -Location $location
 
     $resourceGroupName = "addvmextresourcegroup"
     $storageAccountName = "addvmextstorageaccount"
@@ -843,19 +860,30 @@ Function Add-AzSVMExtension
     $propertyBody = $sourceBlobJSON + "," + $osTypeJSON + ',' + $ComputeRoleJSON + "," + $VMScaleSetEnabledJSON + "," + $SupportMultipleExtensionsJSON + "," + $IsSystemExtensionJSON 
 
     #building ARMResource
-
-    $propertyBody = '{' + $propertyBody + '}'
-
+    $apiVersion = "2015-12-01-preview"
     $resourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/types/versions"
     $resourceName = "{0}/VMExtension/{1}/{2}/{3}" -f $location, $publisher, $type, $version
-    $resourceProperty = ConvertFrom-Json $propertyBody
+    $propertyBody = '{' + $propertyBody + '}'
     $extensionDescription = "publisher: {0}, type: {1}, version: {2}" -f $publisher, $type, $version
 
     if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to create VM extension with $extensionDescription ?","")) {
-        New-AzureRmResource -ResourceType $resourceType -ResourceName $resourceName -Property $resourceProperty -ApiVersion "2015-12-01-preview" -ErrorAction Stop -Force
+        $params = @{
+            ResourceType = $resourceType
+            ResourceName = $resourceName
+            ApiVersion = $apiVersion
+            Property = ConvertFrom-Json $propertyBody
+        }
+
+        New-AzureRmResource @params -ErrorAction Stop -Force
     }
     
-    $extensionHandler = Get-AzureRmResource -ResourceType $resourceType -ResourceName $resourceName -ApiVersion "2015-12-01-preview"
+    $getParams = @{
+        ResourceType = $resourceType 
+        ResourceName = $resourceName 
+        ApiVersion = $apiVersion
+    }
+
+    $extensionHandler = Get-AzureRmResource @$getParams
     if($null -eq $extensionHandler) {
         Write-Error -Message ("VM extension with {0} created failed." -f $extensionDescription) -ErrorAction Stop
     }
@@ -873,7 +901,7 @@ Function Add-AzSVMExtension
 
         Write-Host "Downloading";
         Start-Sleep -Seconds 4
-        $extensionHandler = Get-AzureRmResource -ResourceType $resourceType -ResourceName $resourceName -ApiVersion "2015-12-01-preview"
+        $extensionHandler = Get-AzureRmResource $getParams
     }
 
     Remove-AzureStorageContainer –Name $containerName -Force
@@ -897,22 +925,43 @@ Function Remove-AzSVMExtension
         [ValidateSet('Windows' ,'Linux')]
         [String] $osType,
 
-        [String] $location = 'local',
+        [String] $location = $null,
 
         [switch] $Force
     )
-   
-    $resourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/types/versions"
-    $resourceName = "{0}/VMExtension/{1}/{2}/{3}" -f $location, $publisher, $type, $version
+
+    $location = Get-AzSLocation -Location $location
+
     $extensionDescription = "publisher: {0}, type: {1}, version: {2}" -f $publisher, $type, $version
 
-    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to delete VM extension with $extensionDescription ?","")) {        
+    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to delete VM extension with $extensionDescription ?","")) {
+        $params = @{
+            ResourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/types/versions"
+            ResourceName = "{0}/VMExtension/{1}/{2}/{3}" -f $location, $publisher, $type, $version
+            ApiVersion  = "2015-12-01-preview" 
+        }
+
         try {
             Write-Verbose -Message "Deleting VM extension" -Verbose
-            Remove-AzureRmResource -ResourceType $resourceType -ResourceName $resourceName -ApiVersion "2015-12-01-preview" -Force
+            Remove-AzureRmResource @params -Force
         }
         catch {                
             Write-Error -Message ('Deletion of VM extension with {0} failed with Error:{1}.' -f $extensionDescription, $Error) -ErrorAction Stop
         }
     }
+}
+
+Function Get-AzSLocation
+{
+    param(
+        [string] $Location
+    )
+
+    if($null -ne $Location -and '' -ne $Location)
+    {
+        return $Location
+    }
+    
+    $locationResource = Get-AzureRmManagedLocation
+    return $locationResource.Name
 }

@@ -126,7 +126,7 @@ The command does the following:
  Does list all Infrastructure Roles
 
 ```powershell
-Get-AzSInfraRole
+Get-AzSInfrastructureRole
 ```
 
 The command does the following:
@@ -138,7 +138,7 @@ The command does the following:
  Does list all Infrastructure Role Instances (Note: Does not return Directory Management VM in One Node deployment)
 
 ```powershell
-Get-AzSInfraRoleInstance
+Get-AzSInfrastructureRoleInstance
 ```
 
 The command does the following:
@@ -270,7 +270,7 @@ The command does the following:
  Does start an Infra Role Instance
 
 ```powershell
-Start-AzSInfraRoleInstance -Name "InfraRoleInstanceName"
+Start-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
 ```
 
 The command does the following:
@@ -282,7 +282,7 @@ The command does the following:
  Does stop an Infra Role Instance
 
 ```powershell
-Stop-AzSInfraRoleInstance -Name "InfraRoleInstanceName"
+Stop-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
 ```
 
 The command does the following:
@@ -294,7 +294,7 @@ The command does the following:
  Does restart an Infra Role Instance
 
 ```powershell
-Restart-AzSInfraRoleInstance -Name "InfraRoleInstanceName"
+Restart-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
 ```
 
 The command does the following:
@@ -359,10 +359,10 @@ $Active=Get-AzSAlert | Where {$_.State -eq "active"}
 $Active
 
 #Stop Infra Role Instance
-Stop-AzSInfraRoleInstance -Name $Active.ResourceName
+Stop-AzSInfrastructureRoleInstance -Name $Active.ResourceName
 
 #Start Infra Role Instance
-Start-AzSInfraRoleInstance -Name $Active.resourceName
+Start-AzSInfrastructureRoleInstance -Name $Active.resourceName
 
 #Validate if error is resolved (Can take up to 3min)
 Get-AzSAlert | Where {$_.State -eq "active"}
