@@ -8,7 +8,10 @@
     .SYNOPSIS
     Produces Azure Resource Manager Policy document to apply to restrict Azure subscriptions to Azure Stack compatible functionality
 #>
-function Get-AzureStackRmPolicy 
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Get-AzureStackRmPolicy' -Value 'Get-AzsPolicy' -ErrorAction SilentlyContinue
+
+function Get-AzsPolicy 
 {
     $defaults = [System.IO.Path]::GetDirectoryName($PSCommandPath)
 
@@ -82,4 +85,4 @@ function Get-AzureStackRmPolicy
     ConvertTo-Json $policy -Depth 100
 }
 
-Export-ModuleMember Get-AzureStackRmPolicy
+Export-ModuleMember Get-AzsPolicy

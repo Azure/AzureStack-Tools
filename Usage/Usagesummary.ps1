@@ -6,7 +6,11 @@
     .EXAMPLE
     Export-AzureStackUsageDetails -StartTime 2/15/2017 -EndTime 2/16/2017 -AzureStackDomain azurestack.local -AADDomain mydir.onmicrosoft.com -Granularity Hourly
 #>
-function Export-AzureStackUsage {
+
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Export-AzureStackUsage' -Value 'Export-AzsUsage' -ErrorAction SilentlyContinue
+
+function Export-AzsUsage {
     Param
     (
         [Parameter(Mandatory = $true)]
