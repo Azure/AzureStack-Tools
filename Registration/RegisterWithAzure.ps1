@@ -182,5 +182,22 @@ $regResponse = Get-Content -path  $activationDataFile
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($regResponse)
 $activationCode = [Convert]::ToBase64String($bytes)
 
-.\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $azureResourceManagerEndpoint -Verbose
+try
+{
+    .\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $azureResourceManagerEndpoint -Verbose
+}
+catch
+{
+    $exceptionMessage = $_.Exception.Message
+
+   if($exceptionMessage.Contains("Application is currently being upgraded"))
+   {
+        Write-Warning "Activate-Bridge: Known issue with redundant service fabric upgrade call" 
+   }
+   else
+   {
+        Write-Error -Message "Activate-Bridge: Error : $($_.Exception)"
+   }
+}
+
 Write-Verbose "Azure Stack activation completed"
