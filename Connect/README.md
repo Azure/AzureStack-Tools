@@ -47,10 +47,10 @@ Then connect your client computer to the environment as follows.
 
 ```powershell
 # Create VPN connection entry for the current user
-Add-AzureStackVpnConnection -ServerAddress <NAT IP> -Password $Password
+Add-AzsVpnConnection -ServerAddress <NAT IP> -Password $Password
 
 # Connect to the Azure Stack instance. This command can be used multiple times.
-Connect-AzureStackVpn -Password $Password
+Connect-AzsVpn -Password $Password
 ```
 
 ## Obtain the NAT IP address with the Azure Stack PoC host address
@@ -58,7 +58,7 @@ Connect-AzureStackVpn -Password $Password
 This command is helpful if you do not immediately know the NAT IP of the Azure Stack PoC you are trying to connect to. You must know the host address of your Azure Stack PoC.
 
 ```powershell
-$natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>" -Password $Password
+$natIp = Get-AzsNatServerAddress -HostComputer "<Azure Stack host address>" -Password $Password
 ```
 
 
@@ -73,25 +73,25 @@ AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Go
 To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external" 
+Add-AzsEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external" 
 ```
 
 To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
 Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
+$TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
 ```
 
 For **ADFS** environments use the following:
 
 ```powershell
-$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
+$TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin 
 ```
 
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
@@ -112,13 +112,13 @@ If you are intending to use newly created subscriptions via PowerShell, CLI or d
 To register providers on the current subscription, do the following.
 
 ```powershell
-Register-AllAzureRmProviders
+Register-AzsProvider
 ```
 
 To register all resource providers on all your subscriptions after logging in using Add-AzureRmAccount do the following. Note that this can take a while.
 
 ```powershell
-Register-AllAzureRmProvidersOnAllSubscriptions
+Register-AzsProviderOnAllSubscriptions
 ```
 
 These registrations are idempotent and can be run multiple times. If provider has already been registered, it will simply be reported in the output.

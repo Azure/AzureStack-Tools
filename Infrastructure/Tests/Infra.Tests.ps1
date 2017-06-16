@@ -11,8 +11,8 @@ Describe $script:ModuleName {
                 Should Not Be $null
         }
 
-        It 'Get-AzSAlert should be exported' {
-            Get-Command -Name Get-AzSAlert -ErrorAction SilentlyContinue | 
+        It 'Get-AzsAlert should be exported' {
+            Get-Command -Name Get-AzsAlert -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     }
@@ -38,49 +38,49 @@ InModuleScope $script:ModuleName {
 
 
     Describe 'Infra - Functional Tests' {
-        It 'Get-AzSAlert should not throw' {
-            { Get-AzSAlert -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsAlert should not throw' {
+            { Get-AzsAlert -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSScaleUnit should not throw' {
-            { Get-AzSAlert -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsScaleUnit should not throw' {
+            { Get-AzsAlert -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSScaleUnitNode should not throw' {
-            { Get-AzSScaleUnitNode -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsScaleUnitNode should not throw' {
+            { Get-AzsScaleUnitNode -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSStorageCapacity should not throw' {
-            { Get-AzSStorageCapacity -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsStorageCapacity should not throw' {
+            { Get-AzsStorageCapacity -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSInfraRole should not throw' {
-            { Get-AzSInfraRole -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsInfrastructureRole should not throw' {
+            { Get-AzsInfrastructureRole -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSInfraRoleInstance should not throw' {
-            { Get-AzSInfraRoleInstance -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsInfrastructureRoleInstance should not throw' {
+            { Get-AzsInfrastructureRoleInstance -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSStorageShare should not throw' {
-            { Get-AzSStorageShare -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsStorageShare should not throw' {
+            { Get-AzsStorageShare -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSlogicalnetwork should not throw' {
-            { Get-AzSlogicalnetwork -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-Azslogicalnetwork should not throw' {
+            { Get-Azslogicalnetwork -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
         
-        It 'Get-AzSUpdateSummary should not throw' {
-            { Get-AzSUpdateSummary -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsUpdateSummary should not throw' {
+            { Get-AzsUpdateSummary -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Get-AzSUpdate should not throw' {
-            { Get-AzSUpdate -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
+        It 'Get-AzsUpdate should not throw' {
+            { Get-AzsUpdate -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds } |
                 Should Not Throw
         }
-        It 'Set-AzSLocationInformation should not throw' {
-            { Set-AzSLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds -Region 'local' -Latitude '12.972442' -Longitude '77.580643'} |
+        It 'Set-AzsLocationInformation should not throw' {
+            { Set-AzsLocationInformation -TenantID $AadTenant -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds -Region 'local' -Latitude '12.972442' -Longitude '77.580643'} |
                 Should Not Throw
         }
 
