@@ -24,19 +24,19 @@ Import-Module .\AzureStack.Connect.psm1
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
+Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
 
 Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
+$TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
 ```
 
 For **ADFS** environments use the following:
 
 ```powershell
-$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin
+$TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin
 ```
 
 Then login:
@@ -54,7 +54,7 @@ Explains each individual command and shows how to use it
 List active and closed Infrastructure Alerts
 
 ```powershell
-Get-AzSAlert
+Get-AzsAlert
 ```
 
 The command does the following:
@@ -66,7 +66,9 @@ The command does the following:
  Close any active Infrastructure Alert. Run Get-AzSAlert to get the AlertID, required to close a specific Alert.
 
 ```powershell
-Close-AzSAlert -AlertID "ID"
+Close-AzsAlert -AlertID "ID"
+$credential = Get-Credential
+Close-AzsAlert -AzureStackCredentials $credential -TenantID $TenantID -AlertID "ID" -EnvironmentName "AzureStackAdmin"
 ```
 
 The command does the following:
@@ -102,7 +104,7 @@ The command does the following:
  Applies a specific Azure Stack Update that is downloaded and applicable. Run Get-AzureStackUpdate to retrieve Update Version first
 
 ```powershell
-Install-AzSUpdate -Update "Update Version"
+Install-AzsUpdate -Update "Update Version"
 ```
 
 The command does the following:
@@ -114,7 +116,7 @@ The command does the following:
  Should be used to validate a specific Update Run or look at previous update runs
 
 ```powershell
-Get-AzSUpdateRun -Update "Update Version"
+Get-AzsUpdateRun -Update "Update Version"
 ```
 
 The command does the following:
@@ -198,6 +200,7 @@ The command does the following:
  Does list all file shares in the storage subsystem
 
 ```powershell
+
 Get-AzSStorageShare
 ```
 
@@ -291,7 +294,7 @@ The command does the following:
 
 ### Restart Infra Role Instance
 
- Does restart an Infra Role Instance
+ Does Restart an Infra Role Instance
 
 ```powershell
 Restart-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
@@ -426,3 +429,21 @@ Enable-AzSScaleUnitNode -Name $node.name
 $node=Get-AzSScaleUnitNode
 $node | fl
 ```
+
+
+### Set Azure Stack's Latitude and Longitude
+
+This command modifies an Azure Stack instance's latitude and longitude location
+
+```powershell
+$EnvironmentName = "AzureStackAdmin"
+$directoryName = "<<yourDirectoryName>>.onmicrosoft.com"
+$credential = Get-Credential
+$latitude = '12.972442'
+$longitude = '77.580643'
+$regionName = 'local'
+
+Set-AzsLocationInformation -Region $regionName -Latitude $latitude -Longitude $longitude
+
+```
+

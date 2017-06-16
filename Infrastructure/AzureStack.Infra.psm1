@@ -7,6 +7,7 @@
     .SYNOPSIS
     List Active & Closed Infrastructure Alerts
 #>
+
 function Get-AzSAlert
 {
     Param(
@@ -79,8 +80,10 @@ Export-ModuleMember -function Get-AzSStorageCapacity
     .SYNOPSIS
     List Infrastructure Roles 
 #>
-function Get-AzSInfrastructureRole
-{
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Get-AzsInfraRole' -Value 'Get-AzsInfrastructureRole' -ErrorAction SilentlyContinue
+
+function Get-AzsInfrastructureRole{
     Param(
         [string] $Region = $null
     )
@@ -98,8 +101,10 @@ Export-ModuleMember -function Get-AzSInfrastructureRole
     List Infrastructure Role Instances
 #>
 
-function Get-AzSInfrastructureRoleInstance
-{
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Get-AzsInfraRoleInstance' -Value 'Get-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
+
+function Get-AzsInfrastructureRoleInstance{
     Param(
         [string] $Region = $null
     )
@@ -134,6 +139,7 @@ Export-ModuleMember -function Get-AzSStorageShare
     .SYNOPSIS
     List Logical Networks
 #>
+
 function Get-AzSLogicalNetwork
 {
     Param(
@@ -152,12 +158,12 @@ Export-ModuleMember -function Get-AzSLogicalNetwork
     .SYNOPSIS
     List Region Update Summary
 #>
+
 function Get-AzSUpdateSummary
 {
     Param(
         [string] $Region = $null
     )
-    
     $resourceType = "Microsoft.Update.Admin/updatelocations/regionUpdateStatus"
 
     $updates = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
@@ -208,10 +214,12 @@ function Get-AzSUpdateRun
 
 Export-ModuleMember -function Get-AzSUpdateRun
 
+
 <#
     .SYNOPSIS
     Apply Azure Stack Update 
 #>
+
 function Install-AzSUpdate
 {
     Param(
@@ -252,6 +260,7 @@ function Close-AzSAlert
         [ValidateNotNullorEmpty()]
         [String] $AlertId
     )
+
     
     $region = Get-AzSLocation -Location $Region
 
@@ -275,7 +284,6 @@ function Close-AzSAlert
         Set-AzureRmResource @params -Force
     }
 }
-
 Export-ModuleMember -function Close-AzSAlert
 
 <#
@@ -318,6 +326,7 @@ Export-ModuleMember -function Get-AzSMaCPool
     .SYNOPSIS
    List Gateway Pools
 #>
+
 function Get-AzSGatewayPool
 {
     Param(
@@ -336,6 +345,7 @@ Export-ModuleMember -function Get-AzSGatewayPool
     .SYNOPSIS
     List SLB MUX
 #>
+
 function Get-AzSSLBMUX
 {
     Param(
@@ -372,6 +382,9 @@ Export-ModuleMember -function Get-AzSGateway
     .SYNOPSIS
     Start Infra Role Instance
 #>
+
+New-Alias -Name 'Start-AzsInfraRoleInstance' -Value 'Start-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
+
 function Start-AzSInfrastructureRoleInstance
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -400,6 +413,10 @@ Export-ModuleMember -function Start-AzSInfrastructureRoleInstance
     .SYNOPSIS
     Shutdown Infra Role Instance
 #>
+
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Stop-AzsInfraRoleInstance' -Value 'Stop-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
+
 function Stop-AzSInfrastructureRoleInstance
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -428,6 +445,10 @@ Export-ModuleMember -function Stop-AzSInfrastructureRoleInstance
     .SYNOPSIS
     Restart Infra Role Instance
 #>
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Restart-AzsInfraRoleInstance' -Value 'Restart-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
+
+
 function Restart-AzSInfrastructureRoleInstance
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -496,6 +517,7 @@ Export-ModuleMember -function Add-AzSIPPool
     .SYNOPSIS
     Enable Maintenance Mode
 #>
+
 function Disable-AzSScaleUnitNode
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -524,6 +546,7 @@ Export-ModuleMember -function Disable-AzSScaleUnitNode
     .SYNOPSIS
     Disable Maintenance Mode
 #>
+
 function Enable-AzSScaleUnitNode
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -568,7 +591,6 @@ function Get-AzSRegionCapacity
 
 Export-ModuleMember -function Get-AzSRegionCapacity
 
-
 function Get-AzSLocation
 {
     param(
@@ -611,6 +633,9 @@ function Get-AzSInfrastructureResource
     $infraResource = Get-AzureRmResource @params
     return $infraResource
 }
+
+Export-ModuleMember -function Set-AzsLocationInformation
+
 
 function Invoke-AzSInfrastructureAction
 {

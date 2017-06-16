@@ -101,6 +101,7 @@ InModuleScope $script:ModuleName {
                 $newSKU = "16.04.1-LTS"
                 $newVersion = "1.0.4"
                 Remove-AzSVMImage -publisher $newPub -offer $newOffer -sku $newSKU -version $newVersion
+
                 $GalleryItemName = "$newOffer$newSKU"
                 $GalleryItemName = $GalleryItemName -replace "\.","-"
                 Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem

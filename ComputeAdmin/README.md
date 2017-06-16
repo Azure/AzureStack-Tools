@@ -18,7 +18,7 @@ Import-Module .\AzureStack.ComputeAdmin.psm1
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
 ## Add the WS2016 Evaluation VM Image 
@@ -56,7 +56,7 @@ Please note that to use this image for **installing additional Azure Stack servi
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
 ```powershell
@@ -77,7 +77,7 @@ Run the below command to remove an uploaded VM image. After removal, tenants wil
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
 ```powershell
@@ -90,7 +90,7 @@ Note: This cmdlet will remove the associated Marketplace item unless the -KeepMa
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 An example usage is the following:
 
@@ -105,7 +105,7 @@ Add-AzSVMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -exten
 You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
+Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
 Run the below command to remove an uploaded VM extension.
 
@@ -127,7 +127,7 @@ VM Scale Set allows deployment of multi-VM collections. To add a gallery item wi
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
 $Location = "<The location name of your AzureStack Environment>"
 
-Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm 
+Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm 
 
 $Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin user password>"
 $User = "<your AzureStack admin user name>"

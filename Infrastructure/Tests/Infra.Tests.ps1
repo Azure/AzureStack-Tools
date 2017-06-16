@@ -11,8 +11,8 @@ Describe $script:ModuleName {
                 Should Not Be $null
         }
 
-        It 'Get-AzSAlert should be exported' {
-            Get-Command -Name Get-AzSAlert -ErrorAction SilentlyContinue | 
+        It 'Get-AzsAlert should be exported' {
+            Get-Command -Name Get-AzsAlert -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     }
@@ -38,45 +38,45 @@ InModuleScope $script:ModuleName {
 
 
     Describe 'Infra - Functional Tests' {
-        It 'Get-AzSAlert should not throw' {
-            { Get-AzSAlert } |
+        It 'Get-AzsAlert should not throw' {
+            { Get-AzsAlert } |
                 Should Not Throw
         }
-        It 'Get-AzSScaleUnit should not throw' {
-            { Get-AzSAlert } |
+        It 'Get-AzsScaleUnit should not throw' {
+            { Get-AzsAlert } |
                 Should Not Throw
         }
-        It 'Get-AzSScaleUnitNode should not throw' {
-            { Get-AzSScaleUnitNode } |
+        It 'Get-AzsScaleUnitNode should not throw' {
+            { Get-AzsScaleUnitNode } |
                 Should Not Throw
         }
-        It 'Get-AzSStorageCapacity should not throw' {
-            { Get-AzSStorageCapacity } |
+        It 'Get-AzsStorageCapacity should not throw' {
+            { Get-AzsStorageCapacity } |
                 Should Not Throw
         }
-        It 'Get-AzSInfraRole should not throw' {
-            { Get-AzSInfraRole } |
+        It 'Get-AzsInfraRole should not throw' {
+            { Get-AzsInfraRole } |
                 Should Not Throw
         }
-        It 'Get-AzSInfraRoleInstance should not throw' {
-            { Get-AzSInfraRoleInstance } |
+        It 'Get-AzsInfraRoleInstance should not throw' {
+            { Get-AzsInfraRoleInstance } |
                 Should Not Throw
         }
-        It 'Get-AzSStorageShare should not throw' {
-            { Get-AzSStorageShare } |
+        It 'Get-AzsStorageShare should not throw' {
+            { Get-AzsStorageShare } |
                 Should Not Throw
         }
-        It 'Get-AzSlogicalnetwork should not throw' {
-            { Get-AzSlogicalnetwork } |
+        It 'Get-Azslogicalnetwork should not throw' {
+            { Get-Azslogicalnetwork } |
                 Should Not Throw
         }
         
-        It 'Get-AzSUpdateSummary should not throw' {
-            { Get-AzSUpdateSummary } |
+        It 'Get-AzsUpdateSummary should not throw' {
+            { Get-AzsUpdateSummary } |
                 Should Not Throw
         }
-        It 'Get-AzSUpdate should not throw' {
-            { Get-AzSUpdate } |
+        It 'Get-AzsUpdate should not throw' {
+            { Get-AzsUpdate } |
                 Should Not Throw
         }
 

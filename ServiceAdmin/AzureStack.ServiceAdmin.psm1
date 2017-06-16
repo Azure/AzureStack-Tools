@@ -7,7 +7,11 @@
     .SYNOPSIS
     Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
 #>
-function Add-AzSTenantOfferAndQuota
+
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-AzsTenantOfferAndQuotas' -Value 'Add-AzsTenantOfferAndQuotas' -ErrorAction SilentlyContinue
+
+function Add-AzsTenantOfferAndQuotas
 {
     param (
         [parameter(HelpMessage="Name of the offer to be made advailable to tenants")]
@@ -18,7 +22,7 @@ function Add-AzSTenantOfferAndQuota
         [parameter(HelpMessage="Azure Stack region in which to define plans and quotas")]
         [string] $Location = "local"
     )
-
+    
     Write-Verbose "Creating quotas..." -Verbose
     $Quotas = @()
     if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')) {
@@ -64,6 +68,9 @@ function Add-AzSTenantOfferAndQuota
 
 Export-ModuleMember Add-AzSTenantOfferAndQuotas
 
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-StorageQuota' -Value 'Add-AzsStorageQuota' -ErrorAction SilentlyContinue
+
 function Add-AzSStorageQuota
 {
     param(
@@ -88,7 +95,10 @@ function Add-AzSStorageQuota
     New-AzSServiceQuota @params
 }
 
-function Add-AzSComputeQuota
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-ComputeQuota' -Value 'Add-AzsComputeQuota' -ErrorAction SilentlyContinue
+
+function Add-AzsComputeQuota
 {
     param(
         [string] $Name         = "default",
@@ -114,7 +124,10 @@ function Add-AzSComputeQuota
     New-AzSServiceQuota @params
 }
 
-function Add-AzSNetworkQuota
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'New-NetworkQuota'-Value 'Add-AzsNetworkQuota' -ErrorAction SilentlyContinue
+    
+function Add-AzsNetworkQuota
 {
     param(
         [string] $Name                        = "default",
@@ -148,6 +161,7 @@ function Add-AzSNetworkQuota
     New-AzSServiceQuota @params
 }
 
+
 function Get-AzSSubscriptionsQuota
 {
     param(
@@ -164,6 +178,9 @@ function Get-AzSSubscriptionsQuota
 
     Get-AzSServiceQuota @params
 }
+
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Get-KeyVaultQuota' -Value 'Get-AzsKeyVaultQuota' -ErrorAction SilentlyContinue
 
 function Get-AzSKeyVaultQuota
 {

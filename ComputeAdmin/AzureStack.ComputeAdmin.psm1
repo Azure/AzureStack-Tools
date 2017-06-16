@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
 <#
@@ -50,6 +50,9 @@ Function Add-AzSVMSSGalleryItem {
 
     Add-AzureRMGalleryItem -GalleryItemUri $uri
 }
+
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Remove-AzureStackVMSSGalleryItem' -Value 'Remove-AzsVMSSGalleryItem' -ErrorAction SilentlyContinue
 
 Function Remove-AzSVMSSGalleryItem {
     $item = Get-AzureRMGalleryItem -Name "microsoft.vmss.1.3.6"
@@ -138,7 +141,7 @@ Function Add-AzSVMImage
     $resourceGroupName = "addvmimageresourcegroup"
     $storageAccountName = "addvmimagestorageaccount"
     $containerName = "addvmimagecontainer"
-    
+
     #pre validate if image is not already deployed
     $VMImageAlreadyAvailable = $false
     if ($(Get-AzSVMImage -publisher $publisher -offer $offer -sku $sku -version $version -location $location -ErrorAction SilentlyContinue).Properties.ProvisioningState -eq 'Succeeded') {
@@ -279,7 +282,6 @@ Function Add-AzSVMImage
 
         Write-Host "Downloading...";
         Start-Sleep -Seconds 10
-
         $platformImage = Get-AzSVMImage -publisher $publisher -offer $offer -sku $sku -version $version -location $location
     }
 
@@ -302,6 +304,7 @@ Function Add-AzSVMImage
     Remove-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -AccountName $storageAccountName 
     Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
 }
+
 
 function Remove-AzSVMImage
 {
@@ -727,6 +730,7 @@ Function CreateGalleyItem{
     return Get-Item -LiteralPath $azpkg
 }
 
+New-Alias -Name 'Get-VMImage' -Value 'Get-AzsVMImage' -ErrorAction SilentlyContinue
 Function Get-AzSVMImage{
     Param(
         [Parameter(Mandatory=$true)]
@@ -909,6 +913,8 @@ Function Add-AzSVMExtension
     Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
 }
 
+# Temporary backwards compatibility.  Original name has been deprecated. 
+New-Alias -Name 'Remove-VMExtension' -Value 'Remove-AzsVMExtension' -ErrorAction SilentlyContinue
 Function Remove-AzSVMExtension
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -956,7 +962,6 @@ Function Get-AzSLocation
     param(
         [string] $Location
     )
-
     if($null -ne $Location -and '' -ne $Location)
     {
         return $Location

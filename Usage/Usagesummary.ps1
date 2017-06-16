@@ -6,8 +6,11 @@
     .EXAMPLE
     Export-AzSUsage -StartTime 2/15/2017 -EndTime 2/16/2017 -Granularity Hourly
 #>
-function Export-AzSUsage 
-{
+
+# Temporary backwards compatibility.  Original name has been deprecated.
+New-Alias -Name 'Export-AzureStackUsage' -Value 'Export-AzsUsage' -ErrorAction SilentlyContinue
+
+function Export-AzsUsage {
     Param
     (
         [Parameter(Mandatory = $true)]
