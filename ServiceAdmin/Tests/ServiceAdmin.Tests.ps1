@@ -21,25 +21,9 @@ Describe $script:ModuleName {
 
 InModuleScope $script:ModuleName {
 
-    $HostComputer = $global:HostComputer
-    $ArmEndpoint = $global:ArmEndpoint
-    $natServer = $global:natServer 
-    $AdminUser= $global:AdminUser 
-    $AadServiceAdmin = $global:AadServiceAdmin 
-
-    $AdminPassword = $global:AdminPassword
-    $AadServiceAdminPassword = $global:AadServiceAdminPassword
-    $stackLoginCreds = $global:AzureStackLoginCredentials
-
-    $VPNConnectionName = $global:VPNConnectionName
-
-    $AadTenant = $global:AadTenantID
-
-    $EnvironmentName = $global:EnvironmentName
-
     Describe 'ServiceAdmin - Functional Tests' {
-        It 'Add-AzsTenantOfferAndQuotas should create Quotas, Plan and Offer' {
-            { Add-AzsTenantOfferAndQuotas -tenantID $AadTenant -AzureStackCredentials $stackLoginCreds -EnvironmentName $EnvironmentName } |
+        It 'Add-AzsTenantOfferAndQuota should create Quotas, Plan and Offer' {
+            { Add-AzsTenantOfferAndQuotas } |
                 Should Not Throw
         }
 

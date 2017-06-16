@@ -4,7 +4,7 @@
     .DESCRIPTION
     Long description
     .EXAMPLE
-    Export-AzureStackUsageDetails -StartTime 2/15/2017 -EndTime 2/16/2017 -AzureStackDomain azurestack.local -AADDomain mydir.onmicrosoft.com -Granularity Hourly
+    Export-AzSUsage -StartTime 2/15/2017 -EndTime 2/16/2017 -Granularity Hourly
 #>
 
 # Temporary backwards compatibility.  Original name has been deprecated.
@@ -19,12 +19,6 @@ function Export-AzsUsage {
         [Parameter(Mandatory = $true)]
         [datetime]
         $EndTime ,
-        [Parameter(Mandatory = $true)]
-        [String]
-        $AzureStackDomain ,
-        [Parameter(Mandatory = $true)]
-        [String]
-        $AADDomain ,
         [Parameter(Mandatory = $false)]
         [ValidateSet("Hourly", "Daily")]
         [String]
@@ -33,14 +27,8 @@ function Export-AzsUsage {
         [String]
         $CsvFile = "UsageSummary.csv",
         [Parameter (Mandatory = $false)]
-        [PSCredential]
-        $Credential,
-        [Parameter(Mandatory = $false)]
         [Switch]
         $TenantUsage,
-        [Parameter(Mandatory = $false)]
-        [String]
-        $Subscription,
         [Parameter(Mandatory = $false)]
         [Switch]
         $Force
@@ -70,115 +58,81 @@ function Export-AzsUsage {
     }
 
     #Output Files
-    if (Test-Path -Path $CsvFile -ErrorAction SilentlyContinue) {
-        if ($Force) {
+    if (Test-Path -Path $CsvFile -ErrorAction SilentlyContinue)
+    {
+        if ($Force)
+        {
             Remove-Item -Path $CsvFile -Force
         }
-        else {
+        else
+        {
             Write-Host "$CsvFile alreday exists use -Force to overwrite"
             return
         }
     }
     New-Item -Path $CsvFile -ItemType File | Out-Null
 
-    #get auth metadata and acquire token for REST call
-    $api = 'adminmanagement'
-    if ($TenantUsage) {
-        $api = 'management'
-    } 
-    $uri = 'https://{0}.{1}/metadata/endpoints?api-version=1.0' -f $api, $AzureStackDomain
-    $endpoints = (Invoke-RestMethod -Uri $uri -Method Get)
-    $activeDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-    $loginEndpoint = $endpoints.authentication.loginEndpoint
-    $authority = $loginEndpoint + $AADDomain + '/'
-    $powershellClientId = '0a7bdc5c-7b57-40be-9939-d4c5fc7cd417'
-
-    #region Auth
-    if ($Credential) {
-        $adminToken = Get-AzureStackToken `
-            -Authority $authority `
-            -Resource $activeDirectoryServiceEndpointResourceId `
-            -AadTenantId $AADDomain `
-            -ClientId $powershellClientId `
-            -Credential $Credential
-    }
-    else {
-        $adminToken = Get-AzureStackToken `
-            -Authority $authority `
-            -Resource $activeDirectoryServiceEndpointResourceId `
-            -AadTenantId $AADDomain `
-            -ClientId $powershellClientId 
-    }
-  
-    if (!$adminToken) {
-        Return
-    }
-    #endregion
-
-    #Setup REST call variables
-    $headers = @{ Authorization = (('Bearer {0}' -f $adminToken)) }
-    $armEndpoint = 'https://{0}.{1}' -f $api, $AzureStackDomain
-
-    if (!$Subscription) {
-        #Get default subscription ID
-        $uri = $armEndpoint + '/subscriptions?api-version=2015-01-01'
-        $result = Invoke-RestMethod -Method GET -Uri $uri  -Headers $headers
-        $Subscription = $result.value[0].subscriptionId
-    }
-
+    $usageResourceType = "Microsoft.Commerce/locations/subscriberUsageAggregates"
+        
     #build usage uri
-    if (!$TenantUsage) {
-        $uri = $armEndpoint + '/subscriptions/{0}/providers/Microsoft.Commerce/subscriberUsageAggregates?api-version=2015-06-01-preview&reportedstartTime={1:s}Z&reportedEndTime={2:s}Z&showDetails=true&aggregationGranularity={3}' -f $Subscription, $StartTime, $EndTime, $Granularity
+    if ($TenantUsage)
+    {
+        $usageResourceType = "Microsoft.Commerce/locations/UsageAggregates"
     }
-    else {
-        $uri = $armEndpoint + '/subscriptions/{0}/providers/Microsoft.Commerce/UsageAggregates?api-version=2015-06-01-preview&reportedstartTime={1:s}Z&reportedEndTime={2:s}Z&showDetails=true&aggregationGranularity={3}' -f $Subscription, $StartTime, $EndTime, $Granularity
-    }
-  
-    Do {
-        $result = Invoke-RestMethod -Method GET -Uri $uri  -Headers $headers -ErrorVariable RestError -Verbose
-        if ($RestError) {
-            return
-        }
-        $usageSummary = @()
-        $uri = $result.NextLink
-        $count = $result.value.Count
-        $Total += $count
-        $result.value  | ForEach-Object {
-            $record = New-Object -TypeName System.Object
-            $resourceInfo = ($_.Properties.InstanceData |ConvertFrom-Json).'Microsoft.Resources'
-            $resourceText = $resourceInfo.resourceUri.Replace('\', '/')
-            $subscription = $resourceText.Split('/')[2]
-            $resourceType = $resourceText.Split('/')[7]
-            $resourceName = $resourceText.Split('/')[8]
-            #$record | Add-Member -Name Name -MemberType NoteProperty -Value $_.Name
-            #$record | Add-Member -Name Type -MemberType NoteProperty -Value $_.Type
-            $record | Add-Member -Name MeterId -MemberType NoteProperty -Value $_.Properties.MeterId
-            if ($meters.ContainsKey($_.Properties.MeterId)) {
-                $record | Add-Member -Name MeterName -MemberType NoteProperty -Value $meters[$_.Properties.MeterId]
-            }
-            $record | Add-Member -Name Quantity -MemberType NoteProperty -Value $_.Properties.Quantity
-            $record | Add-Member -Name UsageStartTime -MemberType NoteProperty -Value $_.Properties.UsageStartTime
-            $record | Add-Member -Name UsageEndTime -MemberType NoteProperty -Value $_.Properties.UsageEndTime
-            $record | Add-Member -Name additionalInfo -MemberType NoteProperty -Value $resourceInfo.additionalInfo
-            $record | Add-Member -Name location -MemberType NoteProperty -Value $resourceInfo.location
-            $record | Add-Member -Name tags -MemberType NoteProperty -Value $resourceInfo.tags
-            $record | Add-Member -Name subscription -MemberType NoteProperty -Value $subscription
-            $record | Add-Member -Name resourceType -MemberType NoteProperty -Value $resourceType
-            $record | Add-Member -Name resourceName -MemberType NoteProperty -Value $resourceName
-            $record | Add-Member -Name resourceUri -MemberType NoteProperty -Value $resourceText
-            $usageSummary += $record
-        }
-        $usageSummary | Export-Csv -Path $CsvFile -Append -NoTypeInformation 
-        if ($PSBoundParameters.ContainsKey(‘Debug’)) {
-            $result.value | Export-Csv -Path "$CsvFile.raw" -Append -NoTypeInformation
-        }
 
+    $params = @{
+        ResourceName = '../' 
+        ResourceType = $usageResourceType
+        ApiVersion = "2015-06-01-preview"
+        ODataQuery = "reportedStartTime={0:s}&reportedEndTime={1:s}&showDetails=true&aggregationGranularity={2}" -f $StartTime, $EndTime, $Granularity
     }
-    While ($count -ne 0)
+
+    $result = Get-AzureRmResource @params -ErrorVariable RestError -Verbose
+
+    if ($RestError)
+    {
+        return
+    }
+
+    $usageSummary = @()
+    $uri = $result.NextLink
+    $count = $result.Count
+    $Total += $count
+    $result  | ForEach-Object 
+    {
+        $record = New-Object -TypeName System.Object
+        $resourceInfo = ($_.Properties.InstanceData | ConvertFrom-Json).'Microsoft.Resources'
+        $resourceText = $resourceInfo.resourceUri.Replace('\', '/')
+        $subscription = $resourceText.Split('/')[2]
+        $resourceType = $resourceText.Split('/')[7]
+        $resourceName = $resourceText.Split('/')[8]
+        #$record | Add-Member -Name Name -MemberType NoteProperty -Value $_.Name
+        #$record | Add-Member -Name Type -MemberType NoteProperty -Value $_.Type
+        $record | Add-Member -Name MeterId -MemberType NoteProperty -Value $_.Properties.MeterId
+        if ($meters.ContainsKey($_.Properties.MeterId)) {
+            $record | Add-Member -Name MeterName -MemberType NoteProperty -Value $meters[$_.Properties.MeterId]
+        }
+        $record | Add-Member -Name Quantity -MemberType NoteProperty -Value $_.Properties.Quantity
+        $record | Add-Member -Name UsageStartTime -MemberType NoteProperty -Value $_.Properties.UsageStartTime
+        $record | Add-Member -Name UsageEndTime -MemberType NoteProperty -Value $_.Properties.UsageEndTime
+        $record | Add-Member -Name additionalInfo -MemberType NoteProperty -Value $resourceInfo.additionalInfo
+        $record | Add-Member -Name location -MemberType NoteProperty -Value $resourceInfo.location
+        $record | Add-Member -Name tags -MemberType NoteProperty -Value $resourceInfo.tags
+        $record | Add-Member -Name subscription -MemberType NoteProperty -Value $subscription
+        $record | Add-Member -Name resourceType -MemberType NoteProperty -Value $resourceType
+        $record | Add-Member -Name resourceName -MemberType NoteProperty -Value $resourceName
+        $record | Add-Member -Name resourceUri -MemberType NoteProperty -Value $resourceText
+        $usageSummary += $record
+    }
+    $usageSummary | Export-Csv -Path $CsvFile -Append -NoTypeInformation 
+    if ($PSBoundParameters.ContainsKey('Debug'))
+    {
+        $result | Export-Csv -Path "$CsvFile.raw" -Append -NoTypeInformation
+    }
+    
     Write-Host "Complete - $Total Usage records written to $CsvFile"
 }
 
 #Main
 
-$aadCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList '<user@domain>', (ConvertTo-SecureString -String 'XXX' -AsPlainText -Force)
-Export-AzureStackUsage -StartTime 3/1/2017 -EndTime 3/13/2017 -AzureStackDomain 'local.azurestack.external' -AADDomain '<domain>'  -Credential $aadCred -Granularity Hourly -Debug -Force
+Export-AzSUsage -StartTime 6/10/2017 -EndTime 6/11/2017 -Granularity Hourly -Force
