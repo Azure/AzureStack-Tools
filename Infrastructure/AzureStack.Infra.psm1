@@ -408,8 +408,8 @@ Function Install-AzSUpdate{
     $Updateprop=$Updates.value
     $Update=$updateprop |where-object {$_.name -eq "$vupdate"}
     $StartUpdateBody = $update | ConvertTo-Json
-    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate ?api-version=2016-05-01"
-    $Runs=Invoke-RestMethod -Method PUT -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $StartUpdateBody
+    $URI= "${ArmEndpoint}/subscriptions/${subscription}/resourceGroups/system.$region/providers/Microsoft.Update.Admin/updatelocations/$region/updates/$vupdate/apply?api-version=2016-05-01"
+    $Runs=Invoke-RestMethod -Method POST -Uri $uri -ContentType 'application/json' -Headers $Headers -Body $StartUpdateBody
     $Startrun=$Runs.value
     $Startrun   
     
