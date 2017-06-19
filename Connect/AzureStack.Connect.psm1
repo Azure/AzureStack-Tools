@@ -9,11 +9,11 @@
     Registers all providers on the all subscription
 #>
 function Register-AllAzureRmProvidersOnAllSubscriptions {
-    foreach($s in (Get-AzureRmSubscription)) {
-        Select-AzureRmSubscription -SubscriptionId $s.SubscriptionId | Out-Null
-        Write-Progress $($s.SubscriptionId + " : " + $s.SubscriptionName)
-    Register-AllAzureRmProviders
-}
+    Get-AzureRmSubscription | ForEach-Object {
+        Select-AzureRmSubscription -SubscriptionId $_.SubscriptionId | Out-Null
+        Write-Progress $($_.SubscriptionId + " : " + $_.SubscriptionName)
+        Register-AllAzureRmProviders
+    }
 }
 
 Export-ModuleMember Register-AllAzureRmProvidersOnAllSubscriptions
@@ -92,7 +92,6 @@ function Add-AzureStackAzureRmEnvironment {
 
     $Domain = ""
     try {
-        $uriARMEndpoint = [System.Uri] $ArmEndpoint
         $i = $ArmEndpoint.IndexOf('.')
         $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
     }

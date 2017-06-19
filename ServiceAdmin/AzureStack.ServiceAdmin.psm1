@@ -8,7 +8,7 @@
     .SYNOPSIS
     Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
 #>
-function New-AzSTenantOfferAndQuotas
+function New-AzSTenantOfferAndQuota
 {
     param (
         [parameter(HelpMessage="Name of the offer to be made advailable to tenants")]
@@ -61,7 +61,7 @@ function New-AzSTenantOfferAndQuotas
     return $offer
 }
 
-Export-ModuleMember New-AzSTenantOfferAndQuotas
+Export-ModuleMember New-AzSTenantOfferAndQuota
 
 function Get-SubscriptionsQuota
 {
