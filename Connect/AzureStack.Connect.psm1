@@ -256,7 +256,7 @@ function Connect-AzureStackVpn {
     $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
 
     Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
-    $cert = Invoke-Command -ComputerName "$Remote.$Domain" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -eq "CN=AzureStackCertificationAuthority, DC=AzureStack, DC=local"} } -Credential $credential
+    $cert = Invoke-Command -ComputerName "$Remote.$Domain" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -eq "CN=AzureStackCertificationAuthority, DC=" + [System.String]::Join(", DC=", $DomainSuffix.Split("."))} } -Credential $credential
 
     if($cert -ne $null) {
         if($cert.GetType().IsArray) {
