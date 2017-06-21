@@ -96,7 +96,7 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).Ticks)",
-	[parameter(HelpMessage="Specifies the file name for canary log file")]
+    [parameter(HelpMessage="Specifies the file name for canary log file")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
