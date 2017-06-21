@@ -75,16 +75,16 @@ The command does the following:
 - Close active Alert
 
 
-### Get Region Update Summary
+### Get Update Location
 
- Review the Update Summary for a specified region.
+ Review details about the Region related to updates.
 
 ```powershell
-Get-AzSUpdateSummary
+Get-AzSUpdateLocation
 ```
 
 The command does the following:
-- Retrieves Region Update Summary
+ Retrieves details about the update location
 
 
 ### Get Azure Stack Update
@@ -183,16 +183,16 @@ The command does the following:
 - Lists logical Networks
 
 
-### List Storage Capacity
+### List Storage Subsystem
 
- Does return the total capacity of the storage subsystem
+ Does return details about the Storage Subsystem
 
 ```powershell
-Get-AzSStorageCapacity
+Get-AzSStorageSubsystem
 ```
 
 The command does the following:
-- Lists total storage capacity for the storage subsystem
+- Lists detail about the storage subsystem
 
 
 ### List Storage Shares

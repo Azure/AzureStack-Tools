@@ -62,7 +62,7 @@ Export-ModuleMember -function Get-AzSScaleUnitNode
     .SYNOPSIS
     List total storage capacity 
 #>
-function Get-AzSStorageCapacity
+function Get-AzSStorageSubsystem
 {
     Param(
         [string] $Region = $null
@@ -74,7 +74,7 @@ function Get-AzSStorageCapacity
     $storage
 }
 
-Export-ModuleMember -function Get-AzSStorageCapacity
+Export-ModuleMember -function Get-AzSStorageSubsystem
 
 <#
     .SYNOPSIS
@@ -159,18 +159,18 @@ Export-ModuleMember -function Get-AzSLogicalNetwork
     List Region Update Summary
 #>
 
-function Get-AzSUpdateSummary
+function Get-AzSUpdateLocation
 {
     Param(
         [string] $Region = $null
     )
-    $resourceType = "Microsoft.Update.Admin/updatelocations/regionUpdateStatus"
+    $resourceType = "Microsoft.Update.Admin/updatelocations"
 
     $updates = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
     $updates.Properties
 }
 
-Export-ModuleMember -function Get-AzSUpdateSummary
+Export-ModuleMember -function Get-AzSUpdateLocation
 
 <#
     .SYNOPSIS
@@ -241,7 +241,7 @@ function Install-AzSUpdate
         Properties = $updateContent
     }
 
-    $StartRun = New-AzureRmResource @params -Force
+    $StartRun = Invoke-AzureRmResourceAction @params -Action 'apply' -Force
 
     $StartRun
 }

@@ -6,7 +6,7 @@ To Validate Storage Capabilities such as Skus available in the CloudCapabilities
 Import-Module ".\AzureRM.TemplateValidator.psm1"
 ```
 # Prerequisites
-Create CloudCapabilities.json by using Get-AzureRMCloudCapabilities tool [AzureStack-Tools repo/CloudCapabilities](../CloudCapabilities). or use the provided sample AzureStackCapabilities_TP2.json in this folder
+Create CloudCapabilities.json by using Get-AzureRMCloudCapabilities tool [AzureStack-Tools repo/CloudCapabilities](../CloudCapabilities). or use the provided sample AzureStackCapabilities_TP3.json in this folder
 For Azure/AzureStack quickstart templates, git clone from below links
 https://github.com/Azure/AzureStack-QuickStart-Templates/
 https://github.com/Azure/Azure-QuickStart-Templates/

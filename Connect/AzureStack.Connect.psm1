@@ -221,7 +221,7 @@ function Add-AzsVpnConnection {
         [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
         [string] $ConnectionName = "azurestack",
 	
-        [parameter(mandatory=$true, HelpMessage="External IP of the Azure Stack NAT VM such as '1.2.3.4'")]
+        [parameter(mandatory=$true, HelpMessage="External IP of the Azure Stack Host such as '1.2.3.4'")]
         [string] $ServerAddress,
 
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
@@ -264,17 +264,13 @@ function Connect-AzsVpn {
     param (
         [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
         [string] $ConnectionName = "azurestack",
-        [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
-        [string] $DomainSuffix = 'azurestack.local',
-        [parameter(HelpMessage="Certificate Authority computer name in this Azure Stack Instance")]
-        [string] $Remote = "azs-ca01",
         [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
-        [securestring] $Password
+        [securestring] $Password,
+        [parameter(HelpMessage="Indicate whether to retrieve and trust certificates from the environment after establishing a VPN connection")]
+        [bool] $RetrieveCertificates = $true
     )    
-    
-    $Domain = $DomainSuffix
     
     Write-Verbose "Connecting to Azure Stack VPN using connection named $ConnectionName..." -Verbose
 
@@ -286,36 +282,41 @@ function Connect-AzsVpn {
 
     $azshome = "$env:USERPROFILE\Documents\$ConnectionName"
 
-    Write-Verbose "Connection-specific files will be saved in $azshome" -Verbose
+    if ($RetrieveCertificates){
+        Write-Verbose "Connection-specific files will be saved in $azshome" -Verbose
 
-    New-Item $azshome -ItemType Directory -Force | Out-Null
+        New-Item $azshome -ItemType Directory -Force | Out-Null
 
-    $UserCred = "$Domain\$User"
-    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
+        $hostIP = (Get-VpnConnection -Name $ConnectionName).ServerAddress
 
-    Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
-    $cert = Invoke-Command -ComputerName "$Remote.$Domain" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -eq "CN=AzureStackCertificationAuthority, DC=AzureStack, DC=local"} } -Credential $credential
+        $UserCred = ".\$User"
+        $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
 
-    if($cert -ne $null) {
-        if($cert.GetType().IsArray) {
-            $cert = $cert[0] # take any that match the subject if multiple certs were deployed
+        Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
+        $cert = Invoke-Command -ComputerName "$hostIP" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -like "*AzureStackSelfSignedRootCert*"} } -Credential $credential
+
+        if($cert -ne $null) {
+            if($cert.GetType().IsArray) {
+                $cert = $cert[0] # take any that match the subject if multiple certs were deployed
+            }
+
+            $certFilePath = "$azshome\CA.cer"
+
+            Write-Verbose "Saving Azure Stack Root certificate in $certFilePath..." -Verbose
+
+            Export-Certificate -Cert $cert -FilePath $certFilePath -Force | Out-Null
+
+            Write-Verbose "Installing Azure Stack Root certificate for the current user..." -Verbose
+            
+            Write-Progress "LOOK FOR CERT ACCEPTANCE PROMPT ON YOUR SCREEN!"
+
+            Import-Certificate -CertStoreLocation cert:\currentuser\root -FilePath $certFilePath
         }
-
-        $certFilePath = "$azshome\CA.cer"
-
-        Write-Verbose "Saving Azure Stack Root certificate in $certFilePath..." -Verbose
-
-        Export-Certificate -Cert $cert -FilePath $certFilePath -Force | Out-Null
-
-        Write-Verbose "Installing Azure Stack Root certificate for the current user..." -Verbose
-        
-        Write-Progress "LOOK FOR CERT ACCEPTANCE PROMPT ON YOUR SCREEN!"
-
-        Import-Certificate -CertStoreLocation cert:\currentuser\root -FilePath $certFilePath
+        else {
+            Write-Error "Certificate has not been retrieved!"
+        }
     }
-    else {
-        Write-Error "Certificate has not been retrieved!"
-    }
+
 }
 
 Export-ModuleMember Connect-AzsVpn
