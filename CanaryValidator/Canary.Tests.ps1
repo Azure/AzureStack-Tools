@@ -196,62 +196,62 @@ while ($runCount -le $NumberOfIterations)
     {
         Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
         {
-	        Get-AzsInfrastructureRole -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsInfrastructureRole -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackInfraRoleInstance' -Description "List all infrastructure role instances" -UsecaseBlock `
         {
-	        Get-AzsInfrastructureRoleInstance -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsInfrastructureRoleInstance -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackLogicalNetwork' -Description "List all logical networks" -UsecaseBlock `
         {
-	        Get-AzsLogicalNetwork -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsLogicalNetwork -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackStorageCapacity' -Description "List storage capacity" -UsecaseBlock `
         {
-	        Get-AzSStorageSubsystem -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzSStorageSubsystem -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackStorageShare' -Description "List all storage file shares" -UsecaseBlock `
         {
-	        Get-AzsStorageShare -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsStorageShare -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
         {
-	        Get-AzsScaleUnit -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsScaleUnit -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
         {
-	        Get-AzsScaleUnitNode -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsScaleUnitNode -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
         {
-	        Get-AzsIpPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsIpPool -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackMacPool' -Description "List all MAC address pools " -UsecaseBlock `
         {
-	        Get-AzsMacPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsMacPool -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGatewayPool' -Description "List all gateway pools" -UsecaseBlock `
         {
-	        Get-AzsGatewayPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsGatewayPool -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackSLBMux' -Description "List all SLB MUX instances" -UsecaseBlock `
         {
-	        Get-AzsSlbMux -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsSlbMux -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGateway' -Description "List all gateway" -UsecaseBlock `
         {
-	        Get-AzsGateway -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsGateway -Location $ResourceLocation
         }            
     }
    
@@ -259,7 +259,7 @@ while ($runCount -le $NumberOfIterations)
     {     
         Invoke-Usecase -Name 'GetAzureStackAlert' -Description "List all alerts" -UsecaseBlock `
         {
-            Get-AzsAlert -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsAlert -Location $ResourceLocation
         }
     }
 
@@ -267,12 +267,12 @@ while ($runCount -le $NumberOfIterations)
     {        
         Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
         {
-            Get-AzSUpdateLocation -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzSUpdateLocation -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
         {
-            Get-AzsUpdate -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsUpdate -Location $ResourceLocation
         }         
     }
        
@@ -282,7 +282,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -Location $ResourceLocation -Version Core -CreateGalleryItem $false
             }
         }
     }
@@ -302,7 +302,7 @@ while ($runCount -le $NumberOfIterations)
                     }
                     New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                     $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                    Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
                     Remove-Item $CanaryCustomImageFolder -Force -Recurse
                 }    
             }
@@ -404,7 +404,7 @@ while ($runCount -le $NumberOfIterations)
             {                
                 Invoke-Usecase -Name 'ListAssignedRoles' -Description "List assigned roles to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
                 {
-	                Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
+                    Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
                 }
 
                 $allAssignedRoles = Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
@@ -412,12 +412,12 @@ while ($runCount -le $NumberOfIterations)
                 {
                     Invoke-Usecase -Name 'AssignReaderRole' -Description "Assign Reader role to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
                     {
-	                    New-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop
+                        New-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop
                     }
 
                     Invoke-Usecase -Name 'VerifyReaderRoleAssignment' -Description "Verify if the Service Principle has got Reader role assigned successfully" -UsecaseBlock `
                     {
-	                    if (-not (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
+                        if (-not (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
                         {
                             throw [System.Exception] "Unable to assign role ($readerRole.Name) to Service Principle ($servicePrincipal.Id) for subscription $tenantSubscriptionName"
                         }                    
@@ -427,7 +427,7 @@ while ($runCount -le $NumberOfIterations)
                     {
                         Invoke-Usecase -Name 'RemoveReaderRoleAssignment' -Description "Remove Reader role assignment from Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
                         {
-	                        Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -Force -ErrorAction Stop
+                            Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -Force -ErrorAction Stop
                         }
                     }
                 }
@@ -435,7 +435,7 @@ while ($runCount -le $NumberOfIterations)
 
             Invoke-Usecase -Name 'ListExistingRoleDefinitions' -Description "List existing Role Definitions" -UsecaseBlock `
             {
-	            $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop                
+                $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop                
                 if (-not $availableRoles)
                 {
                     throw [System.Exception] "No roles are available."
@@ -458,7 +458,7 @@ while ($runCount -le $NumberOfIterations)
             {
                 Invoke-Usecase -Name 'CustomRoleDefinition' -Description "Create a custom Role Definition - $customRoleName" -UsecaseBlock `
                 {
-	                $role = Get-AzureRmRoleDefinition -Name Reader                
+                    $role = Get-AzureRmRoleDefinition -Name Reader                
                     $role.Id = $null                
                     $role.Name = $customRoleName
                     $role.Description = "Custom role definition for Canary"
@@ -477,14 +477,14 @@ while ($runCount -le $NumberOfIterations)
                 {
                     Invoke-Usecase -Name 'RemoveCustomRoleDefinition' -Description "Remove custom role definition - $customRoleName" -UsecaseBlock `
                     {
-	                    Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop                
+                        Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop                
                     }
                 }
             }
 
             Invoke-Usecase -Name 'GetProviderOperations' -Description "Get provider operations for all resource providers" -UsecaseBlock `
             {
-	            $resourceProviders = Get-AzureRmResourceProvider -ListAvailable
+                $resourceProviders = Get-AzureRmResourceProvider -ListAvailable
                 # Some of the RPs have not implemented their operations API yet. So update this exclusion list whenever any RP implements its operations API
                 $rpOperationsExclusionList = @("Microsoft.Compute", "Microsoft.Commerce", "Microsoft.Gallery", "Microsoft.Insights")
                 $totalOperationsPerRP = @()    

@@ -820,7 +820,7 @@ Function Get-AzsLocation {
         [Parameter(Mandatory = $false)]
         [string] $Location
     )
-    if ($null -ne $Location -and '' -ne $Location) {
+    if ($Location) {
         return $Location
     }
     
