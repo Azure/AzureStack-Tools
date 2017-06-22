@@ -1,113 +1,32 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
 #requires -Modules AzureRM.Profile, VpnClient, AzureRM.AzureStackAdmin
 
-<#
-    .SYNOPSIS
-    Registers all providers on the all subscription
-#>
-
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Register-AllAzureRMProvidersOnAllSubscriptions' -Value 'Register-AzsProviderOnAllSubscription' -ErrorAction SilentlyContinue
-
-function Register-AzsProviderOnAllSubscription {
-
-    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
-
-    foreach($s in (Get-AzureRmSubscription)) {
-            Select-AzureRmSubscription -SubscriptionId $s.SubscriptionId | Out-Null
-            Write-Progress $($s.SubscriptionId + " : " + $s.SubscriptionName)
-        Register-AzsProvider
-    }
-}
-
-Export-ModuleMember Register-AzsProviderOnAllSubscription
-
-<#
-    .SYNOPSIS
-    Registers all providers on the newly created subscription
-#>
-
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Register-AllAzureRmProviders' -Value 'Register-AzsProvider' -ErrorAction SilentlyContinue
-
-function Register-AzsProvider {
-
-    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
-
-    Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force
-}
-
-Export-ModuleMember Register-AzsProvider
-
-<#
-    .SYNOPSIS
-    Obtains Aazure Active Directory tenant that was used when deploying the Azure Stack instance
-#>
-
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Get-AzureStackAadTenant' -Value 'Get-AzsAADTenant' -ErrorAction SilentlyContinue
-
-function Get-AzsAADTenant {
-    param (
-        [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
-        [string] $HostComputer,        
-        [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
-        [string] $DomainSuffix = 'azurestack.local',
-        [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
-        [string] $User = "administrator",
-        [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
-        [securestring] $Password
-    )
-
-    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
-
-    $Domain = $DomainSuffix
-
-    $UserCred = "$Domain\$User"
-    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
-
-    Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
-    return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
-        {            
-        Write-Verbose "Retrieving Azure Stack configuration..." -Verbose
-        $configFile = Get-ChildItem -Path C:\EceStore -Recurse | Where-Object {-not $_.PSIsContainer} | Sort-Object Length -Descending | Select-Object -First 1
-        $customerConfig = [xml] (Get-Content -Path $configFile.FullName)
-
-        $Parameters = $customerConfig.CustomerConfiguration
-        $fabricRole = $Parameters.Role.Roles.Role | Where-Object {$_.Id -eq "Fabric"}
-        $allFabricRoles = $fabricRole.Roles.ChildNodes
-        $idProviderRole = $allFabricRoles | Where-Object {$_.Id -eq "IdentityProvider"}
-        $idProviderRole.PublicInfo.AADTenant.Id
-    }
-}
-
-Export-ModuleMember Get-AzsAADTenant
 
 <#
     .SYNOPSIS
     Adds Azure Stack environment to use with AzureRM command-lets when targeting Azure Stack
 #>
 
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Add-AzureStackAzureRmEnvironment' -Value 'Add-AzsEnvironment' -ErrorAction SilentlyContinue
-
 function Add-AzsEnvironment {
     param (
-        [Parameter(mandatory=$true, HelpMessage="The Admin ARM endpoint of the Azure Stack Environment")]
+        [Parameter(mandatory = $true, HelpMessage = "The Admin ARM endpoint of the Azure Stack Environment")]
         [string] $ArmEndpoint,
-        [parameter(mandatory=$true, HelpMessage="Azure Stack environment name for use with AzureRM commandlets")]
+        [parameter(mandatory = $true, HelpMessage = "Azure Stack environment name for use with AzureRM commandlets")]
         [string] $Name
     )
 
-    if(!$ARMEndpoint.Contains('https://')){
-        if($ARMEndpoint.Contains('http://')){
+    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for future deprecation."
+
+    if (!$ARMEndpoint.Contains('https://')) {
+        if ($ARMEndpoint.Contains('http://')) {
             $ARMEndpoint = $ARMEndpoint.Substring(7)
             $ARMEndpoint = 'https://' + $ARMEndpoint
 
-        }else{
+        }
+        else {
             $ARMEndpoint = 'https://' + $ARMEndpoint
         }
     }
@@ -116,9 +35,9 @@ function Add-AzsEnvironment {
 
     $Domain = ""
     try {
-        $uriARMEndpoint = [System.Uri] $ArmEndpoint
+        $null = [System.Uri] $ArmEndpoint
         $i = $ArmEndpoint.IndexOf('.')
-        $Domain = ($ArmEndpoint.Remove(0,$i+1)).TrimEnd('/')
+        $Domain = ($ArmEndpoint.Remove(0, $i + 1)).TrimEnd('/')
     }
     catch {
         Write-Error "The specified ARM endpoint was invalid"
@@ -130,8 +49,8 @@ function Add-AzsEnvironment {
     Write-Verbose "Retrieving endpoints from the $ResourceManagerEndpoint..." -Verbose
     $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop
 
-    $AzureKeyVaultDnsSuffix="vault.$($stackdomain)".ToLowerInvariant()
-    $AzureKeyVaultServiceEndpointResourceId= $("https://vault.$stackdomain".ToLowerInvariant())
+    $AzureKeyVaultDnsSuffix = "vault.$($stackdomain)".ToLowerInvariant()
+    $AzureKeyVaultServiceEndpointResourceId = $("https://vault.$stackdomain".ToLowerInvariant())
     $StorageEndpointSuffix = ($stackdomain).ToLowerInvariant()
     $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
 
@@ -150,7 +69,7 @@ function Add-AzsEnvironment {
     }
 
     $armEnv = Get-AzureRmEnvironment -Name $Name
-    if($armEnv -ne $null) {
+    if ($armEnv) {
         Write-Verbose "Updating AzureRm environment $Name" -Verbose
         Remove-AzureRmEnvironment -Name $Name -Force | Out-Null
     }
@@ -161,75 +80,27 @@ function Add-AzsEnvironment {
     return Add-AzureRmEnvironment @azureEnvironmentParams
 }
 
-Export-ModuleMember Add-AzsEnvironment
-
-<#
-    .SYNOPSIS
-    Obtains Azure Stack NAT address from the Azure Stack One Node instance
-#>
-
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Get-AzureStackNatServerAddress' -Value 'Get-AzsNatServerAddress' -ErrorAction SilentlyContinue
-
-function Get-AzsNatServerAddress {
-    param (    
-        [parameter(mandatory=$true, HelpMessage="Azure Stack One Node host address or name such as '1.2.3.4'")]
-        [string] $HostComputer,
-        [Parameter(HelpMessage="The Domain suffix of the environment VMs")]
-        [string] $DomainSuffix = 'azurestack.local',
-        [parameter(HelpMessage="NAT computer name in this Azure Stack Instance")]
-        [string] $natServer = "azs-bgpnat01",
-        [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
-        [string] $User = "administrator",
-        [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
-        [securestring] $Password
-    )
-
-    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
-
-    $Domain = $DomainSuffix
-
-    $UserCred = "$Domain\$User"
-    $credential = New-Object System.Management.Automation.PSCredential -ArgumentList $UserCred, $Password
-
-    $nat = "$natServer.$Domain"
-
-    Write-Verbose "Remoting to the Azure Stack host $HostComputer..." -Verbose
-    return Invoke-Command -ComputerName "$HostComputer" -Credential $credential -ScriptBlock `
-        { 
-        Write-Verbose "Remoting to the Azure Stack NAT server $using:nat..." -Verbose
-        Invoke-Command -ComputerName "$using:nat"  -Credential $using:credential -ScriptBlock `
-                { 
-            Write-Verbose "Obtaining external IP..." -Verbose
-            Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -ne $null } | ForEach-Object { $_.IPv4Address.IPAddress }
-        }
-    } 
-}
-
-Export-ModuleMember Get-AzsNatServerAddress
+Export-ModuleMember -Function 'Add-AzsEnvironment'
 
 <#
     .SYNOPSIS
     Add VPN connection to an Azure Stack instance
 #>
 
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Add-AzureStackVpnConnection' -Value 'Add-AzsVpnConnection' -ErrorAction SilentlyContinue
-
 function Add-AzsVpnConnection {
     param (
-        [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
+        [parameter(HelpMessage = "Azure Stack VPN Connection Name such as 'my-poc'")]
         [string] $ConnectionName = "azurestack",
-	
-        [parameter(mandatory=$true, HelpMessage="External IP of the Azure Stack Host such as '1.2.3.4'")]
+
+        [parameter(mandatory = $true, HelpMessage = "External IP of the Azure Stack NAT VM such as '1.2.3.4'")]
         [string] $ServerAddress,
 
-        [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
+        [parameter(mandatory = $true, HelpMessage = "Administrator password used to deploy this Azure Stack instance")]
         [securestring] $Password
     )
 
     $existingConnection = Get-VpnConnection -Name $ConnectionName -ErrorAction Ignore
-    if ($existingConnection -ne $null) {
+    if ($existingConnection) {
         Write-Verbose "Updating Azure Stack VPN connection named $ConnectionName" -Verbose
         rasdial $ConnectionName /d
         Remove-VpnConnection -name $ConnectionName -Force -ErrorAction Ignore
@@ -250,25 +121,22 @@ function Add-AzsVpnConnection {
     return $connection
 }
 
-Export-ModuleMember Add-AzsVpnConnection
+Export-ModuleMember -Function 'Add-AzsVpnConnection'
 
 <#
     .SYNOPSIS
     Connects to Azure Stack via VPN
 #>
 
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Connect-AzureStackVpn' -Value 'Connect-AzsVpn' -ErrorAction SilentlyContinue
-
 function Connect-AzsVpn {
     param (
-        [parameter(HelpMessage="Azure Stack VPN Connection Name such as 'my-poc'")]
+        [parameter(HelpMessage = "Azure Stack VPN Connection Name such as 'my-poc'")]
         [string] $ConnectionName = "azurestack",
-        [parameter(HelpMessage="Administrator user name of this Azure Stack Instance")]
+        [parameter(HelpMessage = "Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
-        [parameter(mandatory=$true, HelpMessage="Administrator password used to deploy this Azure Stack instance")]
+        [parameter(mandatory = $true, HelpMessage = "Administrator password used to deploy this Azure Stack instance")]
         [securestring] $Password,
-        [parameter(HelpMessage="Indicate whether to retrieve and trust certificates from the environment after establishing a VPN connection")]
+        [parameter(HelpMessage = "Indicate whether to retrieve and trust certificates from the environment after establishing a VPN connection")]
         [bool] $RetrieveCertificates = $true
     )    
     
@@ -282,7 +150,7 @@ function Connect-AzsVpn {
 
     $azshome = "$env:USERPROFILE\Documents\$ConnectionName"
 
-    if ($RetrieveCertificates){
+    if ($RetrieveCertificates) {
         Write-Verbose "Connection-specific files will be saved in $azshome" -Verbose
 
         New-Item $azshome -ItemType Directory -Force | Out-Null
@@ -295,8 +163,8 @@ function Connect-AzsVpn {
         Write-Verbose "Retrieving Azure Stack Root Authority certificate..." -Verbose
         $cert = Invoke-Command -ComputerName "$hostIP" -ScriptBlock { Get-ChildItem cert:\currentuser\root | where-object {$_.Subject -like "*AzureStackSelfSignedRootCert*"} } -Credential $credential
 
-        if($cert -ne $null) {
-            if($cert.GetType().IsArray) {
+        if ($cert) {
+            if ($cert.GetType().IsArray) {
                 $cert = $cert[0] # take any that match the subject if multiple certs were deployed
             }
 
@@ -319,46 +187,44 @@ function Connect-AzsVpn {
 
 }
 
-Export-ModuleMember Connect-AzsVpn
+Export-ModuleMember -Function 'Connect-AzsVpn'
 
 <#
     .SYNOPSIS
     Retrieve the admin token and subscription ID needed to make REST calls directly to Azure Resource Manager
 #>
 
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Get-AzureStackAdminSubTokenHeader' -Value 'Get-AzsAdminSubTokenHeader' -ErrorAction SilentlyContinue
-
 function Get-AzsAdminSubTokenHeader {
     param (
-        [parameter(mandatory=$true, HelpMessage="Name of the Azure Stack Environment")]
+        [parameter(mandatory = $true, HelpMessage = "Name of the Azure Stack Environment")]
         [string] $EnvironmentName,
 
-        [parameter(mandatory=$true, HelpMessage="TenantID of Identity Tenant")]
+        [parameter(mandatory = $true, HelpMessage = "TenantID of Identity Tenant")]
         [string] $tenantID,
 
-        [parameter(HelpMessage="Credentials to retrieve token header for")]
+        [parameter(HelpMessage = "Credentials to retrieve token header for")]
         [System.Management.Automation.PSCredential] $azureStackCredentials,
 
-        [parameter(HelpMessage="Name of the Administrator subscription")]
+        [parameter(HelpMessage = "Name of the Administrator subscription")]
         [string] $subscriptionName = "Default Provider Subscription"
     )
     
     $azureStackEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName -ErrorAction SilentlyContinue
-    if($azureStackEnvironment -ne $null) {
+    if ($azureStackEnvironment) {
         $ARMEndpoint = $azureStackEnvironment.ResourceManagerUrl
     }
     else {
         Write-Error "The Azure Stack Admin environment with the name $EnvironmentName does not exist. Create one with Add-AzsEnvironment." -ErrorAction Stop
     }
 
-    if(-not $azureStackCredentials){
+    if (-not $azureStackCredentials) {
         $azureStackCredentials = Get-Credential
     }
 
-    try{
+    try {
         Invoke-RestMethod -Method Get -Uri "$($ARMEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -ErrorAction Stop | Out-Null
-    }catch{
+    }
+    catch {
         Write-Error "The specified ARM endpoint: $ArmEndpoint is not valid for this environment. Please make sure you are using the correct administrator ARM endpoint for this environment." -ErrorAction Stop
     }
 
@@ -382,11 +248,11 @@ function Get-AzsAdminSubTokenHeader {
     $WarningPreference = 'SilentlyContinue' 
 
     $adminToken = Get-AzureStackToken `
-    -Authority $authority `
-    -Resource $activeDirectoryServiceEndpointResourceId `
-    -AadTenantId $tenantID `
-    -ClientId $powershellClientId `
-    -Credential $azureStackCredentials 
+        -Authority $authority `
+        -Resource $activeDirectoryServiceEndpointResourceId `
+        -AadTenantId $tenantID `
+        -ClientId $powershellClientId `
+        -Credential $azureStackCredentials 
 
     $WarningPreference = $savedWarningPreference
 
@@ -395,55 +261,36 @@ function Get-AzsAdminSubTokenHeader {
     return $subscription.SubscriptionId, $headers
 }
 
-Export-ModuleMember Get-AzsAdminSubTokenHeader
+Export-ModuleMember -Function 'Get-AzsAdminSubTokenHeader'
 
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Get-AADTenantGUID' -Value 'Get-AzsAADTenantGuid' -ErrorAction SilentlyContinue
-
-function Get-AzsAADTenantGuid () {
-    param(
-        [parameter(mandatory=$true, HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
-        [string] $AADTenantName = "",
-        [parameter(mandatory=$false, HelpMessage="Azure Cloud")]
-        [ValidateSet("AzureCloud","AzureChinaCloud","AzureUSGovernment","AzureGermanCloud")]
-        [string] $AzureCloud = "AzureCloud"
-    )
-
-    Write-Warning "The function '$($MyInvocation.MyCommand)' is marked for deprecation. Please remove any references in code."
-
-    $ADauth = (Get-AzureRmEnvironment -Name $AzureCloud).ActiveDirectoryAuthority
-    $endpt = "{0}{1}/.well-known/openid-configuration" -f $ADauth, $AADTenantName
-    $OauthMetadata = (Invoke-WebRequest -UseBasicParsing $endpt).Content | ConvertFrom-Json
-    $AADid = $OauthMetadata.Issuer.Split('/')[3]
-    $AADid
-} 
-
-Export-ModuleMember Get-AzsAADTenantGuid
-
-# Temporary backwards compatibility.  Original name has been deprecated. 
-New-Alias -Name 'Get-DirectoryTenantID' -Value 'Get-AzsDirectoryTenantId' -ErrorAction SilentlyContinue
+<#
+    .SYNOPSIS
+    Connecting to your environment requires that you obtain the value of your Directory Tenant ID. 
+    For **Azure Active Directory** environments provide your directory tenant name.
+#>
 
 function Get-AzsDirectoryTenantId () {
-    [CmdletBinding(DefaultParameterSetName='AzureActiveDirectory')]
+    [CmdletBinding(DefaultParameterSetName = 'AzureActiveDirectory')]
     param(
-        [Parameter(Mandatory=$true, ParameterSetName='ADFS')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ADFS')]
         [switch] $ADFS,
 
-        [parameter(mandatory=$true,ParameterSetName='AzureActiveDirectory', HelpMessage="AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
-        [string] $AADTenantName = "",
+        [parameter(mandatory = $true, ParameterSetName = 'AzureActiveDirectory', HelpMessage = "AAD Directory Tenant <myaadtenant.onmicrosoft.com>")]
+        [string] $AADTenantName,
 
-        [Parameter(Mandatory=$true, ParameterSetName='ADFS')]
-        [Parameter(Mandatory=$true, ParameterSetName='AzureActiveDirectory')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'ADFS')]
+        [Parameter(Mandatory = $true, ParameterSetName = 'AzureActiveDirectory')]
         [string] $EnvironmentName
     )
     
     $ADauth = (Get-AzureRmEnvironment -Name $EnvironmentName).ActiveDirectoryAuthority
-    if($ADFS -eq $true){
-        if(-not (Get-AzureRmEnvironment -Name $EnvironmentName).EnableAdfsAuthentication){
+    if ($ADFS -eq $true) {
+        if (-not (Get-AzureRmEnvironment -Name $EnvironmentName).EnableAdfsAuthentication) {
             Write-Error "This environment is not configured to do ADFS authentication." -ErrorAction Stop
         }
         return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $ADauth.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
-    }else{
+    }
+    else {
         $endpt = "{0}{1}/.well-known/openid-configuration" -f $ADauth, $AADTenantName
         $OauthMetadata = (Invoke-WebRequest -UseBasicParsing $endpt).Content | ConvertFrom-Json
         $AADid = $OauthMetadata.Issuer.Split('/')[3]

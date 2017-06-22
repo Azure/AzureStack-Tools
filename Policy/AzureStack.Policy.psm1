@@ -8,11 +8,8 @@
     .SYNOPSIS
     Produces Azure Resource Manager Policy document to apply to restrict Azure subscriptions to Azure Stack compatible functionality
 #>
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Get-AzureStackRmPolicy' -Value 'Get-AzsPolicy' -ErrorAction SilentlyContinue
 
-function Get-AzsPolicy 
-{
+function Get-AzsPolicy {
     $defaults = [System.IO.Path]::GetDirectoryName($PSCommandPath)
 
     $providerMetadata = ConvertFrom-Json (Get-Content -Path ($defaults + "\AzureStack.Provider.Metadata.json") -Raw)
@@ -21,10 +18,8 @@ function Get-AzsPolicy
     
     $allowResources = @()
 
-    foreach ($p in $providerMetadata.value) 
-    {
-        foreach ($r in $p.resourceTypes)
-        {
+    foreach ($p in $providerMetadata.value) {
+        foreach ($r in $p.resourceTypes) {
             $allowResources += @{ field = "type"; equals = $p.namespace + "/" + $r.ResourceType}
             $allowResources += @{ field = "type"; like = $p.namespace + "/" + $r.ResourceType + "/*" }
         }
@@ -34,7 +29,7 @@ function Get-AzsPolicy
     $storageSkuField = "Microsoft.Storage/storageAccounts/sku.name"
 
     $policy = @{
-        if = @{
+        if   = @{
             not = @{
                 allOf = @(
                     @{
@@ -46,13 +41,13 @@ function Get-AzsPolicy
                                 @{
                                     allOf = @(
                                         @{
-                                            field = $vmSkuField;
+                                            field  = $vmSkuField;
                                             exists = "true"
                                         },
                                         @{
                                             not = @{
                                                 field = $vmSkuField;
-                                                in = $vmSkus
+                                                in    = $vmSkus
                                             }
                                         }
                                     )
@@ -60,13 +55,13 @@ function Get-AzsPolicy
                                 @{
                                     allOf = @(
                                         @{
-                                            field = $storageSkuField;
+                                            field  = $storageSkuField;
                                             exists = "true"
                                         },
                                         @{
                                             not = @{
                                                 field = $storageSkuField;
-                                                in = $storageSkus
+                                                in    = $storageSkus
                                             }
                                         }
                                     )

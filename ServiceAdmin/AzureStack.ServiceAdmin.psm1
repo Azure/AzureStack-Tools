@@ -8,205 +8,126 @@
     Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
 #>
 
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'New-AzsTenantOfferAndQuotas' -Value 'Add-AzsTenantOfferAndQuotas' -ErrorAction SilentlyContinue
-
-function Add-AzsTenantOfferAndQuotas
-{
-    param (
-        [parameter(HelpMessage="Name of the offer to be made advailable to tenants")]
-        [string] $Name ="default",
-        [Parameter(HelpMessage="If this parameter is not specified all quotas are assigned. Provide a sub selection of quotas in this parameter if you do not want all quotas assigned.")]
-        [ValidateSet('Compute','Network','Storage','KeyVault','Subscriptions',IgnoreCase =$true)]
-        [array] $ServiceQuotas,
-        [parameter(HelpMessage="Azure Stack region in which to define plans and quotas")]
-        [string] $Location = "local"
-    )
-    
-    Write-Verbose "Creating quotas..." -Verbose
-    $Quotas = @()
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Compute')) {
-        Write-Verbose "Creating compute quota..."
-        $Quotas += Add-AzSComputeQuota -Location $Location 
-    }
-
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Network')) {
-        Write-Verbose "Creating network quota..."
-        $Quotas += Add-AzSNetworkQuota -Location $Location 
-    }
-
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Storage')) {
-        Write-Verbose "Creating storage quota..."
-        $Quotas += Add-AzSStorageQuota -Location $Location 
-    }
-
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'KeyVault')) {
-        Write-Verbose "Get default key vault quota..."
-        $Quotas += Get-AzSKeyVaultQuota -Location $Location 
-    }
-
-    if ((!($ServiceQuotas)) -or ($ServiceQuotas -match 'Subscriptions')) {
-        Write-Verbose "Creating subscription quota..."
-        $Quotas += Get-AzSSubscriptionsQuota -Location $Location 
-    }
-    
-    Write-Verbose "Creating resource group for plans and offers..." -Verbose
-    if (Get-AzureRmResourceGroup -Name $Name -ErrorAction SilentlyContinue)
-    {        
-        Remove-AzureRmResourceGroup -Name $Name -Force -ErrorAction Stop
-    }
-    New-AzureRmResourceGroup -Name $Name -Location $Location -ErrorAction Stop
-
-    Write-Verbose "Creating plan..." -Verbose
-    $plan = New-AzureRMPlan -Name $Name -DisplayName $Name -ArmLocation $Location -ResourceGroup $Name -QuotaIds $Quotas
-
-    Write-Verbose "Creating public offer..." -Verbose
-    $offer = New-AzureRMOffer -Name $Name -DisplayName $Name -State Public -BasePlanIds @($plan.Id) -ArmLocation $Location -ResourceGroup $Name
-
-    return $offer
-}
-
-Export-ModuleMember Add-AzSTenantOfferAndQuotas
-
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'New-StorageQuota' -Value 'Add-AzsStorageQuota' -ErrorAction SilentlyContinue
-
-function Add-AzSStorageQuota
-{
+function Add-AzsStorageQuota {
     param(
-        [string] $Name                  = "default",
-        [int] $CapacityInGb             = 1000,
-        [int] $NumberOfStorageAccounts  = 2000,
-        [string] $Location              = $null
+        [string] $Name = "default",
+        [int] $CapacityInGb = 1000,
+        [int] $NumberOfStorageAccounts = 2000,
+        [string] $Location = $null
     )
     
-    $Location = Get-AzSLocation -Location $Location    
+    $Location = Get-AzsLocation -Location $Location    
 
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
         ResourceType = "Microsoft.Storage.Admin/locations/quotas"
-        ApiVersion = "2015-12-01-preview"
-        Properties = @{  
-            capacityInGb = $CapacityInGb
+        ApiVersion   = "2015-12-01-preview"
+        Properties   = @{  
+            capacityInGb            = $CapacityInGb
             numberOfStorageAccounts = $NumberOfStorageAccounts
         }
     }
 
-    New-AzSServiceQuota @params
+    New-AzsServiceQuota @params
 }
 
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'New-ComputeQuota' -Value 'Add-AzsComputeQuota' -ErrorAction SilentlyContinue
-
-function Add-AzsComputeQuota
-{
+function Add-AzsComputeQuota {
     param(
-        [string] $Name         = "default",
-        [int] $VmCount         = 1000,
-        [int] $MemoryLimitMB   = 1048576,
-        [int] $CoresLimit      = 1000,
-        [string] $Location     = $null
+        [string] $Name = "default",
+        [int] $VmCount = 1000,
+        [int] $MemoryLimitMB = 1048576,
+        [int] $CoresLimit = 1000,
+        [string] $Location = $null
     )
 
-    $Location = Get-AzSLocation -Location $Location    
+    $Location = Get-AzsLocation -Location $Location    
     
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
         ResourceType = "Microsoft.Compute.Admin/locations/quotas"
-        ApiVersion = "2015-12-01-preview"
-        Properties = @{
+        ApiVersion   = "2015-12-01-preview"
+        Properties   = @{
             virtualMachineCount = $VmCount
-            memoryLimitMB = $MemoryLimitMB
-            coresLimit = $CoresLimit
+            memoryLimitMB       = $MemoryLimitMB
+            coresLimit          = $CoresLimit
         }
     }
     
-    New-AzSServiceQuota @params
+    New-AzsServiceQuota @params
 }
-
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'New-NetworkQuota'-Value 'Add-AzsNetworkQuota' -ErrorAction SilentlyContinue
     
-function Add-AzsNetworkQuota
-{
+function Add-AzsNetworkQuota {
     param(
-        [string] $Name                        = "default",
-        [int] $PublicIpsPerSubscription       = 500,
-        [int] $VNetsPerSubscription           = 500,
-        [int] $GatewaysPerSubscription        = 10,
-        [int] $ConnectionsPerSubscription     = 20,
-        [int] $LoadBalancersPerSubscription   = 500,
-        [int] $NicsPerSubscription            = 1000,
-        [int] $SecurityGroupsPerSubscription  = 500,
-        [string] $Location                    = $null
+        [string] $Name = "default",
+        [int] $PublicIpsPerSubscription = 500,
+        [int] $VNetsPerSubscription = 500,
+        [int] $GatewaysPerSubscription = 10,
+        [int] $ConnectionsPerSubscription = 20,
+        [int] $LoadBalancersPerSubscription = 500,
+        [int] $NicsPerSubscription = 1000,
+        [int] $SecurityGroupsPerSubscription = 500,
+        [string] $Location = $null
     ) 
     
-    $Location = Get-AzSLocation -Location $Location
+    $Location = Get-AzsLocation -Location $Location
     
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
         ResourceType = "Microsoft.Network.Admin/locations/quotas"
-        ApiVersion = "2015-06-15"
-        Properties = @{
-            maxPublicIpsPerSubscription = $PublicIpsPerSubscription
-            maxVnetsPerSubscription = $VNetsPerSubscription
-            maxVirtualNetworkGatewaysPerSubscription = $GatewaysPerSubscription
+        ApiVersion   = "2015-06-15"
+        Properties   = @{
+            maxPublicIpsPerSubscription                        = $PublicIpsPerSubscription
+            maxVnetsPerSubscription                            = $VNetsPerSubscription
+            maxVirtualNetworkGatewaysPerSubscription           = $GatewaysPerSubscription
             maxVirtualNetworkGatewayConnectionsPerSubscription = $ConnectionsPerSubscription
-            maxLoadBalancersPerSubscription = $LoadBalancersPerSubscription
-            maxNicsPerSubscription = $NicsPerSubscription
-            maxSecurityGroupsPerSubscription = $SecurityGroupsPerSubscription
+            maxLoadBalancersPerSubscription                    = $LoadBalancersPerSubscription
+            maxNicsPerSubscription                             = $NicsPerSubscription
+            maxSecurityGroupsPerSubscription                   = $SecurityGroupsPerSubscription
         }
     }
     
-    New-AzSServiceQuota @params
+    New-AzsServiceQuota @params
 }
 
 
-function Get-AzSSubscriptionsQuota
-{
-    param(
-        [string] $Location = $null
-    )
-
-    $Location = Get-AzSLocation -Location $Location
-
-    $params = @{
-        ResourceName = $Location
-        ResourceType = "Microsoft.Subscriptions.Admin/locations/quotas"
-        ApiVersion = "2015-11-01"
-    }
-
-    Get-AzSServiceQuota @params
-}
-
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Get-KeyVaultQuota' -Value 'Get-AzsKeyVaultQuota' -ErrorAction SilentlyContinue
-
-function Get-AzSKeyVaultQuota
-{
-    param(  
-        [string] $Location = $null
-    )
-    
-    $Location = Get-AzSLocation -Location $Location
-    
-    $params = @{
-        ResourceName = $Location
-        ResourceType = "Microsoft.Keyvault.Admin/locations/quotas"
-        ApiVersion = "2014-04-01-preview"
-    }
-
-    Get-AzSServiceQuota @params
-}
-
-function Get-AzSLocation
-{
+function Get-AzsSubscriptionsQuota {
     param(
         [string] $Location
     )
 
-    if($null -ne $Location -and '' -ne $Location)
-    {
+    $Location = Get-AzsLocation -Location $Location
+
+    $params = @{
+        ResourceName = $Location
+        ResourceType = "Microsoft.Subscriptions.Admin/locations/quotas"
+        ApiVersion   = "2015-11-01"
+    }
+
+    Get-AzsServiceQuota @params
+}
+
+function Get-AzsKeyVaultQuota {
+    param(  
+        [string] $Location
+    )
+    
+    $Location = Get-AzsLocation -Location $Location
+    
+    $params = @{
+        ResourceName = $Location
+        ResourceType = "Microsoft.Keyvault.Admin/locations/quotas"
+        ApiVersion   = "2014-04-01-preview"
+    }
+
+    Get-AzsServiceQuota @params
+}
+
+function Get-AzsLocation {
+    param(
+        [string] $Location
+    )
+
+    if ($Location) {
         return $Location
     }
 
@@ -215,8 +136,7 @@ function Get-AzSLocation
 }
 
 
-function New-AzSServiceQuota
-{
+function New-AzsServiceQuota {
     param(
         [string] $ResourceName,
         [string] $ResourceType,
@@ -228,8 +148,7 @@ function New-AzSServiceQuota
     $serviceQuota.ResourceId
 }
 
-function Get-AzSServiceQuota
-{
+function Get-AzsServiceQuota {
     param(
         [string] $ResourceName,
         [string] $ResourceType,

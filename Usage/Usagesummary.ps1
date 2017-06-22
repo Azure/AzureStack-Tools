@@ -1,14 +1,11 @@
-﻿<#
+<#
     .Synopsis
     Exports usage meters from Azure Stack to a csv file
     .DESCRIPTION
     Long description
     .EXAMPLE
-    Export-AzSUsage -StartTime 2/15/2017 -EndTime 2/16/2017 -Granularity Hourly
+    Export-AzsUsage -StartTime 2/15/2017 -EndTime 2/16/2017 -Granularity Hourly
 #>
-
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Export-AzureStackUsage' -Value 'Export-AzsUsage' -ErrorAction SilentlyContinue
 
 function Export-AzsUsage {
     Param
@@ -16,6 +13,7 @@ function Export-AzsUsage {
         [Parameter(Mandatory = $true)]
         [datetime]
         $StartTime,
+
         [Parameter(Mandatory = $true)]
         [datetime]
         $EndTime ,
@@ -64,9 +62,8 @@ function Export-AzsUsage {
         {
             Remove-Item -Path $CsvFile -Force
         }
-        else
-        {
-            Write-Host "$CsvFile alreday exists use -Force to overwrite"
+        else {
+            Write-Error "'$CsvFile' already exists use -Force to overwrite"
             return
         }
     }
@@ -95,7 +92,6 @@ function Export-AzsUsage {
     }
 
     $usageSummary = @()
-    $uri = $result.NextLink
     $count = $result.Count
     $Total += $count
     $result  | ForEach-Object 
@@ -124,6 +120,7 @@ function Export-AzsUsage {
         $record | Add-Member -Name resourceUri -MemberType NoteProperty -Value $resourceText
         $usageSummary += $record
     }
+    
     $usageSummary | Export-Csv -Path $CsvFile -Append -NoTypeInformation 
     if ($PSBoundParameters.ContainsKey('Debug'))
     {
@@ -135,4 +132,4 @@ function Export-AzsUsage {
 
 #Main
 
-Export-AzSUsage -StartTime 6/10/2017 -EndTime 6/11/2017 -Granularity Hourly -Force
+Export-AzsUsage -StartTime 6/10/2017 -EndTime 6/11/2017 -Granularity Hourly -Force

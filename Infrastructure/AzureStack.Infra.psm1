@@ -8,211 +8,209 @@
     List Active & Closed Infrastructure Alerts
 #>
 
-function Get-AzSAlert
-{
+function Get-AzsAlert {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.InfrastructureInsights.Admin/regionHealths/Alerts"
 
-    $alerts = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $alerts = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $alerts.Properties
 }
 
-Export-ModuleMember -function Get-AzSAlert
+Export-ModuleMember -Function Get-AzsAlert
 
 <#
     .SYNOPSIS
-    List Azure Stack Scale Units in specified Region
+    List Azure Stack Scale Units in specified Location
 #>
-function Get-AzSScaleUnit
-{
+function Get-AzsScaleUnit {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/ScaleUnits"
 
-    $cluster = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $cluster = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $cluster
 }
 
-Export-ModuleMember -function Get-AzSScaleUnit
+Export-ModuleMember -Function Get-AzsScaleUnit
 
 <#
     .SYNOPSIS
     List Nodes in Scale Unit 
 #>
-function Get-AzSScaleUnitNode
-{
+function Get-AzsScaleUnitNode {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
     
-    $nodesprop = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $nodesprop = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $nodesprop
 }
 
-Export-ModuleMember -function Get-AzSScaleUnitNode
+Export-ModuleMember -Function Get-AzsScaleUnitNode
 
 <#
     .SYNOPSIS
     List total storage capacity 
 #>
-function Get-AzSStorageSubsystem
-{
+function Get-AzsStorageSubsystem {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/storagesubSystems"
 
-    $storage = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $storage = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $storage
 }
 
-Export-ModuleMember -function Get-AzSStorageSubsystem
+Export-ModuleMember -function Get-AzsStorageSubsystem
 
 <#
     .SYNOPSIS
     List Infrastructure Roles 
 #>
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Get-AzsInfraRole' -Value 'Get-AzsInfrastructureRole' -ErrorAction SilentlyContinue
 
-function Get-AzsInfrastructureRole{
+function Get-AzsInfrastructureRole {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/InfraRoles"
 
-    $roles = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $roles = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $roles
 }
 
-Export-ModuleMember -function Get-AzSInfrastructureRole
+Export-ModuleMember -Function Get-AzsInfrastructureRole
 
 <#
     .SYNOPSIS
     List Infrastructure Role Instances
 #>
 
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Get-AzsInfraRoleInstance' -Value 'Get-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
-
-function Get-AzsInfrastructureRoleInstance{
+function Get-AzsInfrastructureRoleInstance {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
 
-    $VMs = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $VMs = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $VMs
 }       
 
-Export-ModuleMember -function Get-AzSInfrastructureRoleInstance
+Export-ModuleMember -Function Get-AzsInfrastructureRoleInstance
 
 <#
     .SYNOPSIS
     List File Shares
 #>
-function Get-AzSStorageShare
-{
+function Get-AzsStorageShare {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
     
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/fileShares"
 
-    $shares = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $shares = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $shares
 }
 
-Export-ModuleMember -function Get-AzSStorageShare
+Export-ModuleMember -Function Get-AzsStorageShare
 
 <#
     .SYNOPSIS
     List Logical Networks
 #>
 
-function Get-AzSLogicalNetwork
-{
+function Get-AzsLogicalNetwork {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
     
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/logicalNetworks"
 
-    $LNetworks = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $LNetworks = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $LNetworks
 }
 
-Export-ModuleMember -function Get-AzSLogicalNetwork
+Export-ModuleMember -Function Get-AzsLogicalNetwork
 
 <#
     .SYNOPSIS
-    List Region Update Summary
+    List Location Update Summary
 #>
 
-function Get-AzSUpdateLocation
-{
+function Get-AzSUpdateLocation {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
     $resourceType = "Microsoft.Update.Admin/updatelocations"
 
-    $updates = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $updates = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $updates.Properties
 }
 
-Export-ModuleMember -function Get-AzSUpdateLocation
+Export-ModuleMember -function Get-AzsUpdateLocation
 
 <#
     .SYNOPSIS
     List Available Updates
 #>
-function Get-AzSUpdate
-{
+Function Get-AzsUpdate {
+    [CmdletBinding(DefaultParameterSetName = 'GetUpdate')]
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates"
 
-    $updates = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
-    $updates | select UpdateName, Version, IsApplicable, Description, State, IsDownloaded, PackageSizeInMb, KbLink    
+    $updates = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $updates | Select-Object UpdateName, Version, IsApplicable, Description, State, IsDownloaded, PackageSizeInMb, KbLink    
 }
 
-Export-ModuleMember -function Get-AzSUpdate
+Export-ModuleMember -Function Get-AzsUpdate
 
 <#
     .SYNOPSIS
     List Status for a specific Update Run
 #>
-function Get-AzSUpdateRun
-{
+function Get-AzsUpdateRun {
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
         
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [String] $Update
     )
     
-    $region = Get-AzSLocation -Location $Region
-    $name = "{0}/{1}" -f $region, $Update
+    $Location = Get-AzsLocation -Location $Location
+    $name = "{0}/{1}" -f $Location, $Update
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates/updateRuns"
 
-    $updates = Get-AzSInfrastructureResource -name $name -region $region -resourceType $resourceType    
-    $updates | select UpdateLocation, UpdateVersion, State, TimeStarted, Duration
+    $updates = Get-AzsInfrastructureResource -Name $name -Location $Location -ResourceType $resourceType
+    $updates | Select-Object UpdateLocation, UpdateVersion, State, TimeStarted, Duration
 }
 
-Export-ModuleMember -function Get-AzSUpdateRun
+Export-ModuleMember -Function Get-AzsUpdateRun
 
 
 <#
@@ -220,25 +218,25 @@ Export-ModuleMember -function Get-AzSUpdateRun
     Apply Azure Stack Update 
 #>
 
-function Install-AzSUpdate
-{
+function Install-AzsUpdate {
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
         
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [String] $Update
     )
 
-    $updates =  Get-AzSUpdate -Region $Region
+    $updates = Get-AzsUpdate -Location $Location
         
     $updateContent = $updates | Where-Object {$_.UpdateName -eq $Update}
             
     $params = @{
         ResourceType = "Microsoft.Update.Admin/updatelocations/updates"
-        ResourceName = "{0}/{1}" -f $Region, $Update
-        ApiVersion = "2016-05-01"
-        Properties = $updateContent
+        ResourceName = "{0}/{1}" -f $Location, $Update
+        ApiVersion   = "2016-05-01"
+        Properties   = $updateContent
     }
 
     $StartRun = Invoke-AzureRmResourceAction @params -Action 'apply' -Force
@@ -246,300 +244,282 @@ function Install-AzSUpdate
     $StartRun
 }
 
-Export-ModuleMember -function Install-AzSUpdate
+Export-ModuleMember -Function Install-AzsUpdate
 
 <#
     .SYNOPSIS
     Close Active Alert
 #>
-function Close-AzSAlert
-{
+function Close-AsSAlert {
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
 
         [ValidateNotNullorEmpty()]
         [String] $AlertId
     )
 
     
-    $region = Get-AzSLocation -Location $Region
+    $Location = Get-AzsLocation -Location $Location
 
-    $alerts = Get-AzSAlert -Region $region
+    $alerts = Get-AzsAlert -Location $Location
     
     $alert = $alerts | Where-Object { $_.AlertId -eq "$AlertId" }
 
-    if($null -ne $alert)
-    {
+    if ($null -ne $alert) {
         $alertName = $alert.AlertId
         $alert.state = "Closed"
         
         $params = @{
-            ApiVersion = "2016-05-01"
-            ResourceName = "{0}/{1}" -f $region, $alertName
-            ResourceType =  "Microsoft.InfrastructureInsights.Admin/regionHealths/Alerts"
-            ResourceGroupName = "system.{0}" -f $region
-            Properties = $alert
+            ApiVersion        = "2016-05-01"
+            ResourceName      = "{0}/{1}" -f $Location, $alertName
+            ResourceType      = "Microsoft.InfrastructureInsights.Admin/regionHealths/Alerts"
+            ResourceGroupName = "system.{0}" -f $Location
+            Properties        = $alert
         }
 
         Set-AzureRmResource @params -Force
     }
 }
-Export-ModuleMember -function Close-AzSAlert
+Export-ModuleMember -Function Close-AzsAlert
 
 <#
     .SYNOPSIS
     List IP Address Pools
 #>
-function Get-AzSIPPool
-{
+function Get-AzsIpPool {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
     
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/IPPools"
 
-    $IPPool = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $IPPool = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $IPPool.Properties
 }
 
-Export-ModuleMember -function Get-AzSIPPool
+Export-ModuleMember -Function Get-AzsIPPool
 
 <#
     .SYNOPSIS
     List MAC Address Pools
 #>
-function Get-AzSMaCPool
-{
+function Get-AzsMacPool {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/MacAddressPools"
 
-    $MACPools = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $MACPools = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $MACPools.Properties
 }
 
-Export-ModuleMember -function Get-AzSMaCPool
+Export-ModuleMember -Function Get-AzsMacPool
 
 <#
     .SYNOPSIS
    List Gateway Pools
 #>
 
-function Get-AzSGatewayPool
-{
+function Get-AzsGatewayPool {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/edgeGatewayPools"
 
-    $GatewayPools = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $GatewayPools = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $GatewayPools.Properties
 }
 
-Export-ModuleMember -function Get-AzSGatewayPool
+Export-ModuleMember -Function Get-AzsGatewayPool
 
 <#
     .SYNOPSIS
     List SLB MUX
 #>
 
-function Get-AzSSLBMUX
-{
+function Get-AzsSLBMux {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/SlbMuxInstances"
 
-    $SLBMUX = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $SLBMUX = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $SLBMUX.Properties
 }
 
-Export-ModuleMember -function Get-AzSSLBMUX
+Export-ModuleMember -Function Get-AzsSLBMux
 
 <#
     .SYNOPSIS
     List Gateways
 #>
-function Get-AzSGateway
-{
+function Get-AzsGateway {
     Param(
-        [string] $Region = $null
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
 
     $resourceType = "Microsoft.Fabric.Admin/fabricLocations/edgegateways"
 
-    $Gateways = Get-AzSInfrastructureResource -region $Region -resourceType $resourceType
+    $Gateways = Get-AzsInfrastructureResource -Location $Location -ResourceType $resourceType
     $Gateways.Properties
 }
 
-Export-ModuleMember -function Get-AzSGateway
+Export-ModuleMember -Function Get-AzsGateway
 
 <#
     .SYNOPSIS
     Start Infra Role Instance
 #>
-
-New-Alias -Name 'Start-AzsInfraRoleInstance' -Value 'Start-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
-
-function Start-AzSInfrastructureRoleInstance
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Start-AzsInfrastructureRoleInstance {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [string] $Name,
 
         [switch] $Force
     )
     
-    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to start $Name ?",""))
-    {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to start $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
 
-        Invoke-AzSInfrastructureAction -Name $Name -Action "poweron" -Region $Region -ResourceType $resourceType
+        Invoke-AzsInfrastructureAction -Name $Name -Action "poweron" -Location $Location -ResourceType $resourceType
     }
 }
 
-Export-ModuleMember -function Start-AzSInfrastructureRoleInstance
-
+Export-ModuleMember -Function Start-AzsInfrastructureRoleInstance
 
 <#
     .SYNOPSIS
     Shutdown Infra Role Instance
 #>
-
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Stop-AzsInfraRoleInstance' -Value 'Stop-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
-
-function Stop-AzSInfrastructureRoleInstance
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Stop-AzsInfrastructureRoleInstance {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-       [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
        
-       [Parameter(Mandatory=$true)]
-       [ValidateNotNullorEmpty()]
-       [string] $Name,
-
-       [switch] $Force
-    )
-
-    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to shut down $Name ?",""))
-    {        
-        $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
-
-        Invoke-AzSInfrastructureAction -Name $Name -Action "shutdown" -Region $Region -ResourceType $resourceType
-    }
-}
-
-Export-ModuleMember -function Stop-AzSInfrastructureRoleInstance
-
-
-<#
-    .SYNOPSIS
-    Restart Infra Role Instance
-#>
-# Temporary backwards compatibility.  Original name has been deprecated.
-New-Alias -Name 'Restart-AzsInfraRoleInstance' -Value 'Restart-AzsInfrastructureRoleInstance' -ErrorAction SilentlyContinue
-
-
-function Restart-AzSInfrastructureRoleInstance
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
-    Param(
-        [string] $Region = $null,
-        
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [string] $Name,
 
         [switch] $Force
     )
 
-    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to restart $Name ?",""))
-    {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to shut down $Name ?", "")) {        
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
 
-        Invoke-AzSInfrastructureAction -Name $Name -Action "reboot" -Region $Region -ResourceType $resourceType
+        Invoke-AzsInfrastructureAction -Name $Name -Action "shutdown" -Location $Location -ResourceType $resourceType
     }
 }
 
-Export-ModuleMember -function Restart-AzSInfrastructureRoleInstance
+Export-ModuleMember -Function Stop-AzsInfrastructureRoleInstance
+
+<#
+    .SYNOPSIS
+    Restart Infra Role Instance
+#>
+function Restart-AzsInfrastructureRoleInstance {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+        
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [string] $Name,
+
+        [switch] $Force
+    )
+
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to restart $Name ?", "")) {
+        $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
+
+        Invoke-AzsInfrastructureAction -Name $Name -Action "reboot" -Location $Location -ResourceType $resourceType
+    }
+}
+
+Export-ModuleMember -Function Restart-AzsInfrastructureRoleInstance
 
 
 <#
     .SYNOPSIS
     Add IP Address Pool
 #>
-function Add-AzSIPPool
-{
+function Add-AzsIpPool {
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string] $Name,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string] $StartIPAddress,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string] $EndIPAddress,
 
         [string] $AddressPrefix = ''
     )
 
-    $region = Get-AzSLocation -Location $Region
+    $Location = Get-AzsLocation -Location $Location
     
     $params = @{
-        ResourceName = "{0}/{1}" -f $region, $Name
-        ResourceType = "Microsoft.Fabric.Admin/fabricLocations/IPPools"
-        ResourceGroupName = "system.{0}" -f $region
-        ApiVersion = "2016-05-01"
-        Properties = @{  
+        ResourceName      = "{0}/{1}" -f $Location, $Name
+        ResourceType      = "Microsoft.Fabric.Admin/fabricLocations/IPPools"
+        ResourceGroupName = "system.{0}" -f $Location
+        ApiVersion        = "2016-05-01"
+        Properties        = @{  
             StartIpAddress = "$StartIPAddress"
-            EndIpAddress = "$EndIPAddress"
-            AddressPrefix = "$AddressPrefix"
+            EndIpAddress   = "$EndIPAddress"
+            AddressPrefix  = "$AddressPrefix"
         }
     }
 
     New-AzureRmResource @params -Force
 }
 
-Export-ModuleMember -function Add-AzSIPPool
+Export-ModuleMember -Function Add-AzsIpPool
 
 <#
     .SYNOPSIS
     Enable Maintenance Mode
 #>
 
-function Disable-AzSScaleUnitNode
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Disable-AzsScaleUnitNode {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [string] $Name,
 
         [switch] $Force
     )
 
-    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to disable scale unit node $Name ?",""))
-    {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to disable scale unit node $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
 
-        Invoke-AzSInfrastructureAction -Action "StartMaintenanceMode" -Name $Name -Region $Region -ResourceType $resourceType
+        Invoke-AzsInfrastructureAction -Action "StartMaintenanceMode" -Name $Name -Location $Location -ResourceType $resourceType
     }
 }
 
-Export-ModuleMember -function Disable-AzSScaleUnitNode
+Export-ModuleMember -Function Disable-AzsScaleUnitNode
 
 
 <#
@@ -547,58 +527,56 @@ Export-ModuleMember -function Disable-AzSScaleUnitNode
     Disable Maintenance Mode
 #>
 
-function Enable-AzSScaleUnitNode
-{
-    [CmdletBinding(SupportsShouldProcess=$true)]
+function Enable-AzsScaleUnitNode {
+    [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [string] $Region = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [string] $Name,
 
         [switch] $Force
     )
     
-    if($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to enable scale unit node $Name ?",""))
-    {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to enable scale unit node $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
 
-        Invoke-AzSInfrastructureAction -Action "StopMaintenanceMode" -Name $Name -Region $Region -ResourceType $resourceType
+        Invoke-AzsInfrastructureAction -Action "StopMaintenanceMode" -Name $Name -Location $Location -ResourceType $resourceType
     }
 }
 
-Export-ModuleMember -function Enable-AzSScaleUnitNode
+Export-ModuleMember -Function Enable-AzsScaleUnitNode
 
 
 <#
     .SYNOPSIS
-    Get Region Capacity
+    Get Location Capacity
 #>
-function Get-AzSRegionCapacity
-{
-    Param(        
-        [string] $Region = $null
+function Get-AzsLocationCapacity {
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location
     )
         
-    $region = Get-AzSLocation -Location $Region
+    $Location = Get-AzsLocation -Location $Location
     $name = "../"
     $resourceType = "Microsoft.InfrastructureInsights.Admin/locations/regionHealths"
 
-    $Capacity = Get-AzSInfrastructureResource -name $name -region $region -resourceType $resourceType
+    $Capacity = Get-AzsInfrastructureResource -Name $name -Location $Location -ResourceType $resourceType
     $Capacity.Properties
 }
 
-Export-ModuleMember -function Get-AzSRegionCapacity
+Export-ModuleMember -Function Get-AzsLocationCapacity
 
-function Get-AzSLocation
-{
+function Get-AzsLocation {
     param(
+        [Parameter(Mandatory = $false)]
         [string] $Location
     )
 
-    if($null -ne $Location -and '' -ne $Location)
-    {
+    if ($Location) {
         return $Location
     }
 
@@ -606,54 +584,57 @@ function Get-AzSLocation
     return $locationResource.Name
 }
 
-function Get-AzSInfrastructureResource
-{
+function Get-AzsInfrastructureResource {
     param(
-        [string] $name = $null,
-        [string] $region,
-        [string] $apiVersion = "2016-05-01",
-        [string] $resourceType
+        [Parameter(Mandatory = $false)]
+        [string] $Name,
+
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+
+        [Parameter(Mandatory = $false)]
+        [string] $ApiVersion = "2016-05-01",
+
+        [string] $ResourceType
     )
     
-    $region = Get-AzSLocation -Location $region
+    $Location = Get-AzsLocation -Location $Location
 
     # If $name is not given, list all resource by using location as ResourceName
-    if($null -eq $name -or '' -eq $name)
-    {       
-        $name = $region
+    if (-not $Name) {       
+        $Name = $Location
     }
 
     $params = @{
-        ApiVersion = $apiVersion
-        ResourceType = $resourceType
-        ResourceName = $name
-        ResourceGroupName = "system.{0}" -f $region
+        ApiVersion        = $apiVersion
+        ResourceType      = $resourceType
+        ResourceName      = $name
+        ResourceGroupName = "system.{0}" -f $Location
     }
 
     $infraResource = Get-AzureRmResource @params
     return $infraResource
 }
 
-Export-ModuleMember -function Set-AzsLocationInformation
+Export-ModuleMember -Function Set-AzsLocationInformation
 
 
-function Invoke-AzSInfrastructureAction
-{
+function Invoke-AzsInfrastructureAction {
     param(
         [string] $Name,
-        [string] $Region,
+        [string] $Location,
         [string] $Action,
         [string] $ResourceType
     )
         
-    $region = Get-AzSLocation -Location $Region
+    $Location = Get-AzsLocation -Location $Location
 
     $params = @{
-        ApiVersion = "2016-05-01"
-        Action = $Action
-        ResourceType = $ResourceType
-        ResourceGroupName = "system.{0}" -f $region
-        ResourceName = "{0}/{1}" -f $region, $Name
+        ApiVersion        = "2016-05-01"
+        Action            = $Action
+        ResourceType      = $ResourceType
+        ResourceGroupName = "system.{0}" -f $Location
+        ResourceName      = "{0}/{1}" -f $Location, $Name
     }
 
     Invoke-AzureRmResourceAction @params -Force

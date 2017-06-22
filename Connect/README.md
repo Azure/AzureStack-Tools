@@ -1,3 +1,5 @@
+# Connection Scripts
+
 As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
 
 ```powershell
@@ -6,7 +8,7 @@ Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
 Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
 ```
 
-This tool set allows you to connect to an Azure Stack PoC (Proof of Concept) instance from an external personal laptop. You can then access the portal or log into that environment via PowerShell. 
+This tool set allows you to connect to an Azure Stack PoC (Proof of Concept) instance from an external personal laptop. You can then access the portal or log into that environment via PowerShell.
 
 Instructions below are relative to the .\Connect folder of the [AzureStack-Tools repo](..).
 
@@ -14,14 +16,14 @@ Instructions below are relative to the .\Connect folder of the [AzureStack-Tools
 Import-Module .\AzureStack.Connect.psm1
 ```
 
-# VPN to Azure Stack Proof of Concept
+## VPN to Azure Stack Proof of Concept
 
 The [Connect to Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-azure-stack) document describes ways to connect to your Azure Stack Proof of Concept environment.
 
-One method is to establish a split tunnel VPN connection to an Azure Stack PoC. 
-This allows your client computer to become part of the Azure Stack PoC network system and therefore resolve Azure Stack endpoints. 
+One method is to establish a split tunnel VPN connection to an Azure Stack PoC.
+This allows your client computer to become part of the Azure Stack PoC network system and therefore resolve Azure Stack endpoints.
 
-The tool will also download root certificate of the targeted Azure Stack PoC instance locally to your client computer. 
+The tool will also download root certificate of the targeted Azure Stack PoC instance locally to your client computer.
 This will ensure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
 
 To connect to Azure Stack PoC via VPN, first locate the host IP address of the target installation. 
@@ -49,10 +51,9 @@ Add-AzsVpnConnection -ServerAddress <Host IP Address> -Password $Password
 Connect-AzsVpn -Password $Password
 ```
 
+## Configure Azure Stack PowerShell Environment
 
-# Configure Azure Stack PowerShell Environment
-
-One method of deploying templates and interacting with your Azure Stack PoC is to access it via PowerShell. 
+One method of deploying templates and interacting with your Azure Stack PoC is to access it via PowerShell.
 
 See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-powershell) article to download and install the correct PowerShell modules for Azure Stack.
 
@@ -61,25 +62,25 @@ AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Go
 To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
 
 ```powershell
-Add-AzsEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external" 
+Add-AzsEnvironment -Name AzureStack -ArmEndpoint "https://management.local.azurestack.external"
 ```
 
 To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
 
 Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
-$TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
+$TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
 ```
 
 For **ADFS** environments use the following:
 
 ```powershell
-$TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin 
+$TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin
 ```
 
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
@@ -110,8 +111,3 @@ Register-AzsProviderOnAllSubscriptions
 ```
 
 These registrations are idempotent and can be run multiple times. If provider has already been registered, it will simply be reported in the output.
-
-
-
-
-

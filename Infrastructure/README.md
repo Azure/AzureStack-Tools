@@ -17,6 +17,7 @@ Import-Module .\AzureStack.Infra.psm1
 ```
 
 ## Add PowerShell environment
+
 ```powershell
 Import-Module .\AzureStack.Connect.psm1
 ```
@@ -60,10 +61,9 @@ Get-AzsAlert
 The command does the following:
 - Retrieves Active & Closed Alerts
 
-
 ### Close Infrastructure Alerts
 
- Close any active Infrastructure Alert. Run Get-AzSAlert to get the AlertID, required to close a specific Alert.
+ Close any active Infrastructure Alert. Run Get-AzsAlert to get the AlertID, required to close a specific Alert.
 
 ```powershell
 Close-AzsAlert -AlertID "ID"
@@ -74,30 +74,27 @@ Close-AzsAlert -AzureStackCredentials $credential -TenantID $TenantID -AlertID "
 The command does the following:
 - Close active Alert
 
+### Get Region Update Summary
 
-### Get Update Location
-
- Review details about the Region related to updates.
+ Review the Update Summary for a specified region.
 
 ```powershell
-Get-AzSUpdateLocation
+Get-AzsUpdateSummary
 ```
 
 The command does the following:
- Retrieves details about the update location
-
+- Retrieves Region Update Summary
 
 ### Get Azure Stack Update
 
  Retrieves list of Azure Stack Updates
 
 ```powershell
-Get-AzSUpdate
+Get-AzsUpdate
 ```
 
 The command does the following:
 - List Azure Stack Updates
-
 
 ### Apply Azure Stack Update
 
@@ -110,7 +107,6 @@ Install-AzsUpdate -Update "Update Version"
 The command does the following:
 - Applies specified Update
 
-
 ### Get Azure Stack Update Run
 
  Should be used to validate a specific Update Run or look at previous update runs
@@ -122,78 +118,71 @@ Get-AzsUpdateRun -Update "Update Version"
 The command does the following:
 - Lists Update Run information for a specific Azure Stack update
 
-
 ### List Infrastructure Roles
 
  Does list all Infrastructure Roles
 
 ```powershell
-Get-AzSInfrastructureRole
+Get-AzsInfrastructureRole
 ```
 
 The command does the following:
 - Lists Infrastructure Roles
-
 
 ### List Infrastructure Role Instance
 
  Does list all Infrastructure Role Instances (Note: Does not return Directory Management VM in One Node deployment)
 
 ```powershell
-Get-AzSInfrastructureRoleInstance
+Get-AzsInfrastructureRoleInstance
 ```
 
 The command does the following:
 - Lists Infrastructure Role Instances
-
 
 ### List Scale Unit
 
  Does list all Scale Units in a specified Region
 
 ```powershell
-Get-AzSScaleUnit
+Get-AzsScaleUnit
 ```
 
 The command does the following:
 - Lists Scale Units
-
 
 ### List Scale Unit Nodes
 
  Does list all Scale Units Nodes
 
 ```powershell
-Get-AzSScaleUnitNode
+Get-AzsScaleUnitNode
 ```
 
 The command does the following:
 - Lists Scale Unit Nodes
-
 
 ### List Logical Networks
 
  Does list all logical Networks by ID
 
 ```powershell
-Get-AzSLogicalNetwork
+Get-AzsLogicalNetwork
 ```
 
 The command does the following:
 - Lists logical Networks
 
+### List Storage Capacity
 
-### List Storage Subsystem
-
- Does return details about the Storage Subsystem
+ Does return the total capacity of the storage subsystem
 
 ```powershell
-Get-AzSStorageSubsystem
+Get-AzsStorageCapacity
 ```
 
 The command does the following:
-- Lists detail about the storage subsystem
-
+- Lists total storage capacity for the storage subsystem
 
 ### List Storage Shares
 
@@ -201,221 +190,211 @@ The command does the following:
 
 ```powershell
 
-Get-AzSStorageShare
+Get-AzsStorageShare
 ```
 
 The command does the following:
 - Retrieves all file shares
-
 
 ### List IP Pools
 
  Does list all IP Pools
 
 ```powershell
-Get-AzSIPPool
+Get-AzsIpPool
 ```
 
 The command does the following:
 - Retrieves all IP Pools
-
 
 ### List MAC Address Pools
 
  Does list all MAC Address Pool
 
 ```powershell
-Get-AzSMacPool
+Get-AzsMacPool
 ```
 
 The command does the following:
 - Retrieves all MAC Address Pools
-
 
 ### List Gateway Pools
 
  Does list all Gateway Pools
 
 ```powershell
-Get-AzSGatewayPool
+Get-AzsGatewayPool
 ```
 
 The command does the following:
 - Retrieves all Gateway Pools
-
 
 ### List SLB MUX
 
  Does list all SLB MUX Instances
 
 ```powershell
-Get-AzSSLBMUX
+Get-AzSLBMux
 ```
 
 The command does the following:
 - Retrieves all SLB MUX instances
-
 
 ### List Gateway Instances
 
  Does list all Gateway Instances
 
 ```powershell
-Get-AzSGateway
+Get-AzsGateway
 ```
 
 The command does the following:
 - Retrieves all Gateway instances
-
 
 ### Start Infra Role Instance
 
  Does start an Infra Role Instance
 
 ```powershell
-Start-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
+Start-AzsInfrastructureRoleInstance -Name "InfraRoleInstanceName"
 ```
 
 The command does the following:
 - Starts an Infra Role instance
-
 
 ### Stop Infra Role Instance
 
  Does stop an Infra Role Instance
 
 ```powershell
-Stop-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
+Stop-AzsInfrastructureRoleInstance -Name "InfraRoleInstanceName"
 ```
 
 The command does the following:
 - Stops an Infra Role instance
-
 
 ### Restart Infra Role Instance
 
  Does Restart an Infra Role Instance
 
 ```powershell
-Restart-AzSInfrastructureRoleInstance -Name "InfraRoleInstanceName"
+Restart-AzsInfrastructureRoleInstance -Name "InfraRoleInstanceName"
 ```
 
 The command does the following:
 - Restart an Infra Role instance
-
 
 ### Add IP Pool
 
  Does add an IP Pool
 
 ```powershell
-Add-AzSIPPool -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.0./24"
+Add-AzsIpPool -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.0./24"
 ```
 
 The command does the following:
 - Adds an IP Pool
-
 
 ### Enable Maintenance Mode
 
  Does put a ScaleUnitNode in Maintenance Mode
 
 ```powershell
-Disable-AzSScaleUnitNode -Name NodeName
+Disable-AzsScaleUnitNode -Name NodeName
 ```
 
 The command does the following:
 - Enables Maintenance Mode for a specified ScaleUnitNode
-
 
 ### Disable Maintenance Mode
 
  Does resume a ScaleUnitNode from Maintenance Mode
 
 ```powershell
-Enable-AzSScaleUnitNode -Name NodeName
+Enable-AzsScaleUnitNode -Name NodeName
 ```
 
 The command does the following:
 - Resume from Maintenance Mode for a specified ScaleUnitNode
-
 
 ### Show Region Capacity
 
  Does show capacity for specified Region
 
 ```powershell
-Get-AzSRegionCapacity
+Get-AzsLocationCapacity
 ```
 
 The command does the following:
 - Retrieves Region Capacity information
 
 ## Scenario Command Usage
+
 Demonstrates using multiple commands together for an end to end scenario.
 
-### Recover an Infrastructure Role Instance that has an Alert assigned.
+### Recover an Infrastructure Role Instance that has an Alert assigned
 
 ```powershell
 #Retrieve all Alerts and apply a filter to only show active Alerts
-$Active=Get-AzSAlert | Where {$_.State -eq "active"}
+$Active=Get-AzsAlert | Where {$_.State -eq "active"}
 $Active
 
 #Stop Infra Role Instance
-Stop-AzSInfrastructureRoleInstance -Name $Active.ResourceName
+Stop-AzsInfrastructureRoleInstance -Name $Active.ResourceName
 
 #Start Infra Role Instance
-Start-AzSInfrastructureRoleInstance -Name $Active.resourceName
+Start-AzsInfrastructureRoleInstance -Name $Active.resourceName
 
 #Validate if error is resolved (Can take up to 3min)
-Get-AzSAlert | Where {$_.State -eq "active"}
+Get-AzsAlert | Where {$_.State -eq "active"}
 ```
 
-
 ### Increase Public IP Pool Capacity
+
 ```powershell
 #Retrieve all Alerts and apply a filter to only show active Alerts
-$Active=Get-AzSAlert | Where {$_.State -eq "active"}
+$Active=Get-AzsAlert | Where {$_.State -eq "active"}
 $Active
 
 #Review IP Pool Allocation
-Get-AzSIPPool
+Get-AzsIpPool
 
 #Add New Public IP Pool
-Add-AzSIPPool -Name "NewPublicIPPool" -StartIPAddress "192.168.80.0" -EndIPAddress "192.168.80.255" -AddressPrefix "192.168.80.0/24"
+Add-AzsIpPool -Name "NewPublicIPPool" -StartIPAddress "192.168.80.0" -EndIPAddress "192.168.80.255" -AddressPrefix "192.168.80.0/24"
 
 #Validate new IP Pool
-Get-AzSIPPool
+Get-AzsIpPool
 ```
 
 ### Apply Update to Azure Stack
+
 ```powershell
 #Review Current Region Update Summary
-Get-AzSUpdateSummary
+Get-AzsUpdateSummary
 
 #Check for available and applicable updates
-Get-AzSUpdate
+Get-AzsUpdate
 
 #Apply Update
-Install-AzSUpdate -Update "2.0.0.0"
+Install-AzsUpdate -Update "2.0.0.0"
 
 #Check Update Run
-Get-AzSUpdateRun -Update "2.0.0.0"
+Get-AzsUpdateRun -Update "2.0.0.0"
 
 #Review Region Update Summary after successful run
-Get-AzSUpdateSummary
+Get-AzsUpdateSummary
 ```
 
-
 ### Perform FRU procedure
+
 ```powershell
 #Review current ScaleUnitNode State
-$node=Get-AzSScaleUnitNode
+$node=Get-AzsScaleUnitNode
 $node | fl
 
 
 #Enable Maintenance Mode for that node which drains all active resources
-Disable-AzSScaleUnitNode -Name $node.name
+Disable-AzsScaleUnitNode -Name $node.name
 
 #Power Off Server using build in KVN or physical power button
 #BMC IP Address is returned by previous command $node.properties | fl
@@ -423,13 +402,12 @@ Disable-AzSScaleUnitNode -Name $node.name
 #Power On Server using build in KVN or physical power button
 
 #Resume ScaleUnitNode from Maintenance Mode
-Enable-AzSScaleUnitNode -Name $node.name
+Enable-AzsScaleUnitNode -Name $node.name
 
 #Validate ScaleUnitNode Status
-$node=Get-AzSScaleUnitNode
+$node=Get-AzsScaleUnitNode
 $node | fl
 ```
-
 
 ### Set Azure Stack's Latitude and Longitude
 
@@ -446,4 +424,3 @@ $regionName = 'local'
 Set-AzsLocationInformation -Region $regionName -Latitude $latitude -Longitude $longitude
 
 ```
-

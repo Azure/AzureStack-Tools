@@ -10,22 +10,12 @@ Describe $script:ModuleName {
             Get-Module -Name $script:ModuleName |
                 Should Not Be $null
         }
-
-        It 'Add-AzsTenantOfferAndQuotas should be exported' {
-            Get-Command -Name Add-AzsTenantOfferAndQuotas -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-
     }
 }
 
 InModuleScope $script:ModuleName {
 
     Describe 'ServiceAdmin - Functional Tests' {
-        It 'Add-AzsTenantOfferAndQuota should create Quotas, Plan and Offer' {
-            { Add-AzsTenantOfferAndQuotas } |
-                Should Not Throw
-        }
 
     }
 }

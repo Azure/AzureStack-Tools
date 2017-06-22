@@ -85,7 +85,7 @@ The following steps need to be completed by the **Directory Tenant Administrator
 
 #### Step 2: Providing UI-based consent to Azure Stack Portal and ARM
 
-- This is an important step. Open up a web browser, and go to `https://portal.<region>.<domain>/guest/signup/<guestDirectoryName>`. Note that this is the directory tenant that needs to be onboarded to Azure Stack. 
+- This is an important step. Open up a web browser, and go to `https://portal.<region>.<domain>/guest/signup/<guestDirectoryName>`. Note that this is the directory tenant that needs to be onboarded to Azure Stack.
 - This will take you to an AAD sign in page where you need to enter your credentials and click on 'Accept' on the consent screen.
 
 #### Step 3: Registering Azure Stack applications with the Guest Directory
