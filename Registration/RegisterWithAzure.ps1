@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
 <#
@@ -57,28 +57,28 @@ This script must be run from the Host machine of the POC.
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [PSCredential] $azureCredential,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [String] $azureAccountId,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [String] $azureSubscriptionId,
 
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [String] $azureDirectoryTenantName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [String] $azureEnvironment = "AzureCloud",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [String] $azureResourceManagerEndpoint = "https://management.azure.com",
 
-    [Parameter(Mandatory=$false)]
-    [Switch] $enableSyndication = $true,
+    [Parameter(Mandatory = $false)]
+    [bool] $enableSyndication = $true,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [Switch] $reportUsage = $false
 )
 
@@ -87,7 +87,7 @@ param(
 #requires -RunAsAdministrator
 
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
-$VerbosePreference     = [System.Management.Automation.ActionPreference]::Continue
+$VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
 Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -Force
 Set-Location  C:\CloudDeployment\Setup\Activation\Bridge
@@ -97,13 +97,11 @@ Set-Location  C:\CloudDeployment\Setup\Activation\Bridge
 #
 
 $versionInfo = [xml] (Get-Content -Path C:\CloudDeployment\Configuration\Version\version.xml) 
-$minVersion  = "1.0.170501.1"
-if($versionInfo.Version -lt $minVersion)
-{
+$minVersion = "1.0.170501.1"
+if ($versionInfo.Version -lt $minVersion) {
     Write-Error -Message "Script only applicable for Azure Stack builds $minVersion or later"
 }
-else
-{
+else {
     Write-Verbose -Message "Running registration on build $($versionInfo.Version)" -Verbose
 }
 
@@ -114,13 +112,11 @@ else
 Import-Module C:\CloudDeployment\Setup\Common\AzureADConfiguration.psm1 -ErrorAction Stop
 $AzureDirectoryTenantId = Get-TenantIdFromName -azureEnvironment $azureEnvironment -tenantName $azureDirectoryTenantName
 
-if(-not $azureCredential)
-{
+if (-not $azureCredential) {
     Write-Verbose "Prompt user to enter Azure Credentials to get refresh token"
     $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName
 }
-else
-{
+else {
     Write-Verbose "Using provided Azure Credentials to get refresh token"
     $tenantDetails = Get-AzureADTenantDetails -AzureEnvironment $azureEnvironment -AADDirectoryTenantName $azureDirectoryTenantName -AADAdminCredential $azureCredential
 }
@@ -151,9 +147,9 @@ New-Item -ItemType Directory -Force -Path "C:\temp"
 $registrationRequestFile = "c:\temp\registration.json"
 $registrationOutputFile = "c:\temp\registrationOutput.json"
 
-.\Register-AzureStack.ps1 -BillingModel PayAsYouUse -EnableSyndication -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
-                          -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
-                          -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
+.\Register-AzureStack.ps1 -BillingModel PayAsYouUse -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
+    -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
+    -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
 Write-Verbose "Register Azure Stack with Azure completed"
 
 #
@@ -182,22 +178,18 @@ $regResponse = Get-Content -path  $activationDataFile
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($regResponse)
 $activationCode = [Convert]::ToBase64String($bytes)
 
-try
-{
+try {
     .\Activate-Bridge.ps1 -activationCode $activationCode -AzureResourceManagerEndpoint $azureResourceManagerEndpoint -Verbose
 }
-catch
-{
+catch {
     $exceptionMessage = $_.Exception.Message
 
-   if($exceptionMessage.Contains("Application is currently being upgraded"))
-   {
+    if ($exceptionMessage.Contains("Application is currently being upgraded")) {
         Write-Warning "Activate-Bridge: Known issue with redundant service fabric upgrade call" 
-   }
-   else
-   {
+    }
+    else {
         Write-Error -Message "Activate-Bridge: Error : $($_.Exception)"
-   }
+    }
 }
 
 Write-Verbose "Azure Stack activation completed"

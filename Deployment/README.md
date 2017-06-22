@@ -35,26 +35,27 @@ The installer script can be used to prepare your host for the deployment of the 
 
 Select the cloudbuilder.vhdx and optionally specify a path to a folder containing drivers for the host.
 The host can be configured with the following options:
- - **Local administrator password** - If you uncheck this option the host will prompt for a password during the oobe setup when rebooting to the cloudbuilder.vhdx. Not specifying a local administrator password requires KVM access to the host to specify the password during boot.
- - **Computer name** - You can specify the name for the Azure Stack Development Kit host. The name needs to comply with FQDN requirements and cannot be longer than 15 characters. If you do not select the option, Windows generates a computername during OOBE.
- - **Timezone** - This options sets timezone for the Azure Stack Development Kit host to the selected value. If this option is not selected the timezone will be configred to (UTC-8:00) Pacific Time (US & Canada)
- - **Static IP Configuration** If the Azure Stack development kit needs to be configured with a static IP address, select this option. The installer will prompt for the networking interface and copy the current values for use in the cloudbuilder.vhdx during reboot. You can override the values that where copied if needed. If you do not select this option the network interfaces will be configured with DHCP when rebooted into the cloudbuilder.vhdx
+
+- **Local administrator password** If you uncheck this option the host will prompt for a password during the oobe setup when rebooting to the cloudbuilder.vhdx. Not specifying a local administrator password requires KVM access to the host to specify the password during boot.
+- **Computer name** - You can specify the name for the Azure Stack Development Kit host. The name needs to comply with FQDN requirements and cannot be longer than 15 characters. If you do not select the option, Windows generates a computername during OOBE.
+- **Timezone** - This options sets timezone for the Azure Stack Development Kit host to the selected value. If this option is not selected the timezone will be configred to (UTC-8:00) Pacific Time (US & Canada)
+- **Static IP Configuration** If the Azure Stack development kit needs to be configured with a static IP address, select this option. The installer will prompt for the networking interface and copy the current values for use in the cloudbuilder.vhdx during reboot. You can override the values that where copied if needed. If you do not select this option the network interfaces will be configured with DHCP when rebooted into the cloudbuilder.vhdx
 
  A job will perform the following actions:
 
-  - Verify if the disk containing the cloudbuilder.vhdx has **enough space** to expand the disk. You will need at least (120GB - Size of the cloudBuilder.vhdx file) of free disk space on the disk that contains the cloudBuilder.vhdx.
-  - Remove previous **Azure Stack** boot entries .
-  - **Mount** the cloudbuilder.vhdx.
-  - Add **bootfiles** to the Operating System disk.
-  - Updates the boot configuration with an **Azure Stack** entry for the virtual hard disk and sets it to the default value.
-  - Adds an **unattend** file to the Operating System on the mounted virtual hard disk, based on the selections made in the wizard.
-  - Adds **drivers** to the operating system, if that option was selected during the wizard.
+- Verify if the disk containing the cloudbuilder.vhdx has **enough space** to expand the disk. You will need at least (120GB - Size of the cloudBuilder.vhdx file) of free disk space on the disk that contains the cloudBuilder.vhdx.
+- Remove previous **Azure Stack** boot entries .
+- **Mount** the cloudbuilder.vhdx.
+- Add **bootfiles** to the Operating System disk.
+- Updates the boot configuration with an **Azure Stack** entry for the virtual hard disk and sets it to the default value.
+- Adds an **unattend** file to the Operating System on the mounted virtual hard disk, based on the selections made in the wizard.
+- Adds **drivers** to the operating system, if that option was selected during the wizard.
 
 When the job is completed you finalize the wizard to reboot into the cloudbuilder.vhdx. If you have enabled the local administrator password and have connectivity to the IP address (either the static one specified or based on DHCP), you can remote into the host with RDP after the OOBE completes.
 
 ## Prepare the Azure Stack Development Kit installation
 
-Once the host has succesfully completed booting from the cloudbuilder.vhdx, logon to the host as administrator and start the same installation script again. The installer script was originally stored on c:\AzureStack_Installer. After the reboot into cloudbuilder.vhdx the SafeOS system disk is presented as a datadisk in the Operating System of the Azure Stack Development Kit host OS. Browse for the script and execute it by righclicking it and select Run with PowerShell. Or browse to the path in a PowerShell session and run; 
+Once the host has succesfully completed booting from the cloudbuilder.vhdx, logon to the host as administrator and start the same installation script again. The installer script was originally stored on c:\AzureStack_Installer. After the reboot into cloudbuilder.vhdx the SafeOS system disk is presented as a datadisk in the Operating System of the Azure Stack Development Kit host OS. Browse for the script and execute it by righclicking it and select Run with PowerShell. Or browse to the path in a PowerShell session and run:
 
 ```powershell
 .\asdk-installer.ps1
@@ -62,8 +63,8 @@ Once the host has succesfully completed booting from the cloudbuilder.vhdx, logo
 
 Click install to start the deployment wizard. Select the preferred identity provider for your Azure Stack Development Kit deployment.
 
- - **Azure Cloud** : Azure Active Directory
- - **ADFS** : Local ADFS instance as part of the installation
+- **Azure Cloud** : Azure Active Directory
+- **ADFS** : Local ADFS instance as part of the installation
 
 If you selected Azure Cloud, specify the credentials of an account with the Global Admin role in an Azure Active Directory tenant. This account will also be used to administer your Azure Stack Development Kit. If this account is part of multiple active directory tenants you can check the tenantID and override the default value with the name of the desired directory tenant for the installation.
 
@@ -71,7 +72,7 @@ Submit the local administrator password. This value submitted has to match the c
 
 In the network interface screen, select the adapter that will be used for the Azure Stack Development Kit. Ensure you have access to the IP address as all other adapters will be disabled by the installer.
 
-The network configuration screen allows you to specify the settings for the BGPNAT vm. The default settings uses DHCP for the BGPNAT vm. You can set it to static, but only use this parameter if DHCP can’t assign a valid IP address for Azure Stack to access the Internet. A static IP address needs to be specified with the subnetmask length (e.g. 10.0.0.5/24). Optionally you can specify the TimeServer, DNS Server and VLAN ID.
+The network configuration screen allows you to specify the settings for the BGPNAT vm. The default settings uses DHCP for the BGPNAT vm. You can set it to static, but only use this parameter if DHCP can???t assign a valid IP address for Azure Stack to access the Internet. A static IP address needs to be specified with the subnetmask length (e.g. 10.0.0.5/24). Optionally you can specify the TimeServer, DNS Server and VLAN ID.
 
 The summary screen displays the PowerSheel script that will be executed. Click deploy start the deployment of the Azure Stack Development Kit.
 
@@ -86,4 +87,5 @@ If the installation completed succesfully, but you ran into an issue that requir
 The installer script allows you to easily initiate a reboot to the SafeOS to start a redeployment of your Azure Stack Development Kit. Start the installer script and select Reboot. You will be presented with the current boot options. Select the entry for the SafeOS and select Reboot. This creates a onetime override in the boot order. The SafeOS boot entry will be select automatically. The next reboot the boot configuration will resume its normal order and the host will boot into the cloudbuilder.vhdx again.
 
 ### Note
+
 The Azure Stack Development Kit installer script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.

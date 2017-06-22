@@ -12,29 +12,9 @@ Describe $script:ModuleName {
             Get-Module -Name $script:ModuleName |
                 Should Not Be $null
         }
-
-        It 'Register-AzsProviderOnAllSubscriptions should be exported' {
-            Get-Command -Name Register-AzsProviderOnAllSubscriptions -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-
-        It 'Register-AzsProvider should be exported' {
-            Get-Command -Name Register-AzsProvider -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-
-        It 'Get-AzsAADTenant should be exported' {
-            Get-Command -Name Get-AzsAADTenant -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
         
         It 'Add-AzsEnvironment should be exported' {
             Get-Command -Name Add-AzsEnvironment -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-    
-        It 'Get-AzsNatServerAddress should be exported' {
-            Get-Command -Name Get-AzsNatServerAddress -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     
@@ -68,20 +48,9 @@ InModuleScope $script:ModuleName {
     $EnvironmentName = $global:EnvironmentName
 
     Set-Item wsman:\localhost\Client\TrustedHosts -Value $HostComputer -Concatenate
-    Set-Item wsman:\localhost\Client\TrustedHosts -Value azs-ca01.azurestack.local -Concatenate
+    Set-Item wsman:\localhost\Client\TrustedHosts -Value Azs-ca01.azurestack.local -Concatenate
 
     Describe 'ConnectModule - Accessing Environment Data' {
-        It 'Recovered AAD Tenant ID should be correct' {
-            $global:AadTenantID = Get-AzsAADTenant  -HostComputer $HostComputer -User $AdminUser -Password $AdminPassword 
-            Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
-            $global:AadTenantID | Should Not Be $null
-        }
-
-        It 'Get-AzsNatServerAddress should return valid NAT address' {
-            $script:NatIPAddress = Get-AzsNatServerAddress -natServer $natServer -HostComputer $HostComputer -User $AdminUser -Password $AdminPassword 
-            Write-Verbose "Returned NAT IP Address of $natIPAddress" -Verbose
-            [IPAddress]$script:NatIPAddress | Should Not Be $null
-        }
 
         It 'Add-AzsVpnConnection should correctly return a VPN connection to a One Node' {
             Add-AzsVpnConnection -ServerAddress $script:NatIPAddress -ConnectionName $VPNConnectionName -Password $AdminPassword

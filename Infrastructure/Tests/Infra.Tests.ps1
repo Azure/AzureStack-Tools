@@ -23,19 +23,13 @@ InModuleScope $script:ModuleName {
     $HostComputer = $global:HostComputer
     $ArmEndpoint = $global:ArmEndpoint
     $natServer = $global:natServer 
-    $AdminUser= $global:AdminUser 
+    $AdminUser = $global:AdminUser 
     $AadServiceAdmin = $global:AadServiceAdmin 
 
     $AdminPassword = $global:AdminPassword
     $AadServiceAdminPassword = $global:AadServiceAdminPassword
-    $stackLoginCreds = $global:AzureStackLoginCredentials
-
     $VPNConnectionName = $global:VPNConnectionName
-
-    $AadTenant = $global:AadTenantID
-
     $EnvironmentName = $global:EnvironmentName
-
 
     Describe 'Infra - Functional Tests' {
         It 'Get-AzsAlert should not throw' {

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Short description
 This installer UI simplifies the preperation and deployment of the Azure Stack Development Kit
@@ -24,7 +24,7 @@ To install the Azure Stack Development Kit you require
 The Azure Stack Development Kit installer UI script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
 #>
 
-#requires –runasadministrator
+#requires -runasadministrator
 
 #region Text
 $Text_Generic = @{}
@@ -183,7 +183,7 @@ $Xaml = @'
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="Foreground" Value="#EBEBEB"/>
-            <Setter Property="PasswordChar" Value="●"/>
+            <Setter Property="PasswordChar" Value="?"/>
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MinHeight" Value="23.5"/>
             <Setter Property="AllowDrop" Value="true"/>
@@ -837,7 +837,7 @@ $Form = [Windows.Markup.XamlReader]::Load( $Reader )
 
 $syncHash = [hashtable]::Synchronized(@{})
 
-$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | where {$_.name -like "Control_*"} | % { $syncHash.Add($_.Name,$Form.FindName($_.Name) )}
+$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | Where-Object {$_.name -like "Control_*"} | ForEach-Object { $syncHash.Add($_.Name,$Form.FindName($_.Name) )}
 #endregion
 
 #region Data
@@ -851,7 +851,7 @@ $AuthEndpoints = @{
         }
 }
 
-$AuthEndpoints.GetEnumerator() | ForEach {
+$AuthEndpoints.GetEnumerator() | ForEach-Object {
 $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 }
 #endregion AuthEndpoints
@@ -859,7 +859,7 @@ $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 #region TimeZones
 $syncHash.Timezones = [System.TimeZoneInfo]::GetSystemTimeZones()
 
-$syncHash.Timezones | ForEach {
+$syncHash.Timezones | ForEach-Object {
 $syncHash.Control_Unattend_Cbx_Timezone.AddChild($_.DisplayName)
 }
 #endregion TimeZones
@@ -905,7 +905,7 @@ $S_NetInterfaces = {
         $properties | Add-Member -Type NoteProperty -Name Ipv4PrefixLength -Value $NetIPAddress.PrefixLength
         $properties | Add-Member -Type NoteProperty -Name Ipv4DefaultGateway -Value $NetIPConfiguration.IPv4DefaultGateway.NextHop
         $properties | Add-Member -Type NoteProperty -Name DHCP -Value $NetIPInterface.DHCP
-        $properties | Add-Member -Type NoteProperty -Name DNS -Value ($NetIPConfiguration.DNSServer | where {$_.AddressFamily -eq "2"}).ServerAddresses
+        $properties | Add-Member -Type NoteProperty -Name DNS -Value ($NetIPConfiguration.DNSServer | Where-Object {$_.AddressFamily -eq "2"}).ServerAddresses
         $properties | Add-Member -Type NoteProperty -Name InterfaceMetric -Value $NetIPInterface.InterfaceMetric
 
         $NetInterfaces += $properties
@@ -913,7 +913,7 @@ $S_NetInterfaces = {
  
     
     $syncHash.Control_NetInterface_Stp_Wait.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Stp_Wait.Visibility="Collapsed"},"Normal")
-    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | % {
+    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {
         $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Lvw_Nics.AddChild($_)},"Normal")
         }
 }
@@ -954,7 +954,7 @@ $S_PrepareVHDX = {
 
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
-    $bootOptions | ForEach {
+    $bootOptions | ForEach-Object {
     if ((($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*') -and (($_.Context.PostContext[0] -replace '^description +') -eq 'Azure Stack'))
         {
         $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
@@ -1010,13 +1010,13 @@ $S_PrepareVHDX = {
 
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
-    $bootOptions | ForEach {
+    $bootOptions | ForEach-Object {
     if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack')))
     {
     $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
     bcdedit /set $BootID description "Azure Stack"
     }
-    }   
+    }
     #endregion
 
     #region Unattend
@@ -1036,7 +1036,7 @@ $S_PrepareVHDX = {
     $Unattend_Apply_StaticIP = $SyncHash.Control_Unattend_Chb_StaticIP.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_StaticIP.IsChecked})
     if ($SyncHash.Control_Unattend_Chb_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_Timezone.IsChecked})){
         $U_unattend_input_timezone_value = $SyncHash.Control_Unattend_Cbx_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Cbx_Timezone.SelectedItem})
-        $U_Unattend_input_timezone = ($syncHash.Timezones | where {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
+        $U_Unattend_input_timezone = ($syncHash.Timezones | Where-Object {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
     }
     else {
         $U_Unattend_input_timezone = "Pacific Standard Time"
@@ -1110,7 +1110,7 @@ $S_PrepareVHDX = {
     <component name="Microsoft-Windows-TCPIP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <Interfaces>
             <Interface wcm:action="add">
-	            <Identifier>$U_Unattend_input_macaddress</Identifier>
+                <Identifier>$U_Unattend_input_macaddress</Identifier>
                 <Ipv4Settings>
                     <DhcpEnabled>false</DhcpEnabled>
                 </Ipv4Settings>
@@ -1175,14 +1175,14 @@ $S_PrepareVHDX = {
         #endregion oobeSystem
 
     
-    if($Unattend_Apply_LocalAdmin) {
+    if($Unattend_Apply_LocalAdmin) {
         $U_Unattend.unattend.AppendChild($U_Unattend.ImportNode($U_Unattend_oobeSysten_AdminPassword.unattend.settings, $true))
-        }
+        }
 
-    if($Unattend_Apply_StaticIP) {
-        ($U_Unattend.unattend.settings | where {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
-        ($U_Unattend.unattend.settings | where {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
-        }
+    if($Unattend_Apply_StaticIP) {
+        ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
+        ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
+        }
 
     $U_Unattend.OuterXml | Out-File ($Prepare_Vhdx_DriveLetter+":\unattend.xml") -Encoding ascii -Force
     #endregion
@@ -1216,9 +1216,9 @@ $S_PrepareVHDX = {
 $Runspace_Jobs_Properties =[runspacefactory]::CreateRunspace()
 $Runspace_Jobs_Properties.Name = "Jobs"
 $Runspace_Jobs_Properties.ApartmentState = "STA"
-$Runspace_Jobs_Properties.ThreadOptions = "ReuseThread"         
+$Runspace_Jobs_Properties.ThreadOptions = "ReuseThread"
 $Runspace_Jobs_Properties.Open()
-$Runspace_Jobs_Properties.SessionStateProxy.SetVariable("syncHash",$syncHash)  
+$Runspace_Jobs_Properties.SessionStateProxy.SetVariable("syncHash",$syncHash)
 $Runspace_Jobs = [PowerShell]::Create()
 #endregion
 
@@ -1303,7 +1303,7 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
     $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_Install.Mode_RightContent
     }
 # Booted from vhdx, but not CloudBuilder.vhdx
-elseif ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
+elseif ((get-disk | Where-Object {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
     Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server." -ForegroundColor Red
     Exit
     }
@@ -1328,10 +1328,10 @@ Param(
 [string]$filter
 )
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-	$Script:F_Browse_obj = New-Object System.Windows.Forms.OpenFileDialog
-	$Script:F_Browse_obj.Filter = $filter
-	$Script:F_Browse_obj.Title = $title
-	$Script:F_Browse_obj.ShowDialog()
+    $Script:F_Browse_obj = New-Object System.Windows.Forms.OpenFileDialog
+    $Script:F_Browse_obj.Filter = $filter
+    $Script:F_Browse_obj.Title = $title
+    $Script:F_Browse_obj.ShowDialog()
 }
 
 function F_Browse_Folder {
@@ -1339,9 +1339,9 @@ Param(
 [string]$title
 )
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-	$Script:F_Browse_obj = New-Object System.Windows.Forms.FolderBrowserDialog
-	$Script:F_Browse_obj.Description = $title
-	$Script:F_Browse_obj.ShowDialog()
+    $Script:F_Browse_obj = New-Object System.Windows.Forms.FolderBrowserDialog
+    $Script:F_Browse_obj.Description = $title
+    $Script:F_Browse_obj.ShowDialog()
 }
 
 Function F_Regex {
@@ -1373,7 +1373,7 @@ if ($validpath){
 }
 
 # Validation Actions
-$control = ($syncHash.GetEnumerator() | where {$_.name -eq $field}) 
+$control = ($syncHash.GetEnumerator() | Where-Object {$_.name -eq $field}) 
 
 if ($Script:validation_error) {
         $tooltip = new-object System.Windows.Controls.ToolTip
@@ -1401,7 +1401,7 @@ $syncHash.Control_Reboot_Lvw_Options.Items.Clear()
 
 $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
 
-$bootOptions | foreach {
+$bootOptions | ForEach-Object {
     $bootOption = New-Object -TypeName PSObject
     $bootOption | Add-Member -Type NoteProperty -Name Description -Value ($_.Context.PostContext[0] -replace '^description +')
     $bootOption | Add-Member -Type NoteProperty -Name ID -Value ($_.Context.PreContext[0] -replace '^identifier +')
@@ -1523,43 +1523,41 @@ $SyncHash.Control_NetConfig_Tbx_DNS.Text=$syncHash.Control_NetInterface_Lvw_Nics
 }
 
 Function F_GetNetworkID {
-$CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
+$CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
 
 $ipBinary = $null
 $dottedDecimal = $null
 
 
-$IPAddress = $CIDRIPAddress.Split("/")[0] 
-$cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
+$IPAddress = $CIDRIPAddress.Split("/")[0] 
+$cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
 
-$IPAddress.split(".") | %{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
+$IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
 
-if($cidr -le 32){ 
-    [Int[]]$array = (1..32) 
-    for($i=0;$i -lt $array.length;$i++){ 
-        if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
-        } 
-        $smBinary =$array -join "" 
-    } 
+if($cidr -le 32){ 
+    [Int[]]$array = (1..32) 
+    for($i=0;$i -lt $array.length;$i++){
+        if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
+        } 
+        $smBinary =$array -join ""
+    } 
 
- 
-
-$netBits=$smBinary.indexOf("0") 
-if ($netBits -ne -1) { 
-    #identify subnet boundaries 
+$netBits=$smBinary.indexOf("0")
+if ($netBits -ne -1) {
+    #identify subnet boundaries 
     $binary = $($ipBinary.substring(0,$netBits).padright(32,"0"))
     $i = 0
-    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
 
-   } 
-else { 
-    #identify subnet boundaries 
-    $binary = $($ipBinary) 
+    }
+    else{
+    #identify subnet boundaries 
+    $binary = $($ipBinary) 
     $i = 0
-    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
-    } 
+    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    }
     return $networkID
 }
 
@@ -1641,8 +1639,8 @@ Function F_Install {
     #region disable non selected NICs
     if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -gt 1)){
         Write-Host "Disabling non selected NICs" -ForegroundColor Cyan
-        $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | where {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
-        $disable_nics | ForEach {
+        $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | Where-Object {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
+        $disable_nics | ForEach-Object {
             $IntID = $_.InterfaceIndex
             Get-NetAdapter -InterfaceIndex $IntID | Disable-NetAdapter -Confirm:$false
             }
@@ -1723,14 +1721,14 @@ Function F_Rerun {
     #endregion
 
     #region Rerun
-    cd C:\CloudDeployment\Setup
+    Set-Location C:\CloudDeployment\Setup
     .\InstallAzureStackPOC.ps1 -Rerun
     #endregion
 }
 
 Function F_GetAzureStackLogs {
     #region Logs
-    cd C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
+    Set-Location C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
     Import-Module .\Microsoft.AzureStack.Diagnostics.DataCollection.psd1
     Get-AzureStackLogs -OutputPath C:\AzureStackLogs
     #endregion

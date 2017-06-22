@@ -25,7 +25,9 @@ New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /s
 ```
 
 To remove the Azure Stack policy, run this command with the same scope used when the policy was applied:
+
 ```powershell
+
 Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId/resourceGroups/$rgName
 Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId
 ```
