@@ -196,62 +196,62 @@ while ($runCount -le $NumberOfIterations)
     {
         Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
         {
-	        Get-AzsInfrastructureRole -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsInfrastructureRole -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackInfraRoleInstance' -Description "List all infrastructure role instances" -UsecaseBlock `
         {
-	        Get-AzsInfrastructureRoleInstance -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsInfrastructureRoleInstance -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackLogicalNetwork' -Description "List all logical networks" -UsecaseBlock `
         {
-	        Get-AzsLogicalNetwork -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsLogicalNetwork -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackStorageCapacity' -Description "List storage capacity" -UsecaseBlock `
         {
-	        Get-AzSStorageSubsystem -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzSStorageSubsystem -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackStorageShare' -Description "List all storage file shares" -UsecaseBlock `
         {
-	        Get-AzsStorageShare -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsStorageShare -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
         {
-	        Get-AzsScaleUnit -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsScaleUnit -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
         {
-	        Get-AzsScaleUnitNode -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsScaleUnitNode -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
         {
-	        Get-AzsIpPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsIpPool -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackMacPool' -Description "List all MAC address pools " -UsecaseBlock `
         {
-	        Get-AzsMacPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsMacPool -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGatewayPool' -Description "List all gateway pools" -UsecaseBlock `
         {
-	        Get-AzsGatewayPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsGatewayPool -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackSLBMux' -Description "List all SLB MUX instances" -UsecaseBlock `
         {
-	        Get-AzsSlbMux -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsSlbMux -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGateway' -Description "List all gateway" -UsecaseBlock `
         {
-	        Get-AzsGateway -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+	        Get-AzsGateway -region $ResourceLocation
         }            
     }
    
@@ -259,7 +259,7 @@ while ($runCount -le $NumberOfIterations)
     {     
         Invoke-Usecase -Name 'GetAzureStackAlert' -Description "List all alerts" -UsecaseBlock `
         {
-            Get-AzsAlert -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsAlert -region $ResourceLocation
         }
     }
 
@@ -267,12 +267,12 @@ while ($runCount -le $NumberOfIterations)
     {        
         Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
         {
-            Get-AzSUpdateLocation -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzSUpdateLocation -region $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
         {
-            Get-AzsUpdate -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsUpdate -region $ResourceLocation
         }         
     }
        
@@ -282,7 +282,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -Location $ResourceLocation -Version Core -CreateGalleryItem $false
             }
         }
     }
@@ -302,7 +302,7 @@ while ($runCount -le $NumberOfIterations)
                     }
                     New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                     $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                    Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
                     Remove-Item $CanaryCustomImageFolder -Force -Recurse
                 }    
             }
