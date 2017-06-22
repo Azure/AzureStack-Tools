@@ -67,22 +67,22 @@ Function Add-AzSVMImage
     Param(
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $publisher,
        
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $offer,
     
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $sku,
     
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromAzure')]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [ValidatePattern("\d+\.\d+\.\d+")]
         [String] $version,
 
         [Parameter(Mandatory=$true, ParameterSetName='VMImageFromLocal')]
@@ -299,7 +299,7 @@ Function Add-AzSVMImage
         Remove-Item $GalleryItem
     }
 
-    Remove-AzureStorageContainer –Name $containerName -Force
+    Remove-AzureStorageContainer -Name $containerName -Force
     Remove-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -AccountName $storageAccountName 
     Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
 }
@@ -310,19 +310,19 @@ function Remove-AzSVMImage
     [CmdletBinding(SupportsShouldProcess=$true)]
     Param(
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $publisher,
        
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $offer,
     
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $sku,
     
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [ValidatePattern("\d+\.\d+\.\d+")]
         [String] $version,
         
         [String] $location = $null,
@@ -534,15 +534,15 @@ function New-AzSServer2016VMImage {
                 $CurrentProgressPref = $ProgressPreference
                 $ProgressPreference = 'SilentlyContinue'
                 Write-Verbose -Message "Starting download of CU. This will take some time." -Verbose
-                Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
+                Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
                 $ProgressPreference = $CurrentProgressPref
-                Unblock-File -Path $OutFile
+                Unblock-File -Path $OutFile
                 $CabPath = ExpandMSU -Path $OutFile
-            }
+                }
         }
 
         $ConvertParams = @{
-            VHDSizeInMB = $VhdSizeInMB
+            VHDSizeInMB = $VhdSizeInMB
             IsoPath = $ISOPath
         }
 
@@ -593,7 +593,7 @@ function New-AzSServer2016VMImage {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
             }
         }
-        if ($Version -eq 'Full' -or $Version -eq 'Both') {
+            if ($Version -eq 'Full' -or $Version -eq 'Both') {
             $ImagePath = "$ModulePath\Server2016DatacenterFullEval.vhd"
             
             try {
@@ -632,13 +632,13 @@ function New-AzSServer2016VMImage {
 
 Function CreateGalleyItem{
     Param(
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $publisher,      
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $offer,
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $sku,
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [ValidatePattern("\d+\.\d+\.\d+")]
         [String] $version,
         [ValidateSet('Windows' ,'Linux')]
         [String] $osType,
@@ -733,19 +733,19 @@ New-Alias -Name 'Get-VMImage' -Value 'Get-AzsVMImage' -ErrorAction SilentlyConti
 Function Get-AzSVMImage{
     Param(
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $publisher,
        
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $offer,
     
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $sku,
     
         [Parameter(Mandatory=$true)]
-        [ValidatePattern(“\d+\.\d+\.\d+”)]
+        [ValidatePattern("\d+\.\d+\.\d+")]
         [String] $version,
 
         [String] $location = $null
@@ -776,7 +776,7 @@ Function Add-AzSVMExtension
     Param(
         [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
         [Parameter(Mandatory=$true, ParameterSetName='VMExtesionFromAzure')]
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $publisher,
 
         [Parameter(Mandatory=$true, ParameterSetName='VMExtensionFromLocal')]
@@ -907,7 +907,7 @@ Function Add-AzSVMExtension
         $extensionHandler = Get-AzureRmResource $getParams
     }
 
-    Remove-AzureStorageContainer –Name $containerName -Force
+    Remove-AzureStorageContainer -Name $containerName -Force
     Remove-AzureRmStorageAccount -ResourceGroupName $resourceGroupName -AccountName $storageAccountName 
     Remove-AzureRmResourceGroup -Name $resourceGroupName -Force
 }
@@ -918,7 +918,7 @@ Function Remove-AzSVMExtension
 {
     [CmdletBinding(SupportsShouldProcess=$true)]
     Param(
-        [ValidatePattern(“[a-zA-Z0-9-]{3,}”)]
+        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $publisher,
 
         [Parameter(Mandatory=$true)]
@@ -943,7 +943,7 @@ Function Remove-AzSVMExtension
         $params = @{
             ResourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/types/versions"
             ResourceName = "{0}/VMExtension/{1}/{2}/{3}" -f $location, $publisher, $type, $version
-            ApiVersion  = "2015-12-01-preview" 
+            ApiVersion = "2015-12-01-preview" 
         }
 
         try {
