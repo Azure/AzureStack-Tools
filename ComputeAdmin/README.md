@@ -66,7 +66,7 @@ Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement
 ```
 
 ```powershell
-Add-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
+Add-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd'
 ```
 
 The command does the following:
@@ -89,7 +89,7 @@ Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement
 ```
 
 ```powershell
-Remove-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
+Remove-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0"
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
