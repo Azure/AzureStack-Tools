@@ -886,7 +886,7 @@ Function Add-AzSVMExtension
         ApiVersion = $apiVersion
     }
 
-    $extensionHandler = Get-AzureRmResource @$getParams
+    $extensionHandler = Get-AzureRmResource @getParams
     if($null -eq $extensionHandler) {
         Write-Error -Message ("VM extension with {0} created failed." -f $extensionDescription) -ErrorAction Stop
     }
@@ -904,7 +904,7 @@ Function Add-AzSVMExtension
 
         Write-Host "Downloading";
         Start-Sleep -Seconds 4
-        $extensionHandler = Get-AzureRmResource $getParams
+        $extensionHandler = Get-AzureRmResource @getParams
     }
 
     Remove-AzureStorageContainer -Name $containerName -Force
