@@ -535,7 +535,7 @@ function New-AzsServer2016VMImage {
                 }
 
                 Write-Verbose -Message "Making VHD bootable"
-                $null = & "$VHDDriveLetter`:\Windows\System32\bcdboot.exe $VHDDriveLetter`:\windows /s $VHDDriveLetter`: /f BIOS" -ErrorAction Stop
+                $null = & "$VHDDriveLetter`:\Windows\System32\bcdboot.exe" "$VHDDriveLetter`:\windows" "/s" "$VHDDriveLetter`:" "/f" "BIOS"
             }
             catch {
                 Write-Error -ErrorRecord $_ -ErrorAction Stop
