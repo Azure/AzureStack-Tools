@@ -24,17 +24,13 @@ This allows your client computer to become part of the Azure Stack PoC network s
 The tool will also download root certificate of the targeted Azure Stack PoC instance locally to your client computer. 
 This will ensure that SSL sites of the target Azure Stack installation are trusted by your client when accessed from the browser or from the command-line tools.
 
-To connect to Azure Stack PoC via VPN, first locate the external BGP-NAT01 address of the target installation. 
-If you specified a static IP for the BGP-NAT during deployment of the Azure Stack PoC, then use it in the connection example below. 
+To connect to Azure Stack PoC via VPN, first locate the host IP address of the target installation. 
 
-If you did not specify a static IP then the BGP-NAT was configured with DHCP. In that case, **read the below section** to obtain your BGP-NAT VM IP by using the IP address of the Azure Stack PoC host (which should be known to you after deployment). 
-
-The commands below need to access the Azure Stack PoC host computer and Azure Stack CA, so they need to be trusted hosts in PowerShell. Run PowerShell as administrator and modify TrustedHosts as follows.
+The commands below need to access the Azure Stack PoC host computer, so it needs to be a trusted host in PowerShell. Run PowerShell as administrator and modify TrustedHosts as follows.
 
 ```powershell
 # Add Azure Stack PoC host to the trusted hosts on your client computer
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-Set-Item wsman:\localhost\Client\TrustedHosts -Value azs-ca01.azurestack.local -Concatenate
+Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host IP address>" -Concatenate
 ```  
 
 For the VPN connection, use the admin password provided at the time of the Azure Stack deployment.
@@ -47,18 +43,10 @@ Then connect your client computer to the environment as follows.
 
 ```powershell
 # Create VPN connection entry for the current user
-Add-AzureStackVpnConnection -ServerAddress <NAT IP> -Password $Password
+Add-AzureStackVpnConnection -ServerAddress <Host IP Address> -Password $Password
 
 # Connect to the Azure Stack instance. This command can be used multiple times.
 Connect-AzureStackVpn -Password $Password
-```
-
-## Obtain the NAT IP address with the Azure Stack PoC host address
-
-This command is helpful if you do not immediately know the NAT IP of the Azure Stack PoC you are trying to connect to. You must know the host address of your Azure Stack PoC.
-
-```powershell
-$natIp = Get-AzureStackNatServerAddress -HostComputer "<Azure Stack host address>" -Password $Password
 ```
 
 
@@ -69,22 +57,6 @@ One method of deploying templates and interacting with your Azure Stack PoC is t
 See the [Azure Stack Install PowerShell](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-powershell) article to download and install the correct PowerShell modules for Azure Stack.
 
 AzureRM cmdlets can be targeted at multiple Azure clouds such as Azure China, Government, and Azure Stack.
-
-Connecting requires that you obtain the GUID value of your Directory Tenant. If you know the non-GUID form of the Azure Active Directory Tenant used to deploy your Azure Stack instance, you can retrieve the GUID value with the following:
-
-```powershell
-$aadTenant = Get-AADTenantGUID -AADTenantName "<myaadtenant>.onmicrosoft.com" 
-```
-
-Otherwise, your home directory can be retrieved directly from your Azure Stack deployment. This method can also be used for AD FS. First, add your host to the list of TrustedHosts:
-```powershell
-Set-Item wsman:\localhost\Client\TrustedHosts -Value "<Azure Stack host address>" -Concatenate
-```
-Then execute the following:
-```powershell
-$Password = ConvertTo-SecureString "<Admin password provided when deploying Azure Stack>" -AsPlainText -Force
-$AadTenant = Get-AzureStackAadTenant  -HostComputer <Host IP Address> -Password $Password
-```
 
 To target your Azure Stack instance as a tenant, an AzureRM environment needs to be registered as follows. The ARM endpoint below is the tenant default for a one-node environment.
 
@@ -98,16 +70,28 @@ To create an administrator environment use the below. The ARM endpoint below is 
 Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
+Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
+
+```powershell
+$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
+```
+
+For **ADFS** environments use the following:
+
+```powershell
+$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
+```
+
 After registering the AzureRM environment, cmdlets can be easily targeted at your Azure Stack instance. For example:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStack" -TenantId $TenantID
 ```
 
 Similarly, for targeting the administrator endpoints:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $AadTenant
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID
 ```
 
 ## Register Azure RM Providers on new subscriptions
