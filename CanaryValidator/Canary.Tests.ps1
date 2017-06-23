@@ -39,11 +39,11 @@ param (
     [parameter(HelpMessage="Path for Linux VHD")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $LinuxImagePath = "https://partner-images.canonical.com/azure/azure_stack/ubuntu-14.04-LTS-microsoft_azure_stack-20161208-9.vhd.zip",
+    [string] $LinuxImagePath = "https://azurestacktemplate.blob.core.windows.net/azurestacktemplate-public-container/Ubuntu1604LTS.vhd",
     [parameter(HelpMessage="Linux OS sku")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $LinuxOSSku = "14.04.3-LTS",
+    [string] $LinuxOSSku = "16.04-LTS",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -295,20 +295,11 @@ while ($runCount -le $NumberOfIterations)
             {
                 if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
                 {
-                    $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).Ticks)"
-                    if (Test-Path -Path $CanaryCustomImageFolder)
-                    {
-                        Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
-                    }
-                    New-Item -Path $CanaryCustomImageFolder -ItemType Directory
-                    $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
-                    Remove-Item $CanaryCustomImageFolder -Force -Recurse
+                    Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskBlobURI $LinuxImagePath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
                 }    
             }
             catch
             {
-                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
                 throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
             }
         }
