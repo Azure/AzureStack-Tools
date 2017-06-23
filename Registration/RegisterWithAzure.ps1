@@ -55,6 +55,7 @@ This script must be run from the Host machine of the POC.
  Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack' 
 #>
 
+
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
@@ -127,6 +128,7 @@ $refreshToken = (ConvertTo-SecureString -string $tenantDetails["RefreshToken"] -
 # Step 1: Configure Bridge identity
 #
 
+Write-Verbose "Calling Configure-BridgeIdentity.ps1"
 .\Configure-BridgeIdentity.ps1 -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureDirectoryTenantName $azureDirectoryTenantName -AzureEnvironment $azureEnvironment -Verbose
 Write-Verbose "Configure Bridge identity completed"
 
@@ -136,6 +138,8 @@ Write-Verbose "Configure Bridge identity completed"
 
 $bridgeAppConfigFile = "\\SU1FileServer\SU1_Infrastructure_1\ASResourceProvider\Config\AzureBridge.IdentityApplication.Configuration.json"
 $registrationOutputFile = "c:\temp\registration.json"
+
+Write-Verbose "Calling New-RegistrationRequest.ps1"
 .\New-RegistrationRequest.ps1 -BridgeAppConfigFile $bridgeAppConfigFile -RegistrationRequestOutputFile $registrationOutputFile -Verbose
 Write-Verbose "New registration request completed"
 
@@ -147,10 +151,18 @@ New-Item -ItemType Directory -Force -Path "C:\temp"
 $registrationRequestFile = "c:\temp\registration.json"
 $registrationOutputFile = "c:\temp\registrationOutput.json"
 
-.\Register-AzureStack.ps1 -BillingModel PayAsYouUse -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
-    -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
-    -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
-Write-Verbose "Register Azure Stack with Azure completed"
+$timestamp = [DateTime]::Now.ToString("yyyyMMdd-HHmmss")
+$logPath = (New-Item -Path "$env:SystemDrive\CloudDeployment\Logs\" -ItemType Directory -Force).FullName
+$logFile = Join-Path -Path $logPath -ChildPath "Register-AzureStack.${timestamp}.txt"
+try { Start-Transcript -Path $logFile -Force | Out-String | Write-Verbose -Verbose } catch { Write-Warning -Message $_.Exception.Message }
+
+    Write-Verbose "Calling Register-AzureStack.ps1"
+    .\Register-AzureStack.ps1 -BillingModel PayAsYouUse -EnableSyndication -ReportUsage -SubscriptionId $azureSubscriptionId -AzureAdTenantId $AzureDirectoryTenantId `
+                                -RefreshToken $refreshToken -AzureAccountId $azureAccountId -AzureEnvironmentName $azureEnvironment -RegistrationRequestFile $registrationRequestFile `
+                                -RegistrationOutputFile $registrationOutputFile -Location "westcentralus" -Verbose
+    Write-Verbose "Register Azure Stack with Azure completed"
+
+try { Stop-Transcript -Verbose } catch { Write-Warning "$_" }
 
 #
 # workaround to enable syndication and usage
@@ -184,10 +196,12 @@ try {
 catch {
     $exceptionMessage = $_.Exception.Message
 
-    if ($exceptionMessage.Contains("Application is currently being upgraded")) {
+    if($exceptionMessage.Contains("Application is currently being upgraded"))
+    {
         Write-Warning "Activate-Bridge: Known issue with redundant service fabric upgrade call" 
     }
-    else {
+    else
+    {
         Write-Error -Message "Activate-Bridge: Error : $($_.Exception)"
     }
 }
