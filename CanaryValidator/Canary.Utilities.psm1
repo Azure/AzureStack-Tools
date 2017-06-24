@@ -118,7 +118,22 @@ function Log-JSONReport
 
 function Get-CanaryResult
 {    
-    $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$LogFilename
+    )
+
+    if ($LogFilename)
+    {
+        $logContent = Get-Content -Raw -Path $LogFilename | ConvertFrom-Json
+    }
+    else 
+    {
+        $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json    
+    }
+    
     Log-Info ($logContent.UseCases | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"}, 
                                                             @{Expression = {$_.Result}; Label="Result"; Align = "Left"}, 
                                                             @{Expression = {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}; Label = "Duration`n[Seconds]"; Align = "Left"},
@@ -258,7 +273,8 @@ function Invoke-Usecase
         }
         if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
         {
-            Invoke-Command -ScriptBlock $UsecaseBlock -ErrorAction SilentlyContinue
+            try {Invoke-Command -ScriptBlock $UsecaseBlock -ErrorAction SilentlyContinue}
+            catch {}
         }
         return
     }
