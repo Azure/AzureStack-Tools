@@ -1,12 +1,6 @@
 # Azure Stack Technical Preview Version
 
-These tools are meant for use with **Azure Stack Technical Preview 3 Refresh**. Azure Stack Technical Preview 3 (March build) users can still use the tools in the [TP3.N](https://github.com/Azure/AzureStack-Tools/tree/TP3.N).
-
-A few notes for this release:
-
-- Default ARM endpoints have changed in this release. 
-- Tools have been updated to include an EnvironmentName parameter.
-- Make sure to use the the Net35 parameter when uploading a Server 2016 image for use with deploying the PaaS services
+These tools are meant for use with **Azure Stack Development Kit**. Azure Stack Technical Preview 3 Refresh users can still use the tools in the [TP3-Refresh](https://github.com/Azure/AzureStack-Tools/tree/TP3-Refresh).
 
 ## Tools for using Azure and Azure Stack
 
@@ -17,7 +11,7 @@ For PowerShell, install the following:
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
 ```
 
 Obtain the tools by cloning the git repository.
@@ -55,8 +49,6 @@ Helps prepare for Azure Stack deployment.
 Connect to an Azure Stack instance from your personal computer/laptop.
 
 - Connect via VPN to an Azure Stack installation
-- Configure Azure Stack PowerShell environment
-- Prepare new subscriptions for use in PowerShell and CLI
 
 ## [Setting up Identity for Azure Stack](Identity)
 

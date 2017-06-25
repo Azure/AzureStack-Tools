@@ -3,13 +3,6 @@
 Instructions below are relative to the .\Infrastructure folder of the [AzureStack-Tools repo](..).
 This also requires the Azure Stack Connect Module to be imported before running any of the commands. The Module can also be found in the [AzureStack-Tools repo](..).
 
-Whats new for TP3:
-
-- New Cmdlet Name Prefix
-- API Resource Name changes
-- New cmdlets
-- Use of Azure Stack Connect Module
-
 ## Import the Module
 
 ```powershell
@@ -18,17 +11,19 @@ Import-Module .\AzureStack.Infra.psm1
 
 ## Add PowerShell environment
 
-```powershell
-Import-Module .\AzureStack.Connect.psm1
-```
-
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+You will need to login to your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
+Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
 
-Connecting to your environment requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
+Then login:
+
+```powershell
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" 
+```
+----
+If you are **not** using your home directory tenant, you will need to supply the tenant ID to your login command. You may find it easiest to obtain using the Connect tool. For **Azure Active Directory** environments provide your directory tenant name:
 
 ```powershell
 $TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
@@ -38,12 +33,6 @@ For **ADFS** environments use the following:
 
 ```powershell
 $TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin
-```
-
-Then login:
-
-```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" -TenantId $TenantID
 ```
 
 ## Individual Command Usage
@@ -67,8 +56,6 @@ The command does the following:
 
 ```powershell
 Close-AzsAlert -AlertID "ID"
-$credential = Get-Credential
-Close-AzsAlert -AzureStackCredentials $credential -TenantID $TenantID -AlertID "ID" -EnvironmentName "AzureStackAdmin"
 ```
 
 The command does the following:

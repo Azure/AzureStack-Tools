@@ -1,4 +1,5 @@
 # Azure Stack Development Kit installer
+![Deploying Azure Stack](https://github.com/Azure/AzureStack-Tools/raw/mattmcg/renamereadme/Deployment/Deployment.gif)
 
 The Azure Stack Development Kit installer provides a UI with the following features
 

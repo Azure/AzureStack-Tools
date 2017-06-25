@@ -7,21 +7,39 @@ Make sure you have the following module prerequisites installed:
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
 ```
 
 Then make sure the following modules are imported:
 
 ```powershell
-Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.ComputeAdmin.psm1
 ```
 
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+## Add PowerShell environment
+
+You will need to login to your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
+
+Then login:
+
+```powershell
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" 
+```
+----
+If you are **not** using your home directory tenant, you will need to supply the tenant ID to your login command. You may find it easiest to obtain using the Connect tool. For **Azure Active Directory** environments provide your directory tenant name:
+
+```powershell
+$TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
+```
+
+For **ADFS** environments use the following:
+
+```powershell
+$TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin
 
 ## Add the WS2016 Evaluation VM Image 
 
@@ -59,12 +77,6 @@ Please note that to use this image for **installing additional Azure Stack servi
     - Specify osType as Windows or Linux.
     - The following is an example invocation of the script:
 
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
-```
-
 ```powershell
 Add-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd'
 ```
@@ -82,40 +94,11 @@ To verify that the command ran successfully, go to Marketplace in the portal, an
 
 Run the below command to remove an uploaded VM image. After removal, tenants will no longer be able to deploy virtual machines with this image.
 
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
-```
-
 ```powershell
 Remove-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0"
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
-
-## Add a VM extension to the Compute with PowerShell
-
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
-```
-
-An example usage is the following:
-
-```powershell
-$path = "<Path to vm extension zip>"
-Add-AzsVMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -extensionLocalPath $path -osType Windows
-```
-
-## Remove a VM extension with PowerShell
-
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
-```
 
 ## VM Scale Set gallery item
 
