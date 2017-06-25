@@ -18,6 +18,8 @@ Import-Module .\AzureStack.Connect.psm1
 
 ## VPN to Azure Stack Development Kit
 
+![VPN to Azure Stack Development Kit](https://github.com/Azure/AzureStack-Tools/raw/renamestaging/Connect/VPNConnection.gif)
+
 The [Connect to Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-connect-azure-stack) document describes ways to connect to your Azure Stack Development Kit environment.
 
 One method is to establish a split tunnel VPN connection to an Azure Stack Development Kit.
@@ -52,7 +54,7 @@ Connect-AzsVpn -Password $Password
 ```
 
 ## Configure Azure Stack PowerShell Environment
-![Adding Azure Stack Environment](https://github.com/Azure/AzureStack-Tools/raw/mattmcg/renamereadme/Connect/EnvironmentAdd.gif)
+![Adding Azure Stack Environment](https://github.com/Azure/AzureStack-Tools/raw/renamestaging/Connect/EnvironmentAdd.gif)
 
 
 One method of deploying templates and interacting with your Azure Stack Development Kit is to access it via PowerShell.
