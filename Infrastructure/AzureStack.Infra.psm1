@@ -202,7 +202,7 @@ function Get-AzsUpdateRun {
         [String] $Update
     )
     
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
     $name = "{0}/{1}" -f $Location, $Update
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates/updateRuns"
 
@@ -260,7 +260,7 @@ function Close-AsSAlert {
     )
 
     
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
 
     $alerts = Get-AzsAlert -Location $Location
     
@@ -475,7 +475,7 @@ function Add-AzsIpPool {
         [string] $AddressPrefix = ''
     )
 
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
     
     $params = @{
         ResourceName      = "{0}/{1}" -f $Location, $Name
@@ -554,13 +554,13 @@ Export-ModuleMember -Function Enable-AzsScaleUnitNode
     .SYNOPSIS
     Get Location Capacity
 #>
-function Get-AzsLocationCapacity {
+function Get-AzsHomeLocationCapacity {
     Param(
         [Parameter(Mandatory = $false)]
         [string] $Location
     )
         
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
     $name = "../"
     $resourceType = "Microsoft.InfrastructureInsights.Admin/locations/regionHealths"
 
@@ -568,9 +568,9 @@ function Get-AzsLocationCapacity {
     $Capacity.Properties
 }
 
-Export-ModuleMember -Function Get-AzsLocationCapacity
+Export-ModuleMember -Function Get-AzsHomeLocationCapacity
 
-function Get-AzsLocation {
+function Get-AzsHomeLocation {
     param(
         [Parameter(Mandatory = $false)]
         [string] $Location
@@ -580,7 +580,7 @@ function Get-AzsLocation {
         return $Location
     }
 
-    $locationResource = Get-AzureRmManagedLocation
+    $locationResource = Get-AzsLocation
     return $locationResource.Name
 }
 
@@ -598,7 +598,7 @@ function Get-AzsInfrastructureResource {
         [string] $ResourceType
     )
     
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
 
     # If $name is not given, list all resource by using location as ResourceName
     if (-not $Name) {       
@@ -627,7 +627,7 @@ function Invoke-AzsInfrastructureAction {
         [string] $ResourceType
     )
         
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
 
     $params = @{
         ApiVersion        = "2016-05-01"

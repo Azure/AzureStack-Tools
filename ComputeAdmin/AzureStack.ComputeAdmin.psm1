@@ -15,7 +15,7 @@ function Add-AzsVMSSGalleryItem {
         [String] $Location
     )
     
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
     $rgName = "vmss.gallery"
 
     New-AzureRmResourceGroup -Name $rgName -Location $Location -Force
@@ -138,7 +138,7 @@ function Add-AzsVMImage {
         [switch] $Force
     )
         
-    $location = Get-AzsLocation -Location $location
+    $location = Get-AzsHomeLocation -Location $location
 
     if ($CreateGalleryItem -eq $false -and $PSBoundParameters.ContainsKey('title')) {
         Write-Error -Message "The title parameter only applies to creating a gallery item." -ErrorAction Stop
@@ -348,7 +348,7 @@ function Remove-AzsVMImage {
         [switch] $Force
     )
         
-    $location = Get-AzsLocation -Location $location
+    $location = Get-AzsHomeLocation -Location $location
         
     $VMImageExists = $false
     if (Get-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version -location $location -ErrorAction SilentlyContinue) {
@@ -419,7 +419,7 @@ function Get-AzsVMImage {
         [String] $Location
     )
 
-    $location = Get-AzsLocation -Location $location
+    $location = Get-AzsHomeLocation -Location $location
 
     $params = @{
         ResourceType = "Microsoft.Compute.Admin/locations/artifactTypes/publishers/offers/skus/versions"
@@ -561,7 +561,7 @@ function New-AzsServer2016VMImage {
     }
     process {
     
-        $location = Get-AzsLocation -Location $location
+        $location = Get-AzsHomeLocation -Location $location
         Write-Verbose -Message "Checking ISO path for a valid ISO." -Verbose
         if (!$IsoPath.ToLower().contains('.iso')) {
             Write-Error -Message "ISO path is not a valid ISO file." -ErrorAction Stop
@@ -815,7 +815,7 @@ Function CreateGalleryItem {
     $azpkg = '{0}\{1}' -f $workdir, $galleryItemName
     return Get-Item -LiteralPath $azpkg
 }
-Function Get-AzsLocation {
+Function Get-AzsHomeLocation {
     param(
         [Parameter(Mandatory = $false)]
         [string] $Location
@@ -824,6 +824,6 @@ Function Get-AzsLocation {
         return $Location
     }
     
-    $locationResource = Get-AzureRmManagedLocation
+    $locationResource = Get-AzsLocation
     return $locationResource.Name
 }

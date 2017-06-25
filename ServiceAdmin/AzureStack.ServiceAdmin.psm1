@@ -16,7 +16,7 @@ function Add-AzsStorageQuota {
         [string] $Location = $null
     )
     
-    $Location = Get-AzsLocation -Location $Location    
+    $Location = Get-AzsHomeLocation -Location $Location    
 
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
@@ -40,7 +40,7 @@ function Add-AzsComputeQuota {
         [string] $Location = $null
     )
 
-    $Location = Get-AzsLocation -Location $Location    
+    $Location = Get-AzsHomeLocation -Location $Location    
     
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
@@ -69,7 +69,7 @@ function Add-AzsNetworkQuota {
         [string] $Location = $null
     ) 
     
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
     
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
@@ -95,7 +95,7 @@ function Get-AzsSubscriptionsQuota {
         [string] $Location
     )
 
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
 
     $params = @{
         ResourceName = $Location
@@ -111,7 +111,7 @@ function Get-AzsKeyVaultQuota {
         [string] $Location
     )
     
-    $Location = Get-AzsLocation -Location $Location
+    $Location = Get-AzsHomeLocation -Location $Location
     
     $params = @{
         ResourceName = $Location
@@ -122,7 +122,7 @@ function Get-AzsKeyVaultQuota {
     Get-AzsServiceQuota @params
 }
 
-function Get-AzsLocation {
+function Get-AzsHomeLocation {
     param(
         [string] $Location
     )
@@ -131,7 +131,7 @@ function Get-AzsLocation {
         return $Location
     }
 
-    $locationResource = Get-AzureRmManagedLocation
+    $locationResource = Get-AzsLocation
     return $locationResource.Name
 }
 
