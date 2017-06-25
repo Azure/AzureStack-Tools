@@ -40,7 +40,7 @@ For **ADFS** environments use the following:
 
 ```powershell
 $TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin
-
+```
 ## Add the WS2016 Evaluation VM Image 
 
 The New-AzsServer2016VMImage allows you to add a Windows Server 2016 Evaluation VM Image to your Azure Stack Marketplace.
