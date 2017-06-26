@@ -42,7 +42,7 @@ function Add-AzsVMSSGalleryItem {
 
     $uri = $blob.Context.BlobEndPoint + $container.Name + "/" + $blob.Name    
 
-    Add-AzureRMGalleryItem -GalleryItemUri $uri
+    Add-AzsGalleryItem -GalleryItemUri $uri
 }
 
 Export-ModuleMember -Function 'Add-AzsVMSSGalleryItem' 
@@ -55,12 +55,12 @@ function Remove-AzsVMSSGalleryItem {
 
     [CmdletBinding(SupportsShouldProcess = $true)]
     param()
-    $item = Get-AzureRMGalleryItem -Name "microsoft.vmss.1.3.6"
+    $item = Get-AzsGalleryItem -Name "microsoft.vmss.1.3.6"
 
     if ($item) {
         
         if ($pscmdlet.ShouldProcess("Delete VMSS Gallery Item")) {
-            $null = $item | Remove-AzureRMGalleryItem
+            $null = $item | Remove-AzsGalleryItem
             $item
         }
     }
@@ -271,11 +271,9 @@ function Add-AzsVMImage {
             ApiVersion   = "2015-12-01-preview"
             Properties   = ConvertFrom-Json $propertyBody
         }
-
-        if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to create VM image with $imageDescription ?", "")) {
-            Write-Verbose "Creating VM Image..."
-            New-AzureRmResource @params -ErrorAction Stop -Force
-        }
+        
+        Write-Verbose "Creating VM Image..."
+        New-AzureRmResource @params -ErrorAction Stop -Force
     }
 
     $platformImage = Get-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version -location $location
@@ -303,7 +301,7 @@ function Add-AzsVMImage {
         $null = $container| Set-AzureStorageBlobContent -File $GalleryItem.FullName -Blob $galleryItem.Name
         $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName, $galleryItem.Name
 
-        Add-AzureRMGalleryItem -GalleryItemUri $galleryItemURI
+        Add-AzsGalleryItem -GalleryItemUri $galleryItemURI
 
         #cleanup
         Remove-Item $GalleryItem
@@ -386,7 +384,7 @@ function Remove-AzsVMImage {
 
         if ($pscmdlet.ShouldProcess("$("Remove Gallery Item: '{0}', offer: '{1}', sku: '{2}'" -f $publisher,$offer,$sku)")) {
 
-            Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzureRMGalleryItem 
+            Get-AzsGalleryItem | Where-Object {$_.Name -contains "$publisher.$name.$version"} | Remove-AzsGalleryItem 
         }
     }
 }
