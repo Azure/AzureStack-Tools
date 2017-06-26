@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Short description
 This installer UI simplifies the preperation and deployment of the Azure Stack Development Kit
@@ -24,15 +24,16 @@ To install the Azure Stack Development Kit you require
 The Azure Stack Development Kit installer UI script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
 #>
 
-#requires -runasadministrator
+#requires –runasadministrator
 
 #region Text
 $Text_Generic = @{}
 $Text_Generic.Password_NotMatch = "Passwords do not match"
+$Text_Generic.Regex_Fqdn = "An FQDN can only contain A-Z, a-z, 0-9 and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
-$Text_Generic.Regex_EmailAddress = "Please specify valid email address"
 $Text_Generic.Regex_IpAddress = "Ip Address must be specified in the x.x.x.x format"
 $Text_Generic.Regex_IpAddressCidr = "Ip Address must be specified in the x.x.x.x/x format"
+$Text_Generic.Regex_LocalAdmin = "The specified password does not match the current local administrator password"
 
 $Text_SafeOS = @{}
 $Text_SafeOS.Mode_Title = "Prepare for Deployment"
@@ -41,15 +42,15 @@ $Text_SafeOS.Mode_LeftContent = "Prepare the Cloudbuilder vhdx"
 $Text_SafeOS.Mode_RightTitle = "Online documentation"
 $Text_SafeOS.Mode_RightContent = "Read the online documentation."
 $Text_SafeOS.Prepare_Title = "Select Cloudbuilder vhdx"
-$Text_SafeOS.Prepare_VHDX_IsMounted = "This VHDX is already mounted"
+$Text_SafeOS.Prepare_VHDX_IsMounted = "This vhdx is already mounted"
 $Text_SafeOS.Prepare_VHDX_InvalidPath = "Not a valid Path"
 $Text_SafeOS.Prepare_Drivers_InvalidPath = "Not a valid Path"
-$Text_SafeOS.Unattend_Title = "Prepare Unattend File"
+$Text_SafeOS.Unattend_Title = "Optional settings"
 $Text_SafeOS.NetInterface_Title = "Select Network Interface for the Azure Stack host"
 $Text_SafeOS.NetInterface_Warning = "Select the network interface that will be configured for the host of the Azure Stack Development Kit. Ensure you have network connectivity to the selected network adapter before proceeding."
 $Text_SafeOS.NetConfig_Title = "Azure Stack host IP configuration"
-$Text_SafeOS.Job_Title = "Preparing cloudbuilder vhdx"
-$Text_SafeOS.Summary_Content = "The Cloudbuilder VHD is prepared succesfully. Please reboot. The server will boot from the CloudBuilder VHD and you can start the installation after signing in as the administrator."
+$Text_SafeOS.Job_Title = "Preparing the environment"
+$Text_SafeOS.Summary_Content = "The cloudbuilder vhdx is prepared succesfully. Please reboot. The server will boot from the CloudBuilder VHD and you can start the installation after signing in as the administrator."
 $Text_SafeOS.Mode_RightLink = "https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-run-powershell-script"
 
 $Text_Install = @{}
@@ -65,6 +66,7 @@ $Text_Install.NetConfig_Title = "Network Configuration for BGPNAT01"
 $Text_Install.Credentials_Title = "Specify Identity Provider and Credentials"
 $Text_Install.Summary_Title = "Summary"
 $Text_Install.Summary_Content = "The following script will be used for deploying the Development Kit"
+$Text_Install.Summary_Warning = "You will be prompted for your Azure AD credentials 2-3 minutes after the installation starts"
 
 $Text_Rerun = @{}
 $Text_Rerun.Mode_Title = "Rerun Installation"
@@ -183,7 +185,7 @@ $Xaml = @'
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="Foreground" Value="#EBEBEB"/>
-            <Setter Property="PasswordChar" Value="?"/>
+            <Setter Property="PasswordChar" Value="●"/>
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MinHeight" Value="23.5"/>
             <Setter Property="AllowDrop" Value="true"/>
@@ -588,27 +590,27 @@ $Xaml = @'
                         <CheckBox x:Name="Control_Unattend_Chb_LocalAdmin" VerticalAlignment="Center" Content="Configure local admin account" Margin="0,0,0,10" IsChecked="True" />
                         <StackPanel x:Name="Control_Unattend_Stp_LocalAdmin" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Username:" Width="100" HorizontalAlignment="Left"/>
-                                <TextBox BorderBrush="#ABADB3" Width="425" Text="Administrator" IsEnabled="False" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Username:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox BorderBrush="#ABADB3" Width="405" Text="Administrator" IsEnabled="False" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="100" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="425" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="120" HorizontalAlignment="Left"/>
+                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="405" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Confirm Pwd:" Width="100" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPasswordConfirm" BorderBrush="#ABADB3" Width="425" IsEnabled="False" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Confirm Password:" Width="120" HorizontalAlignment="Left"/>
+                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPasswordConfirm" BorderBrush="#ABADB3" Width="405" IsEnabled="False" />
                             </StackPanel>
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_Computername" VerticalAlignment="Center" Content="Computername" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Unattend_Stp_Computername" Visibility="Collapsed">
-                            <TextBox x:Name="Control_Unattend_Tbx_Computername" BorderBrush="#ABADB3" Width="425" Text="" HorizontalAlignment="Right"/>
+                            <TextBox x:Name="Control_Unattend_Tbx_Computername" BorderBrush="#ABADB3" Width="405" Text="" HorizontalAlignment="Right"/>
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_TimeZone" VerticalAlignment="Center" Content="Time Zone" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Unattend_Stp_TimeZone" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Timezone:" Width="100" HorizontalAlignment="Left"/>
-                                <ComboBox x:Name="Control_Unattend_Cbx_Timezone" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" Width="425"  />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Timezone:" Width="120" HorizontalAlignment="Left"/>
+                                <ComboBox x:Name="Control_Unattend_Cbx_Timezone" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" Width="405"  />
                             </StackPanel>
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_StaticIP" VerticalAlignment="Center" Content="Static IP configuration" Margin="0,0,0,10" />
@@ -626,37 +628,24 @@ $Xaml = @'
 
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Type:" Width="100" HorizontalAlignment="Left"/>
-                            <ComboBox Width="450" x:Name="Control_Creds_Cbx_Idp" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" >
+                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Type:" Width="120" HorizontalAlignment="Left"/>
+                            <ComboBox Width="430" x:Name="Control_Creds_Cbx_Idp" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" >
                             </ComboBox>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_AAD" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Username:" Width="100" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_Creds_Tbx_AADUsername" BorderBrush="#ABADB3" Width="450" IsEnabled="False" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="100" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Creds_Pwb_AADPassword" BorderBrush="#ABADB3" Width="450" IsEnabled="False" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Confirm Pwd:" Width="100" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Creds_Pwb_AADPasswordConfirm" BorderBrush="#ABADB3" Width="450" IsEnabled="False"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <CheckBox x:Name="Control_Creds_Chb_AADTenant" VerticalAlignment="Center" Content="Tenant:" Width="100" IsEnabled="False"  />
-                                <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="#ABADB3" Width="450"  IsEnabled="False" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="AAD Tenant:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="#ABADB3" Width="430"  IsEnabled="False" />
                             </StackPanel>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_LocalPassword" Visibility="Visible">
                             <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Local Administrator Password" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="100" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Creds_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="450" IsEnabled="False" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Confirm Pwd:" Width="100" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Creds_Pwb_LocalPasswordConfirm" BorderBrush="#ABADB3" Width="450" IsEnabled="False" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="120" HorizontalAlignment="Left"/>
+                                <Grid>
+                                    <PasswordBox x:Name="Control_Creds_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="430"/>
+                                    <Path x:Name="Control_Creds_Pth_LocalPassword" SnapsToDevicePixels="False" StrokeThickness="3" Data="M2,10 L8,16 L15,5" Stroke="#92D050" Margin="300,0,0,0" Visibility="Hidden"/>
+                                </Grid>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -726,30 +715,30 @@ $Xaml = @'
                             <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Static" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
                         </RadioButton>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Ip Address:" Width="100" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="#ABADB3" Width="450" IsEnabled="False"/>
+                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Gateway:" Width="100" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="#ABADB3" Width="450" IsEnabled="False"/>
+                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_DNS">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="100" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="450" IsEnabled="False"/>
+                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
                         </StackPanel>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="VLAN ID:" Width="100" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="450" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="VLAN ID:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="430" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder:" Width="100" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="450"/>
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="430"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server:" Width="100" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="450" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -780,15 +769,14 @@ $Xaml = @'
                                 <ColumnDefinition Width="550"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition />
+                                <RowDefinition  />
                                 <RowDefinition/>
-                                <RowDefinition />
-                                <RowDefinition />
+                                <RowDefinition/>
                             </Grid.RowDefinitions>
                             <TextBlock x:Name="Control_Summary_Tbl_Header1" Grid.Row="0" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBlock x:Name="Control_Summary_Tbl_Header2" Grid.Row="2" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBlock x:Name="Control_Summary_Tbl_Content1" Grid.Row="1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBlock x:Name="Control_Summary_Tbl_Content2" Grid.Row="3" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                            <TextBox x:Name="Control_Summary_Tbx_Content1" Grid.Row="1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed" BorderBrush="#ABADB3" />
+                            <TextBlock x:Name="Control_Summary_Tbl_Content1" Grid.Row="2" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                            <Path x:Name="Control_Summary_Pth_Content1" Grid.Row="2" SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,0,0" Visibility="Collapsed"/>
                         </Grid>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -829,6 +817,7 @@ $Xaml = @'
 
 #region Get XAML and create variables
 Add-Type -AssemblyName PresentationFramework
+Add-Type -assemblyname system.DirectoryServices.accountmanagement 
 
 [xml]$Xaml = $Xaml
 
@@ -837,7 +826,7 @@ $Form = [Windows.Markup.XamlReader]::Load( $Reader )
 
 $syncHash = [hashtable]::Synchronized(@{})
 
-$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | Where-Object {$_.name -like "Control_*"} | ForEach-Object { $syncHash.Add($_.Name,$Form.FindName($_.Name) )}
+$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | where {$_.name -like "Control_*"} | % { $syncHash.Add($_.Name,$Form.FindName($_.Name) )}
 #endregion
 
 #region Data
@@ -851,7 +840,7 @@ $AuthEndpoints = @{
         }
 }
 
-$AuthEndpoints.GetEnumerator() | ForEach-Object {
+$AuthEndpoints.GetEnumerator() | ForEach {
 $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 }
 #endregion AuthEndpoints
@@ -859,18 +848,18 @@ $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 #region TimeZones
 $syncHash.Timezones = [System.TimeZoneInfo]::GetSystemTimeZones()
 
-$syncHash.Timezones | ForEach-Object {
+$syncHash.Timezones | ForEach {
 $syncHash.Control_Unattend_Cbx_Timezone.AddChild($_.DisplayName)
 }
 #endregion TimeZones
 
 #region Regex
 $Regex = @{}
+$Regex.Fqdn = @'
+(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)
+'@
 $Regex.Computername = @'
 (?![0-9]{1,15}$)[a-zA-Z0-9-]{1,15}
-'@
-$Regex.EmailAddress = @'
-?:(?:[\w`~!#$%^&*\-=+;:{}'|,?\/]+(?:(?:\.(?:"(?:\\?[\w`~!#$%^&*\-=+;:{}'|,?\/\.()<>\[\] @]|\\"|\\\\)*"|[\w`~!#$%^&*\-=+;:{}'|,?\/]+))*\.[\w`~!#$%^&*\-=+;:{}'|,?\/]+)?)|(?:"(?:\\?[\w`~!#$%^&*\-=+;:{}'|,?\/\.()<>\[\] @]|\\"|\\\\)+"))@(?:[a-zA-Z\d\-]+(?:\.[a-zA-Z\d\-]+)*|\[\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\]
 '@
 $Regex.IpAddress = @'
 ([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]
@@ -905,7 +894,7 @@ $S_NetInterfaces = {
         $properties | Add-Member -Type NoteProperty -Name Ipv4PrefixLength -Value $NetIPAddress.PrefixLength
         $properties | Add-Member -Type NoteProperty -Name Ipv4DefaultGateway -Value $NetIPConfiguration.IPv4DefaultGateway.NextHop
         $properties | Add-Member -Type NoteProperty -Name DHCP -Value $NetIPInterface.DHCP
-        $properties | Add-Member -Type NoteProperty -Name DNS -Value ($NetIPConfiguration.DNSServer | Where-Object {$_.AddressFamily -eq "2"}).ServerAddresses
+        $properties | Add-Member -Type NoteProperty -Name DNS -Value ($NetIPConfiguration.DNSServer | where {$_.AddressFamily -eq "2"}).ServerAddresses
         $properties | Add-Member -Type NoteProperty -Name InterfaceMetric -Value $NetIPInterface.InterfaceMetric
 
         $NetInterfaces += $properties
@@ -913,7 +902,7 @@ $S_NetInterfaces = {
  
     
     $syncHash.Control_NetInterface_Stp_Wait.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Stp_Wait.Visibility="Collapsed"},"Normal")
-    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {
+    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | % {
         $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Lvw_Nics.AddChild($_)},"Normal")
         }
 }
@@ -954,7 +943,7 @@ $S_PrepareVHDX = {
 
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
-    $bootOptions | ForEach-Object {
+    $bootOptions | ForEach {
     if ((($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*') -and (($_.Context.PostContext[0] -replace '^description +') -eq 'Azure Stack'))
         {
         $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
@@ -1010,13 +999,13 @@ $S_PrepareVHDX = {
 
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
-    $bootOptions | ForEach-Object {
+    $bootOptions | ForEach {
     if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack')))
     {
     $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
     bcdedit /set $BootID description "Azure Stack"
     }
-    }
+    }   
     #endregion
 
     #region Unattend
@@ -1036,7 +1025,7 @@ $S_PrepareVHDX = {
     $Unattend_Apply_StaticIP = $SyncHash.Control_Unattend_Chb_StaticIP.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_StaticIP.IsChecked})
     if ($SyncHash.Control_Unattend_Chb_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_Timezone.IsChecked})){
         $U_unattend_input_timezone_value = $SyncHash.Control_Unattend_Cbx_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Cbx_Timezone.SelectedItem})
-        $U_Unattend_input_timezone = ($syncHash.Timezones | Where-Object {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
+        $U_Unattend_input_timezone = ($syncHash.Timezones | where {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
     }
     else {
         $U_Unattend_input_timezone = "Pacific Standard Time"
@@ -1110,7 +1099,7 @@ $S_PrepareVHDX = {
     <component name="Microsoft-Windows-TCPIP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <Interfaces>
             <Interface wcm:action="add">
-                <Identifier>$U_Unattend_input_macaddress</Identifier>
+	            <Identifier>$U_Unattend_input_macaddress</Identifier>
                 <Ipv4Settings>
                     <DhcpEnabled>false</DhcpEnabled>
                 </Ipv4Settings>
@@ -1175,14 +1164,14 @@ $S_PrepareVHDX = {
         #endregion oobeSystem
 
     
-    if($Unattend_Apply_LocalAdmin) {
+    if($Unattend_Apply_LocalAdmin) {
         $U_Unattend.unattend.AppendChild($U_Unattend.ImportNode($U_Unattend_oobeSysten_AdminPassword.unattend.settings, $true))
-        }
+        }
 
-    if($Unattend_Apply_StaticIP) {
-        ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
-        ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
-        }
+    if($Unattend_Apply_StaticIP) {
+        ($U_Unattend.unattend.settings | where {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
+        ($U_Unattend.unattend.settings | where {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
+        }
 
     $U_Unattend.OuterXml | Out-File ($Prepare_Vhdx_DriveLetter+":\unattend.xml") -Encoding ascii -Force
     #endregion
@@ -1216,9 +1205,9 @@ $S_PrepareVHDX = {
 $Runspace_Jobs_Properties =[runspacefactory]::CreateRunspace()
 $Runspace_Jobs_Properties.Name = "Jobs"
 $Runspace_Jobs_Properties.ApartmentState = "STA"
-$Runspace_Jobs_Properties.ThreadOptions = "ReuseThread"
+$Runspace_Jobs_Properties.ThreadOptions = "ReuseThread"         
 $Runspace_Jobs_Properties.Open()
-$Runspace_Jobs_Properties.SessionStateProxy.SetVariable("syncHash",$syncHash)
+$Runspace_Jobs_Properties.SessionStateProxy.SetVariable("syncHash",$syncHash)  
 $Runspace_Jobs = [PowerShell]::Create()
 #endregion
 
@@ -1303,7 +1292,7 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
     $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_Install.Mode_RightContent
     }
 # Booted from vhdx, but not CloudBuilder.vhdx
-elseif ((get-disk | Where-Object {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
+elseif ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
     Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server." -ForegroundColor Red
     Exit
     }
@@ -1328,10 +1317,10 @@ Param(
 [string]$filter
 )
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-    $Script:F_Browse_obj = New-Object System.Windows.Forms.OpenFileDialog
-    $Script:F_Browse_obj.Filter = $filter
-    $Script:F_Browse_obj.Title = $title
-    $Script:F_Browse_obj.ShowDialog()
+	$Script:F_Browse_obj = New-Object System.Windows.Forms.OpenFileDialog
+	$Script:F_Browse_obj.Filter = $filter
+	$Script:F_Browse_obj.Title = $title
+	$Script:F_Browse_obj.ShowDialog()
 }
 
 function F_Browse_Folder {
@@ -1339,9 +1328,9 @@ Param(
 [string]$title
 )
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-    $Script:F_Browse_obj = New-Object System.Windows.Forms.FolderBrowserDialog
-    $Script:F_Browse_obj.Description = $title
-    $Script:F_Browse_obj.ShowDialog()
+	$Script:F_Browse_obj = New-Object System.Windows.Forms.FolderBrowserDialog
+	$Script:F_Browse_obj.Description = $title
+	$Script:F_Browse_obj.ShowDialog()
 }
 
 Function F_Regex {
@@ -1373,7 +1362,7 @@ if ($validpath){
 }
 
 # Validation Actions
-$control = ($syncHash.GetEnumerator() | Where-Object {$_.name -eq $field}) 
+$control = ($syncHash.GetEnumerator() | where {$_.name -eq $field}) 
 
 if ($Script:validation_error) {
         $tooltip = new-object System.Windows.Controls.ToolTip
@@ -1401,7 +1390,7 @@ $syncHash.Control_Reboot_Lvw_Options.Items.Clear()
 
 $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
 
-$bootOptions | ForEach-Object {
+$bootOptions | foreach {
     $bootOption = New-Object -TypeName PSObject
     $bootOption | Add-Member -Type NoteProperty -Name Description -Value ($_.Context.PostContext[0] -replace '^description +')
     $bootOption | Add-Member -Type NoteProperty -Name ID -Value ($_.Context.PreContext[0] -replace '^identifier +')
@@ -1419,20 +1408,25 @@ Function F_Reboot {
     #endregion
 }
 
+Function F_Verify_LocalAdminCreds {
+$dsa = New-Object System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
+$pass = $syncHash.Control_Creds_Pwb_LocalPassword.Password
+if ($dsa.ValidateCredentials('Administrator', $pass)){
+    }
+else {
+    F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
+    }
+}
+
 Function F_VerifyFields_Creds {
 if (
     ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS' -and
-    ($syncHash.Control_Creds_Pwb_LocalPassword.Password -and ($syncHash.Control_Creds_Pwb_LocalPassword.BorderBrush.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.Password) -and ($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.BorderBrush.color -ne "#FFFF0000")) -or
+    ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0)) -or
     (
     $syncHash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS' -and
     $syncHash.Control_Creds_Cbx_Idp.SelectedItem -and
-    ($syncHash.Control_Creds_Tbx_AADUsername.Text -and ($syncHash.Control_Creds_Tbx_AADUsername.BorderBrush.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Pwb_AADPassword.Password -and ($syncHash.Control_Creds_Pwb_AADPassword.BorderBrush.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Pwb_AADPasswordConfirm.Password -and ($syncHash.Control_Creds_Pwb_AADPasswordConfirm.BorderBrush.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Pwb_LocalPassword.Password -and ($syncHash.Control_Creds_Pwb_LocalPassword.BorderBrush.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.Password -and ($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.BorderBrush.color -ne "#FFFF0000")))
+    ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000")) -and
+    ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0))
 ) {
   $syncHash.Control_Creds_Btn_Next.IsEnabled = $true  
 }
@@ -1523,41 +1517,43 @@ $SyncHash.Control_NetConfig_Tbx_DNS.Text=$syncHash.Control_NetInterface_Lvw_Nics
 }
 
 Function F_GetNetworkID {
-$CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
+$CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
 
 $ipBinary = $null
 $dottedDecimal = $null
 
 
-$IPAddress = $CIDRIPAddress.Split("/")[0] 
-$cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
+$IPAddress = $CIDRIPAddress.Split("/")[0] 
+$cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
 
-$IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
+$IPAddress.split(".") | %{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
 
-if($cidr -le 32){ 
-    [Int[]]$array = (1..32) 
-    for($i=0;$i -lt $array.length;$i++){
-        if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
-        } 
-        $smBinary =$array -join ""
-    } 
+if($cidr -le 32){ 
+    [Int[]]$array = (1..32) 
+    for($i=0;$i -lt $array.length;$i++){ 
+        if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
+        } 
+        $smBinary =$array -join "" 
+    } 
 
-$netBits=$smBinary.indexOf("0")
-if ($netBits -ne -1) {
-    #identify subnet boundaries 
+ 
+
+$netBits=$smBinary.indexOf("0") 
+if ($netBits -ne -1) { 
+    #identify subnet boundaries 
     $binary = $($ipBinary.substring(0,$netBits).padright(32,"0"))
     $i = 0
-    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
 
-    }
-    else{
-    #identify subnet boundaries 
-    $binary = $($ipBinary) 
+   } 
+else { 
+    #identify subnet boundaries 
+    $binary = $($ipBinary) 
     $i = 0
-    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
-    }
+    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    } 
     return $networkID
 }
 
@@ -1565,66 +1561,63 @@ Function F_Summary {
 If ($Script:Initialized -eq "CloudBuilder_Install"){
 $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Install.Summary_Content
 
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Clear()
+$syncHash.Control_Summary_Tbx_Content1.Visibility = "Visible"
+$syncHash.Control_Summary_Tbx_Content1.Text = $null
 
-If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add('$InfraAzureDirectoryTenantAdminCredential = ')
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add("New-Object System.Management.Automation.PSCredential (")
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_Creds_Tbx_AADUsername.Text)
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add(", ")
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add($syncHash.Control_Creds_Pwb_AADPassword.PasswordChar.ToString() * $syncHash.Control_Creds_Pwb_AADPassword.Password.Length)
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add(")")
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add((New-Object System.Windows.Documents.LineBreak))
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add((New-Object System.Windows.Documents.LineBreak))
-}
-
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add(".\InstallAzureStackPOC.ps1")
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -AdminPassword ")
-$syncHash.Control_Summary_Tbl_Content1.Inlines.Add($syncHash.Control_Creds_Pwb_LocalPassword.PasswordChar.ToString() * $syncHash.Control_Creds_Pwb_LocalPassword.Password.Length)
+$InstallScript += '$adminpass = ConvertTo-SecureString ' + "'" + ($syncHash.Control_Creds_Pwb_LocalPassword.PasswordChar.ToString() * $syncHash.Control_Creds_Pwb_LocalPassword.Password.Length) +"'" + '-AsPlainText -Force'
+$InstallScript += "`r`n"
+$InstallScript += 'cd C:\CloudDeployment\Setup'
+$InstallScript += "`r`n"
+$InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
 
 If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
         
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -InfraAzureDirectoryTenantAdminCredential ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add('$InfraAzureDirectoryTenantAdminCredential')
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -InfraAzureDirectoryTenantName ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_Creds_Tbx_AADTenant.Text)
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -AzureEnvironment ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_Creds_Cbx_Idp.SelectedItem)
+        $InstallScript += " -InfraAzureDirectoryTenantName "
+        $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
     }
 
 If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -UseADFS ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add('$true')
+        $InstallScript += " -UseADFS"
     }
 
 If ($synchash.Control_NetConfig_Rbt_Static.IsChecked){
         $NetworkID = F_GetNetworkID
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -NatIPv4Subnet ") 
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($NetworkID)
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -NatIPv4Address ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0])
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -NatIPv4DefaultGateway ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_NetConfig_Tbx_Gateway.Text)
+        $InstallScript += " -NatIPv4Subnet " 
+        $InstallScript += $NetworkID
+        $InstallScript += " -NatIPv4Address "
+        $InstallScript += $synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0]
+        $InstallScript += " -NatIPv4DefaultGateway "
+        $InstallScript += $synchash.Control_NetConfig_Tbx_Gateway.Text
     }
 
 If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -PublicVLan ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_NetConfig_Tbx_VlanID.Text)
+        $InstallScript += " -PublicVLan "
+        $InstallScript += $synchash.Control_NetConfig_Tbx_VlanID.Text
     }
 
 If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -EnvironmentDNS ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_NetConfig_Tbx_DnsForwarder.Text)
+        $InstallScript += " -EnvironmentDNS "
+        $InstallScript += $synchash.Control_NetConfig_Tbx_DnsForwarder.Text
     }
 
 If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add(" -TimeServer ")
-        $syncHash.Control_Summary_Tbl_Content1.Inlines.Add($synchash.Control_NetConfig_Tbx_TimeServer.Text)
+        $InstallScript += " -TimeServer "
+        $InstallScript += $synchash.Control_NetConfig_Tbx_TimeServer.Text
     }
+
+$syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
+
+If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
+    $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
+    $syncHash.Control_Summary_Tbl_Content1.Margin = "35,0,0,10"
+    $SyncHash.Control_Summary_Tbl_Content1.Text = $Text_Install.Summary_Warning
+}
+
 }
 If ($Script:Initialized -eq "SafeOS"){
-    $syncHash.Control_Summary_Tbl_Header1.Text = $Text_SafeOS.Summary_Content
+    $syncHash.Control_Summary_Tbl_Content1.Text = $Text_SafeOS.Summary_Content
 }
+
 }
 
 Function F_Install {
@@ -1639,8 +1632,8 @@ Function F_Install {
     #region disable non selected NICs
     if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -gt 1)){
         Write-Host "Disabling non selected NICs" -ForegroundColor Cyan
-        $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | Where-Object {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
-        $disable_nics | ForEach-Object {
+        $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | where {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
+        $disable_nics | ForEach {
             $IntID = $_.InterfaceIndex
             Get-NetAdapter -InterfaceIndex $IntID | Disable-NetAdapter -Confirm:$false
             }
@@ -1651,28 +1644,16 @@ Function F_Install {
     }
     #endregion
 
-    #region Install Optional Creds
-    Write-Host "Defining installation parameters" -ForegroundColor Cyan
-
-    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
-    '$aadpass = ConvertTo-SecureString "' + $syncHash.Control_Creds_Pwb_AADPassword.Password + '" -AsPlainText -Force' | Add-Content $filepath
-    '$InfraAzureDirectoryTenantAdminCredential = New-Object System.Management.Automation.PSCredential ("' + $synchash.Control_Creds_Tbx_AADUsername.Text + '", $aadpass)' | Add-Content $filepath
-    #$InfraAzureDirectoryTenantAdminCredential = New-Object System.Management.Automation.PSCredential ($synchash.Control_Creds_Tbx_AADUsername.Text, $syncHash.Control_Creds_Pwb_AADPassword.SecurePassword)
-
-    }
-    #endregion
-
     #region Install Arguments
-        
-    '$adminpass = ConvertTo-SecureString "' + $syncHash.Control_Creds_Pwb_LocalPassword.Password + '" -AsPlainText -Force' | Add-Content $filepath
+    Write-Host "Defining installation parameters" -ForegroundColor Cyan 
+           
+    '$adminpass = ConvertTo-SecureString ' + "'" + $syncHash.Control_Creds_Pwb_LocalPassword.Password + "'" + ' -AsPlainText -Force' | Add-Content $filepath
     "cd C:\CloudDeployment\Setup" |  Add-Content $filepath
     ".\InstallAzureStackPOC.ps1" |  Add-Content $filepath -NoNewline
     ' -AdminPassword $adminpass' |  Add-Content $filepath -NoNewline
 
     If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
-        ' -InfraAzureDirectoryTenantAdminCredential $InfraAzureDirectoryTenantAdminCredential' |  Add-Content $filepath -NoNewline
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
-        #' -AzureEnvironment "' + $synchash.Control_Creds_Cbx_Idp.SelectedItem + '"' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
@@ -1721,14 +1702,14 @@ Function F_Rerun {
     #endregion
 
     #region Rerun
-    Set-Location C:\CloudDeployment\Setup
+    cd C:\CloudDeployment\Setup
     .\InstallAzureStackPOC.ps1 -Rerun
     #endregion
 }
 
 Function F_GetAzureStackLogs {
     #region Logs
-    Set-Location C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
+    cd C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
     Import-Module .\Microsoft.AzureStack.Diagnostics.DataCollection.psd1
     Get-AzureStackLogs -OutputPath C:\AzureStackLogs
     #endregion
@@ -1968,7 +1949,7 @@ $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
 })
 
 $syncHash.Control_Creds_Btn_Next.Add_Click({
-F_Regex -field 'Control_Creds_Tbx_AADUsername' -field_value $syncHash.Control_Creds_Tbx_AADUsername.Text -regex $Regex.EmailAddress -message $Text_Generic.Regex_EmailAddress
+F_Verify_LocalAdminCreds
 If (!($Script:validation_error)){
     $syncHash.Control_Creds_Stp.Visibility = "Collapsed"
     $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
@@ -1985,121 +1966,27 @@ If (!($Script:validation_error)){
 $syncHash.Control_Creds_Cbx_Idp.Add_SelectionChanged({
 
 If ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
-    $syncHash.Control_Creds_Tbx_AADUsername.Clear()
-    $syncHash.Control_Creds_Tbx_AADUsername.IsEnabled = $false
-    $syncHash.Control_Creds_Pwb_AADPassword.Clear()
-    $syncHash.Control_Creds_Pwb_AADPassword.IsEnabled = $false
-    $syncHash.Control_Creds_Pwb_AADPasswordConfirm.Clear()
-    $syncHash.Control_Creds_Pwb_AADPasswordConfirm.IsEnabled = $false
-    $syncHash.Control_Creds_Chb_AADTenant.IsChecked = $false
-    $syncHash.Control_Creds_Chb_AADTenant.IsEnabled = $false
     $syncHash.Control_Creds_Tbx_AADTenant.Clear()
     $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $false
     $syncHash.Control_Creds_Pwb_LocalPassword.IsEnabled = $true
     }
 Else {
-    $syncHash.Control_Creds_Tbx_AADUsername.IsEnabled = $true
-    $syncHash.Control_Creds_Pwb_AADPassword.IsEnabled = $true
+    $syncHash.Control_Creds_Tbx_AADTenant.Clear()
+    $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $true
     $syncHash.Control_Creds_Pwb_LocalPassword.IsEnabled = $true
     }
 F_VerifyFields_Creds
 })
 
-$syncHash.Control_Creds_Tbx_AADUsername.Add_TextChanged({
-F_VerifyFields_Creds
-If ($syncHash.Control_Creds_Tbx_AADUsername.Text -match "@"){
-$syncHash.Control_Creds_Tbx_AADTenant.Text = ($syncHash.Control_Creds_Tbx_AADUsername.Text -split "@")[1]
-$syncHash.Control_Creds_Chb_AADTenant.IsEnabled = $true
-}
-})
-
-$syncHash.Control_Creds_Tbx_AADUsername.Add_LostFocus({
-F_Regex -field 'Control_Creds_Tbx_AADUsername' -field_value $syncHash.Control_Creds_Tbx_AADUsername.Text -regex $Regex.EmailAddress -message $Text_Generic.Regex_EmailAddress
-})
-
-$syncHash.Control_Creds_Pwb_AADPassword.Add_PasswordChanged({
-#Enable the confirmation box if the First box contains any characters
-If (($syncHash.Control_Creds_Pwb_AADPassword.Password) -and (!($syncHash.Control_Creds_Pwb_AADPasswordConfirm.IsEnabled))) {
-    $syncHash.Control_Creds_Pwb_AADPasswordConfirm.IsEnabled = $true
-    }
-#Match the password with the confirmation field (only if it contains a value) while typing
-If ($syncHash.Control_Creds_Pwb_AADPasswordConfirm.Password){
-    If ($syncHash.Control_Creds_Pwb_AADPassword.Password -cne $syncHash.Control_Creds_Pwb_AADPasswordConfirm.Password) {
-    F_Regex -field 'Control_Creds_Pwb_AADPassword'-nocondition -message $Text_Generic.Password_NotMatch
-    F_VerifyFields_Creds
-    }
-    Else {
-    F_Regex -field 'Control_Creds_Pwb_AADPassword'
-    F_Regex -field 'Control_Creds_Pwb_AADPasswordConfirm'
-    F_VerifyFields_Creds
-    }
-}
-})
-
-$syncHash.Control_Creds_Pwb_AADPasswordConfirm.Add_PasswordChanged({
-#Match the password with the confirmation field (only if it contains a value) while typing
-If ($syncHash.Control_Creds_Pwb_AADPassword.Password){
-    If ($syncHash.Control_Creds_Pwb_AADPasswordConfirm.Password -cne $syncHash.Control_Creds_Pwb_AADPassword.Password) {
-        F_Regex -field 'Control_Creds_Pwb_AADPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
-        F_VerifyFields_Creds
-    }
-    Else {
-        F_Regex -field 'Control_Creds_Pwb_AADPasswordConfirm'
-        F_Regex -field 'Control_Creds_Pwb_AADPassword'
-        F_VerifyFields_Creds
-    }
-}
-})
-
-$syncHash.Control_Creds_Chb_AADTenant.Add_Click({
-if ($syncHash.Control_Creds_Chb_AADTenant.IsChecked){
-    $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $true
-    F_VerifyFields_Creds
-    }
-else {
-    $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $false
-    $syncHash.Control_Creds_Tbx_AADTenant.Text = ($syncHash.Control_Creds_Tbx_AADUsername.Text -split "@")[1]
-    }
-})
-
 $syncHash.Control_Creds_Tbx_AADTenant.Add_TextChanged({
+F_Regex -field 'Control_Creds_Tbx_AADTenant' -field_value $syncHash.Control_Creds_Tbx_AADTenant.Text -regex $Regex.Fqdn -message $Text_Generic.Regex_Fqdn
 F_VerifyFields_Creds
 })
 
 $syncHash.Control_Creds_Pwb_LocalPassword.Add_PasswordChanged({
-#Enable the confirmation box if the First box contains any characters
-If (($syncHash.Control_Creds_Pwb_LocalPassword.Password) -and (!($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.IsEnabled))) {
-    $syncHash.Control_Creds_Pwb_LocalPasswordConfirm.IsEnabled = $true
-    }
-#Match the password with the confirmation field (only if it contains a value) while typing
-If ($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.Password){
-    If ($syncHash.Control_Creds_Pwb_LocalPassword.Password -cne $syncHash.Control_Creds_Pwb_LocalPasswordConfirm.Password) {
-    F_Regex -field 'Control_Creds_Pwb_LocalPassword'-nocondition -message $Text_Generic.Password_NotMatch
-    F_VerifyFields_Creds
-    }
-    Else {
-    F_Regex -field 'Control_Creds_Pwb_LocalPassword'
-    F_Regex -field 'Control_Creds_Pwb_LocalPasswordConfirm'
-    F_VerifyFields_Creds
-    }
-}
+F_Regex -field 'Control_Creds_Pwb_LocalPassword'
+F_VerifyFields_Creds
 })
-
-$syncHash.Control_Creds_Pwb_LocalPasswordConfirm.Add_PasswordChanged({
-#Match the password with the confirmation field (only if it contains a value) while typing
-If ($syncHash.Control_Creds_Pwb_LocalPassword.Password){
-    If ($syncHash.Control_Creds_Pwb_LocalPasswordConfirm.Password -cne $syncHash.Control_Creds_Pwb_LocalPassword.Password) {
-        F_Regex -field 'Control_Creds_Pwb_LocalPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
-        F_VerifyFields_Creds
-    }
-    Else {
-        F_Regex -field 'Control_Creds_Pwb_LocalPasswordConfirm'
-        F_Regex -field 'Control_Creds_Pwb_LocalPassword'
-        F_VerifyFields_Creds
-    }
-}
-})
-
 #endregion Events Creds
 
 #region Events NetInterface
@@ -2224,8 +2111,8 @@ $syncHash.Control_Job_Btn_Next.Add_Click({
 $syncHash.Control_Job_Stp.Visibility = "Collapsed"
 if ($Script:Initialized -eq "SafeOS"){
 $syncHash.Control_Summary_Stp.Visibility = "Visible"
-$syncHash.Control_Summary_Btn_Previous.Content = "Close"
-$syncHash.Control_Summary_Btn_Next.Content = "Reboot"
+$syncHash.Control_Summary_Btn_Previous.Content = "Reboot later"
+$syncHash.Control_Summary_Btn_Next.Content = "Reboot now"
 F_Summary
 }
 })
