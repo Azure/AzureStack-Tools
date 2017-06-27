@@ -1,7 +1,7 @@
-# Azure Stack Identity
-
-```powershell
-Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
+// Place your settings in this file to overwrite the default settings
+{
+    "workbench.colorTheme": "Abyss"
+}nstall-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
 Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
 ```
@@ -48,22 +48,6 @@ There are two personas involved in implementing this scenario.
 
 ### Azure Stack Administrator
 
-#### Pre-Requisite: Populate Azure Resource Manager with AzureStack Applications
-
-- This step is a temporary workaround and needed only  for the TP3 (March) release of Azure Stack
-- Execute this cmdlet as the **Azure Stack Service Administrator**, from the Console VM or the DVM replacing ```$azureStackDirectoryTenant``` with the directory tenant that Azure Stack is registered to and ```$guestDirectoryTenant``` with the directory that needs to be onboarded to Azure Stack.
-
-__NOTE:__ This cmd needs to be run **only once** throughout the entire life cycle of that Azure Stack installation. You do **not** have to run this step every time you need to add a new directory.
-
-```powershell
-$adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
-$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
-$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
-
-Publish-AzsApplicationsToARM -AdminResourceManagerEndpoint $adminARMEndpoint `
-    -DirectoryTenantName $azureStackDirectoryTenant
-```
-
 #### Step 1: Onboard the Guest Directory Tenant to Azure Stack
 
 This step will let Azure Resource manager know that it can accept users and service principals from the guest directory tenant.
@@ -72,9 +56,11 @@ This step will let Azure Resource manager know that it can accept users and serv
 $adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
 $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com" # this is the primary tenant Azure Stack is registered to
 $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com" # this is the new tenant that needs to be onboarded to Azure Stack
-
-Register-AzsGuestDirectoryTenant -AdminResourceManagerEndpoint $adminARMEndpoint `
-    -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
+$location = "local"
+Register-GuestDirectoryTenantToAzureStack -AdminResourceManagerEndpoint $adminARMEndpoint `
+    -DirectoryTenantName $azureStackDirectoryTenant `
+    -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded `
+    -Location $location
 ```
 
 With this step, the work of the Azure Stack administrator is done.
@@ -96,6 +82,6 @@ Execute the following cmdlet as the administrator of the directory that needs to
 $tenantARMEndpoint = "https://management.<region>.<domain>"
 $guestDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com" # this is the new tenant that needs to be onboarded to Azure Stack
 
-Register-AzsWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
-    -DirectoryTenantName $guestDirectoryTenantName -Verbose -Debug
+Register-AzureStackWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
+    -DirectoryTenantName $guestDirectoryTenantName
 ```

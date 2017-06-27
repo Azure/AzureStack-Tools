@@ -20,6 +20,11 @@ function Initialize-GraphEnvironment {
         [ValidateNotNull()]
         [pscredential] $UserCredential,
 
+        # Indicates that the script should prompt the user to input a credential with which to acquire an access token targeting Graph.
+        [Parameter(ParameterSetName='Credential_AAD')]
+        [Parameter(ParameterSetName='Credential_ADFS')]
+        [switch] $PromptForUserCredential,
+
         # The refresh token to use to acquire an access token targeting Graph.
         [Parameter(ParameterSetName = 'RefreshToken_AAD')]
         [Parameter(ParameterSetName = 'RefreshToken_ADFS')]
@@ -61,7 +66,13 @@ function Initialize-GraphEnvironment {
         Write-Warning "Parameters for ADFS have been specified; please note that only a subset of Graph APIs are available to be used in conjuction with ADFS."
     }
 
-    if ($UserCredential) {
+    if ($PromptForUserCredential)
+    {
+        $UserCredential = Get-Credential -Message "Please provide a credential used to access Graph. Must support non-interactive authentication flows."
+    }
+
+    if ($UserCredential)
+    {
         Write-Verbose "Initializing the module to use Graph environment '$Environment' for user '$($UserCredential.UserName)' in directory tenant '$DirectoryTenantId'." -Verbose
     }
     elseif ($RefreshToken) {
@@ -70,8 +81,9 @@ function Initialize-GraphEnvironment {
     elseif ($ClientId -and $ClientCertificate) {
         Write-Verbose "Initializing the module to use Graph environment '$Environment' for service principal '$($ClientId)' in directory tenant '$DirectoryTenantId' with certificate $($ClientCertificate.Thumbprint)." -Verbose
     }
-    else {
-        Write-Warning "A user credential, refresh token, or service principal info was not provided. Graph API calls cannot be made until one is provided. Please run 'Initialize-GraphEnvironment' again with valid credentials."        
+    else
+    {
+        Write-Warning "A user credential, refresh token, or service principal info was not provided. Graph API calls cannot be made until one is provided. Please run 'Initialize-GraphEnvironment' again with valid credentials."
     }
 
     $graphEnvironmentTemplate = @{}
@@ -199,12 +211,23 @@ function Initialize-GraphEnvironment {
         }
 
         AadPermissions = [HashTable]@{
-            AccessDirectoryAsSignedInUser = "a42657d6-7f20-40e3-b6f0-cee03008a62a"
-            EnableSignOnAndReadUserProfiles = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
-            ReadAllGroups = "6234d376-f627-4f0f-90e0-dff25c5211a3"
-            ReadAllUsersBasicProfile = "cba73afc-7f69-4d86-8450-4978e04ecd1a"
-            ReadAllUsersFullProfile = "c582532d-9d9e-43bd-a97c-2667a28ce295"
-            ReadDirectoryData = "5778995a-e1bf-45b8-affa-663a9f3f4d04"
+            AccessDirectoryAsSignedInUser      = "a42657d6-7f20-40e3-b6f0-cee03008a62a"
+            EnableSignOnAndReadUserProfiles    = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
+            ReadAllGroups                      = "6234d376-f627-4f0f-90e0-dff25c5211a3"
+            ReadAllUsersBasicProfile           = "cba73afc-7f69-4d86-8450-4978e04ecd1a"
+            ReadAllUsersFullProfile            = "c582532d-9d9e-43bd-a97c-2667a28ce295"
+            ReadDirectoryData                  = "5778995a-e1bf-45b8-affa-663a9f3f4d04"
+            ManageAppsThatThisAppCreatesOrOwns = "824c81eb-e3f8-4ee6-8f6d-de7f50d565b7"
+        }
+
+        AadPermissionScopes = [HashTable]@{
+            AccessDirectoryAsSignedInUser      = "Directory.AccessAsUser.All"
+            EnableSignOnAndReadUserProfiles    = "User.Read"
+            ReadAllGroups                      = "Group.Read.All"
+            ReadAllUsersBasicProfile           = "User.ReadBasic.All"
+            ReadAllUsersFullProfile            = "User.Read.All"
+            ReadDirectoryData                  = "Directory.Read.All"
+            ManageAppsThatThisAppCreatesOrOwns = "Application.ReadWrite.OwnedBy"
         }
     }
 
@@ -280,7 +303,7 @@ function Assert-GraphConnection {
             # Trace the message to verbose stream as well in case error is not traced in same file as other verbose logs
             $traceMessage = "An error occurred while trying to verify connection to the graph endpoint '$($Script:GraphEnvironment.OpenIdMetadata)': $_`r`n`r`nAdditional details: $traceResponse"
             Write-Verbose "ERROR: $traceMessage"
-            
+
             throw New-Object System.InvalidOperationException($traceMessage)
         }
     }
@@ -677,8 +700,8 @@ function Find-GraphApplication {
         [string] $DisplayName
     )
 
-    $filter = if ($DisplayName) {"displayName eq '$DisplayName'"} elseif ($AppUri) {"identifierUris/any(i:i eq '$AppUri')"} else {"appId eq '$AppId'"}
-    $response = Invoke-GraphApi -ApiPath "applications()" -QueryParameters @{ '$filter' = $filter } -ErrorAction Stop
+    $filter = if ($DisplayName) {"displayName eq '$DisplayName'"} elseif($AppUri) {"identifierUris/any(i:i eq '$AppUri')"} else {"appId eq '$AppId'"}
+    $response = Invoke-GraphApi -ApiPath "applications" -QueryParameters @{ '$filter' = $filter } -ErrorAction Stop
     Write-Output $response.value
 }
 
@@ -686,20 +709,27 @@ function Find-GraphApplication {
 .Synopsis
    Gets an existing Graph application object (returns an error if the application is not found).
 #>
-function Get-GraphApplication {
-    [CmdletBinding()]
+function Get-GraphApplication
+{
+    [CmdletBinding(DefaultParameterSetName='ByUri')]
     [OutputType([pscustomobject])]
     param
     (
         # The application identifier URI.
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory=$true, ParameterSetName='ByUri')]
         [ValidateNotNullOrEmpty()]
-        [string] $AppUri
+        [string] $AppUri,
+
+        # The application identifer.
+        [Parameter(Mandatory=$true, ParameterSetName='ById')]
+        [ValidateNotNullOrEmpty()]
+        [string] $AppId
     )
 
-    $application = Find-GraphApplication -AppUri $AppUri
-    if (-not $application) {
-        Write-Error "Application with identifier '$AppUri' not found"
+    $application = Find-GraphApplication @PSBoundParameters
+    if (-not $application)
+    {
+        Write-Error "Application with identifier '${AppUri}${AppId}' not found"
     }
     else {
         Write-Output $application
@@ -895,8 +925,9 @@ function Initialize-GraphApplicationServicePrincipal {
     process {
         $getScript = { (Invoke-GraphApi -ApiPath servicePrincipals -QueryParameters @{ '$filter' = "appId eq '$ApplicationId'" }).value }
 
-        # Create a service principal for the application (if one doesn't already exist) # TODO: support update tags
-        if (-not ($primaryServicePrincipal = & $getScript)) {
+        # Create a service principal for the application (if one doesn't already exist)
+        if (-not ($primaryServicePrincipal = & $getScript))
+        {
             Write-Verbose "Creating service principal for application '$ApplicationId' in AAD..." -Verbose
             $servicePrincipalRequestBody = @{
                 'odata.type' = 'Microsoft.DirectoryServices.ServicePrincipal'
@@ -1016,41 +1047,156 @@ function Initialize-GraphOAuth2PermissionGrant {
         [string] $ConsentType = 'AllPrincipals'
     )
 
+    # https://msdn.microsoft.com/en-us/library/azure/ad/graph/api/entity-and-complex-type-reference#oauth2permissiongrant-entity
+
     # Ensure the application service principals exist in the directory tenant
 
-    $clientApplicationServicePrincipal = if ($ClientApplicationId) {
-        Initialize-GraphApplicationServicePrincipal -ApplicationId $ClientApplicationId
+    $clientApplicationServicePrincipal = if ($ClientApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ClientApplicationId -ErrorAction Stop
     }
-    else {
-        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ClientApplicationIdentifierUri
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ClientApplicationIdentifierUri -ErrorAction Stop
     }
 
-    $resourceApplicationServicePrincipal = if ($ResourceApplicationId) {
-        Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceApplicationId
+    $resourceApplicationServicePrincipal = if ($ResourceApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceApplicationId -ErrorAction Stop
     }
-    else {
-        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ResourceApplicationIdentifierUri
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ResourceApplicationIdentifierUri -ErrorAction Stop
     }
-    
-    # TODO: Do we need to support updating expired permission grants? The documentation appears to say these properties should be ignored: "https://msdn.microsoft.com/en-us/library/azure/ad/graph/api/entity-and-complex-type-reference#oauth2permissiongrant-entity"
+
+    # Note: value=Invalid characters found in scope. Allowed characters are %x20 / %x21 / %x23-5B / %x5D-7E
+    $scopesToGrant = $Scope.Split(' ')
+
+    # Note: the permission grants do not expire, but we must provide an expiration date to the API
     $queryParameters = @{
         '$filter' = "resourceId eq '$($resourceApplicationServicePrincipal.objectId)' and clientId eq '$($clientApplicationServicePrincipal.objectId)'"
         '$top' = '999'
     }
-    if (-not (Invoke-GraphApi -ApiPath oauth2PermissionGrants -QueryParameters $queryParameters).Value) {
+    $existingGrant = (Invoke-GraphApi -ApiPath oauth2PermissionGrants -QueryParameters $queryParameters).Value | Select -First 1
+
+    if (-not $existingGrant)
+    {
         Write-Verbose "Granting OAuth2Permission '$Scope' to application service principal '$($clientApplicationServicePrincipal.appDisplayName)' on behalf of application '$($resourceApplicationServicePrincipal.appDisplayName)'..." -Verbose
-        $null = Invoke-GraphApi -Method Post -ApiPath oauth2PermissionGrants -Body (ConvertTo-Json ([pscustomobject]@{
-                    'odata.type' = 'Microsoft.DirectoryServices.OAuth2PermissionGrant'
-                    clientId = $clientApplicationServicePrincipal.objectId
-                    resourceId = $resourceApplicationServicePrincipal.objectId
-                    consentType = $ConsentType
-                    scope = $Scope
-                    startTime = [DateTime]::UtcNow.ToString('o')
-                    expiryTime = [DateTime]::UtcNow.AddYears(1).ToString('o')
-                }))
+        $response = Invoke-GraphApi -Method Post -ApiPath oauth2PermissionGrants -Body (ConvertTo-Json ([pscustomobject]@{
+            'odata.type' = 'Microsoft.DirectoryServices.OAuth2PermissionGrant'
+            clientId     = $clientApplicationServicePrincipal.objectId
+            resourceId   = $resourceApplicationServicePrincipal.objectId
+            consentType  = $ConsentType
+            scope        = $Scope
+            startTime    = [DateTime]::UtcNow.ToString('o')
+            expiryTime   = [DateTime]::UtcNow.AddYears(1).ToString('o')
+        }))
+
+        Write-Verbose "Sleeping for 3 seconds to allow the permission grant to propagate..." -Verbose
+        Start-Sleep -Seconds 3
     }
-    else {
-        Write-Verbose "OAuth2Permission '$Scope' already granted to client application service principal '$($clientApplicationServicePrincipal.appDisplayName)' on behalf of resource application '$($resourceApplicationServicePrincipal.appDisplayName)'." -Verbose
+    else
+    {
+        Write-Verbose "Existing OAuth2PermissionGrant found: $(ConvertTo-Json $existingGrant)" -Verbose
+
+        $existingScopes = $existingGrant.scope.Split(' ')
+        $missingScopes  = $scopesToGrant | Where { $_ -inotin $existingScopes }
+
+        if ($missingScopes.Count)
+        {
+            $fullScopes = $existingGrant.scope += (' ' + [string]::Join(' ', $missingScopes))
+            Write-Verbose "Updating OAuth2PermissionGrant scopes to include missing scopes '$([string]::Join(' ', $missingScopes))' to client application service principal '$($clientApplicationServicePrincipal.appDisplayName)' on behalf of resource application '$($resourceApplicationServicePrincipal.appDisplayName)'. Full Scopes will include: '$fullScopes'" -Verbose
+            $response = Invoke-GraphApi -Method Patch -ApiPath "oauth2PermissionGrants/$($existingGrant.objectId)" -Body (ConvertTo-Json ([pscustomobject]@{ scope = $fullScopes }))
+        }
+        else
+        {
+            Write-Verbose "OAuth2Permission '$Scope' already granted to client application service principal '$($clientApplicationServicePrincipal.appDisplayName)' on behalf of resource application '$($resourceApplicationServicePrincipal.appDisplayName)'. Full Scopes: '$($existingGrant.scope)'" -Verbose
+        }
+
+    }
+}
+
+function Initialize-GraphAppRoleAssignment
+{
+    [CmdletBinding(DefaultParameterSetName='ClientAppId_ResourceAppId')]
+    param
+    (
+        # The application identifier of the client application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ClientApplicationId,
+
+        # The application identifier URI of the client application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ClientApplicationIdentifierUri,
+
+        # The application identifier of the resource application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceAppId')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceApplicationId,
+
+        # The application identifier URI of the resource application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceApplicationIdentifierUri,
+
+        # The identifier of the app role permission to grant.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $RoleId,
+
+        # The type of the service principal to with the permission will be granted (e.g. 'ServicePrincipal' [default value]).
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet('ServicePrincipal', 'User', 'Group')]
+        [string] $PrincipalType = 'ServicePrincipal'
+    )
+
+    # https://msdn.microsoft.com/en-us/library/azure/ad/graph/api/entity-and-complex-type-reference#approleassignment-entity
+
+    # Ensure the application service principals exist in the directory tenant
+
+    $clientApplicationServicePrincipal = if ($ClientApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ClientApplicationId -ErrorAction Stop
+    }
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ClientApplicationIdentifierUri -ErrorAction Stop
+    }
+
+    $resourceApplicationServicePrincipal = if ($ResourceApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceApplicationId -ErrorAction Stop
+    }
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ResourceApplicationIdentifierUri -ErrorAction Stop
+    }
+
+    $existingAssignments = (Invoke-GraphApi -ApiPath "servicePrincipals/$($clientApplicationServicePrincipal.objectId)/appRoleAssignedTo").value
+    $existingAssignment  = $existingAssignments |
+        Where id -EQ $RoleId |
+        Where resourceId -EQ $resourceApplicationServicePrincipal.objectId
+
+    if (-not $existingAssignment)
+    {
+        Write-Verbose "Granting AppRoleAssignment '$RoleId' to application service principal '$($clientApplicationServicePrincipal.appDisplayName)' on behalf of application '$($resourceApplicationServicePrincipal.appDisplayName)'..." -Verbose
+        $response = Invoke-GraphApi -Method Post -ApiPath "servicePrincipals/$($clientApplicationServicePrincipal.objectId)/appRoleAssignments" -Body (ConvertTo-Json ([pscustomobject]@{
+            principalId   = $clientApplicationServicePrincipal.objectId
+            principalType = $PrincipalType
+            resourceId    = $resourceApplicationServicePrincipal.objectId
+            id            = $RoleId
+        }))
+    }
+    else
+    {
+        Write-Verbose "AppRoleAssignment '$RoleId' already granted to client application service principal '$($clientApplicationServicePrincipal.appDisplayName)' on behalf of resource application '$($resourceApplicationServicePrincipal.appDisplayName)'." -Verbose
     }
 }
 
@@ -1074,7 +1220,7 @@ function Initialize-GraphDirectoryRoleMembership {
         [string] $RoleDisplayName
     )
 
-    # Ensure the application service principal exist in the directory tenant
+    # Ensure the application service principal exists in the directory tenant
     $applicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $ApplicationId
 
     # https://msdn.microsoft.com/en-us/Library/Azure/Ad/Graph/api/directoryroles-operations#AddDirectoryRoleMembers
@@ -1101,10 +1247,11 @@ function Initialize-GraphDirectoryRoleMembership {
     # Lookup the existing memberships of the service principal; if the application service principal is not already a member of the directory role, grant it role membership
     $apiPath = "servicePrincipals/$($applicationServicePrincipal.objectId)/getMemberObjects"
     $response = Invoke-GraphApi -Method Post -ApiPath $apiPath -Body (ConvertTo-Json ([pscustomobject]@{
-                securityEnabledOnly = $false
-            }))
-    
-    if ($response.value -icontains $roleObjectId) {
+        securityEnabledOnly = $false
+    }))
+
+    if ($response.value -icontains $roleObjectId)
+    {
         Write-Verbose "Membership already granted to directory role '$RoleDisplayName' ($($roleObjectId)) for application service principal '$($applicationServicePrincipal.appDisplayName)'." -Verbose
     }
     else {
@@ -1113,6 +1260,461 @@ function Initialize-GraphDirectoryRoleMembership {
         $response = Invoke-GraphApi -Method Post -ApiPath $apiPath -Body (ConvertTo-Json ([pscustomobject]@{
                     url = '{0}/directoryObjects/{1}' -f $Script:GraphEnvironment.GraphEndpoint.AbsoluteUri.TrimEnd('/'), $applicationServicePrincipal.objectId
                 }))
+    }
+}
+
+<#
+.Synopsis
+   Creates a new representation of a permission exposed by a resource application and grantable to a client application.
+#>
+function New-GraphPermissionDescription
+{
+    [CmdletBinding(DefaultParameterSetName='ClientAppId_ResourceAppId')]
+    param
+    (
+        # The application identifier of the client application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_Resource')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ClientApplicationId,
+
+        # The application identifier URI of the client application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_Resource')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ClientApplicationIdentifierUri,
+
+        # The object reprsentation client application service principal.
+        [Parameter(Mandatory=$true, ParameterSetName='Client_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='Client_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='Client_Resource')]
+        [pscustomobject] $ClientApplicationServicePrincipal,
+
+        # The application identifier of the resource application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceAppId')]
+        [Parameter(Mandatory=$true, ParameterSetName='Client_ResourceAppId')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceApplicationId,
+
+        # The application identifier URI of the resource application.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_ResourceIdentifierUri')]
+        [Parameter(Mandatory=$true, ParameterSetName='Client_ResourceIdentifierUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceApplicationIdentifierUri,
+
+        # The object reprsentation resource application service principal.
+        [Parameter(Mandatory=$true, ParameterSetName='ClientAppId_Resource')]
+        [Parameter(Mandatory=$true, ParameterSetName='ClientIdentifierUri_Resource')]
+        [Parameter(Mandatory=$true, ParameterSetName='Client_Resource')]
+        [pscustomobject] $ResourceApplicationServicePrincipal,
+
+        # The type of the permission.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateSet('Application', 'Delegated')]
+        [string] $PermissionType,
+
+        # The identifier of the permission.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $PermissionId,
+
+        # Indicates whether the permission has been granted (consented).
+        [Parameter()]
+        [ValidateNotNull()]
+        [switch] $IsConsented,
+
+        # Indicates whether the current permission consent status should be queried.
+        [Parameter()]
+        [ValidateNotNull()]
+        [switch] $LookupConsentStatus
+    )
+
+    # Lookup / initialize client service principal
+    $ClientApplicationServicePrincipal = if ($ClientApplicationServicePrincipal)
+    {
+        $ClientApplicationServicePrincipal
+    }
+    elseif ($ClientApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ClientApplicationId -ErrorAction Stop
+    }
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ClientApplicationIdentifierUri -ErrorAction Stop
+    }
+
+    # Lookup / initialize resource service principal
+    $ResourceApplicationServicePrincipal = if ($ResourceApplicationServicePrincipal)
+    {
+        $ResourceApplicationServicePrincipal
+    }
+    elseif ($ResourceApplicationId)
+    {
+        Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceApplicationId -ErrorAction Stop
+    }
+    else
+    {
+        Get-GraphApplicationServicePrincipal -ApplicationIdentifierUri $ResourceApplicationIdentifierUri -ErrorAction Stop
+    }
+
+    $permissionProperties = [ordered]@{
+        clientApplicationId            = $ClientApplicationServicePrincipal.appId
+        clientApplicationDisplayName   = $ClientApplicationServicePrincipal.appDisplayName
+        resourceApplicationId          = $ResourceApplicationServicePrincipal.appId
+        resourceApplicationDisplayName = $ResourceApplicationServicePrincipal.appDisplayName
+    }
+
+    $permissionProperties += [ordered]@{
+        isConsented    = $IsConsented
+        permissionType = $PermissionType
+        permissionId   = $PermissionId
+    }
+
+    switch ($PermissionType)
+    {
+        'Application'
+        {
+            $appRole = $ResourceApplicationServicePrincipal.appRoles | Where id -EQ $PermissionId
+            $permissionProperties += [ordered]@{
+                permissionName        = $appRole.value
+                permissionDisplayName = $appRole.displayName
+                permissionDescription = $appRole.description
+            }
+
+            if ($LookupConsentStatus)
+            {
+                $existingAppRoleAssignments = (Invoke-GraphApi -ApiPath "servicePrincipals/$($ClientApplicationServicePrincipal.objectId)/appRoleAssignedTo").value
+                $permissionProperties.isConsented = if ($existingAppRoleAssignments | Where id -EQ $PermissionId) {$true} else {$false}
+            }
+        }
+
+        'Delegated'
+        {
+            $oAuth2Permission = $ResourceApplicationServicePrincipal.oauth2Permissions | Where id -EQ $PermissionId
+            $permissionProperties += [ordered]@{
+                permissionName        = $oAuth2Permission.value
+                permissionDisplayName = $oAuth2Permission.adminConsentDisplayName
+                permissionDescription = $oAuth2Permission.adminConsentDescription
+            }
+
+            if ($LookupConsentStatus)
+            {
+                $queryParameters = @{
+                    '$filter' = "resourceId eq '$($ResourceApplicationServicePrincipal.objectId)' and clientId eq '$($ClientApplicationServicePrincipal.objectId)'"
+                    '$top'    = '999'
+                }
+                $existingOAuth2PermissionGrants = (Invoke-GraphApi -ApiPath oauth2PermissionGrants -QueryParameters $queryParameters).Value
+                $permissionProperties.isConsented = if ($existingOAuth2PermissionGrants) {$true} else {$false}
+            }
+        }
+    }
+
+    Write-Output ([pscustomobject]$permissionProperties)
+}
+
+<#
+.Synopsis
+   Gets all permissions which have been granted to the specified application. If the application was created in the current directory tenant, also returns permissions which have not been consented but which are advertised as "required" in the application's manifest.
+#>
+function Get-GraphApplicationPermissions
+{
+    [CmdletBinding()]
+    [OutputType([pscustomobject])]
+    param
+    (
+        # The application identifier for which all consented permissions should be retrieved.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('appId')]
+        [string] $ApplicationId
+    )
+
+    # Ensure the application service principal exists in the directory tenant
+    $applicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $ApplicationId -ErrorAction Stop
+
+    # Identify which permissions have already been granted
+    $existingAppRoleAssignments             = (Invoke-GraphApi -ApiPath "servicePrincipals/$($applicationServicePrincipal.objectId)/appRoleAssignedTo").value
+    $existingClientOAuth2PermissionGrants   = (Invoke-GraphApi -ApiPath oauth2PermissionGrants -QueryParameters @{ '$filter' = "clientId eq '$($applicationServicePrincipal.objectId)'"; '$top' = '999' }).Value
+    $existingResourceOAuth2PermissionGrants = @() # Note - there is an issue with this API at the moment, it returns 404 on the provided nextLink URI # (Invoke-GraphApi -ApiPath oauth2PermissionGrants -QueryParameters @{ '$filter' = "resourceId eq '$($applicationServicePrincipal.objectId)'"; '$top' = '999' }).Value
+
+    # Build a representation of each permission which has been granted
+    $permissions = @()
+    foreach ($existingAppRoleAssignment in $existingAppRoleAssignments)
+    {
+        $permissionParams = @{
+            ClientApplicationServicePrincipal   = $applicationServicePrincipal
+            ResourceApplicationServicePrincipal = Invoke-GraphApi -ApiPath "directoryObjects/$($existingAppRoleAssignment.resourceId)" -ErrorAction Stop
+            PermissionType                      = 'Application'
+            PermissionId                        = $existingAppRoleAssignment.id
+            IsConsented                         = $true
+        }
+        $permissions += New-GraphPermissionDescription @permissionParams
+    }
+    foreach ($existingOAuth2PermissionGrant in $existingClientOAuth2PermissionGrants)
+    {
+        $permissionParams = @{
+            ClientApplicationServicePrincipal   = $applicationServicePrincipal
+            ResourceApplicationServicePrincipal = Invoke-GraphApi -ApiPath "directoryObjects/$($existingOAuth2PermissionGrant.resourceId)" -ErrorAction Stop
+            PermissionType                      = 'Delegated'
+            IsConsented                         = $true
+        }
+        foreach ($scope in $existingOAuth2PermissionGrant.scope.split(' '))
+        {
+            $oAuth2Permission = $permissionParams.ResourceApplicationServicePrincipal.oauth2Permissions | Where value -EQ $scope
+            $permissions += New-GraphPermissionDescription @permissionParams -PermissionId $oAuth2Permission.id
+        }
+    }
+    foreach ($existingOAuth2PermissionGrant in $existingResourceOAuth2PermissionGrants)
+    {
+        $permissionParams = @{
+            ClientApplicationServicePrincipal   = Invoke-GraphApi -ApiPath "directoryObjects/$($existingOAuth2PermissionGrant.clientId)" -ErrorAction Stop
+            ResourceApplicationServicePrincipal = $applicationServicePrincipal
+            PermissionType                      = 'Delegated'
+            IsConsented                         = $true
+        }
+        foreach ($scope in $existingOAuth2PermissionGrant.scope.split(' '))
+        {
+            $oAuth2Permission = $permissionParams.ResourceApplicationServicePrincipal.oauth2Permissions | Where value -EQ $scope
+            $permissions += New-GraphPermissionDescription @permissionParams -PermissionId $oAuth2Permission.id
+        }
+    }
+
+    # Attempt to get unconsented permissions if we can access the application object (e.g. if the application exists in the same directory in which we are currently authenticated)
+    if (($application = Find-GraphApplication -AppId $ApplicationId))
+    {
+        foreach ($requiredResource in $application.requiredResourceAccess)
+        {
+            $permissionParams = @{
+                ClientApplicationServicePrincipal   = $applicationServicePrincipal
+                ResourceApplicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $requiredResource.resourceAppId
+                IsConsented                         = $false
+            }
+            foreach ($resourceAccess in $requiredResource.resourceAccess)
+            {
+                $relatedConsentedPermissions = $permissions | Where resourceApplicationId -EQ $requiredResource.resourceAppId | Where permissionId -EQ $resourceAccess.id
+                # $resourceAccess.type is one of: 'Role', 'Scope', 'Role,Scope', or 'Scope,Role'
+                if ($resourceAccess.type -ilike '*Role*')
+                {
+                    if (-not ($relatedConsentedPermissions | Where permissionType -EQ 'Application'))
+                    {
+                        $permissions += New-GraphPermissionDescription @permissionParams -PermissionType Application -PermissionId $resourceAccess.id
+                    }
+                    else
+                    {
+                        Write-Verbose "Application permission '$($resourceAccess.id)' of type 'AppRoleAssignment' already consented for application '$($applicationServicePrincipal.appDisplayName)' ('$ApplicationId')."
+                    }
+                }
+                if ($resourceAccess.type -ilike '*Scope*')
+                {
+                    if (-not ($relatedConsentedPermissions | Where permissionType -EQ 'Delegated'))
+                    {
+                        $permissions += New-GraphPermissionDescription @permissionParams -PermissionType Delegated -PermissionId $resourceAccess.id
+                    }
+                    else
+                    {
+                        Write-Verbose "Application permission '$($resourceAccess.id)' of type 'OAuth2PermissionGrant' already consented for application '$($applicationServicePrincipal.appDisplayName)' ('$ApplicationId')."
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        Write-Verbose "Unable to retrieve application with appId '$ApplicationId' and will be unable to retrieve information on any additional required permissions which have not been consented." -Verbose
+    }
+
+    if (-not $permissions.Count)
+    {
+        if ($application)
+        {
+            Write-Verbose "Application '$($applicationServicePrincipal.appDisplayName)' ('$ApplicationId') does not have any consented permissions, nor does it advertise any additional required permissions in its application manifest." -Verbose
+        }
+        else
+        {
+            Write-Verbose "Application '$($applicationServicePrincipal.appDisplayName)' ('$ApplicationId') does not have any consented permissions in the current directory tenant." -Verbose
+        }
+    }
+
+    Write-Output $permissions
+}
+
+<#
+.Synopsis
+   Grants a permission to a graph application. Use the 'New-GraphApplicationPermission' or 'Get-GraphApplicationPermissions' cmdlets to create an instance of the permission object or to see its structure.
+#>
+function Grant-GraphApplicationPermission
+{
+    [CmdletBinding()]
+    param
+    (
+        # The graph permission description object.
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [ValidateNotNullOrEmpty()]
+        [pscustomobject] $PermissionDescription
+    )
+    process
+    {
+        Write-Verbose "Granting permission '$($PermissionDescription.permissionName)' ($($PermissionDescription.PermissionId)) exposed by application '$($PermissionDescription.resourceApplicationDisplayName)' ($($PermissionDescription.resourceApplicationId)) of type '$($PermissionDescription.PermissionType)' to application '$($PermissionDescription.clientApplicationDisplayName)' ($($PermissionDescription.clientApplicationId))" -Verbose
+        $params = @{ ClientApplicationId = $PermissionDescription.clientApplicationId; ResourceApplicationId = $PermissionDescription.resourceApplicationId }
+        switch ($PermissionDescription.permissionType)
+        {
+            'Application' { Initialize-GraphAppRoleAssignment     @params -RoleId $PermissionDescription.permissionId   -Verbose }
+            'Delegated'   { Initialize-GraphOAuth2PermissionGrant @params -Scope  $PermissionDescription.permissionName -Verbose }
+        }
+    }
+}
+
+<#
+.Synopsis
+   Grants all permissions required by an application which are specified in the application manifest. Only applies to the home directory of the application.
+#>
+function Grant-GraphApplicationPermissions
+{
+    [CmdletBinding()]
+    param
+    (
+        # The application identifier for which all required permissions should be granted.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationId
+    )
+    # Ensure the application can be retrieved in the current directory tenant
+    $application = Get-GraphApplication -AppId $ApplicationId -ErrorAction Stop
+    $permissions = Get-GraphApplicationPermissions -ApplicationId $ApplicationId
+    foreach ($permission in $permissions)
+    {
+        if ($permission.isConsented)
+        {
+            Write-Verbose "Permission '$($permission.permissionName)' ($($permission.PermissionId)) exposed by application '$($permission.resourceApplicationDisplayName)' ($($permission.resourceApplicationId)) of type '$($permission.PermissionType)' has already been granted to application '$($permission.clientApplicationDisplayName)' ($($permission.clientApplicationId))" -Verbose
+        }
+        else
+        {
+            Grant-GraphApplicationPermission -PermissionDescription $permission
+        }
+    }
+}
+
+<#
+.Synopsis
+   Writes a representation of the specified Graph permission descriptions to the current PowerShell host console window.
+#>
+function Show-GraphApplicationPermissionDescriptions
+{
+    [CmdletBinding()]
+    param
+    (
+        # The graph permission description object.
+        [Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+        [ValidateNotNullOrEmpty()]
+        [pscustomobject[]] $PermissionDescription,
+
+        # The text display to use above the permission descriptions.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $DisplayHeader = 'Microsoft Azure Stack - Required Directory Permissions',
+
+        # The text display to use below the permission descriptions.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $DisplayFooter = '(X) = Consent given, ( ) = Consent not given',
+
+        # Indicates that any duplicate permissions should be filtered-out from the display.
+        [Parameter()]
+        [Switch] $FilterDuplicates = $true
+    )
+    begin
+    {
+        $permissions = @()
+    }
+    process
+    {
+        foreach ($permission in $PermissionDescription)
+        {
+            if ($FilterDuplicates -and ($permissions |
+                    Where clientApplicationId   -EQ $permission.clientApplicationId |
+                    Where resourceApplicationId -EQ $permission.resourceApplicationId |
+                    Where permissionId          -EQ $permission.permissionId |
+                    Where permissionType        -EQ $permission.permissionType))
+            {
+                continue
+            }
+
+            $permissions += $permission
+        }
+    }
+    end
+    {
+        <# Writes a textual consent display to the console similar to this:
+        +------------------------------------------------------------+
+        | Microsoft Azure Stack - Required Directory Permissions     |
+        +------------------------------------------------------------+
+        | Access Azure Stack [bryanr-env]                            |
+        |   (X) Delegated to: Microsoft Azure Stack                  |
+        |                                                            |
+        | Access the directory as the signed-in user                 |
+        |   (X) Delegated to: Azure Stack                            |
+        |                                                            |
+        | Read all users' basic profiles                             |
+        |   (X) Delegated to: Azure Stack                            |
+        |                                                            |
+        | Read all users' full profiles                              |
+        |   (X) Delegated to: Azure Stack                            |
+        |                                                            |
+        | Read directory data                                        |
+        |   (X) Granted to:   Azure Stack                            |
+        |   (X) Granted to:   AzureStack - Policy                    |
+        |   (X) Delegated to: Azure Stack                            |
+        |   (X) Delegated to: Microsoft Azure Stack                  |
+        |                                                            |
+        | Sign in and read user profile                              |
+        |   (X) Delegated to: Azure Stack                            |
+        |   (X) Delegated to: Microsoft Azure Stack                  |
+        |                                                            |
+        +------------------------------------------------------------+
+        | (X) = Consent given, ( ) = Consent not given               |
+        +------------------------------------------------------------+
+        #>
+
+        $header = $DisplayHeader
+        $footer = $DisplayFooter
+
+        $lines = @()
+        foreach ($permissionGroup in @($permissions | Sort resourceApplicationDisplayName, permissionDisplayName | Group permissionId))
+        {
+            $lines += "{0}" -f $permissionGroup.Group[0].permissionDisplayName
+            foreach ($permission in @($permissionGroup.Group | Sort permissionType, clientApplicationDisplayName))
+            {
+                $lines += "  {0} {1} {2}" -f @(
+                    ($consentDisplay = if ($permission.isConsented) {'(X)'} else {'( )'})
+                    ($typeDisplay = switch ($permission.permissionType) { 'Application' { 'Granted to:  ' }; 'Delegated' { 'Delegated to:' } })
+                    $permission.clientApplicationDisplayName
+                )
+            }
+            $lines += ''
+        }
+
+        $max = (($lines + @($header, $footer)) | Measure Length -Maximum).Maximum
+        $div = '+-{0}-+' -f (New-Object string('-', $max))
+
+        $lines = @(
+            $div
+            '| {0} |' -f "$header".PadRight($max)
+            $div
+            $lines | ForEach { '| {0} |' -f "$_".PadRight($max) }
+            $div
+            '| {0} |' -f "$footer".PadRight($max)
+            $div
+        )
+
+        foreach ($line in $lines)
+        {
+            Write-Host $line
+        }
     }
 }
 
@@ -1160,7 +1762,8 @@ function Initialize-GraphApplication {
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [ValidateSet(
-            'ReadDirectoryData'
+            'ReadDirectoryData',
+            'ManageAppsThatThisAppCreatesOrOwns'
         )]
         [String[]] $ApplicationAadPermissions = @(),
 
@@ -1216,9 +1819,13 @@ function Initialize-GraphApplication {
         [Parameter()]
         [bool] $AvailableToOtherTenants = $true,
 
-        # Indicates that the application service principal should be given membership in the directory readers role to activate the role permission ReadDirectoryData. True by default.
+        # Indicates that the application service principal should have all declared application permissions consented-to. True by default.
         [Parameter()]
-        [bool] $UseDirectoryReadersRolePermission = $true
+        [Switch] $ConsentToAppPermissions = $true,
+
+        # Indicates that any existing client certificates associated to this application should be removed. False by default.
+        [Parameter()]
+        [Switch] $RemoveExistingClientCertificates
     )
 
     if ($ClientCertificateThumbprint) {
@@ -1291,23 +1898,28 @@ function Initialize-GraphApplication {
     }
 
     # Initialize the application key credentials with which it can authenticate
-    if ($ClientCertificate) {
+    $requestBody['keyCredentials@odata.type'] = "Collection(Microsoft.DirectoryServices.KeyCredential)"
+    $requestBody['keyCredentials'] = @(@($existingApplication.keyCredentials) | Where { $_ -ne $null })
+    if ($RemoveExistingClientCertificates)
+    {
+        $requestBody['keyCredentials'] = @()
+    }
+    if ($ClientCertificate)
+    {
         $customKeyIdentifier = [Convert]::ToBase64String($ClientCertificate.GetCertHash())
-        if (-not (@($existingApplication.keyCredentials) | Where-Object customKeyIdentifier -EQ $customKeyIdentifier)) {
+        if (-not (@($requestBody['keyCredentials']) | Where customKeyIdentifier -EQ $customKeyIdentifier))
+        {
             Write-Verbose "Adding new key credentials to application using client certificate '$($ClientCertificate.Subject)' ($($ClientCertificate.Thumbprint))" -Verbose
 
-            $requestBody['keyCredentials@odata.type'] = "Collection(Microsoft.DirectoryServices.KeyCredential)"
-            $requestBody['keyCredentials'] = @(@($existingApplication.keyCredentials) | Where-Object { $_ -ne $null })
-
-            $requestBody['keyCredentials'] += @(@{
-                    keyId = [Guid]::NewGuid()
-                    type = "AsymmetricX509Cert"
-                    usage = "Verify"
-                    customKeyIdentifier = $customKeyIdentifier
-                    value = [Convert]::ToBase64String($ClientCertificate.GetRawCertData())
-                    startDate = $ClientCertificate.NotBefore.ToUniversalTime().ToString('o')
-                    endDate = $ClientCertificate.NotAfter.ToUniversalTime().ToString('o')
-                })
+            $requestBody['keyCredentials'] += @(,([pscustomobject]@{
+                keyId               = [Guid]::NewGuid()
+                type                = "AsymmetricX509Cert"
+                usage               = "Verify"
+                customKeyIdentifier = $customKeyIdentifier
+                value               = [Convert]::ToBase64String($ClientCertificate.GetRawCertData())
+                startDate           = $ClientCertificate.NotBefore.ToUniversalTime().ToString('o')
+                endDate             = $ClientCertificate.NotAfter.ToUniversalTime().ToString('o')
+            }))
         }
         else {
             Write-Verbose "Key credentials already exist on application for client certificate '$($ClientCertificate.Subject)' ($($ClientCertificate.Thumbprint))" -Verbose
@@ -1487,18 +2099,59 @@ function Initialize-GraphApplication {
         Initialize-GraphOAuth2PermissionGrant @params
     }
 
-    # Initialize directory role membership
-    if ($UseDirectoryReadersRolePermission -and ($ApplicationAadPermissions -icontains 'ReadDirectoryData')) {
-        $params = @{
-            ApplicationId = $application.appId
-            RoleDisplayName = 'Directory Readers'
-        }
-
-        Initialize-GraphDirectoryRoleMembership @params
+    # "Consent" to application permissions
+    if ($ConsentToAppPermissions)
+    {
+        Grant-GraphApplicationPermissions -ApplicationId $application.appId
     }
 
     # Return the application in its final (current) state
     Get-GraphApplication -AppUri $IdentifierUri | Write-Output
+}
+
+<#
+.Synopsis
+   Creates or updates an application in Graph with an implicit service principal and the specified properties.
+#>
+function Initialize-GraphApplicationOwner
+{
+    [CmdletBinding(DefaultParameterSetName='ById')]
+    param
+    (
+        # The application identifier.
+        [Parameter(Mandatory=$true, ParameterSetName='ById')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationId,
+
+        # The application identifier URI.
+        [Parameter(Mandatory=$true, ParameterSetName='ByUri')]
+        [ValidateNotNullOrEmpty()]
+        [string] $ApplicationIdentifierUri,
+
+        # The identifier of the object (user, service principal, etc.) to which ownership of the target application should be granted.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $OwnerObjectId
+    )
+
+    # Lookup the target objects
+    $params      = if ($ApplicationId) {@{ AppId = $ApplicationId }} else {@{ AppUri = $ApplicationIdentifierUri }}
+    $application = Get-GraphApplication @params -ErrorAction Stop
+    $owner       = Invoke-GraphApi -ApiPath "directoryObjects/$OwnerObjectId" -ErrorAction Stop
+
+    # Lookup the existing owners and grant ownership if not already granted
+    $owners = (Invoke-GraphApi -Method Get -ApiPath "applications/$($application.objectId)/owners" -ErrorAction Stop).value
+    if ($owners | Where objectId -EQ $OwnerObjectId)
+    {
+        Write-Verbose "Object '$($owner.objectId)' of type '$($owner.objectType)' is already an owner of the application '$($application.displayName)' ($($application.appId))" -Verbose
+    }
+    else
+    {
+        Write-Verbose "Granting ownership of application '$($application.displayName)' ($($application.appId)) to object '$($owner.objectId)' of type '$($owner.objectType)'." -Verbose
+        Invoke-GraphApi -Method Post -ApiPath "applications/$($application.objectId)/`$links/owners" -Verbose -ErrorAction Stop -Body (ConvertTo-Json ([pscustomobject]@{
+            url = '{0}/directoryObjects/{1}' -f $Script:GraphEnvironment.GraphEndpoint.AbsoluteUri.TrimEnd('/'), $OwnerObjectId
+        }))
+    }
 }
 
 [System.Reflection.Assembly]::LoadWithPartialName('System.Web') | Out-Null
@@ -1536,6 +2189,14 @@ Export-ModuleMember -Function @(
     'Initialize-GraphApplicationServicePrincipal'
     'Update-GraphApplicationServicePrincipalTag'
     'Initialize-GraphOAuth2PermissionGrant'
+    'Initialize-GraphAppRoleAssignment'
     'Initialize-GraphDirectoryRoleMembership'
+    'New-GraphPermissionDescription'
+    'Get-GraphApplicationPermissions'
+    'Grant-GraphApplicationPermission'
+    'Grant-GraphApplicationPermissions'
+    'Show-GraphApplicationPermissionDescriptions'
     'Initialize-GraphApplication'
+    'Initialize-GraphApplicationOwner'
+    #'ConvertTo-QueryString'
 )
