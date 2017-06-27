@@ -18,7 +18,7 @@ Import-Module ..\Identity\AzureStack.Identity.psm1
 This function is used to get the Directory Tenant Guid. This method works for both AAD and AD FS.
 
 ```powershell
-$directoryTenantId = Get-DirectoryTenantIdentifier -Authority "<DirectoryTenantUrl>"
+$directoryTenantId = Get-AzsDirectoryTenantIdentifier -Authority "<DirectoryTenantUrl>"
 ```
 
 An example of an authority for AAD is `https://login.windows.net/microsoft.onmicrosoft.com`
@@ -29,7 +29,7 @@ and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 You can create a Service Principal by executing the following command after importing the Identity module
 
 ```powershell
-$servicePrincipal = New-ADGraphServicePrincipal -DisplayName "<YourServicePrincipalName>" -AdminCredential $(Get-Credential) -Verbose
+$servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "<YourServicePrincipalName>" -AdminCredential $(Get-Credential) -Verbose
 ```
 
 After the Service Principal is created, you should open your Azure Stack Portal to provide the appropriate level of RBAC to it. You can do this from the Access Control (IAM) tab of any resource. After the RBAC is given, you can login using the service principal as follows:

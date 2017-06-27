@@ -8,11 +8,12 @@
     This function fetches the OpenID configuration metadata from the identity system and parses the Directory TenantID out of it. 
     Azure Stack AD FS is configured to be a single tenanted identity system with a TenantID.
 .EXAMPLE
-    Get-DirectoryTenantIdentifier -authority https://login.windows.net/microsoft.onmicrosoft.com
+    Get-AzsDirectoryTenantIdentifier -authority https://login.windows.net/microsoft.onmicrosoft.com
 .EXAMPLE
-    Get-DirectoryTenantIdentifier -authority https://adfs.local.azurestack.external/adfs
+    Get-AzsDirectoryTenantIdentifier -authority https://adfs.local.azurestack.external/adfs
 #>
-function Get-DirectoryTenantIdentifier {
+
+function Get-AzsDirectoryTenantidentifier {
     [CmdletBinding()]
     Param
     (
@@ -25,17 +26,20 @@ function Get-DirectoryTenantIdentifier {
     return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $authority.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
 }
 
+Export-ModuleMember -Function 'Get-AzsDirectoryTenantidentifier' 
+
 <#
    .Synopsis
       This function is used to create a Service Principal on teh AD Graph
    .DESCRIPTION
       The command creates a certificate in the cert store of the local user and uses that certificate to create a Service Principal in the Azure Stack Stamp Active Directory.
    .EXAMPLE
-      $servicePrincipal = New-ADGraphServicePrincipal -DisplayName "mySPApp" -AdminCredential $(Get-Credential) -Verbose
+      $servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "mySPApp" -AdminCredential $(Get-Credential) -Verbose
    .EXAMPLE
-      $servicePrincipal = New-ADGraphServicePrincipal -DisplayName "mySPApp" -AdminCredential $(Get-Credential) -DeleteAndCreateNew -Verbose
+      $servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "mySPApp" -AdminCredential $(Get-Credential) -DeleteAndCreateNew -Verbose
    #>
-function New-ADGraphServicePrincipal {
+
+function New-AzsAdGraphServicePrincipal {
     [CmdletBinding()]
     Param
     (
@@ -46,9 +50,9 @@ function New-ADGraphServicePrincipal {
         $DisplayName,
 
         # Adfs Machine name
-        [Parameter(Mandatory = $true , Position = 1)]
+        [Parameter(Mandatory = $true, Position = 1)]
         [string]
-        $AdfsMachineName = "azs-adfs01.azurestack.local",
+        $AdfsMachineName,
 
         # Domain Administrator Credential to create Service Principal
         [Parameter(Mandatory = $true,
@@ -91,13 +95,13 @@ function New-ADGraphServicePrincipal {
 
         Write-Verbose -Message "Creating new application group with name '$applicationGroupName'."
         $applicationParameters = @{
-            Name = $applicationGroupName
-            Description = $applicationGroupDescription
-            ClientType = 'Confidential'
-            ClientId = $shellSiteApplicationId
-            ClientDisplayName = $shellSiteDisplayName
+            Name               = $applicationGroupName
+            Description        = $applicationGroupDescription
+            ClientType         = 'Confidential'
+            ClientId           = $shellSiteApplicationId
+            ClientDisplayName  = $shellSiteDisplayName
             ClientRedirectUris = $shellSiteRedirectUri
-            ClientDescription = $shellSiteClientDescription
+            ClientDescription  = $shellSiteClientDescription
             ClientCertificates = $ClientCertificate
         }
         $defaultTimeOut = New-TimeSpan -Minutes 10
@@ -105,9 +109,9 @@ function New-ADGraphServicePrincipal {
 
         Write-Verbose -Message "Shell Site ApplicationGroup: $($applicationGroup | ConvertTo-Json)"
         return [pscustomobject]@{
-            ObjectId = $applicationGroup.Identifier
+            ObjectId      = $applicationGroup.Identifier
             ApplicationId = $applicationParameters.ClientId
-            Thumbprint = $ClientCertificate.Thumbprint
+            Thumbprint    = $ClientCertificate.Thumbprint
         }
     }
     $domainAdminSession = New-PSSession -ComputerName $AdfsMachineName -Credential $AdminCredential -Authentication Credssp -Verbose
@@ -238,9 +242,10 @@ function Get-AzureRmUserRefreshToken([Microsoft.Azure.Commands.Profile.Models.PS
     $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
     $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
 
-    Register-GuestDirectoryTenantToAzureStack -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
+    Register-AzsGuestDirectoryTenant -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
 #>
-function Register-GuestDirectoryTenantToAzureStack {
+
+function Register-AzsGuestDirectoryTenant {
     [CmdletBinding()]
     param
     (
@@ -311,6 +316,8 @@ function Register-GuestDirectoryTenantToAzureStack {
     }
 }
 
+Export-ModuleMember -Function 'Publish-AzsApplicationsToARM' 
+
 <#
 .Synopsis
 Consents to the given Azure Stack instance within the callers's Azure Directory Tenant.
@@ -320,10 +327,11 @@ Consents to the given Azure Stack instance within the callers's Azure Directory 
 $tenantARMEndpoint = "https://management.local.azurestack.external"
 $myDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com"
 
-Register-AzureStackWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
+Register-AzsWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
     -DirectoryTenantName $myDirectoryTenantName -Verbose -Debug
 #>
-function Register-AzureStackWithMyDirectoryTenant {
+
+function Register-AzsWithMyDirectoryTenant {
     [CmdletBinding()]
     param
     (
@@ -362,7 +370,7 @@ function Register-AzureStackWithMyDirectoryTenant {
     $refreshToken = Get-AzureRmUserRefreshToken -azureEnvironment $azureEnvironment -directoryTenantId $azureStackEnvironment.AdTenant -AutomationCredential $AutomationCredential
 
     # Initialize the Graph PowerShell module to communicate with the correct graph service
-    $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
+    $graphEnvironment = ResolveGraphEnvironment $azureEnvironment
     Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
 
     # Initialize the service principal for the Azure Stack Resource Manager application (allows us to acquire a token to ARM). If not specified, the sign-up flow must be completed via the Azure Stack portal first.
@@ -382,11 +390,11 @@ function Register-AzureStackWithMyDirectoryTenant {
     # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be initialized in the onboarding directory tenant
     $armAccessToken = (Get-GraphToken -Resource $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
     $applicationRegistrationParams = @{
-        Method = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
+        Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
         Headers = @{ Authorization = "Bearer $armAccessToken" }
-        Uri = "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
+        Uri     = "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
     }
-    $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select -ExpandProperty value
+    $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select-Object -ExpandProperty value
 
     # Identify which permissions have already been granted to each registered application and which additional permissions need consent
     $permissions = @()
