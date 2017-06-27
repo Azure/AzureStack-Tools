@@ -133,11 +133,38 @@ function Get-CanaryResult
     {
         $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json    
     }
-    
-    Log-Info ($logContent.UseCases | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"}, 
-                                                            @{Expression = {$_.Result}; Label="Result"; Align = "Left"}, 
-                                                            @{Expression = {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}; Label = "Duration`n[Seconds]"; Align = "Left"},
-                                                            @{Expression = {$_.Description}; Label = "Description"; Align = "Left"})                                                    
+    $results = @()   
+    foreach ($usecase in $logContent.UseCases)
+    {
+        $ucObj = New-Object -TypeName PSObject
+        if ([bool]($usecase.PSobject.Properties.name -match "UseCase"))
+        {
+            $ucObj | Add-Member -Type NoteProperty -Name Name -Value $usecase.Name
+            $ucObj | Add-Member -Type NoteProperty -Name Result -Value $usecase.Result
+            $ucObj | Add-Member -Type NoteProperty -Name "Duration`n[Seconds]" -Value ((Get-Date $usecase.EndTime) - (Get-Date $usecase.StartTime)).TotalSeconds     
+            $ucObj | Add-Member -Type NoteProperty -Name Description -Value $usecase.Description
+            $results += $ucObj               
+            
+            foreach ($subusecase in $usecase.UseCase)
+            {                                                                                                                                                          
+                $ucObj = New-Object -TypeName PSObject
+                $ucObj | Add-Member -Type NoteProperty -Name Name -Value ("|-- $($subusecase.Name)")
+                $ucObj | Add-Member -Type NoteProperty -Name Result -Value $subusecase.Result
+                $ucObj | Add-Member -Type NoteProperty -Name "Duration`n[Seconds]" -Value ((Get-Date $subusecase.EndTime) - (Get-Date $subusecase.StartTime)).TotalSeconds     
+                $ucObj | Add-Member -Type NoteProperty -Name Description -Value ("|-- $($subusecase.Description)")
+                $results += $ucObj  
+            }
+        }
+        else
+        {
+            $ucObj | Add-Member -Type NoteProperty -Name Name -Value $usecase.Name
+            $ucObj | Add-Member -Type NoteProperty -Name Result -Value $usecase.Result
+            $ucObj | Add-Member -Type NoteProperty -Name "Duration`n[Seconds]" -Value ((Get-Date $usecase.EndTime) - (Get-Date $usecase.StartTime)).TotalSeconds     
+            $ucObj | Add-Member -Type NoteProperty -Name Description -Value $usecase.Description   
+            $results += $ucObj
+        }
+    }   
+    Log-Info($results | Format-Table -AutoSize)                                               
 }
 
 function Get-CanaryLonghaulResult
@@ -264,7 +291,7 @@ function Invoke-Usecase
         $parentUsecase = $Name
         if ((Get-PSCallStack)[1].Arguments.Contains($parentUsecase))
         {
-            "  `t"*([math]::Floor((Get-PSCallStack).Count/3)) + "|--" + $Name
+            "  `t"*([math]::Floor((Get-PSCallStack).Count/3)) + "|-- " + $Name
         }
         else
         {
