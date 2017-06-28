@@ -315,7 +315,7 @@ while ($runCount -le $NumberOfIterations)
                         }
                         New-Item -Path $CanaryCustomImageFolder -ItemType Directory
                         $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                        Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -Location $ResourceLocation -CreateGalleryItem $false -EnvironmentName $SvcAdminEnvironmentName
+                        Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
                         Remove-Item $CanaryCustomImageFolder -Force -Recurse
                         $linuxUpload = $true
                     }    
