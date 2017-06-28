@@ -138,6 +138,7 @@ while ($runCount -le $NumberOfIterations)
     $linuxImagePublisher    = "Canonical"
     $linuxImageOffer        = "UbuntuServer"
     $linuxImageVersion      = "1.0.0"
+    [boolean]$linuxUpload   = $false
     if (Test-Path -Path $canaryUtilPath)
     {
         Remove-Item -Path $canaryUtilPath -Force -Recurse 
@@ -289,27 +290,34 @@ while ($runCount -le $NumberOfIterations)
 
     if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name)).SizeRemaining/1GB -gt 35)
     {
-        Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
+        [boolean]$invalidUri = $false
+        try {Invoke-WebRequest -Uri $LinuxImagePath -UseBasicParsing -DisableKeepAlive -Method Head -ErrorAction SilentlyContinue | Out-Null} 
+        catch {$invalidUri = $true}
+        if (-not $invalidUri)
         {
-            try 
+            Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
             {
-                if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+                try 
                 {
-                    $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).Ticks)"
-                    if (Test-Path -Path $CanaryCustomImageFolder)
+                    if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
                     {
-                        Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
-                    }
-                    New-Item -Path $CanaryCustomImageFolder -ItemType Directory
-                    $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-                    Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
-                    Remove-Item $CanaryCustomImageFolder -Force -Recurse
-                }    
-            }
-            catch
-            {
-                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
-                throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
+                        $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).Ticks)"
+                        if (Test-Path -Path $CanaryCustomImageFolder)
+                        {
+                            Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+                        }
+                        New-Item -Path $CanaryCustomImageFolder -ItemType Directory
+                        $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
+                        Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
+                        Remove-Item $CanaryCustomImageFolder -Force -Recurse
+                        $linuxUpload = $true
+                    }    
+                }
+                catch
+                {
+                    Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
+                    throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
+                }
             }
         }
     }
@@ -322,7 +330,7 @@ while ($runCount -le $NumberOfIterations)
         $tenantSubscriptionName             = $CanaryUtilitiesRG + "tenantsubscription" + [Random]::new().Next(1,999)            
         $canaryDefaultTenantSubscription    = $CanaryUtilitiesRG + "tenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
-        if (-not $TenantArmEndpoint)
+        if ((-not $TenantArmEndpoint) -and (-not $listAvl))
         {
             throw [System.Exception] "Tenant ARM endpoint is required."
         }
