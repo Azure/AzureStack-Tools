@@ -52,8 +52,10 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
 # Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
 .\Canary.Tests.ps1 -ListAvailable
+
 Sample output:
-    PS C:\AzureStack-Tools\CanaryValidator> .\Canary.Tests.ps1 -ListAvailable
+PS C:\AzureStack-Tools-vnext\CanaryValidator> .\Canary.Tests.ps1 -ListAvailable
+List of scenarios in Canary:
         CreateAdminAzureStackEnv
         LoginToAzureStackEnvAsSvcAdmin
         SelectDefaultProviderSubscription
@@ -75,6 +77,24 @@ Sample output:
         ListUpdatesResourceProviderInfo
         |--GetAzureStackUpdateSummary
         |--GetAzureStackUpdateToApply
+        CreateTenantAzureStackEnv
+        CreateResourceGroupForTenantSubscription
+        CreateTenantPlan
+        CreateTenantOffer
+        CreateTenantDefaultManagedSubscription
+        LoginToAzureStackEnvAsTenantAdmin
+        CreateTenantSubscription
+        RoleAssignmentAndCustomRoleDefinition
+        |--ListAssignedRoles
+        |--ListExistingRoleDefinitions
+        |--GetProviderOperations
+        |--AssignReaderRole
+        |--VerifyReaderRoleAssignment
+        |--RemoveReaderRoleAssignment
+        |--CustomRoleDefinition
+        |--ListRoleDefinitionsAfterCustomRoleCreation
+        |--RemoveCustomRoleDefinition
+        RegisterResourceProviders
         CreateResourceGroupForUtilities
         CreateStorageAccountForUtilities
         CreateStorageContainerForUtilities
@@ -85,6 +105,7 @@ Sample output:
         CreateKeyVaultStoreForCertSecret
         CreateResourceGroupForVMs
         DeployARMTemplate
+        RetrieveResourceDeploymentTimes
         QueryTheVMsDeployed
         CheckVMCommunicationPreVMReboot
         AddDatadiskToVMWithPrivateIP
@@ -103,6 +124,11 @@ Sample output:
         DeleteVMWithPrivateIP
         DeleteVMResourceGroup
         DeleteUtilitiesResourceGroup
+        TenantRelatedcleanup
+        |--DeleteTenantSubscriptions
+        |--LoginToAzureStackEnvAsSvcAdminForCleanup
+        |--RemoveLinuxImageFromPIR
+        |--DeleteSubscriptionResourceGroup
 ```
 
 ## To exclude certain usecases from getting executed

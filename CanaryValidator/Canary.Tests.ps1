@@ -39,11 +39,11 @@ param (
     [parameter(HelpMessage="Path for Linux VHD")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $LinuxImagePath = "https://partner-images.canonical.com/azure/azure_stack/ubuntu-14.04-LTS-microsoft_azure_stack-20161208-9.vhd.zip",
+    [string] $LinuxImagePath = "http://cloud-images.ubuntu.com/releases/xenial/release/ubuntu-16.04-server-cloudimg-amd64-disk1.vhd.zip",
     [parameter(HelpMessage="Linux OS sku")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $LinuxOSSku = "14.04.3-LTS",
+    [string] $LinuxOSSku = "16.04-LTS",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -96,7 +96,7 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).Ticks)",
-    [parameter(HelpMessage="Specifies the file name for canary log file")]
+	[parameter(HelpMessage="Specifies the file name for canary log file")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
@@ -104,20 +104,27 @@ param (
     [parameter(HelpMessage="List of usecases to be excluded from execution")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
-    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "GetAzureStackScaleUnitNode"),
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance"),
     [parameter(HelpMessage="Lists the available usecases in Canary")]
     [Parameter(ParameterSetName="listavl", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]  
     [switch]$ListAvailable     
 )
 
-#requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
-#Requires -RunAsAdministrator
 Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force -DisableNameChecking
-Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
-Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
-Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
+if (-not $ListAvailable.IsPresent)
+{
+    #requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
+    #Requires -RunAsAdministrator
 
+    Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
+    Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
+    Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
+}
+else
+{
+    $ErrorActionPreference = "SilentlyContinue"
+}
 $runCount = 1
 $tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
@@ -148,7 +155,7 @@ while ($runCount -le $NumberOfIterations)
     #
     # Start Canary 
     #  
-    if($ListAvailable){$listAvl = $true} else{$listAvl = $false}
+    if($ListAvailable){Write-Host "List of scenarios in Canary:" -ForegroundColor Green; $listAvl = $true} else{$listAvl = $false}
     $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
     $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
     Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure -ListAvailable $listAvl -ExclusionList $ExclusionList
@@ -276,7 +283,7 @@ while ($runCount -le $NumberOfIterations)
             Get-AzsUpdate -Location $ResourceLocation
         }         
     }
-       
+    
     if ($WindowsISOPath)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
@@ -322,7 +329,7 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    if ($TenantAdminCredentials)
+    if (($TenantAdminCredentials) -or ($ListAvailable))
     {
         $subscriptionRGName                 = $CanaryUtilitiesRG + "subscrrg" + [Random]::new().Next(1,999)
         $tenantPlanName                     = $CanaryUtilitiesRG + "tenantplan" + [Random]::new().Next(1,999)        
@@ -330,7 +337,7 @@ while ($runCount -le $NumberOfIterations)
         $tenantSubscriptionName             = $CanaryUtilitiesRG + "tenantsubscription" + [Random]::new().Next(1,999)            
         $canaryDefaultTenantSubscription    = $CanaryUtilitiesRG + "tenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
-        if ((-not $TenantArmEndpoint) -and (-not $listAvl))
+        if ((-not $TenantArmEndpoint) -and (-not $ListAvailable.IsPresent))
         {
             throw [System.Exception] "Tenant ARM endpoint is required."
         }
@@ -350,6 +357,7 @@ while ($runCount -le $NumberOfIterations)
                                     -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                     -ErrorAction Stop
         }
+
         Invoke-Usecase -Name 'CreateResourceGroupForTenantSubscription' -Description "Create a resource group $subscriptionRGName for the tenant subscription" -UsecaseBlock `
         {        
             if (Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction SilentlyContinue)
@@ -555,7 +563,7 @@ while ($runCount -le $NumberOfIterations)
                     throw [System.Exception] "Custom role definition ($customRoleName) for subscription $tenantSubscriptionName is not available"
                 }
             }
-        }	
+        }
 
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
         {
@@ -1089,7 +1097,7 @@ while ($runCount -le $NumberOfIterations)
 
             if (($TenantAdminCredentials) -or ($listAvl))
             {
-                Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
+                Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related resources" -UsecaseBlock `
                 {
                     Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
                     {
@@ -1115,7 +1123,6 @@ while ($runCount -le $NumberOfIterations)
                             Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation
                         }
                     }
-                    
                     Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
                     {
                         if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
