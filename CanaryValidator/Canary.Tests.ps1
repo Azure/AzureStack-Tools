@@ -395,47 +395,20 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'RoleAssignmentAndCustomRoleDefinition' -Description "Assign a reader role and create a custom role definition" -UsecaseBlock `
         {
-            $readerRole = Get-AzureRmRoleDefinition -Name Reader
-            $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
-            $servicePrincipal = (Get-AzureRmADServicePrincipal)[0]            
-            $customRoleName = "CustomCanaryRole-" + [Random]::new().Next(1,99)
-
-            if ($readerRole)
-            {                
-                Invoke-Usecase -Name 'ListAssignedRoles' -Description "List assigned roles to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
-                {
-                    Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
-                }
-
-                $allAssignedRoles = Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
-                if (-not $allAssignedRoles -or ($allAssignedRoles -and -not ($allAssignedRoles | Where-Object {$_.RoleDefinitionName -eq $readerRole.Name})))
-                {
-                    Invoke-Usecase -Name 'AssignReaderRole' -Description "Assign Reader role to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
-                    {
-                        New-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop
-                    }
-
-                    Invoke-Usecase -Name 'VerifyReaderRoleAssignment' -Description "Verify if the Service Principle has got Reader role assigned successfully" -UsecaseBlock `
-                    {
-                        if (-not (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
-                        {
-                            throw [System.Exception] "Unable to assign role ($readerRole.Name) to Service Principle ($servicePrincipal.Id) for subscription $tenantSubscriptionName"
-                        }                    
-                    }
-
-                    if (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop)
-                    {
-                        Invoke-Usecase -Name 'RemoveReaderRoleAssignment' -Description "Remove Reader role assignment from Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
-                        {
-                            Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -Force -ErrorAction Stop
-                        }
-                    }
-                }
+            if (-not $ListAvailable.IsPresent)
+            {         
+                $servicePrincipal = (Get-AzureRmADServicePrincipal)[0]             
+                $customRoleName = "CustomCanaryRole-" + [Random]::new().Next(1,99)            
+            }
+        
+            Invoke-Usecase -Name 'ListAssignedRoles' -Description "List assigned roles to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
+            {
+	            Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
             }
 
             Invoke-Usecase -Name 'ListExistingRoleDefinitions' -Description "List existing Role Definitions" -UsecaseBlock `
             {
-                $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop                
+	            $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop                
                 if (-not $availableRoles)
                 {
                     throw [System.Exception] "No roles are available."
@@ -453,40 +426,12 @@ while ($runCount -le $NumberOfIterations)
                     }
                 }                
             }
-            
-            if (-not (Get-AzureRmRoleDefinition -Name $customRoleName))
-            {
-                Invoke-Usecase -Name 'CustomRoleDefinition' -Description "Create a custom Role Definition - $customRoleName" -UsecaseBlock `
-                {
-                    $role = Get-AzureRmRoleDefinition -Name Reader                
-                    $role.Id = $null                
-                    $role.Name = $customRoleName
-                    $role.Description = "Custom role definition for Canary"
-                    $role.Actions.Clear()
-                    $role.Actions.Add("Microsoft.Authorization/*/Read")
-                    $role.AssignableScopes.Clear()
-                    $role.AssignableScopes.Add("/Subscriptions/$subscriptionID")
-                    New-AzureRmRoleDefinition -Role $role -ErrorAction Stop
-                    if (-not (Get-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
-                    {
-                        throw [System.Exception] "Unable to create custom role ($customRoleName) for subscription $tenantSubscriptionName"
-                    }    
-                }
-
-                if(Get-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop)
-                {
-                    Invoke-Usecase -Name 'RemoveCustomRoleDefinition' -Description "Remove custom role definition - $customRoleName" -UsecaseBlock `
-                    {
-                        Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop                
-                    }
-                }
-            }
 
             Invoke-Usecase -Name 'GetProviderOperations' -Description "Get provider operations for all resource providers" -UsecaseBlock `
             {
-                $resourceProviders = Get-AzureRmResourceProvider -ListAvailable
+	            $resourceProviders = Get-AzureRmResourceProvider -ListAvailable
                 # Some of the RPs have not implemented their operations API yet. So update this exclusion list whenever any RP implements its operations API
-                $rpOperationsExclusionList = @("Microsoft.Compute", "Microsoft.Commerce", "Microsoft.Gallery", "Microsoft.Insights")
+                $rpOperationsExclusionList = @("Microsoft.Commerce", "Microsoft.Gallery", "Microsoft.Insights")
                 $totalOperationsPerRP = @()    
                 foreach($rp in $resourceProviders)
                 {
@@ -515,7 +460,94 @@ while ($runCount -le $NumberOfIterations)
                     }
                 }
             }
-        }
+
+            Invoke-Usecase -Name 'AssignReaderRole' -Description "Assign Reader role to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
+            {
+                $readerRole = Get-AzureRmRoleDefinition -Name Reader 
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId                
+                $allAssignedRoles = Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
+                if ($subscriptionID -and $readerRole -and (-not $allAssignedRoles -or ($allAssignedRoles -and -not ($allAssignedRoles | Where-Object {$_.RoleDefinitionName -eq $readerRole.Name}))))
+                {
+	                New-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop
+                }                
+            }
+
+            Invoke-Usecase -Name 'VerifyReaderRoleAssignment' -Description "Verify if the Service Principle has got Reader role assigned successfully" -UsecaseBlock `
+            {
+                $readerRole = Get-AzureRmRoleDefinition -Name Reader 
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
+	            if ($subscriptionID -and $readerRole -and (-not (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop)))
+                {
+                    throw [System.Exception] "Unable to assign role ($readerRole.Name) to Service Principle ($servicePrincipal.Id) for subscription $tenantSubscriptionName"
+                }                    
+            }
+
+            Invoke-Usecase -Name 'RemoveReaderRoleAssignment' -Description "Remove Reader role assignment from Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
+            {
+                $readerRole = Get-AzureRmRoleDefinition -Name Reader 
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
+                if ($subscriptionID -and $readerRole -and (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
+                {                
+	                Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -Force -ErrorAction Stop
+                }
+            }           
+            
+            Invoke-Usecase -Name 'CustomRoleDefinition' -Description "Create a custom Role Definition - $customRoleName" -UsecaseBlock `
+            {
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId                
+                if (Get-AzureRmRoleDefinition -Name $customRoleName)
+                {
+                    Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop
+                }                               
+	            $role = Get-AzureRmRoleDefinition -Name Reader                
+                $role.Id = $null                
+                $role.Name = $customRoleName
+                $role.Description = "Custom role definition for Canary"
+                $role.Actions.Clear()
+                $role.Actions.Add("Microsoft.Authorization/*/Read")
+                $role.AssignableScopes.Clear()
+                $role.AssignableScopes.Add("/Subscriptions/$subscriptionID")
+                New-AzureRmRoleDefinition -Role $role -ErrorAction Stop
+                if (-not (Get-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
+                {
+                    throw [System.Exception] "Unable to create custom role definition ($customRoleName) for subscription $tenantSubscriptionName"
+                }                               
+            }
+
+            Invoke-Usecase -Name 'ListRoleDefinitionsAfterCustomRoleCreation' -Description "List existing Role Definitions" -UsecaseBlock `
+            {
+	            $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop               
+                if (-not $availableRoles)
+                {
+                    throw [System.Exception] "No roles are available."
+                }   
+                else
+                {
+                    $availableRoles
+                    $availableRolesNames = $availableRoles.Name
+                    $mustHaveRoles = @("Owner", "Reader", "Contributor")
+                    $match = Compare-Object $mustHaveRoles $availableRolesNames
+                    if ($match -and ($match | Where-Object {$_.SideIndicator -eq "<="}))
+                    {
+                        $notAvailableRoles = ($match | Where-Object {$_.SideIndicator -eq "<="}).InputObject
+                        throw [System.Exception] "Some must have Role Definitions are not available. Number of missing Role Definitions - $($notAvailableRoles.Count). Missing Role Definitions - $notAvailableRoles"
+                    }
+                }                
+            }
+
+            Invoke-Usecase -Name 'RemoveCustomRoleDefinition' -Description "Remove custom role definition - $customRoleName" -UsecaseBlock `
+            {
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
+                if(Get-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop)
+                {
+	                Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop                
+                }
+                else
+                {
+                    throw [System.Exception] "Custom role definition ($customRoleName) for subscription $tenantSubscriptionName is not available"
+                }
+            }
+        }	
 
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
         {
