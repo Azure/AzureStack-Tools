@@ -11,7 +11,7 @@ Login-AzureRmAccount
 $s = Select-AzureRmSubscription -SubscriptionName "<sub name>"
 $subId = $s.Subscription.SubscriptionId
 
-$policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzureStackRmPolicy)
+$policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzsPolicy)
 
 New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subId
 ```
@@ -25,7 +25,9 @@ New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /s
 ```
 
 To remove the Azure Stack policy, run this command with the same scope used when the policy was applied:
+
 ```powershell
+
 Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId/resourceGroups/$rgName
 Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId
 ```

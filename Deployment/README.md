@@ -26,7 +26,7 @@ $LocalPath = 'c:\AzureStack_Installer'
 New-Item $LocalPath -Type directory
 
 # Download file
-Invoke-WebRequest $uri -OutFile ($LocalPath + '\' + asdk-installer.ps1)
+Invoke-WebRequest $uri -OutFile ($LocalPath + '\' + 'asdk-installer.ps1')
 ```
 
 ## Prepare the SafeOS for deployment
@@ -65,7 +65,7 @@ Click install to start the deployment wizard. Select the preferred identity prov
  - **Azure Cloud** : Azure Active Directory
  - **ADFS** : Local ADFS instance as part of the installation
 
-If you selected Azure Cloud, specify the credentials of an account with the Global Admin role in an Azure Active Directory tenant. This account will also be used to administer your Azure Stack Development Kit. If this account is part of multiple active directory tenants you can check the tenantID and override the default value with the name of the desired directory tenant for the installation.
+If you selected Azure Cloud, specify the Azure Active Directory tenant (e.g. azurestack.onmicrosoft.com). 
 
 Submit the local administrator password. This value submitted has to match the current configured local administrator password.
 
@@ -73,7 +73,9 @@ In the network interface screen, select the adapter that will be used for the Az
 
 The network configuration screen allows you to specify the settings for the BGPNAT vm. The default settings uses DHCP for the BGPNAT vm. You can set it to static, but only use this parameter if DHCP can’t assign a valid IP address for Azure Stack to access the Internet. A static IP address needs to be specified with the subnetmask length (e.g. 10.0.0.5/24). Optionally you can specify the TimeServer, DNS Server and VLAN ID.
 
-The summary screen displays the PowerSheel script that will be executed. Click deploy start the deployment of the Azure Stack Development Kit.
+The summary screen displays the PowerShell script that will be executed. Click deploy start the deployment of the Azure Stack Development Kit.
+
+> Note: When you have selected Azure Cloud as the identity provider, you will be prompted 2 to 3 minutes after the deployment has started. Please ensure you submit your Azure AD credentials.
 
 ## Rerun and gather logs
 

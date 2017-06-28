@@ -204,62 +204,62 @@ while ($runCount -le $NumberOfIterations)
     {
         Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
         {
-	        Get-AzSInfraRole -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsInfrastructureRole -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackInfraRoleInstance' -Description "List all infrastructure role instances" -UsecaseBlock `
         {
-	        Get-AzSInfraRoleInstance -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsInfrastructureRoleInstance -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackLogicalNetwork' -Description "List all logical networks" -UsecaseBlock `
         {
-	        Get-AzSLogicalNetwork -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsLogicalNetwork -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackStorageCapacity' -Description "List storage capacity" -UsecaseBlock `
         {
-	        Get-AzSStorageSubsystem -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzSStorageSubsystem -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackStorageShare' -Description "List all storage file shares" -UsecaseBlock `
         {
-	        Get-AzSStorageShare -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsStorageShare -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
         {
-	        Get-AzSScaleUnit -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsScaleUnit -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
         {
-	        Get-AzSScaleUnitNode -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsScaleUnitNode -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
         {
-	        Get-AzSIPPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsIpPool -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackMacPool' -Description "List all MAC address pools " -UsecaseBlock `
         {
-	        Get-AzSMacPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsMacPool -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGatewayPool' -Description "List all gateway pools" -UsecaseBlock `
         {
-	        Get-AzSGatewayPool -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsGatewayPool -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackSLBMux' -Description "List all SLB MUX instances" -UsecaseBlock `
         {
-	        Get-AzSSLBMUX -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsSlbMux -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackGateway' -Description "List all gateway" -UsecaseBlock `
         {
-	        Get-AzSGateway -AzureStackCredentials $ServiceAdminCredentials -TenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsGateway -Location $ResourceLocation
         }            
     }
    
@@ -267,7 +267,7 @@ while ($runCount -le $NumberOfIterations)
     {     
         Invoke-Usecase -Name 'GetAzureStackAlert' -Description "List all alerts" -UsecaseBlock `
         {
-            Get-AzSAlert -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsAlert -Location $ResourceLocation
         }
     }
 
@@ -275,12 +275,12 @@ while ($runCount -le $NumberOfIterations)
     {        
         Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
         {
-            Get-AzSUpdateLocation -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzSUpdateLocation -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
         {
-            Get-AzSUpdate -TenantID $TenantID -AzureStackCredentials $ServiceAdminCredentials -EnvironmentName $SvcAdminEnvironmentName -region $ResourceLocation
+            Get-AzsUpdate -Location $ResourceLocation
         }         
     }
     
@@ -290,7 +290,7 @@ while ($runCount -le $NumberOfIterations)
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -Location $ResourceLocation -Version Core -CreateGalleryItem $false
             }
         }
     }
@@ -447,7 +447,7 @@ while ($runCount -le $NumberOfIterations)
             {
 	            $resourceProviders = Get-AzureRmResourceProvider -ListAvailable
                 # Some of the RPs have not implemented their operations API yet. So update this exclusion list whenever any RP implements its operations API
-                $rpOperationsExclusionList = @("Microsoft.Compute", "Microsoft.Commerce", "Microsoft.Gallery", "Microsoft.Insights")
+                $rpOperationsExclusionList = @("Microsoft.Commerce", "Microsoft.Gallery", "Microsoft.Insights")
                 $totalOperationsPerRP = @()    
                 foreach($rp in $resourceProviders)
                 {
@@ -1120,10 +1120,9 @@ while ($runCount -le $NumberOfIterations)
                     {
                         if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
                         {
-                            Remove-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -tenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -AzureStackCredentials $ServiceAdminCredentials
+                            Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation
                         }
                     }
-
                     Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
                     {
                         if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
