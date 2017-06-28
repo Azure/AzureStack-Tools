@@ -1108,6 +1108,14 @@ while ($runCount -le $NumberOfIterations)
                         Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
                     }
 
+                    Invoke-Usecase -Name 'RemoveLinuxImageFromPIR' -Description "Remove the Linux image uploaded during setup from the Platform Image Respository" -UsecaseBlock `
+                    {
+                        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
+                        {
+                            Remove-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -tenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -AzureStackCredentials $ServiceAdminCredentials
+                        }
+                    }
+                    
                     Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
                     {
                         if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
