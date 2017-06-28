@@ -707,40 +707,69 @@ while ($runCount -le $NumberOfIterations)
         New-AzureRmResourceGroup -Name $CanaryVMRG -Location $ResourceLocation -ErrorAction Stop 
     }
 
+    $pirQueryRes = Invoke-Usecase -Name 'QueryImagesFromPIR' -Description "Queries the images in Platform Image Repository to retrieve the OS Version to deploy on the VMs" -UsecaseBlock `
+    {
+        $osVersion = ""
+        [boolean]$linuxImgExists = $false
+        $sw = [system.diagnostics.stopwatch]::startNew()
+        while (([string]::IsNullOrEmpty($osVersion)) -and ($sw.ElapsedMilliseconds -lt 300000))
+        {
+            # Returns all the images that are available in the PIR
+            $pirImages = Get-AzureRmVMImagePublisher -Location $ResourceLocation | Get-AzureRmVMImageOffer | Get-AzureRmVMImageSku | Get-AzureRMVMImage | Get-AzureRmVMImage
+
+            foreach($image in $pirImages)
+            {
+                # Canary specific check to see if the required Ubuntu image was successfully uploaded and available in PIR
+                if ($image.PublisherName.Equals("Canonical") -and $image.Offer.Equals("UbuntuServer") -and $image.Skus.Equals($LinuxOSSku))
+                {
+                    $linuxImgExists = $true
+                }
+
+                if ($image.PublisherName.Equals("MicrosoftWindowsServer") -and $image.Offer.Equals("WindowsServer") -and $image.Skus.Equals("2016-Datacenter-Core"))
+                {
+                    $osVersion = "2016-Datacenter-Core"
+                }
+                elseif ($image.PublisherName.Equals("MicrosoftWindowsServer") -and $image.Offer.Equals("WindowsServer") -and $image.Skus.Equals("2016-Datacenter"))
+                {
+                    $osVersion = "2016-Datacenter"
+                }
+                elseif ($image.PublisherName.Equals("MicrosoftWindowsServer") -and $image.Offer.Equals("WindowsServer") -and $image.Skus.Equals("2012-R2-Datacenter"))
+                {
+                    $osVersion = "2012-R2-Datacenter"
+                }
+            }
+            Start-Sleep -Seconds 20  
+        } 
+        $sw.Stop()
+        if (($linuxUpload) -and (-not $linuxImgExists))
+        {
+            throw [System.Exception] "Unable to find Ubuntu image (Ubuntu $LinuxOSSku) in PIR or failed to retrieve the image from PIR"
+        }
+        if ([string]::IsNullOrEmpty($osVersion))
+        {
+            throw [System.Exception] "Unable to find windows image in PIR or failed to retrieve the image from PIR"
+        }
+        $osVersion, $linuxImgExists
+    }
+    [string]$osVersion = $pirQueryRes[2]
+    [boolean]$linuxImgExists = $pirQueryRes[3]
+
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {        
         $kvSecretId = (Get-AzureKeyVaultSecret -VaultName $keyVaultName -Name $kvSecretName -IncludeVersions -ErrorAction Stop).Id  
-        $osVersion = ""
-        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue)
-        {
-            $osVersion = "2016-Datacenter-Core"
-        }
-        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter" -ErrorAction SilentlyContinue)
-        {
-            $osVersion = "2016-Datacenter"
-        }
-        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
-        {
-            $osVersion = "2012-R2-Datacenter"
-        } 
-        $linuxImgExists = $false      
-        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "Canonical" -Offer "UbuntuServer" -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
-        {
-            $linuxImgExists = $true
-        }
-
         $templateDeploymentName = "CanaryVMDeployment"
-        $parameters = @{"VMAdminUserName"       = $VMAdminUserName;
-                        "VMAdminUserPassword"   = $VMAdminUserPass;
-                        "ASCanaryUtilRG"        = $CanaryUtilitiesRG;
-                        "ASCanaryUtilSA"        = $storageAccName;
-                        "ASCanaryUtilSC"        = $storageCtrName;
-                        "vaultName"             = $keyvaultName;
-                        "windowsOSVersion"      = $osVersion;
-                        "secretUrlWithVersion"  = $kvSecretId;
-                        "LinuxImagePublisher"   = $linuxImagePublisher;
-                        "LinuxImageOffer"       = $linuxImageOffer;
-                        "LinuxImageSku"         = $LinuxOSSku}   
+        $parameters = @{"VMAdminUserName"           = $VMAdminUserName;
+                        "VMAdminUserPassword"       = $VMAdminUserPass;
+                        "ASCanaryUtilRG"            = $CanaryUtilitiesRG;
+                        "ASCanaryUtilSA"            = $storageAccName;
+                        "ASCanaryUtilSC"            = $storageCtrName;
+                        "vaultName"                 = $keyvaultName;
+                        "windowsOSVersion"          = $osVersion;
+                        "secretUrlWithVersion"      = $kvSecretId;
+                        "LinuxImagePublisher"       = $linuxImagePublisher;
+                        "LinuxImageOffer"           = $linuxImageOffer;
+                        "LinuxImageSku"             = $LinuxOSSku;
+                        "storageAccountEndPoint"    = "https://$EnvironmentDomainFQDN/"}   
         if (-not $linuxImgExists)
         {
             $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
@@ -761,6 +790,12 @@ while ($runCount -le $NumberOfIterations)
         {
             throw [System.Exception] "Template validation failed. `n$($templateError.Message)"
         }
+    }
+
+    Invoke-Usecase -Name 'RetrieveResourceDeploymentTimes' -Description "Retrieves the resources deployment times from the ARM template deployment" -UsecaseBlock `
+    {
+        $templateDeploymentName = "CanaryVMDeployment"
+        (Get-AzureRmResourceGroupDeploymentOperation -Deploymentname $templateDeploymentName -ResourceGroupName $CanaryVMRG).Properties | Select-Object ProvisioningOperation,Duration,ProvisioningState,StatusCode,TargetResource | Format-Table -AutoSize
     }
 
     $canaryWindowsVMList = @()
