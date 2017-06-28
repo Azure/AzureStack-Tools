@@ -1112,7 +1112,7 @@ while ($runCount -le $NumberOfIterations)
                     {
                         if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
                         {
-                            Remove-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -tenantID $TenantID -EnvironmentName $SvcAdminEnvironmentName -Location $ResourceLocation -AzureStackCredentials $ServiceAdminCredentials
+                            Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation
                         }
                     }
                     
