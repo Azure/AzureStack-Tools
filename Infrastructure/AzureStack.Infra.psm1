@@ -183,7 +183,7 @@ Function Get-AzsUpdate {
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates"
 
     $updates = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
-    $updates | Select-Object UpdateName, Version, IsApplicable, Description, State, IsDownloaded, PackageSizeInMb, KbLink    
+    $updates    
 }
 
 Export-ModuleMember -Function Get-AzsUpdate
