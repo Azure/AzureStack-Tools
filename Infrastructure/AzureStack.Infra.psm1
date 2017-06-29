@@ -207,7 +207,7 @@ function Get-AzsUpdateRun {
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates/updateRuns"
 
     $updates = Get-AzsInfrastructureResource -Name $name -Location $Location -ResourceType $resourceType
-    $updates | Select-Object UpdateLocation, UpdateVersion, State, TimeStarted, Duration
+    $updates
 }
 
 Export-ModuleMember -Function Get-AzsUpdateRun
@@ -554,7 +554,7 @@ Export-ModuleMember -Function Enable-AzsScaleUnitNode
     .SYNOPSIS
     Get Location Capacity
 #>
-function Get-AzsHomeLocationCapacity {
+function Get-AzsLocationCapacity {
     Param(
         [Parameter(Mandatory = $false)]
         [string] $Location
@@ -568,7 +568,46 @@ function Get-AzsHomeLocationCapacity {
     $Capacity.Properties
 }
 
-Export-ModuleMember -Function Get-AzsHomeLocationCapacity
+Export-ModuleMember -Function Get-AzsLocationCapacity
+
+
+<#
+    .SYNOPSIS
+    List Backup location
+#>
+
+function Get-AzsBackupLocation {
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location
+    )
+
+    $resourceType = "Microsoft.Backup.Admin/backupLocations"
+
+    $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $backuplocation.Properties
+}
+
+Export-ModuleMember -Function Get-AzsBackupLocation
+
+<#
+    .SYNOPSIS
+    List Backups
+#>
+
+function Get-AzsBackup {
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location
+    )
+
+    $resourceType = "Microsoft.Backup.Admin/backupLocations/$Location/backups"
+
+    $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $backuplocation.Properties
+}
+
+Export-ModuleMember -Function Get-AzsBackup
 
 function Get-AzsHomeLocation {
     param(
