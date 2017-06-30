@@ -220,7 +220,7 @@ Export-ModuleMember -Function Get-AzsUpdateRun
 
 function Install-AzsUpdate {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
         
         [Parameter(Mandatory = $true)]
@@ -228,15 +228,12 @@ function Install-AzsUpdate {
         [String] $Update
     )
 
-    $updates = Get-AzsUpdate -Location $Location
-        
-    $updateContent = $updates | Where-Object {$_.UpdateName -eq $Update}
-            
+          
     $params = @{
         ResourceType = "Microsoft.Update.Admin/updatelocations/updates"
         ResourceName = "{0}/{1}" -f $Location, $Update
         ApiVersion   = "2016-05-01"
-        Properties   = $updateContent
+        ResourceGroupName = "system.{0}" -f $Location
     }
 
     $StartRun = Invoke-AzureRmResourceAction @params -Action 'apply' -Force
