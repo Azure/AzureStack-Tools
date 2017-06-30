@@ -3,6 +3,8 @@
 Instructions below are relative to the .\Infrastructure folder of the [AzureStack-Tools repo](..).
 This also requires the Azure Stack Connect Module to be imported before running any of the commands. The Module can also be found in the [AzureStack-Tools repo](..).
 
+![Using infrastructure cmdlets against Azure Stack](/Infrastructure/InfraAlertsVideo.gif)
+
 ## Import the Module
 
 ```powershell
