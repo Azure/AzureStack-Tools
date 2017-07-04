@@ -454,5 +454,5 @@ Export-ModuleMember -Function @(
     "Register-AzureStackWithMyDirectoryTenant",
     "Register-GuestDirectoryTenantToAzureStack",
     "Get-DirectoryTenantIdentifier",
-    "New-ADGraphServicePrincipal"
+    "New-AzsADGraphServicePrincipal"
 )
