@@ -79,14 +79,14 @@ $Text_Rerun.Mode_LeftContent_Logs = "Gather the Azure Stack deployment log files
 $Text_Rerun.Summary_Title = "Rerun"
 $Text_Rerun.Summary_Content = "Click Rerun to resume the current Microsoft Azure Stack Developement Kit deployment from where it failed"
 $Text_Rerun.Summary_Title_Logs = "Gather Logs"
-$Text_Rerun.Summary_Content_Logs = "Click Run to gather the Azure Stack log files in c:\AzureStackLogs"
+$Text_Rerun.Summary_Content_Logs = "Gather the Azure Stack log files and save to c:\AzureStackLogs"
 
 $Text_Completed = @{}
 $Text_Completed.Mode_Title = "Installation completed"
 $Text_Completed.Mode_LeftTitle = "Gather Logs"
 $Text_Completed.Mode_LeftContent = "Gather the Azure Stack deployment log files"
 $Text_Completed.Summary_Title = "Gather Logs"
-$Text_Completed.Summary_Content = "Click Run to gather the Azure Stack log files in c:\AzureStackLogs"
+$Text_Completed.Summary_Content = "Gather the Azure Stack log files and save to c:\AzureStackLogs"
 #endregion Text
 
 #region XAML
@@ -1783,6 +1783,7 @@ Function F_Rerun {
 }
 
 Function F_GetAzureStackLogs {
+    Write-Host "Starting Get-AzureStackLog. This can take a moment. Please wait.." -ForegroundColor Cyan
     #region Logs
     Set-Location C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
     Import-Module .\Microsoft.AzureStack.Diagnostics.DataCollection.psd1
@@ -1796,7 +1797,11 @@ Function F_GetAzureStackLogs {
 #region Events Mode
 $syncHash.Control_Mode_Btn_Left.Add_Click({
 $syncHash.Control_Mode_Stp.Visibility = "Collapsed"
-if ($Script:Initialized -eq "CloudBuilder_Install") {
+if ($Script:Initialized -eq "SafeOS") {
+    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
+    }
+elseif ($Script:Initialized -eq "CloudBuilder_Install") {
     $syncHash.Control_Creds_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
     }
@@ -1810,17 +1815,15 @@ elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
     $syncHash.Control_Summary_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
     $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content_Logs
+    $syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
     }
 elseif ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
 $syncHash.Control_Summary_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Summary_Title
 $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Completed.Summary_Content
-$syncHash.Control_Summary_Btn_Next.Content = "Run"
+$syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
 }
-elseif ($Script:Initialized -eq "SafeOS") {
-    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
-    }
+
 })
 
 $syncHash.Control_Mode_Btn_Right.Add_Click({
@@ -2264,7 +2267,7 @@ F_Rerun
 }
 ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
 $Form.Close()
-F_Rerun
+F_GetAzureStackLogs
 }
 ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
 $Form.Close()
