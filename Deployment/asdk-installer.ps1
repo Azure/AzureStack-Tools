@@ -1208,7 +1208,7 @@ $S_PrepareVHDX = {
 
 $S_Netbxnda = {
     
-    #region Verify if netbxnda.inf is used
+    # Verify if netbxnda.inf is used
     # Progress
 
     $syncHash.Control_Job_Tbx_Netbxnda.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbx_Netbxnda.Text=''},"Normal")
@@ -1804,6 +1804,7 @@ elseif ($Script:Initialized -eq "CloudBuilder_Rerun") {
     $syncHash.Control_Summary_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title
     $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content
+    $syncHash.Control_Summary_Btn_Next.Content = "Rerun"
     }
 elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
     $syncHash.Control_Summary_Stp.Visibility = "Visible"
@@ -2225,17 +2226,26 @@ if ($Script:F_Browse_obj.FileName) {
 #region Events Summary
 $syncHash.Control_Summary_Btn_Previous.Add_Click({
 $syncHash.Control_Summary_Stp.Visibility = "Collapsed"
-If ($Script:Initialized -eq "CloudBuilder_Install") {
+If ($Script:Initialized -eq "SafeOS"){
+    $Form.Close()
+    }
+ElseIf ($Script:Initialized -eq "CloudBuilder_Install") {
 $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
+}
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun") {
+$syncHash.Control_Mode_Stp.Visibility = "Visible"
+$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
+}
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
+$syncHash.Control_Mode_Stp.Visibility = "Visible"
+$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
 }
 ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
 $syncHash.Control_Mode_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
     }
-ElseIf ($Script:Initialized -eq "SafeOS"){
-    $Form.Close()
-    }
+
 })
 
 $syncHash.Control_Summary_Btn_Next.Add_Click({
@@ -2244,19 +2254,19 @@ If ($Script:Initialized -eq "SafeOS"){
     $Form.Close()
     Restart-Computer -Force
 }
-If ($Script:Initialized -eq "Cloudbuilder_Install"){
+ElseIf ($Script:Initialized -eq "Cloudbuilder_Install"){
 $Form.Close()
 F_Install
 }
-If ($Script:Initialized -eq "CloudBuilder_Rerun"){
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun"){
 $Form.Close()
 F_Rerun
 }
-If ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
 $Form.Close()
 F_Rerun
 }
-If ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
+ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
 $Form.Close()
 F_GetAzureStackLogs
 }
