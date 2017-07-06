@@ -761,7 +761,7 @@ $Xaml = @'
                                 <TextBlock  TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="An update cannot be downloaded" />
                             </StackPanel>
                             <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="The update could not be downloaded directly from this machine. Please download the update from the following url:" />
-                            <TextBox  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" BorderBrush="#ABADB3" Text="https://qlogicexe.blob.core.windows.net/blob/qlogic-force-name.exe" />
+                            <TextBox  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" BorderBrush="#ABADB3" Text="https://go.microsoft.com/fwlink/?linkid=852544" />
                             <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="Save the file on this host, click the browse button and select the executable to continue." />
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <TextBox x:Name="Control_Job_Tbx_Netbxnda" BorderBrush="#ABADB3" Width="440" IsReadOnly="True" />
@@ -1228,7 +1228,7 @@ $S_Netbxnda = {
         try{
                 Start-Transcript -Path C:\CloudDeployment\Setup\netbxnda.txt -Append 
                 $filepath = "$env:TEMP\netbxnda.exe"
-                Invoke-WebRequest "https://qlogicexe.blob.core.windows.net/blob/qlogic-force-name.exe" -OutFile $filepath
+                Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=852544" -OutFile $filepath
 
                 $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='80'},"Normal")
                 $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Applying update..'},"Normal")
