@@ -1,5 +1,5 @@
 # Azure Stack Development Kit installer
-![Deployment tool](/Deployment/Deployment.gif)
+
 The Azure Stack Development Kit installer provides a UI with the following features
 
 - Prepare the SafeOS for deployment
