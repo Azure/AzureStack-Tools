@@ -1,4 +1,7 @@
 # Azure Stack Compute Administration
+![Adding an image in an ADFS environment](/ComputeAdmin/ComputeAdmin.gif)
+
+
 Instructions below are relative to the .\ComputeAdmin folder of the [AzureStack-Tools repo](..).
 
 Make sure you have the following module prerequisites installed:
@@ -6,45 +9,53 @@ Make sure you have the following module prerequisites installed:
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
 ```
+
 Then make sure the following modules are imported:
 
 ```powershell
-Import-Module ..\Connect\AzureStack.Connect.psm1
 Import-Module .\AzureStack.ComputeAdmin.psm1
 ```
 
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+## Add PowerShell environment
+
+You will need to login to your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
 ```
 
-Adding a VM Image requires that you obtain the value of your Directory Tenant ID. For **Azure Active Directory** environments provide your directory tenant name:
+Then login:
 
 ```powershell
-$TenantID = Get-DirectoryTenantID -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin 
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" 
+```
+----
+If you are **not** using your home directory tenant, you will need to supply the tenant ID to your login command. You may find it easiest to obtain using the Connect tool. For **Azure Active Directory** environments provide your directory tenant name:
+
+```powershell
+$TenantID = Get-AzsDirectoryTenantId -AADTenantName "<mydirectorytenant>.onmicrosoft.com" -EnvironmentName AzureStackAdmin
 ```
 
 For **ADFS** environments use the following:
 
 ```powershell
-$TenantID = Get-DirectoryTenantID -ADFS -EnvironmentName AzureStackAdmin 
+$TenantID = Get-AzsDirectoryTenantId -ADFS -EnvironmentName AzureStackAdmin
 ```
-
 ## Add the WS2016 Evaluation VM Image 
 
-The New-Server2016VMImage allows you to add a Windows Server 2016 Evaluation VM Image to your Azure Stack Marketplace. 
+The New-AzsServer2016VMImage allows you to add a Windows Server 2016 Evaluation VM Image to your Azure Stack Marketplace.
 
 As a prerequisite, you need to obtain the Windows Server 2016 Evaluation ISO which can be found [here](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016).
 
 An example usage is the following:
+
 ```powershell
+
 $ISOPath = "<Path to ISO>"
-New-Server2016VMImage -ISOPath $ISOPath -TenantId $TenantID -EnvironmentName "AzureStackAdmin"
+New-AzsServer2016VMImage -ISOPath $ISOPath
 ```
-Please make sure to specify the correct administrator ARM endpoint for your environment.
 
 This command may show a **popup prompt that can be ignored** without issue.
 
@@ -55,31 +66,25 @@ Please note that to use this image for **installing additional Azure Stack servi
 ## Add a VM image to the Marketplace with PowerShell
 
 1. Prepare a Windows or Linux operating system virtual hard disk image in VHD format (not VHDX).
-    -   For Windows images, the article [Upload a Windows VM image to Azure for Resource Manager deployments](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-upload-image/) contains image preparation instructions in the **Prepare the VHD for upload** section.
-    -   For Linux images, follow the steps to
+
+    - For Windows images, the article [Upload a Windows VM image to Azure for Resource Manager deployments](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-upload-image/) contains image preparation instructions in the **Prepare the VHD for upload** section.
+    - For Linux images, follow the steps to
         prepare the image or use an existing Azure Stack Linux image as described in
         the article [Deploy Linux virtual machines on Azure
         Stack](https://azure.microsoft.com/en-us/documentation/articles/azure-stack-linux/).
 
-2. Add the VM image by invoking the Add-VMImage cmdlet. 
-	-  Include the publisher, offer, SKU, and version for the VM image. These parameters are used by Azure Resource Manager templates that reference the VM image.
-	-  Specify osType as Windows or Linux.
-	-  Include your Azure Active Directory tenant ID in the form *&lt;mydirectory&gt;*.onmicrosoft.com.
-	-  The following is an example invocation of the script:
+1. Add the VM image by invoking the Add-AzsVMImage cmdlet.
 
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
+    - Include the publisher, offer, SKU, and version for the VM image. These parameters are used by Azure Resource Manager templates that reference the VM image.
+    - Specify osType as Windows or Linux.
+    - The following is an example invocation of the script:
 
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
+Add-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd'
 ```
-
-```powershell
-Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -osType Linux -osDiskLocalPath 'C:\Users\<me>\Desktop\UbuntuServer.vhd' -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
-```
-
-Note: The cmdlet requests credentials for adding the VM image. Provide the administrator Azure Active Directory credentials, such as *&lt;Admin Account&gt;*@*&lt;mydirectory&gt;*.onmicrosoft.com, to the prompt.  
 
 The command does the following:
+
 - Authenticates to the Azure Stack environment
 - Uploads the local VHD to a newly created temporary storage account
 - Adds the VM image to the VM image repository
@@ -88,79 +93,49 @@ The command does the following:
 To verify that the command ran successfully, go to Marketplace in the portal, and then verify that the VM image is available in the **Virtual Machines** category.
 
 ## Remove a VM Image with PowerShell
+
 Run the below command to remove an uploaded VM image. After removal, tenants will no longer be able to deploy virtual machines with this image.
 
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
 ```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
-```
-
-```powershell
-Remove-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0" -tenantID <GUID AADTenant> -EnvironmentName "AzureStackAdmin"
+Remove-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "14.04.3-LTS" -version "1.0.0"
 ```
 
 Note: This cmdlet will remove the associated Marketplace item unless the -KeepMarketplaceItem parameter is specified.
-
-## Add a VM extension to the Compute with PowerShell
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
-```
-An example usage is the following:
-
-```powershell
-$path = "<Path to vm extension zip>"
-Add-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -extensionLocalPath $path -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
-```
-
-
-# Remove a VM extension with PowerShell
-
-You will need to reference your Azure Stack Administrator environment. To create an administrator environment use the below. The ARM endpoint below is the administrator default for a one-node environment.
-
-```powershell
-Add-AzureStackAzureRmEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external"
-```
-Run the below command to remove an uploaded VM extension.
-
-```powershell
-Remove-VMExtension -publisher "Publisher" -type "Type" -version "1.0.0.0" -osType Windows -tenantID $TenantID -azureStackCredentials $azureStackCredentials -EnvironmentName "AzureStackAdmin"
-```
 
 ## VM Scale Set gallery item
 
 VM Scale Set allows deployment of multi-VM collections. To add a gallery item with VM Scale Set:
 
-1. Add evaluation Windows Server 2016 image using New-Server2016VMImage as described above.
+1. Add evaluation Windows Server 2016 image using New-AzsServer2016VMImage as described above.
 
-2. For linux support, download Ubuntu Server 16.04 and add it using Add-VmImage with the following parameters -publisher "Canonical" -offer "UbuntuServer" -sku "16.04-LTS"
+1. For linux support, download Ubuntu Server 16.04 and add it using Add-AzsVMImage with the following parameters -publisher "Canonical" -offer "UbuntuServer" -sku "16.04-LTS"
 
-3. Add VM Scale Set gallery item as follows
+1. Add VM Scale Set gallery item as follows
 
 ```powershell
-$TenantId = "<AAD Tenant Id used to connect to AzureStack>"
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
 $Location = "<The location name of your AzureStack Environment>"
 
-Add-AzureStackAzureRmEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm 
+Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm
 
 $Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin user password>"
 $User = "<your AzureStack admin user name>"
 $Creds =  New-Object System.Management.Automation.PSCredential $User, $Password
 
-Login-AzureRmAccount -EnvironmentName AzureStackAdmin -Credential $Creds -TenantId $TenantId
+$AzsEnv = Get-AzureRmEnvironment AzureStackAdmin
+$AzsEnvContext = Add-AzureRmAccount -Environment $AzsEnv -Credential $Creds
+Select-AzureRmProfile -Profile $AzsEnvContext
 
 Select-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
 
-Add-AzureStackVMSSGalleryItem -Location $Location
-```
+Add-AzsVMSSGalleryItem -Location $Location
+
 To remove VM Scale Set gallery item run the following command:
 
 ```powershell
-Remove-AzureStackVMSSGalleryItem
+
+Remove-AzsVMSSGalleryItem
+
 ```
 
 Note that gallery item is not removed immediately. You could run the above command several times to determine when the item is actually gone.
-

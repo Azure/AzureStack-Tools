@@ -1,0 +1,16 @@
+# Azure Stack Marketplace Toolkit parameter file
+
+$ApplicationName = "Windows Server"
+$Publisher = "Contoso"
+$Summary = "Windows Server virtual machine"
+$Description = "This marketplace item deploys a Windows Server virtual machine, a Virtual Network (with DNS), a Public IP address, a Network Security Group, and a Network Interface."
+$Category = "Solutions"
+$Icon40x40 = "C:\AzureStack_Marketplace\40.png"
+$Icon90x90 = "C:\AzureStack_Marketplace\90.png"
+$Icon115x115 = "C:\AzureStack_Marketplace\115.png"
+$Icon255x115 = "C:\AzureStack_Marketplace\255.png"
+$Screenshot533X324 = "C:\AzureStack_Marketplace\533.png"
+$ArmTemplate = ""
+$ExecutablePath = ""
+$UserName = "admin@mydomain.onmicrosoft.com"
+$Endpoint = "adminmanagement.local.azurestack.external"

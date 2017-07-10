@@ -83,6 +83,12 @@
             "metadata": {
                 "description": "Maps to the sku in the Azure Stack Platform Image Repository manifest file Eg: 12.SP1, 6.7 , 7.2"
             }
+        },
+        "storageAccountEndPoint": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account endpoint to be used to collect the diagnostic information from the VMs"
+            }
         }
     },
 
@@ -662,7 +668,7 @@
                 "protectedSettings": {
                     "storageAccountName": "[variables('storageAccountName3')]",
                     "storageAccountKey": "[listKeys(variables('storageAccountName3ID'), variables('apiVersionSRP')).key1]",
-                    "storageAccountEndPoint": "http://azurestack.local"
+                    "storageAccountEndPoint": "[parameters('storageAccountEndPoint')]"
                 }
             }
         },
