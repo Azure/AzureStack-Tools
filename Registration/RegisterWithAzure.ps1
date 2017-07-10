@@ -6,34 +6,35 @@
 .SYNOPSIS
 
 This script can be used to register Azure Stack POC with Azure. To run this script, you must have a public Azure subscription of any type.
-There must also be an account that is an owner or contributor of the subscription. 
+There must also be an account that is an owner or contributor of the subscription, and you must have registered the AzureStack resource provider
 
 .DESCRIPTION
 
-RegisterToAzure runs local scripts to connect your Azure Stack to Azure. After connecting with Azure, you can test marketplace syndication.
+RegisterWithAzure runs scripts already present in Azure Stack (path: $root\CloudDeployment\Setup\Activation\Bridge)to connect your Azure Stack to Azure.
+After connecting with Azure, you can test marketplace syndication by downloading products from the marketplace. Usage data will also default to being reported to Azure for billing purposes.
+To turn these features off see examples below.
 
 The script will follow four steps:
-Configure bridge identity: configures Azure Stack so that it can call to Azure via your Azure subscription
-Get registration request: get Azure Stack environment information to create a registration for this azure stack in azure
+Configure bridge identity: Creates Azure AD application that is used by Azure Bridge for marketplace syndication and by Usage Bridge to send Usage records (if configured).
+Get registration request: get Azure Stack environment information to create a registration for this Azure Stack in azure
 Register with Azure: uses Azure powershell to create an "Azure Stack Registration" resource on your Azure subscription
 Activate Azure Stack: final step in connecting Azure Stack to be able to call out to Azure
 
-.PARAMETER azureSubscriptionId
+.PARAMETER azureCredential
 
+Powershell object that contains credential information such as user name and password. If not supplied script will request login via gui
+
+.PARAMETER azureAccountId
+
+Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
+
+.PARAMETER azureSubscriptionId
 
 Azure subscription ID that you want to register your Azure Stack with. This parameter is mandatory.
 
 .PARAMETER azureDirectoryTenantName
 
 Name of your AAD Tenant which your Azure subscription is a part of. This parameter is mandatory.
-
-.PARAMETER azureAccountId
-
-Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
-
-.PARAMETER azureCredential
-
-Powershell object that contains credential information such as user name and password. If not supplied script will request login via gui
 
 .PARAMETER azureEnvironment
 
@@ -43,16 +44,34 @@ Environment name for use in retrieving tenant details and running several of the
 
 URI used for ActivateBridge.ps1 that refers to the endpoint for Azure Resource Manager. Defaults to "https://management.azure.com"
 
+.PARAMETER enableSyndication
+
+Boolean value used in Register-AzureStack.ps1 to enable marketplace syndication. Defaults to $true
+
+.PARAMETER reportUsage
+
+Boolean value used in Register-AzureStack.ps1 to enable reporting of usage records to Azure. Defaults to $true
+
 .EXAMPLE
 
+This example registers your AzureStack account with Azure, enables syndication, and enables usage reporting to Azure.
 This script must be run from the Host machine of the POC.
-.\RegisterWithAzure.ps1 -azureSubscriptionId "5e0ae55d-0b7a-47a3-afbc-8b372650abd3" -azureDirectoryTenantName "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com"
 
+.\RegisterWithAzure.ps1 -azureCredential $yourCredentials -azureSubscriptionId $subsciptionId -azureDirectoryTenantName "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com"
+
+.EXAMPLE
+
+This example registers your AzureStack account with Azure, enables syndication, and disables usage reporting to Azure. 
+
+.\RegisterWithAzure.ps1 -azureCredential $yourCredentials -azureSubscriptionId $subsciptionId -azureDirectoryTenantName "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com" -reportUsage:$false
 
 .NOTES
  Ensure that you have an Azure subscription and it is registered for Microsoft.AzureStack namespace in Azure.
  Namespace can be registered with the following command:
  Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack' 
+
+ If you would like to un-Register with you azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication
+ and reportUsage set to false. This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported. 
 #>
 
 
@@ -80,7 +99,7 @@ param(
     [bool] $enableSyndication = $true,
 
     [Parameter(Mandatory = $false)]
-    [Switch] $reportUsage = $false
+    [Switch] $reportUsage = $true
 )
 
 #requires -Module AzureRM.Profile
