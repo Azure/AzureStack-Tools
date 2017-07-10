@@ -15,4 +15,4 @@ To run the script:
 RegisterWithAzure.ps1 -azureCredentials YourCredentialObject -azureAccountId YourAccountName -azureSubscriptionId YourSubscriptionGUID -azureDirectoryTenantName YourAADTenantName
 ```
 
-AzureCredentials are not mandatory, if you do not pass in an Azure Credential object you will be prompted for your Azure credentials before continuing. 
+AzureCredentials are not mandatory, if you do not pass in a credential object you will be prompted for your Azure credentials before continuing. 
