@@ -12,39 +12,19 @@ Describe $script:ModuleName {
             Get-Module -Name $script:ModuleName |
                 Should Not Be $null
         }
-
-        It 'Register-AllAzureRmProvidersOnAllSubscriptions should be exported' {
-            Get-Command -Name Register-AllAzureRmProvidersOnAllSubscriptions -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-
-        It 'Register-AllAzureRmProviders should be exported' {
-            Get-Command -Name Register-AllAzureRmProviders -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-
-        It 'Get-AzureStackAadTenant should be exported' {
-            Get-Command -Name Get-AzureStackAadTenant -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
         
-        It 'Add-AzureStackAzureRmEnvironment should be exported' {
-            Get-Command -Name Add-AzureStackAzureRmEnvironment -ErrorAction SilentlyContinue | 
+        It 'Add-AzsEnvironment should be exported' {
+            Get-Command -Name Add-AzsEnvironment -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     
-        It 'Get-AzureStackNatServerAddress should be exported' {
-            Get-Command -Name Get-AzureStackNatServerAddress -ErrorAction SilentlyContinue | 
+        It 'Add-AzsVpnConnection should be exported' {
+            Get-Command -Name Add-AzsVpnConnection -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     
-        It 'Add-AzureStackVpnConnection should be exported' {
-            Get-Command -Name Add-AzureStackVpnConnection -ErrorAction SilentlyContinue | 
-                Should Not Be $null
-        }
-    
-        It 'Connect-AzureStackVpn should be exported' {
-            Get-Command -Name Connect-AzureStackVpn -ErrorAction SilentlyContinue | 
+        It 'Connect-AzsVpn should be exported' {
+            Get-Command -Name Connect-AzsVpn -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     }
@@ -68,36 +48,25 @@ InModuleScope $script:ModuleName {
     $EnvironmentName = $global:EnvironmentName
 
     Set-Item wsman:\localhost\Client\TrustedHosts -Value $HostComputer -Concatenate
-    Set-Item wsman:\localhost\Client\TrustedHosts -Value mas-ca01.azurestack.local -Concatenate
+    Set-Item wsman:\localhost\Client\TrustedHosts -Value Azs-ca01.azurestack.local -Concatenate
 
     Describe 'ConnectModule - Accessing Environment Data' {
-        It 'Recovered AAD Tenant ID should be correct' {
-            $global:AadTenantID = Get-AzureStackAadTenant  -HostComputer $HostComputer -User $AdminUser -Password $AdminPassword 
-            Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
-            $global:AadTenantID | Should Not Be $null
-        }
 
-        It 'Get-AzureStackNatServerAddress should return valid NAT address' {
-            $script:NatIPAddress = Get-AzureStackNatServerAddress -natServer $natServer -HostComputer $HostComputer -User $AdminUser -Password $AdminPassword 
-            Write-Verbose "Returned NAT IP Address of $natIPAddress" -Verbose
-            [IPAddress]$script:NatIPAddress | Should Not Be $null
-        }
-
-        It 'Add-AzureStackVpnConnection should correctly return a VPN connection to a One Node' {
-            Add-AzureStackVpnConnection -ServerAddress $script:NatIPAddress -ConnectionName $VPNConnectionName -Password $AdminPassword
+        It 'Add-AzsVpnConnection should correctly return a VPN connection to a One Node' {
+            Add-AzsVpnConnection -ServerAddress $script:NatIPAddress -ConnectionName $VPNConnectionName -Password $AdminPassword
             Get-VpnConnection -Name $VPNConnectionName | Should Not Be $null
         }
 
-        It 'Connect-AzureStackVpn should successfully connect to a One Node environment' {
-            {Connect-AzureStackVpn -ConnectionName $VPNConnectionName -User $AdminUser -Password $AdminPassword} | Should Not Throw
+        It 'Connect-AzsVpn should successfully connect to a One Node environment' {
+            {Connect-AzsVpn -ConnectionName $VPNConnectionName -User $AdminUser -Password $AdminPassword} | Should Not Throw
         }
 
-        It 'Add-AzureStackAzureRmEnvironment should successfully add a an administrator environment' {
-            Add-AzureStackAzureRmEnvironment -ArmEndpoint $armEndpoint -Name $EnvironmentName
+        It 'Add-AzsEnvironment should successfully add a an administrator environment' {
+            Add-AzsEnvironment -ArmEndpoint $armEndpoint -Name $EnvironmentName
             Get-AzureRmEnvironment -Name $EnvironmentName | Should Not Be $null
         }
 
-        It 'User should be able to login to environment successfully created by Add-AzureStackAzureRmEnvironment' {
+        It 'User should be able to login to environment successfully created by Add-AzsEnvironment' {
             Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
             Write-Verbose "Passing credential to Login-AzureRmAccount" -Verbose
             {Login-AzureRmAccount -EnvironmentName $EnvironmentName -TenantId $global:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
@@ -107,22 +76,22 @@ InModuleScope $script:ModuleName {
             Get-AzureRmResourceGroup | Should Not Be $null
         }
 
-        It 'Get-AzureStackAdminSubTokenHeader should retrieve a valid admin token' {
-            $subID, $headers = Get-AzureStackAdminSubTokenHeader -TenantID $global:AadTenantID -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds 
+        It 'Get-AzsAdminSubTokenheader should retrieve a valid admin token' {
+            $subID, $headers = Get-AzsAdminSubTokenheader -TenantID $global:AadTenantID -EnvironmentName $EnvironmentName -AzureStackCredentials $stackLoginCreds 
             Write-Verbose "Admin subscription ID was $subID" -Verbose
             Write-Verbose "Acquired token was $headers.Authorization" -Verbose
             $headers.Authorization | Should Not Be $null
             $subID | Should Not Be $null
         }
 
-        It 'Register-AllAzureRmProviders should register all resource providers for the current subscription' {
-            Register-AllAzureRmProviders 
+        It 'Register-AzsProvider should register all resource providers for the current subscription' {
+            Register-AzsProvider 
             $unRegisteredProviders = Get-AzureRmResourceProvider | Where-Object {$_.RegistrationState -ne "Registered"}
             $unRegisteredProviders | Should Be $null
         }
 
-        It 'Register-AllAzureRmProvidersOnAllSubscriptions should register all resource providers for all subscriptions' {
-            Register-AllAzureRmProvidersOnAllSubscriptions
+        It 'Register-AzsProviderOnAllSubscriptions should register all resource providers for all subscriptions' {
+            Register-AzsProviderOnAllSubscriptions
             $unRegisteredProviders = Get-AzureRmResourceProvider | Where-Object {$_.RegistrationState -ne "Registered"}
             $unRegisteredProviders | Should Be $null
         }
