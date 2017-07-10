@@ -46,7 +46,7 @@ URI used for ActivateBridge.ps1 that refers to the endpoint for Azure Resource M
 .EXAMPLE
 
 This script must be run from the Host machine of the POC.
-.\RegisterWithAzure.ps1 -azureSubscriptionId "5e0ae55d-0b7a-47a3-afbc-8b372650abd3" -azureDirectoryTenantId "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com" -azureCredentialPassword "password"
+.\RegisterWithAzure.ps1 -azureSubscriptionId "5e0ae55d-0b7a-47a3-afbc-8b372650abd3" -azureDirectoryTenantName "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com"
 
 
 .NOTES
