@@ -1666,12 +1666,12 @@ If ($synchash.Control_NetConfig_Rbt_Static.IsChecked){
     }
 
 If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
-        $InstallScript += " -PublicVLan "
+        $InstallScript += " -PublicVlanId "
         $InstallScript += $synchash.Control_NetConfig_Tbx_VlanID.Text
     }
 
 If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
-        $InstallScript += " -EnvironmentDNS "
+        $InstallScript += " -DNSForwarder "
         $InstallScript += $synchash.Control_NetConfig_Tbx_DnsForwarder.Text
     }
 
@@ -1743,11 +1743,11 @@ Function F_Install {
     }
 
     If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
-        ' -PublicVLan "' + $synchash.Control_NetConfig_Tbx_VlanID.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -PublicVlanId "' + $synchash.Control_NetConfig_Tbx_VlanID.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
-        ' -EnvironmentDNS "' + $synchash.Control_NetConfig_Tbx_DnsForwarder.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -DNSForwarder "' + $synchash.Control_NetConfig_Tbx_DnsForwarder.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
