@@ -10,7 +10,7 @@
 
 function Get-AzsAlert {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -28,7 +28,7 @@ Export-ModuleMember -Function Get-AzsAlert
 #>
 function Get-AzsScaleUnit {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -46,7 +46,7 @@ Export-ModuleMember -Function Get-AzsScaleUnit
 #>
 function Get-AzsScaleUnitNode {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -64,7 +64,7 @@ Export-ModuleMember -Function Get-AzsScaleUnitNode
 #>
 function Get-AzsStorageSubsystem {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -83,7 +83,7 @@ Export-ModuleMember -function Get-AzsStorageSubsystem
 
 function Get-AzsInfrastructureRole {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -102,7 +102,7 @@ Export-ModuleMember -Function Get-AzsInfrastructureRole
 
 function Get-AzsInfrastructureRoleInstance {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -120,7 +120,7 @@ Export-ModuleMember -Function Get-AzsInfrastructureRoleInstance
 #>
 function Get-AzsStorageShare {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
     
@@ -139,7 +139,7 @@ Export-ModuleMember -Function Get-AzsStorageShare
 
 function Get-AzsLogicalNetwork {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
     
@@ -158,7 +158,7 @@ Export-ModuleMember -Function Get-AzsLogicalNetwork
 
 function Get-AzSUpdateLocation {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
     $resourceType = "Microsoft.Update.Admin/updatelocations"
@@ -176,7 +176,7 @@ Export-ModuleMember -function Get-AzsUpdateLocation
 Function Get-AzsUpdate {
     [CmdletBinding(DefaultParameterSetName = 'GetUpdate')]
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -194,7 +194,7 @@ Export-ModuleMember -Function Get-AzsUpdate
 #>
 function Get-AzsUpdateRun {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
         
         [Parameter(Mandatory = $true)]
@@ -202,7 +202,6 @@ function Get-AzsUpdateRun {
         [String] $Update
     )
     
-    $Location = Get-AzsHomeLocation -Location $Location
     $name = "{0}/{1}" -f $Location, $Update
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates/updateRuns"
 
@@ -249,15 +248,12 @@ Export-ModuleMember -Function Install-AzsUpdate
 #>
 function Close-AsSAlert {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
 
         [ValidateNotNullorEmpty()]
         [String] $AlertId
     )
-
-    
-    $Location = Get-AzsHomeLocation -Location $Location
 
     $alerts = Get-AzsAlert -Location $Location
     
@@ -286,7 +282,7 @@ Export-ModuleMember -Function Close-AzsAlert
 #>
 function Get-AzsIpPool {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
     
@@ -304,7 +300,7 @@ Export-ModuleMember -Function Get-AzsIPPool
 #>
 function Get-AzsMacPool {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -323,7 +319,7 @@ Export-ModuleMember -Function Get-AzsMacPool
 
 function Get-AzsGatewayPool {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -342,7 +338,7 @@ Export-ModuleMember -Function Get-AzsGatewayPool
 
 function Get-AzsSLBMux {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -360,7 +356,7 @@ Export-ModuleMember -Function Get-AzsSLBMux
 #>
 function Get-AzsGateway {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -379,7 +375,7 @@ Export-ModuleMember -Function Get-AzsGateway
 function Start-AzsInfrastructureRoleInstance {
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
 
         [Parameter(Mandatory = $true)]
@@ -405,7 +401,7 @@ Export-ModuleMember -Function Start-AzsInfrastructureRoleInstance
 function Stop-AzsInfrastructureRoleInstance {
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
        
         [Parameter(Mandatory = $true)]
@@ -431,7 +427,7 @@ Export-ModuleMember -Function Stop-AzsInfrastructureRoleInstance
 function Restart-AzsInfrastructureRoleInstance {
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
         
         [Parameter(Mandatory = $true)]
@@ -457,7 +453,7 @@ Export-ModuleMember -Function Restart-AzsInfrastructureRoleInstance
 #>
 function Add-AzsIpPool {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
 
         [Parameter(Mandatory = $true)]
@@ -471,8 +467,6 @@ function Add-AzsIpPool {
 
         [string] $AddressPrefix = ''
     )
-
-    $Location = Get-AzsHomeLocation -Location $Location
     
     $params = @{
         ResourceName      = "{0}/{1}" -f $Location, $Name
@@ -499,7 +493,7 @@ Export-ModuleMember -Function Add-AzsIpPool
 function Disable-AzsScaleUnitNode {
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
 
         [Parameter(Mandatory = $true)]
@@ -527,7 +521,7 @@ Export-ModuleMember -Function Disable-AzsScaleUnitNode
 function Enable-AzsScaleUnitNode {
     [CmdletBinding(SupportsShouldProcess = $true)]
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
 
         [Parameter(Mandatory = $true)]
@@ -553,11 +547,10 @@ Export-ModuleMember -Function Enable-AzsScaleUnitNode
 #>
 function Get-AzsLocationCapacity {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
-        
-    $Location = Get-AzsHomeLocation -Location $Location
+    
     $name = "../"
     $resourceType = "Microsoft.InfrastructureInsights.Admin/locations/regionHealths"
 
@@ -575,7 +568,7 @@ Export-ModuleMember -Function Get-AzsLocationCapacity
 
 function Get-AzsBackupLocation {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -594,7 +587,7 @@ Export-ModuleMember -Function Get-AzsBackupLocation
 
 function Get-AzsBackup {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
 
@@ -606,26 +599,12 @@ function Get-AzsBackup {
 
 Export-ModuleMember -Function Get-AzsBackup
 
-function Get-AzsHomeLocation {
-    param(
-        [Parameter(Mandatory = $false)]
-        [string] $Location
-    )
-
-    if ($Location) {
-        return $Location
-    }
-
-    $locationResource = Get-AzsLocation
-    return $locationResource.Name
-}
-
 function Get-AzsInfrastructureResource {
     param(
         [Parameter(Mandatory = $false)]
         [string] $Name,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
 
         [Parameter(Mandatory = $false)]
@@ -634,8 +613,6 @@ function Get-AzsInfrastructureResource {
         [string] $ResourceType
     )
     
-    $Location = Get-AzsHomeLocation -Location $Location
-
     # If $name is not given, list all resource by using location as ResourceName
     if (-not $Name) {       
         $Name = $Location
@@ -662,8 +639,6 @@ function Invoke-AzsInfrastructureAction {
         [string] $Action,
         [string] $ResourceType
     )
-        
-    $Location = Get-AzsHomeLocation -Location $Location
 
     $params = @{
         ApiVersion        = "2016-05-01"
