@@ -629,9 +629,6 @@ function Get-AzsInfrastructureResource {
     return $infraResource
 }
 
-Export-ModuleMember -Function Set-AzsLocationInformation
-
-
 function Invoke-AzsInfrastructureAction {
     param(
         [string] $Name,
