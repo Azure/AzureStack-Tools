@@ -18,6 +18,7 @@ function Get-AzureRMCloudCapability() {
         [String] $OutputPath = "AzureCloudCapabilities.Json",
 
         [Parameter(HelpMessage = 'Cloud Capabilities for the specified location')]
+        [Parameter(Mandatory = $true)]
         [String] $Location,
 
         [Parameter(HelpMessage = 'Set this to get compute resource provider Capabilities like Extensions, Images, Sizes')]

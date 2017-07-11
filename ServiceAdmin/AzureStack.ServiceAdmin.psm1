@@ -10,13 +10,18 @@
 
 function Add-AzsStorageQuota {
     param(
-        [string] $Name = "default",
-        [int] $CapacityInGb = 1000,
-        [int] $NumberOfStorageAccounts = 2000,
-        [string] $Location = $null
+        [Parameter(Mandatory = $true)]
+        [string] $Name,
+
+        [Parameter(Mandatory = $true)]
+        [int] $CapacityInGb,
+
+        [Parameter(Mandatory = $true)]
+        [int] $NumberOfStorageAccounts,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Location
     )
-    
-    $Location = Get-AzsHomeLocation -Location $Location    
 
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
@@ -31,16 +36,25 @@ function Add-AzsStorageQuota {
     New-AzsServiceQuota @params
 }
 
+Export-ModuleMember -Function Add-AzsStorageQuota
+
 function Add-AzsComputeQuota {
     param(
-        [string] $Name = "default",
-        [int] $VmCount = 1000,
-        [int] $MemoryLimitMB = 1048576,
-        [int] $CoresLimit = 1000,
-        [string] $Location = $null
-    )
+        [Parameter(Mandatory = $true)]
+        [string] $Name,
 
-    $Location = Get-AzsHomeLocation -Location $Location    
+        [Parameter(Mandatory = $true)]
+        [int] $VmCount,
+
+        [Parameter(Mandatory = $true)]
+        [int] $MemoryLimitMB,
+
+        [Parameter(Mandatory = $true)]
+        [int] $CoresLimit,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Location
+    )
     
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
@@ -55,21 +69,38 @@ function Add-AzsComputeQuota {
     
     New-AzsServiceQuota @params
 }
+
+Export-ModuleMember -Function Add-AzsComputeQuota
     
 function Add-AzsNetworkQuota {
     param(
-        [string] $Name = "default",
-        [int] $PublicIpsPerSubscription = 500,
-        [int] $VNetsPerSubscription = 500,
-        [int] $GatewaysPerSubscription = 10,
-        [int] $ConnectionsPerSubscription = 20,
-        [int] $LoadBalancersPerSubscription = 500,
-        [int] $NicsPerSubscription = 1000,
-        [int] $SecurityGroupsPerSubscription = 500,
-        [string] $Location = $null
+        [Parameter(Mandatory = $true)]
+        [string] $Name,
+
+        [Parameter(Mandatory = $true)]
+        [int] $PublicIpsPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [int] $VNetsPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [int] $GatewaysPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [int] $ConnectionsPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [int] $LoadBalancersPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [int] $NicsPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [int] $SecurityGroupsPerSubscription,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Location
     ) 
-    
-    $Location = Get-AzsHomeLocation -Location $Location
     
     $params = @{
         ResourceName = "{0}/{1}" -f $Location, $Name
@@ -89,13 +120,13 @@ function Add-AzsNetworkQuota {
     New-AzsServiceQuota @params
 }
 
+Export-ModuleMember -Function Add-AzsNetworkQuota
 
 function Get-AzsSubscriptionsQuota {
     param(
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
-
-    $Location = Get-AzsHomeLocation -Location $Location
 
     $params = @{
         ResourceName = $Location
@@ -106,12 +137,13 @@ function Get-AzsSubscriptionsQuota {
     Get-AzsServiceQuota @params
 }
 
+Export-ModuleMember -Function Get-AzsSubscriptionsQuota
+
 function Get-AzsKeyVaultQuota {
-    param(  
+    param(
+        [Parameter(Mandatory = $true)]
         [string] $Location
     )
-    
-    $Location = Get-AzsHomeLocation -Location $Location
     
     $params = @{
         ResourceName = $Location
@@ -122,19 +154,7 @@ function Get-AzsKeyVaultQuota {
     Get-AzsServiceQuota @params
 }
 
-function Get-AzsHomeLocation {
-    param(
-        [string] $Location
-    )
-
-    if ($Location) {
-        return $Location
-    }
-
-    $locationResource = Get-AzsLocation
-    return $locationResource.Name
-}
-
+Export-ModuleMember -Function Get-AzsKeyVaultQuota
 
 function New-AzsServiceQuota {
     param(
