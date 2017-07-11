@@ -7,7 +7,7 @@ Make sure you have the following module prerequisites installed:
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
 ```
 
 Then make sure the following modules are imported:
@@ -23,11 +23,17 @@ You will need to reference your Azure Stack Administrator environment. To create
 Add-AzsEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanagement.local.azurestack.external" 
 ```
 
-
 ## Create default plan and quota for tenants
 
 ```powershell
-Add-AzsTenantOfferAndQuota
+# Default Quotas
+Add-AzsStorageQuota -Name "default" -CapacityInGb 1000 -NumberOfStorageAccounts 2000 -Location "<location>"
+
+Add-AzsComputeQuota -Name "default" -VmCount 1000 -MemoryLimitMB 1048576 -CoresLimit 1000 -Location "<location>"
+
+Add-AzsNetworkQuota -Name "default" -PublicIpsPerSubscription 500 -VNetsPerSubscription 500 -GatewaysPerSubscription 10 `
+                    -ConnectionsPerSubscription 20 -LoadBalancersPerSubscription 500 -NicsPerSubscription 1000 `
+                    -SecurityGroupsPerSubscription 500 -Location "<location>"
 ```
 
 Tenants can now see the "default" offer available to them and can subscribe to it. The offer includes unlimited compute, network, storage and key vault usage.
