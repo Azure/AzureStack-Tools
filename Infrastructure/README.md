@@ -397,19 +397,3 @@ Enable-AzsScaleUnitNode -Name $node.name
 $node=Get-AzsScaleUnitNode
 $node | fl
 ```
-
-### Set Azure Stack's Latitude and Longitude
-
-This command modifies an Azure Stack instance's latitude and longitude location
-
-```powershell
-$EnvironmentName = "AzureStackAdmin"
-$directoryName = "<<yourDirectoryName>>.onmicrosoft.com"
-$credential = Get-Credential
-$latitude = '12.972442'
-$longitude = '77.580643'
-$regionName = 'local'
-
-Set-AzsLocationInformation -Region $regionName -Latitude $latitude -Longitude $longitude
-
-```
