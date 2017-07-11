@@ -118,7 +118,7 @@ Export-ModuleMember -Function Get-AzsInfrastructureRoleInstance
     .SYNOPSIS
     List File Shares
 #>
-function Get-AzsStorageShare {
+function Get-AzsInfrastructureShare {
     Param(
         [Parameter(Mandatory = $false)]
         [string] $Location
@@ -130,7 +130,7 @@ function Get-AzsStorageShare {
     $shares
 }
 
-Export-ModuleMember -Function Get-AzsStorageShare
+Export-ModuleMember -Function Get-AzsInfrastructureShare
 
 <#
     .SYNOPSIS
