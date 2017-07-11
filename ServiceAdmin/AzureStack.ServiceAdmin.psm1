@@ -8,35 +8,13 @@
     Creates "default" tenant offer with unlimited quotas across Compute, Network, Storage and KeyVault services.
 #>
 
-function Add-AzsStorageQuota {
+function New-AzsComputeQuota {
     param(
         [string] $Name = "default",
-        [int] $CapacityInGb = 1000,
-        [int] $NumberOfStorageAccounts = 2000,
-        [string] $Location = $null
-    )
-    
-    $Location = Get-AzsHomeLocation -Location $Location    
-
-    $params = @{
-        ResourceName = "{0}/{1}" -f $Location, $Name
-        ResourceType = "Microsoft.Storage.Admin/locations/quotas"
-        ApiVersion   = "2015-12-01-preview"
-        Properties   = @{  
-            capacityInGb            = $CapacityInGb
-            numberOfStorageAccounts = $NumberOfStorageAccounts
-        }
-    }
-
-    New-AzsServiceQuota @params
-}
-
-function Add-AzsComputeQuota {
-    param(
-        [string] $Name = "default",
-        [int] $VmCount = 1000,
-        [int] $MemoryLimitMB = 1048576,
-        [int] $CoresLimit = 1000,
+        [int] $CoresLimit = 200,
+        [int] $VirtualMachineCount = 50,
+        [int] $AvailabilitySetCount = 10,
+        [int] $VmScaleSetCount = 10,
         [string] $Location = $null
     )
 
@@ -47,16 +25,17 @@ function Add-AzsComputeQuota {
         ResourceType = "Microsoft.Compute.Admin/locations/quotas"
         ApiVersion   = "2015-12-01-preview"
         Properties   = @{
-            virtualMachineCount = $VmCount
-            memoryLimitMB       = $MemoryLimitMB
-            coresLimit          = $CoresLimit
+            virtualMachineCount  = $VirtualMachineCount
+            availabilitySetCount = $AvailabilitySetCount
+            coresLimit           = $CoresLimit
+            vmScaleSetCount      = $VmScaleSetCount
         }
     }
     
     New-AzsServiceQuota @params
 }
     
-function Add-AzsNetworkQuota {
+function New-AzsNetworkQuota {
     param(
         [string] $Name = "default",
         [int] $PublicIpsPerSubscription = 500,
@@ -145,7 +124,15 @@ function New-AzsServiceQuota {
     )
         
     $serviceQuota = New-AzureRmResource -ResourceName $ResourceName -ResourceType $ResourceType -ApiVersion $ApiVersion -Properties $Properties -Force
-    $serviceQuota.ResourceId
+    $quotaObject = New-Object PSObject      
+    foreach ($property in ($serviceQuota.Properties | Get-Member -MemberType NoteProperty)){
+        $quotaObject | Add-Member NoteProperty -Name $property.Name -Value $serviceQuota.Properties.($property.Name)
+    }
+    $quotaObject | Add-Member NoteProperty Name($serviceQuota.ResourceName)
+    $quotaObject | Add-Member NoteProperty Type($serviceQuota.ResourceType)
+    $quotaObject | Add-Member NoteProperty Location($serviceQuota.Location)
+    $quotaObject | Add-Member NoteProperty Id($serviceQuota.ResourceId)
+    $quotaObject
 }
 
 function Get-AzsServiceQuota {

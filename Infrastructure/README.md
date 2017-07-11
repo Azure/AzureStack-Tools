@@ -22,7 +22,7 @@ Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanage
 Then login:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" 
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin"
 ```
 ----
 If you are **not** using your home directory tenant, you will need to supply the tenant ID to your login command. You may find it easiest to obtain using the Connect tool. For **Azure Active Directory** environments provide your directory tenant name:
@@ -179,7 +179,7 @@ The command does the following:
 
 ```powershell
 
-Get-AzsStorageShare
+Get-AzsInfrastructureShare
 ```
 
 The command does the following:
