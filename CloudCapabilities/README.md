@@ -14,5 +14,5 @@ Import-Module ".\AzureRM.CloudCapabilities.psm1"
  Connected Azure or AzureStack powershell environment (Refer [AzureStack-Tools repo/Connect](../Connect) for connecting to an Azure Stack instance. )
 
 ```powershell
-Get-AzureRMCloudCapabilities -Location '<provide location>' -Verbose #-IncludeComputeCapabilities -IncludeStorageCapabilities
+Get-AzureRMCloudCapability -Location '<provide location>' -Verbose #-IncludeComputeCapabilities -IncludeStorageCapabilities
 ```
