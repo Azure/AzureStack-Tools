@@ -392,7 +392,7 @@ function Start-AzsInfrastructureRoleInstance {
         [switch] $Force
     )
     
-    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to start $Name ?", "")) {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to start $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
 
         Invoke-AzsInfrastructureAction -Name $Name -Action "poweron" -Location $Location -ResourceType $resourceType
@@ -418,7 +418,7 @@ function Stop-AzsInfrastructureRoleInstance {
         [switch] $Force
     )
 
-    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to shut down $Name ?", "")) {        
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to shut down $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
 
         Invoke-AzsInfrastructureAction -Name $Name -Action "shutdown" -Location $Location -ResourceType $resourceType
@@ -444,7 +444,7 @@ function Restart-AzsInfrastructureRoleInstance {
         [switch] $Force
     )
 
-    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to restart $Name ?", "")) {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to restart $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/infraRoleInstances"
 
         Invoke-AzsInfrastructureAction -Name $Name -Action "reboot" -Location $Location -ResourceType $resourceType
@@ -482,7 +482,7 @@ function Add-AzsIpPool {
         ResourceType      = "Microsoft.Fabric.Admin/fabricLocations/IPPools"
         ResourceGroupName = "system.{0}" -f $Location
         ApiVersion        = "2016-05-01"
-        Properties        = @{  
+        Properties        = @{
             StartIpAddress = "$StartIPAddress"
             EndIpAddress   = "$EndIPAddress"
             AddressPrefix  = "$AddressPrefix"
@@ -512,7 +512,7 @@ function Disable-AzsScaleUnitNode {
         [switch] $Force
     )
 
-    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to disable scale unit node $Name ?", "")) {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to disable scale unit node $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
 
         Invoke-AzsInfrastructureAction -Action "StartMaintenanceMode" -Name $Name -Location $Location -ResourceType $resourceType
@@ -540,7 +540,7 @@ function Enable-AzsScaleUnitNode {
         [switch] $Force
     )
     
-    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure to enable scale unit node $Name ?", "")) {
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to enable scale unit node $Name ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
 
         Invoke-AzsInfrastructureAction -Action "StopMaintenanceMode" -Name $Name -Location $Location -ResourceType $resourceType
@@ -549,6 +549,94 @@ function Enable-AzsScaleUnitNode {
 
 Export-ModuleMember -Function Enable-AzsScaleUnitNode
 
+<#
+    .SYNOPSIS
+    Repairs a scale unit node by reimaging and readding a specific node
+#>
+
+function Repair-AzsScaleUnitNode {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [string] $ScaleUnitNodeName,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [string] $BMCIPv4Address,
+
+        [switch] $Force
+    )
+    
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to repair scale unit node $ScaleUnitNodeName ?", "")) {
+        $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
+
+        $parameters = @{
+            bmcIPv4Address = $BMCIPv4Address
+        }
+
+        Invoke-AzsInfrastructureAction -Action "Repair" -Name $ScaleUnitNodeName -Location $Location -ResourceType $resourceType -Parameters $parameters
+    }
+}
+
+Export-ModuleMember -Function Repair-AzsScaleUnitNode
+
+<#
+    .SYNOPSIS
+    Powers off a scale unit node
+#>
+
+function Stop-AzsScaleUnitNode {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [string] $ScaleUnitNodeName,
+
+        [switch] $Force
+    )
+    
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to stop scale unit node $ScaleUnitNodeName ?", "")) {
+        $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
+
+        Invoke-AzsInfrastructureAction -Action "PowerOff" -Name $ScaleUnitNodeName -Location $Location -ResourceType $resourceType
+    }
+}
+
+Export-ModuleMember -Function Stop-AzsScaleUnitNode
+
+<#
+    .SYNOPSIS
+    Powers on a scale unit node
+#>
+
+function Start-AzsScaleUnitNode {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [string] $ScaleUnitNodeName,
+
+        [switch] $Force
+    )
+    
+    if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to start scale unit node $ScaleUnitNodeName ?", "")) {
+        $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
+
+        Invoke-AzsInfrastructureAction -Action "PowerOn" -Name $ScaleUnitNodeName -Location $Location -ResourceType $resourceType
+    }
+}
+
+Export-ModuleMember -Function Start-AzsScaleUnitNode
 
 <#
     .SYNOPSIS
@@ -624,9 +712,12 @@ function Invoke-AzsInfrastructureAction {
         [string] $Name,
         [string] $Location,
         [string] $Action,
-        [string] $ResourceType
+        [string] $ResourceType,
+
+        [Parameter(Mandatory = $false)]
+        [Hashtable] $Parameters = $null
     )
-        
+
     $Location = Get-AzsHomeLocation -Location $Location
 
     $params = @{
@@ -635,6 +726,11 @@ function Invoke-AzsInfrastructureAction {
         ResourceType      = $ResourceType
         ResourceGroupName = "system.{0}" -f $Location
         ResourceName      = "{0}/{1}" -f $Location, $Name
+    }
+
+    if ($Parameters)
+    {
+        $params.Parameters = $Parameters
     }
 
     Invoke-AzureRmResourceAction @params -Force
