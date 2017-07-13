@@ -56,8 +56,8 @@ InModuleScope $script:ModuleName {
             { Get-AzsInfraRoleInstance } |
                 Should Not Throw
         }
-        It 'Get-AzsStorageShare should not throw' {
-            { Get-AzsStorageShare } |
+        It 'Get-AzsInfrastructureShare should not throw' {
+            { Get-AzsInfrastructureShare } |
                 Should Not Throw
         }
         It 'Get-Azslogicalnetwork should not throw' {

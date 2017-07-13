@@ -222,9 +222,9 @@ while ($runCount -le $NumberOfIterations)
             Get-AzSStorageSubsystem -Location $ResourceLocation
         }
 
-        Invoke-Usecase -Name 'GetAzureStackStorageShare' -Description "List all storage file shares" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackInfrastructureShare' -Description "List all storage file shares" -UsecaseBlock `
         {
-            Get-AzsStorageShare -Location $ResourceLocation
+            Get-AzsInfrastructureShare -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
