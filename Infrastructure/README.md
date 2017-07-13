@@ -3,6 +3,8 @@
 Instructions below are relative to the .\Infrastructure folder of the [AzureStack-Tools repo](..).
 This also requires the Azure Stack Connect Module to be imported before running any of the commands. The Module can also be found in the [AzureStack-Tools repo](..).
 
+![Using infrastructure cmdlets against Azure Stack](/Infrastructure/InfraAlertsVideo.gif)
+
 ## Import the Module
 
 ```powershell
@@ -20,7 +22,7 @@ Add-AzureRMEnvironment -Name "AzureStackAdmin" -ArmEndpoint "https://adminmanage
 Then login:
 
 ```powershell
-Login-AzureRmAccount -EnvironmentName "AzureStackAdmin" 
+Login-AzureRmAccount -EnvironmentName "AzureStackAdmin"
 ```
 ----
 If you are **not** using your home directory tenant, you will need to supply the tenant ID to your login command. You may find it easiest to obtain using the Connect tool. For **Azure Active Directory** environments provide your directory tenant name:
@@ -177,7 +179,7 @@ The command does the following:
 
 ```powershell
 
-Get-AzsStorageShare
+Get-AzsInfrastructureShare
 ```
 
 The command does the following:

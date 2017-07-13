@@ -1,4 +1,6 @@
 # Azure Stack Compute Administration
+![Adding an image in an ADFS environment](/ComputeAdmin/ComputeAdmin.gif)
+
 
 Instructions below are relative to the .\ComputeAdmin folder of the [AzureStack-Tools repo](..).
 

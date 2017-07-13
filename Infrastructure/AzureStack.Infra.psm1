@@ -118,7 +118,7 @@ Export-ModuleMember -Function Get-AzsInfrastructureRoleInstance
     .SYNOPSIS
     List File Shares
 #>
-function Get-AzsStorageShare {
+function Get-AzsInfrastructureShare {
     Param(
         [Parameter(Mandatory = $false)]
         [string] $Location
@@ -130,7 +130,7 @@ function Get-AzsStorageShare {
     $shares
 }
 
-Export-ModuleMember -Function Get-AzsStorageShare
+Export-ModuleMember -Function Get-AzsInfrastructureShare
 
 <#
     .SYNOPSIS
@@ -183,7 +183,7 @@ Function Get-AzsUpdate {
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates"
 
     $updates = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
-    $updates | Select-Object UpdateName, Version, IsApplicable, Description, State, IsDownloaded, PackageSizeInMb, KbLink    
+    $updates    
 }
 
 Export-ModuleMember -Function Get-AzsUpdate
@@ -207,7 +207,7 @@ function Get-AzsUpdateRun {
     $resourceType = "Microsoft.Update.Admin/updatelocations/updates/updateRuns"
 
     $updates = Get-AzsInfrastructureResource -Name $name -Location $Location -ResourceType $resourceType
-    $updates | Select-Object UpdateLocation, UpdateVersion, State, TimeStarted, Duration
+    $updates
 }
 
 Export-ModuleMember -Function Get-AzsUpdateRun
@@ -220,7 +220,7 @@ Export-ModuleMember -Function Get-AzsUpdateRun
 
 function Install-AzsUpdate {
     Param(
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [string] $Location,
         
         [Parameter(Mandatory = $true)]
@@ -228,15 +228,12 @@ function Install-AzsUpdate {
         [String] $Update
     )
 
-    $updates = Get-AzsUpdate -Location $Location
-        
-    $updateContent = $updates | Where-Object {$_.UpdateName -eq $Update}
-            
+          
     $params = @{
         ResourceType = "Microsoft.Update.Admin/updatelocations/updates"
         ResourceName = "{0}/{1}" -f $Location, $Update
         ApiVersion   = "2016-05-01"
-        Properties   = $updateContent
+        ResourceGroupName = "system.{0}" -f $Location
     }
 
     $StartRun = Invoke-AzureRmResourceAction @params -Action 'apply' -Force
@@ -642,7 +639,7 @@ Export-ModuleMember -Function Start-AzsScaleUnitNode
     .SYNOPSIS
     Get Location Capacity
 #>
-function Get-AzsHomeLocationCapacity {
+function Get-AzsLocationCapacity {
     Param(
         [Parameter(Mandatory = $false)]
         [string] $Location
@@ -656,7 +653,46 @@ function Get-AzsHomeLocationCapacity {
     $Capacity.Properties
 }
 
-Export-ModuleMember -Function Get-AzsHomeLocationCapacity
+Export-ModuleMember -Function Get-AzsLocationCapacity
+
+
+<#
+    .SYNOPSIS
+    List Backup location
+#>
+
+function Get-AzsBackupLocation {
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location
+    )
+
+    $resourceType = "Microsoft.Backup.Admin/backupLocations"
+
+    $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $backuplocation.Properties
+}
+
+Export-ModuleMember -Function Get-AzsBackupLocation
+
+<#
+    .SYNOPSIS
+    List Backups
+#>
+
+function Get-AzsBackup {
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location
+    )
+
+    $resourceType = "Microsoft.Backup.Admin/backupLocations/$Location/backups"
+
+    $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $backuplocation.Properties
+}
+
+Export-ModuleMember -Function Get-AzsBackup
 
 function Get-AzsHomeLocation {
     param(

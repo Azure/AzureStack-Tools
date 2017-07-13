@@ -222,9 +222,9 @@ while ($runCount -le $NumberOfIterations)
             Get-AzSStorageSubsystem -Location $ResourceLocation
         }
 
-        Invoke-Usecase -Name 'GetAzureStackStorageShare' -Description "List all storage file shares" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackInfrastructureShare' -Description "List all storage file shares" -UsecaseBlock `
         {
-            Get-AzsStorageShare -Location $ResourceLocation
+            Get-AzsInfrastructureShare -Location $ResourceLocation
         }
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
@@ -1120,7 +1120,7 @@ while ($runCount -le $NumberOfIterations)
                     {
                         if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
                         {
-                            Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation
+                            Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation -Force
                         }
                     }
                     Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `

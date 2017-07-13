@@ -29,7 +29,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 #region Text
 $Text_Generic = @{}
 $Text_Generic.Password_NotMatch = "Passwords do not match"
-$Text_Generic.Regex_Fqdn = "An FQDN can only contain A-Z, a-z, 0-9 and a hyphen"
+$Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
 $Text_Generic.Regex_IpAddress = "Ip Address must be specified in the x.x.x.x format"
 $Text_Generic.Regex_IpAddressCidr = "Ip Address must be specified in the x.x.x.x/x format"
@@ -37,7 +37,7 @@ $Text_Generic.Regex_LocalAdmin = "The specified password does not match the curr
 
 $Text_SafeOS = @{}
 $Text_SafeOS.Mode_Title = "Prepare for Deployment"
-$Text_SafeOS.Mode_LeftTitle = "Prepare vhdx"
+$Text_SafeOS.Mode_LeftTitle = "Prepare Environment"
 $Text_SafeOS.Mode_LeftContent = "Prepare the Cloudbuilder vhdx"
 $Text_SafeOS.Mode_RightTitle = "Online documentation"
 $Text_SafeOS.Mode_RightContent = "Read the online documentation."
@@ -67,6 +67,7 @@ $Text_Install.Credentials_Title = "Specify Identity Provider and Credentials"
 $Text_Install.Summary_Title = "Summary"
 $Text_Install.Summary_Content = "The following script will be used for deploying the Development Kit"
 $Text_Install.Summary_Warning = "You will be prompted for your Azure AD credentials 2-3 minutes after the installation starts"
+$Text_Install.Job_Title = "Verifying network interface card properties"
 
 $Text_Rerun = @{}
 $Text_Rerun.Mode_Title = "Rerun Installation"
@@ -78,14 +79,14 @@ $Text_Rerun.Mode_LeftContent_Logs = "Gather the Azure Stack deployment log files
 $Text_Rerun.Summary_Title = "Rerun"
 $Text_Rerun.Summary_Content = "Click Rerun to resume the current Microsoft Azure Stack Developement Kit deployment from where it failed"
 $Text_Rerun.Summary_Title_Logs = "Gather Logs"
-$Text_Rerun.Summary_Content_Logs = "Click Run to gather the Azure Stack log files in c:\AzureStackLogs"
+$Text_Rerun.Summary_Content_Logs = "Gather the Azure Stack log files and save to c:\AzureStackLogs"
 
 $Text_Completed = @{}
 $Text_Completed.Mode_Title = "Installation completed"
 $Text_Completed.Mode_LeftTitle = "Gather Logs"
 $Text_Completed.Mode_LeftContent = "Gather the Azure Stack deployment log files"
 $Text_Completed.Summary_Title = "Gather Logs"
-$Text_Completed.Summary_Content = "Click Run to gather the Azure Stack log files in c:\AzureStackLogs"
+$Text_Completed.Summary_Content = "Gather the Azure Stack log files and save to c:\AzureStackLogs"
 #endregion Text
 
 #region XAML
@@ -634,7 +635,7 @@ $Xaml = @'
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_AAD" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="AAD Tenant:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="#ABADB3" Width="430"  IsEnabled="False" />
                             </StackPanel>
                         </StackPanel>
@@ -754,6 +755,19 @@ $Xaml = @'
                         <ProgressBar x:Name="Control_Job_Pgb_Progress" Height="23.5" Width="550" Background="#1B4D72" Minimum="0" Maximum="100" Value="0" Foreground="#4F91CD" BorderThickness="0"/>
                         <TextBlock x:Name="Control_Job_Tbl_Current" FontSize="12" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="" HorizontalAlignment="Left" Margin="0,10,0,0" />
                         <TextBlock x:Name="Control_Job_Tbl_Details" FontSize="12" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                        <StackPanel x:Name="Control_Job_Stp_Netbxnda" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal">
+                                <Path  SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,10,0" Visibility="Visible"/>
+                                <TextBlock  TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="An update cannot be downloaded" />
+                            </StackPanel>
+                            <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="The update could not be downloaded directly from this machine. Please download the update from the following url:" />
+                            <TextBox  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" BorderBrush="#ABADB3" Text="https://go.microsoft.com/fwlink/?linkid=852544" />
+                            <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="Save the file on this host, click the browse button and select the executable to continue." />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBox x:Name="Control_Job_Tbx_Netbxnda" BorderBrush="#ABADB3" Width="440" IsReadOnly="True" />
+                                <Button x:Name="Control_Job_Btn_Netbxnda" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="Control_Job_Btn_Previous" Content="Previous" Height="23.5" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -764,20 +778,12 @@ $Xaml = @'
                 <!--#region Summary-->
                 <StackPanel x:Name="Control_Summary_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <Grid >
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="550"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition  />
-                                <RowDefinition/>
-                                <RowDefinition/>
-                            </Grid.RowDefinitions>
-                            <TextBlock x:Name="Control_Summary_Tbl_Header1" Grid.Row="0" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBox x:Name="Control_Summary_Tbx_Content1" Grid.Row="1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed" BorderBrush="#ABADB3" />
-                            <TextBlock x:Name="Control_Summary_Tbl_Content1" Grid.Row="2" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <Path x:Name="Control_Summary_Pth_Content1" Grid.Row="2" SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,0,0" Visibility="Collapsed"/>
-                        </Grid>
+                            <TextBlock x:Name="Control_Summary_Tbl_Header1" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
+                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed" BorderBrush="#ABADB3" />
+                        <StackPanel Orientation="Horizontal">
+                            <Path x:Name="Control_Summary_Pth_Content1"  SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,10,0" Visibility="Collapsed"/>
+                            <TextBlock x:Name="Control_Summary_Tbl_Content1"  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Width="550" />
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="Control_Summary_Btn_Previous" Content="Previous" Height="23.5" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -826,7 +832,7 @@ $Form = [Windows.Markup.XamlReader]::Load( $Reader )
 
 $syncHash = [hashtable]::Synchronized(@{})
 
-$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | where {$_.name -like "Control_*"} | % { $syncHash.Add($_.Name,$Form.FindName($_.Name) )}
+$xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | Where-Object {$_.name -like "Control_*"} | ForEach-Object { $syncHash.Add($_.Name,$Form.FindName($_.Name) )}
 #endregion
 
 #region Data
@@ -840,7 +846,7 @@ $AuthEndpoints = @{
         }
 }
 
-$AuthEndpoints.GetEnumerator() | ForEach {
+$AuthEndpoints.GetEnumerator() | ForEach-Object {
 $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 }
 #endregion AuthEndpoints
@@ -848,7 +854,7 @@ $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 #region TimeZones
 $syncHash.Timezones = [System.TimeZoneInfo]::GetSystemTimeZones()
 
-$syncHash.Timezones | ForEach {
+$syncHash.Timezones | ForEach-Object {
 $syncHash.Control_Unattend_Cbx_Timezone.AddChild($_.DisplayName)
 }
 #endregion TimeZones
@@ -877,6 +883,7 @@ bcdedit
 }
 
 $S_NetInterfaces = {
+    $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Lvw_Nics.Items.Clear()},"Normal")
     $NetInterfaces = @()
     Get-NetAdapter | Foreach-Object {
 
@@ -894,7 +901,7 @@ $S_NetInterfaces = {
         $properties | Add-Member -Type NoteProperty -Name Ipv4PrefixLength -Value $NetIPAddress.PrefixLength
         $properties | Add-Member -Type NoteProperty -Name Ipv4DefaultGateway -Value $NetIPConfiguration.IPv4DefaultGateway.NextHop
         $properties | Add-Member -Type NoteProperty -Name DHCP -Value $NetIPInterface.DHCP
-        $properties | Add-Member -Type NoteProperty -Name DNS -Value ($NetIPConfiguration.DNSServer | where {$_.AddressFamily -eq "2"}).ServerAddresses
+        $properties | Add-Member -Type NoteProperty -Name DNS -Value ($NetIPConfiguration.DNSServer | Where-Object {$_.AddressFamily -eq "2"}).ServerAddresses
         $properties | Add-Member -Type NoteProperty -Name InterfaceMetric -Value $NetIPInterface.InterfaceMetric
 
         $NetInterfaces += $properties
@@ -902,7 +909,7 @@ $S_NetInterfaces = {
  
     
     $syncHash.Control_NetInterface_Stp_Wait.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Stp_Wait.Visibility="Collapsed"},"Normal")
-    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | % {
+    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {
         $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Lvw_Nics.AddChild($_)},"Normal")
         }
 }
@@ -943,7 +950,7 @@ $S_PrepareVHDX = {
 
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
-    $bootOptions | ForEach {
+    $bootOptions | ForEach-Object {
     if ((($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*') -and (($_.Context.PostContext[0] -replace '^description +') -eq 'Azure Stack'))
         {
         $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
@@ -999,7 +1006,7 @@ $S_PrepareVHDX = {
 
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
-    $bootOptions | ForEach {
+    $bootOptions | ForEach-Object {
     if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack')))
     {
     $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
@@ -1025,7 +1032,7 @@ $S_PrepareVHDX = {
     $Unattend_Apply_StaticIP = $SyncHash.Control_Unattend_Chb_StaticIP.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_StaticIP.IsChecked})
     if ($SyncHash.Control_Unattend_Chb_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_Timezone.IsChecked})){
         $U_unattend_input_timezone_value = $SyncHash.Control_Unattend_Cbx_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Cbx_Timezone.SelectedItem})
-        $U_Unattend_input_timezone = ($syncHash.Timezones | where {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
+        $U_Unattend_input_timezone = ($syncHash.Timezones | Where-Object {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
     }
     else {
         $U_Unattend_input_timezone = "Pacific Standard Time"
@@ -1169,8 +1176,8 @@ $S_PrepareVHDX = {
         }
 
     if($Unattend_Apply_StaticIP) {
-        ($U_Unattend.unattend.settings | where {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
-        ($U_Unattend.unattend.settings | where {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
+        ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
+        ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
         }
 
     $U_Unattend.OuterXml | Out-File ($Prepare_Vhdx_DriveLetter+":\unattend.xml") -Encoding ascii -Force
@@ -1190,6 +1197,74 @@ $S_PrepareVHDX = {
         }
     }
     #endregion
+
+    #region Finalize
+    $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='100'},"Normal")
+    $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Completed'},"Normal")
+    $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
+    $syncHash.Control_Job_Btn_Next.Dispatcher.Invoke([action]{$syncHash.Control_Job_Btn_Next.IsEnabled=$true},"Normal")
+    #endregion
+}
+
+$S_Netbxnda = {
+    
+    # Verify if netbxnda.inf is used
+    # Progress
+
+    $syncHash.Control_Job_Tbx_Netbxnda.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbx_Netbxnda.Text=''},"Normal")
+    $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='20'},"Normal")
+    $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Verify driver..'},"Normal")
+    $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
+    
+    #Logic
+    $SelectedNetAdapterIterfaceIndex = $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke('Normal',[Func[Object]]{$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.InterfaceIndex})
+    $SelectedNetAdapter = Get-NetAdapter -InterfaceIndex $SelectedNetAdapterIterfaceIndex
+    $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='40'},"Normal")
+    $PnPDevice = Get-PnpDevice -InstanceId $SelectedNetAdapter.PnPDeviceID
+    # netbxnda.inf used in selected NIC?
+    If ((Get-PnpDeviceProperty -InputObject $PnPDevice -KeyName DEVPKEY_Device_DriverInfPath).Data -eq "netbxnda.inf"){
+        $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='60'},"Normal")
+        $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Downloading update..'},"Normal")
+        try{
+                Start-Transcript -Path C:\CloudDeployment\Setup\netbxnda.txt -Append 
+                $filepath = "$env:TEMP\netbxnda.exe"
+                Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=852544" -OutFile $filepath
+
+                $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='80'},"Normal")
+                $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Applying update..'},"Normal")
+
+                Invoke-Expression $filepath
+                Remove-Item -Path $filepath
+                Stop-Transcript
+                }
+        catch{
+                $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='60'},"Normal")
+                $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Downloading update..'},"Normal")
+                $syncHash.Control_Job_Stp_Netbxnda.Dispatcher.Invoke([action]{$synchash.Control_Job_Stp_Netbxnda.Visibility='Visible'},"Normal")
+                Break
+                }
+        }
+
+    #region Finalize
+    $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='100'},"Normal")
+    $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Completed'},"Normal")
+    $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
+    $syncHash.Control_Job_Btn_Next.Dispatcher.Invoke([action]{$syncHash.Control_Job_Btn_Next.IsEnabled=$true},"Normal")
+    #endregion
+    
+}
+
+$S_NetbxndaOffline = {
+
+    $filepath = $syncHash.Control_Job_Tbx_Netbxnda.Dispatcher.Invoke('Normal',[Func[Object]]{$syncHash.Control_Job_Tbx_Netbxnda.Text})
+
+    $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='80'},"Normal")
+    $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Applying update..'},"Normal")
+
+    Start-Transcript -Path C:\CloudDeployment\Setup\netbxnda.txt -Append 
+    Invoke-Expression $filepath
+    Remove-Item -Path $filepath
+    Stop-Transcript
 
     #region Finalize
     $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='100'},"Normal")
@@ -1292,7 +1367,7 @@ if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
     $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_Install.Mode_RightContent
     }
 # Booted from vhdx, but not CloudBuilder.vhdx
-elseif ((get-disk | where {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
+elseif ((get-disk | Where-Object {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
     Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server." -ForegroundColor Red
     Exit
     }
@@ -1362,7 +1437,7 @@ if ($validpath){
 }
 
 # Validation Actions
-$control = ($syncHash.GetEnumerator() | where {$_.name -eq $field}) 
+$control = ($syncHash.GetEnumerator() | Where-Object {$_.name -eq $field}) 
 
 if ($Script:validation_error) {
         $tooltip = new-object System.Windows.Controls.ToolTip
@@ -1390,7 +1465,7 @@ $syncHash.Control_Reboot_Lvw_Options.Items.Clear()
 
 $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
 
-$bootOptions | foreach {
+$bootOptions | ForEach-Object {
     $bootOption = New-Object -TypeName PSObject
     $bootOption | Add-Member -Type NoteProperty -Name Description -Value ($_.Context.PostContext[0] -replace '^description +')
     $bootOption | Add-Member -Type NoteProperty -Name ID -Value ($_.Context.PreContext[0] -replace '^identifier +')
@@ -1526,7 +1601,7 @@ $dottedDecimal = $null
 $IPAddress = $CIDRIPAddress.Split("/")[0] 
 $cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
 
-$IPAddress.split(".") | %{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
+$IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
 
 if($cidr -le 32){ 
     [Int[]]$array = (1..32) 
@@ -1609,7 +1684,7 @@ $syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
 
 If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
     $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
-    $syncHash.Control_Summary_Tbl_Content1.Margin = "35,0,0,10"
+    $syncHash.Control_Summary_Tbl_Content1.Width = "510"
     $SyncHash.Control_Summary_Tbl_Content1.Text = $Text_Install.Summary_Warning
 }
 
@@ -1632,8 +1707,8 @@ Function F_Install {
     #region disable non selected NICs
     if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -gt 1)){
         Write-Host "Disabling non selected NICs" -ForegroundColor Cyan
-        $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | where {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
-        $disable_nics | ForEach {
+        $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | Where-Object {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
+        $disable_nics | ForEach-Object {
             $IntID = $_.InterfaceIndex
             Get-NetAdapter -InterfaceIndex $IntID | Disable-NetAdapter -Confirm:$false
             }
@@ -1702,14 +1777,15 @@ Function F_Rerun {
     #endregion
 
     #region Rerun
-    cd C:\CloudDeployment\Setup
+    Set-Location C:\CloudDeployment\Setup
     .\InstallAzureStackPOC.ps1 -Rerun
     #endregion
 }
 
 Function F_GetAzureStackLogs {
+    Write-Host "Starting Get-AzureStackLog. This can take a moment. Please wait.." -ForegroundColor Cyan
     #region Logs
-    cd C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
+    Set-Location C:\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection
     Import-Module .\Microsoft.AzureStack.Diagnostics.DataCollection.psd1
     Get-AzureStackLogs -OutputPath C:\AzureStackLogs
     #endregion
@@ -1721,7 +1797,11 @@ Function F_GetAzureStackLogs {
 #region Events Mode
 $syncHash.Control_Mode_Btn_Left.Add_Click({
 $syncHash.Control_Mode_Stp.Visibility = "Collapsed"
-if ($Script:Initialized -eq "CloudBuilder_Install") {
+if ($Script:Initialized -eq "SafeOS") {
+    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
+    }
+elseif ($Script:Initialized -eq "CloudBuilder_Install") {
     $syncHash.Control_Creds_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
     }
@@ -1729,22 +1809,21 @@ elseif ($Script:Initialized -eq "CloudBuilder_Rerun") {
     $syncHash.Control_Summary_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title
     $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content
+    $syncHash.Control_Summary_Btn_Next.Content = "Rerun"
     }
 elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
     $syncHash.Control_Summary_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
     $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content_Logs
+    $syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
     }
 elseif ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
 $syncHash.Control_Summary_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Summary_Title
 $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Completed.Summary_Content
-$syncHash.Control_Summary_Btn_Next.Content = "Run"
+$syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
 }
-elseif ($Script:Initialized -eq "SafeOS") {
-    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
-    }
+
 })
 
 $syncHash.Control_Mode_Btn_Right.Add_Click({
@@ -1955,6 +2034,7 @@ If (!($Script:validation_error)){
     $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetInterface_Title
     $syncHash.Control_NetInterface_Tbl_Warning.Text = $Text_Install.NetInterface_Warning
+    $syncHash.Control_NetInterface_Lvw_Nics.Items.Clear()
     $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $false
     $Runspace_Jobs.Commands.Clear()
     $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
@@ -1993,7 +2073,6 @@ F_VerifyFields_Creds
 $syncHash.Control_NetInterface_Btn_Previous.Add_Click({
 $syncHash.Control_NetInterface_Stp.Visibility = "Collapsed"
 $syncHash.Control_NetInterface_Stp_Wait.Visibility = "Visible"
-$syncHash.Control_NetInterface_Lvw_Nics.Items.Clear()
 If ($Script:Initialized -eq "SafeOS"){
 $syncHash.Control_Unattend_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Unattend_Title
@@ -2006,8 +2085,8 @@ $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
 
 $syncHash.Control_NetInterface_Btn_Next.Add_Click({
 $syncHash.Control_NetInterface_Stp.Visibility = "Collapsed"
-$syncHash.Control_NetConfig_Stp.Visibility = "Visible"
 If ($Script:Initialized -eq "SafeOS"){
+    $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetConfig_Title
     $SyncHash.Control_NetConfig_Rbt_Static.Visibility="Collapsed"
     $SyncHash.Control_NetConfig_Rbt_DHCP.Visibility="Collapsed"
@@ -2015,6 +2094,7 @@ If ($Script:Initialized -eq "SafeOS"){
     F_CopyNicProperties
 }
 Else {
+$syncHash.Control_NetConfig_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
 $syncHash.Control_NetConfig_Stp_DNS.Visibility="Collapsed"
 }
@@ -2029,11 +2109,12 @@ $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $true
 #region Events NetConfig
 $syncHash.Control_NetConfig_Btn_Previous.Add_Click({
 $syncHash.Control_NetConfig_Stp.Visibility = "Collapsed"
-$syncHash.Control_NetInterface_Stp.Visibility = "Visible" 
 if ($script:Initialized -eq "SafeOS"){
+    $syncHash.Control_NetInterface_Stp.Visibility = "Visible" 
     $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetInterface_Title
     }
-Else{
+if ($script:Initialized -eq "Cloudbuilder_Install"){
+    $syncHash.Control_NetInterface_Stp.Visibility = "Visible" 
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetInterface_Title
     }
 })
@@ -2049,12 +2130,16 @@ if ($script:Initialized -eq "SafeOS"){
         $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
         $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
 }
-Else {
-$syncHash.Control_Summary_Stp.Visibility = "Visible"
-$SyncHash.Control_Summary_Btn_Next.Content = "Deploy"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Summary_Title
-F_Summary
-}
+if ($script:Initialized -eq "Cloudbuilder_Install"){
+    $syncHash.Control_Job_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Job_Title
+
+        $syncHash.Control_Job_Btn_Next.IsEnabled = $false
+        $Runspace_Jobs.Commands.Clear()
+        $Runspace_Jobs.AddScript($S_Netbxnda) | Out-Null
+        $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+        $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+    }
 })
 
 $syncHash.Control_NetConfig_Rbt_DHCP.Add_Click({
@@ -2101,6 +2186,11 @@ if ($Script:Initialized -eq "SafeOS"){
     $syncHash.Control_Prepare_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
 }
+if ($Script:Initialized -eq "CloudBuilder_Install"){
+    $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
+    $synchash.Control_Job_Stp_Netbxnda.Visibility="Collapsed"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
+}
 if ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
     $syncHash.Control_Mode_Stp.Visibility = "Visible"
     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
@@ -2115,23 +2205,50 @@ $syncHash.Control_Summary_Btn_Previous.Content = "Reboot later"
 $syncHash.Control_Summary_Btn_Next.Content = "Reboot now"
 F_Summary
 }
+else {
+$syncHash.Control_Summary_Stp.Visibility = "Visible"
+$SyncHash.Control_Summary_Btn_Next.Content = "Deploy"
+$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Summary_Title
+F_Summary
+}
+})
+
+$syncHash.Control_Job_Btn_Netbxnda.Add_Click({
+F_Browse_File -title "Select netbxnda.exe" -filter "netbxnda.exe|netbxnda.exe"
+if ($Script:F_Browse_obj.FileName) {
+    $syncHash.Control_Job_Tbx_Netbxnda.Text = $Script:F_Browse_obj.FileName
+    $syncHash.Control_Job_Stp_Netbxnda.Visibility = "Collapsed"
+    $Runspace_Jobs.Commands.Clear()
+    $Runspace_Jobs.AddScript($S_NetbxndaOffline) | Out-Null
+    $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+    $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+    }
 })
 #endregion Events Job
 
 #region Events Summary
 $syncHash.Control_Summary_Btn_Previous.Add_Click({
 $syncHash.Control_Summary_Stp.Visibility = "Collapsed"
-If ($Script:Initialized -eq "CloudBuilder_Install") {
+If ($Script:Initialized -eq "SafeOS"){
+    $Form.Close()
+    }
+ElseIf ($Script:Initialized -eq "CloudBuilder_Install") {
 $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
+}
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun") {
+$syncHash.Control_Mode_Stp.Visibility = "Visible"
+$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
+}
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
+$syncHash.Control_Mode_Stp.Visibility = "Visible"
+$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
 }
 ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
 $syncHash.Control_Mode_Stp.Visibility = "Visible"
 $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
     }
-ElseIf ($Script:Initialized -eq "SafeOS"){
-    $Form.Close()
-    }
+
 })
 
 $syncHash.Control_Summary_Btn_Next.Add_Click({
@@ -2140,19 +2257,19 @@ If ($Script:Initialized -eq "SafeOS"){
     $Form.Close()
     Restart-Computer -Force
 }
-If ($Script:Initialized -eq "Cloudbuilder_Install"){
+ElseIf ($Script:Initialized -eq "Cloudbuilder_Install"){
 $Form.Close()
 F_Install
 }
-If ($Script:Initialized -eq "CloudBuilder_Rerun"){
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun"){
 $Form.Close()
 F_Rerun
 }
-If ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
+ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
 $Form.Close()
-F_Rerun
+F_GetAzureStackLogs
 }
-If ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
+ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
 $Form.Close()
 F_GetAzureStackLogs
 }
