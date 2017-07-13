@@ -1764,7 +1764,7 @@ Function F_Install {
     #endregion Rerun Count
 
     #region Install
-    Start-Process powershell $filepath
+    Start-Process powershell -ArgumentList "-noexit", "-file $filepath"
     #endregion
 
 }
