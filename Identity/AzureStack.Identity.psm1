@@ -451,7 +451,8 @@ function Register-AzsWithMyDirectoryTenant {
 
 Export-ModuleMember -Function @(
     "Register-AzsGuestDirectoryTenant",
-    "Register-AzsGuestDirectoryTenant",
+    "Register-AzsWithMyDirectoryTenant",
     "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
+
 )
