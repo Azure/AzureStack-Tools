@@ -70,7 +70,7 @@ This example registers your AzureStack account with Azure, enables syndication, 
  Namespace can be registered with the following command:
  Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack' 
 
- If you would like to un-Register with you azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication
+ If you would like to un-Register with azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication
  and reportUsage set to false. This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported. 
 #>
 
@@ -142,6 +142,29 @@ else {
 }
 
 $refreshToken = (ConvertTo-SecureString -string $tenantDetails["RefreshToken"] -AsPlainText -Force)
+
+$maxAttempts = 3
+$currentAttempt = 0
+$registerRPsuccessful = $false
+do{
+
+    try {
+        Register-AzureRmResourceProvider -ProviderNamespace 'Microsoft.AzureStack'-Force -Verbose
+        $registerRPsuccessful = $true
+    }
+    catch {
+        $currentAttempt++
+        if ($currentAttempt -gt $maxAttempts)
+        {
+            $exceptionMessage = $_.Exception.Message
+            Write-Warning "Failed to register the Azure resource provider 'Microsoft.AzureStack' on attempt # $currentAttempt. Cancelling RegisterWithAzure.ps1"
+            throw $exceptionMessage
+        }
+        Write-Verbose "Failed to register Azure resource provider 'Microsoft.AzureStack'. Trying again in 10 seconds"
+        Start-Sleep -Seconds 10
+    }
+}while ((-not $registerRPsuccessful) -and ($currentAttempt -le $maxAttempts))
+
 
 #
 # Step 1: Configure Bridge identity
