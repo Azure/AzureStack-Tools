@@ -763,8 +763,9 @@ function Get-AzsInfrastructureRoleHealths {
         [string] $Location
 
     )
-
-    $resourceType = "Microsoft.InfrastructureInsights.Admin/regionHealths/serviceHealths/472aaaa6-3f63-43fa-a489-4fd9094e235f/resourceHealths"
+    $RP=Get-AzsResourceProviderHealths -Location $location|where {$_.DisplayName -eq "Capacity"}
+    $ID=$RP.RegistrationID
+    $resourceType = "Microsoft.InfrastructureInsights.Admin/regionHealths/serviceHealths/$ID/resourceHealths"
 
     $rolehealth = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $rolehealth.Properties
