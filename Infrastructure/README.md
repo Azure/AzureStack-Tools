@@ -377,7 +377,7 @@ The command does the following:
  Does restore a backup job
 
 ```powershell
-Restore-AzsBackup -name 
+Restore-AzsBackup -name ID
 ```
 
 The command does the following:
