@@ -686,13 +686,91 @@ function Get-AzsBackup {
         [string] $Location
     )
 
-    $resourceType = "Microsoft.Backup.Admin/backupLocations/$Location/backups"
+    $resourceType = "Microsoft.Backup.Admin/backupLocations/backups"
 
     $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $backuplocation.Properties
 }
 
 Export-ModuleMember -Function Get-AzsBackup
+
+<#
+    .SYNOPSIS
+    Start Infrastructure Backup
+#>
+function Start-AzsBackup {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location
+    )
+
+        $resourceType = "Microsoft.Backup.Admin/backupLocations"
+        Invoke-AzsInfrastructureAction -Name $Location -Action "createbackup" -Location $Location -ResourceType $resourceType
+}
+
+Export-ModuleMember -Function Start-AzsBackup
+
+<#
+    .SYNOPSIS
+    Restore Infrastructure Backup
+#>
+function Restore-AzsBackup {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string] $Location,
+
+         [Parameter(Mandatory = $true)]
+        [string] $Name
+
+    )
+
+        $resourceType = "Microsoft.Backup.Admin/backupLocations/backups"
+        Invoke-AzsInfrastructureAction -Name $Name -Action "restore" -Location $Location -ResourceType $resourceType
+}
+
+Export-ModuleMember -Function Restore-AzsBackup
+
+<#
+    .SYNOPSIS
+    List Resource Provider Healths
+#>
+
+function Get-AzsResourceProviderHealths {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string] $Location
+
+    )
+
+    $resourceType = "Microsoft.InfrastructureInsights.Admin/regionHealths/serviceHealths"
+
+    $rolehealth = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $rolehealth.Properties
+}
+
+Export-ModuleMember -Function Get-AzsResourceProviderHealths
+
+<#
+    .SYNOPSIS
+    List Infrastructure Role Healths
+#>
+
+function Get-AzsInfrastructureRoleHealths {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string] $Location
+
+    )
+
+    $resourceType = "Microsoft.InfrastructureInsights.Admin/regionHealths/serviceHealths/472aaaa6-3f63-43fa-a489-4fd9094e235f/resourceHealths"
+
+    $rolehealth = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
+    $rolehealth.Properties
+}
+
+Export-ModuleMember -Function Get-AzsInfrastructureRoleHealths
 
 function Get-AzsHomeLocation {
     param(
