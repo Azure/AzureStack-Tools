@@ -598,7 +598,7 @@ function Get-AzsBackup {
         [string] $Location
     )
 
-    $resourceType = "Microsoft.Backup.Admin/backupLocations/$Location/backups"
+    $resourceType = "Microsoft.Backup.Admin/backupLocations/backups"
 
     $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $backuplocation.Properties
