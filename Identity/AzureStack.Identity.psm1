@@ -26,7 +26,6 @@ function Get-AzsDirectoryTenantidentifier {
     return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $authority.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
 }
 
-Export-ModuleMember -Function 'Get-AzsDirectoryTenantidentifier' 
 
 <#
    .Synopsis
@@ -316,7 +315,7 @@ function Register-AzsGuestDirectoryTenant {
     }
 }
 
-Export-ModuleMember -Function 'Publish-AzsApplicationsToARM' 
+
 
 <#
 .Synopsis
@@ -451,8 +450,8 @@ function Register-AzsWithMyDirectoryTenant {
 }
 
 Export-ModuleMember -Function @(
-    "Register-AzureStackWithMyDirectoryTenant",
-    "Register-GuestDirectoryTenantToAzureStack",
-    "Get-DirectoryTenantIdentifier",
+    "Register-AzsWithMyDirectoryTenant",
+    "Register-AzsGuestDirectoryTenant",
+    "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
 )
