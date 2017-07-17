@@ -44,8 +44,8 @@ InModuleScope $script:ModuleName {
             { Get-AzsScaleUnitNode } |
                 Should Not Throw
         }
-        It 'Get-AzsStorageCapacity should not throw' {
-            { Get-AzsStorageCapacity } |
+        It 'Get-AzsStorageSubsystem should not throw' {
+            { Get-AzsStorageSubsystem } |
                 Should Not Throw
         }
         It 'Get-AzsInfraRole should not throw' {
@@ -65,8 +65,8 @@ InModuleScope $script:ModuleName {
                 Should Not Throw
         }
         
-        It 'Get-AzsUpdateSummary should not throw' {
-            { Get-AzsUpdateSummary } |
+        It 'Get-AzsUpdateLocation should not throw' {
+            { Get-AzsUpdateLocation } |
                 Should Not Throw
         }
         It 'Get-AzsUpdate should not throw' {
