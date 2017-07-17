@@ -280,7 +280,7 @@ function Register-AzsGuestDirectoryTenant {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string] $ResourceGroupName = 'system',
+        [string] $ResourceGroupName = 'system.local',
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
