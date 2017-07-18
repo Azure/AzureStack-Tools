@@ -643,7 +643,7 @@ function Set-AzSLocationInformation {
         }
     }
 	
-	New-AzureRmResource @params -IsFullObject
+	New-AzureRmResource @params -IsFullObject -Force
 }
 
 function Get-AzsHomeLocation {
