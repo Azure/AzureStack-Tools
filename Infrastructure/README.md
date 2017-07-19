@@ -410,6 +410,6 @@ $latitude = '12.972442'
 $longitude = '77.580643'
 $regionName = 'local'
 
-Set-AzsLocationInformation -Region $regionName -Latitude $latitude -Longitude $longitude
+Set-AzsLocationInformation -Location $regionName -Latitude $latitude -Longitude $longitude
 
 ```
