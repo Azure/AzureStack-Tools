@@ -369,7 +369,7 @@ function Register-AzsWithMyDirectoryTenant {
     $refreshToken = Get-AzureRmUserRefreshToken -azureEnvironment $azureEnvironment -directoryTenantId $azureStackEnvironment.AdTenant -AutomationCredential $AutomationCredential
 
     # Initialize the Graph PowerShell module to communicate with the correct graph service
-    $graphEnvironment = ResolveGraphEnvironment $azureEnvironment
+    $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
     Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
 
     # Initialize the service principal for the Azure Stack Resource Manager application (allows us to acquire a token to ARM). If not specified, the sign-up flow must be completed via the Azure Stack portal first.
