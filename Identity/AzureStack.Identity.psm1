@@ -26,8 +26,6 @@ function Get-AzsDirectoryTenantidentifier {
     return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $authority.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
 }
 
-
-
 <#
    .Synopsis
       This function is used to create a Service Principal on teh AD Graph
@@ -315,7 +313,6 @@ function Register-AzsGuestDirectoryTenant {
         Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
     }
 }
-
 
 <#
 .Synopsis
