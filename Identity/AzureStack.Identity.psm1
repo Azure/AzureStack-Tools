@@ -26,7 +26,6 @@ function Get-AzsDirectoryTenantidentifier {
     return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $authority.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
 }
 
-
 <#
    .Synopsis
       This function is used to create a Service Principal on teh AD Graph
@@ -315,8 +314,6 @@ function Register-AzsGuestDirectoryTenant {
     }
 }
 
-
-
 <#
 .Synopsis
 Consents to the given Azure Stack instance within the callers's Azure Directory Tenant.
@@ -369,7 +366,7 @@ function Register-AzsWithMyDirectoryTenant {
     $refreshToken = Get-AzureRmUserRefreshToken -azureEnvironment $azureEnvironment -directoryTenantId $azureStackEnvironment.AdTenant -AutomationCredential $AutomationCredential
 
     # Initialize the Graph PowerShell module to communicate with the correct graph service
-    $graphEnvironment = ResolveGraphEnvironment $azureEnvironment
+    $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
     Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
 
     # Initialize the service principal for the Azure Stack Resource Manager application (allows us to acquire a token to ARM). If not specified, the sign-up flow must be completed via the Azure Stack portal first.
@@ -450,8 +447,9 @@ function Register-AzsWithMyDirectoryTenant {
 }
 
 Export-ModuleMember -Function @(
-    "Register-AzsWithMyDirectoryTenant",
     "Register-AzsGuestDirectoryTenant",
+    "Register-AzsWithMyDirectoryTenant",
     "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
+
 )

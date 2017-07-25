@@ -1,5 +1,7 @@
 # Validate Azure ARM Template Capabilities
 
+The Cloud capabilities json AzureStackCloudCapabilities_with_AddOns_20170627.json contains Add-On resources for SQL, MYSQL and APPServices. You are required to deploy SQL RP, MYSQL RP or AppServices in order to use the respective resources.
+
 Instructions below are relative to the .\TemplateValidator folder of the [AzureStack-Tools repo](..).
 To Validate Compute Capabilities such as Images, Extensions & Sizes available in the CloudCapabilities.json add -IncludeComputeCapabilities
 To Validate Storage Capabilities such as Skus available in the CloudCapabilities.json add -IncludeStorageCapabilities

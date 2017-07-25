@@ -167,7 +167,7 @@ The command does the following:
  Does return the total capacity of the storage subsystem
 
 ```powershell
-Get-AzsStorageCapacity
+Get-AzSStorageSubsystem
 ```
 
 The command does the following:
@@ -223,7 +223,7 @@ The command does the following:
  Does list all SLB MUX Instances
 
 ```powershell
-Get-AzSLBMux
+Get-AzsSLBMux
 ```
 
 The command does the following:
@@ -476,6 +476,6 @@ $latitude = '12.972442'
 $longitude = '77.580643'
 $regionName = 'local'
 
-Set-AzsLocationInformation -Region $regionName -Latitude $latitude -Longitude $longitude
+Set-AzsLocationInformation -Location $regionName -Latitude $latitude -Longitude $longitude
 
 ```

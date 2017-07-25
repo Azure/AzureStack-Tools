@@ -1301,65 +1301,63 @@ Write-Host "." -NoNewline -ForegroundColor Cyan
 
 # Get environment details
 # CloudBuilder
-if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
-
-    if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")){
-        # Deployment not initialized
-        $Script:Initialized="CloudBuilder_Install"
-        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
-        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
-        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
-        }
-    else{
-        # Import module to check current deployment status
-        Import-Module "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1" -Force -Verbose:$false
-        $actionProgress = Get-ActionProgress -ActionType Deployment
-        # Deployment not started
-        if (!($actionProgress)){
+    if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
+        if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")){
+            # Deployment not initialized
             $Script:Initialized="CloudBuilder_Install"
             $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
             $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
             $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
             }
-        # Deployment in progress
-        elseif($actionProgress.LastAttribute.Value -eq 'InProgress'){
-            # Not deployed with deployment UI
-            if(!(test-path "C:\CloudDeployment\Rerun\config.xml")){
-                New-Item C:\CloudDeployment\Rerun -type directory -Force
-                '<config status="rerun" run="0"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
-                $Script:Initialized="CloudBuilder_Rerun"
-                $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
-                $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
-                $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
-                }
-            # Deployed with deployment UI
-            else {
-                $Status = [XML](Get-Content "C:\CloudDeployment\Rerun\config.xml")
-                # Contains only 1 or 2 deployment logs
-                if ($status.config.status -eq "Rerun" -and [int]$status.config.run -le 2){
+        else{
+            # Import module to check current deployment status
+            Import-Module "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1" -Force -Verbose:$false
+            $actionProgress = Get-ActionProgress -ActionType Deployment
+            # Deployment not started
+            if (!($actionProgress)){
+                $Script:Initialized="CloudBuilder_Install"
+                $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
+                $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
+                $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
+            }
+            # Deployment completed successfully
+            elseif($actionProgress.Attribute("Status").Value -eq 'Success'){
+                $Script:Initialized="CloudBuilder_Completed_GatherLogs"
+                $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
+                $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Completed.Mode_LeftTitle
+                $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Completed.Mode_LeftContent
+            }
+            # Deployment in progress or stopped
+            else{
+                # Not deployed with deployment UI
+                if(!(test-path "C:\CloudDeployment\Rerun\config.xml")){
+                    New-Item C:\CloudDeployment\Rerun -type directory -Force
+                    '<config status="rerun" run="0"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
                     $Script:Initialized="CloudBuilder_Rerun"
                     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
                     $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
                     $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
-                    }
-                # Contains 2 or more deplployment logs
+                }
+                # Deployed with deployment UI
                 else {
-                    $Script:Initialized="CloudBuilder_Rerun_GatherLogs"
-                    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
-                    $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle_Logs 
-                    $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent_Logs
+                    $Status = [XML](Get-Content "C:\CloudDeployment\Rerun\config.xml")
+                    # Contains only 1 or 2 deployment logs
+                    if ($status.config.status -eq "Rerun" -and [int]$status.config.run -le 2){
+                        $Script:Initialized="CloudBuilder_Rerun"
+                        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
+                        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
+                        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
+                    }
+                    # Contains 2 or more deployment logs
+                    else {
+                        $Script:Initialized="CloudBuilder_Rerun_GatherLogs"
+                        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
+                        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle_Logs
+                        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent_Logs
                     }
                 }
             }
-        else{
-            # Deployment completed
-            $Script:Initialized="CloudBuilder_Completed_GatherLogs"
-            $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
-            $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Completed.Mode_LeftTitle
-            $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Completed.Mode_LeftContent
         }
-
-    }
 
     # Reboot options
     F_Reboot_Options
@@ -1666,12 +1664,12 @@ If ($synchash.Control_NetConfig_Rbt_Static.IsChecked){
     }
 
 If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
-        $InstallScript += " -PublicVLan "
+        $InstallScript += " -PublicVlanId "
         $InstallScript += $synchash.Control_NetConfig_Tbx_VlanID.Text
     }
 
 If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
-        $InstallScript += " -EnvironmentDNS "
+        $InstallScript += " -DNSForwarder "
         $InstallScript += $synchash.Control_NetConfig_Tbx_DnsForwarder.Text
     }
 
@@ -1743,11 +1741,11 @@ Function F_Install {
     }
 
     If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
-        ' -PublicVLan "' + $synchash.Control_NetConfig_Tbx_VlanID.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -PublicVlanId "' + $synchash.Control_NetConfig_Tbx_VlanID.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
-        ' -EnvironmentDNS "' + $synchash.Control_NetConfig_Tbx_DnsForwarder.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -DNSForwarder "' + $synchash.Control_NetConfig_Tbx_DnsForwarder.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
@@ -1764,7 +1762,7 @@ Function F_Install {
     #endregion Rerun Count
 
     #region Install
-    Start-Process powershell $filepath
+    Start-Process powershell -ArgumentList "-noexit", "-file $filepath"
     #endregion
 
 }
