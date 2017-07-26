@@ -74,10 +74,6 @@ This example registers your AzureStack account with Azure, enables syndication, 
  and reportUsage set to false. This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported. 
 #>
 
-
-#requires -Module AzureRM.Profile
-#requires -Module AzureRM.Resources
-
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
@@ -116,6 +112,10 @@ param(
     [string] $AgreementNumber
 )
 
+
+#requires -Module AzureRM.Profile
+#requires -Module AzureRM.Resources
+
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
@@ -144,18 +144,24 @@ function Connect-AzureAccount
     }
 
     if (-not $isConnected)
-    {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId
-    }
+        {
+            Add-AzureRmAccount -SubscriptionId $SubscriptionId
+            $context = Get-AzureRmContext
 
-    $environment = Get-AzureRmEnvironment -Name $AzureEnvironment
-    $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
+        }
 
-    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-    if (-not $tokens -or ($tokens.Count -le 0))
-    {
-        throw "Token cache is empty."
-    }
+        $environment = Get-AzureRmEnvironment -Name $AzureEnvironment
+        $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
+
+        $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
+        if (-not $tokens -or ($tokens.Count -le 0))
+        {
+            $tokens = $context.TokenCache.ReadItems()
+            -not $tokens -or ($tokens.Count -le 0)
+            {
+                throw "Token cache is empty"
+            }
+        }
 
     $token = $tokens |
         Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
