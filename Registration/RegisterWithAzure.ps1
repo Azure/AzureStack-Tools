@@ -119,6 +119,15 @@ param(
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+$profileVersion = (Get-Module -Name AzureRM.Profile).Version
+$resourcesVersion = (Get-Module -Name AzureRM.Profile).Version
+$maxVersion = "1.0.4.4"
+
+if (($profileVersion -gt $maxVersion) -or ($resourcesVersion -gt $maxVersion))
+{
+    Write-Error "You are using an incompatible version of Powershell Module: AzureRm. Please use the version outlined here: `r`n https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install"
+}
+
 function Connect-AzureAccount
 {
     param(
@@ -156,11 +165,7 @@ function Connect-AzureAccount
         $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
         if (-not $tokens -or ($tokens.Count -le 0))
         {
-            $tokens = $context.TokenCache.ReadItems()
-            -not $tokens -or ($tokens.Count -le 0)
-            {
                 throw "Token cache is empty"
-            }
         }
 
     $token = $tokens |
