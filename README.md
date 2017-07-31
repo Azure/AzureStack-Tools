@@ -1,4 +1,4 @@
-# Azure Stack Technical Preview Version
+# Azure Stack Development Kit Version
 
 These tools are meant for use with **Azure Stack Development Kit**. Azure Stack Technical Preview 3 Refresh users can still use the tools in the [TP3-Refresh](https://github.com/Azure/AzureStack-Tools/tree/TP3-Refresh).
 

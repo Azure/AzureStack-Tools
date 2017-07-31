@@ -116,7 +116,7 @@ VM Scale Set allows deployment of multi-VM collections. To add a gallery item wi
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
 $Location = "<The location name of your AzureStack Environment>"
 
-Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm
+Add-AzureRMEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm
 
 $Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin user password>"
 $User = "<your AzureStack admin user name>"
