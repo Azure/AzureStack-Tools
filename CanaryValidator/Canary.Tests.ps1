@@ -234,7 +234,32 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
         {
-            Get-AzsScaleUnitNode -Location $ResourceLocation
+            $retryCount = 0
+            $retryLimit = 2
+            $retryDelayInSec = 20
+
+            do
+            {
+                try
+                {
+                    Get-AzsScaleUnitNode -Location $ResourceLocation
+                    break;
+                }
+                catch
+                {
+                    $retryCount++
+
+                    if($retryCount -gt $retryLimit)
+                    {
+                        throw "GetScaleUnitNode method failed and retried '$retryCount' times. The last exception was: $_" 
+                    }
+                    else
+                    {
+                        Start-Sleep -Seconds $retryDelayInSec
+                    }
+                }
+            }
+            while($retryCount -le $retryLimit)
         }
 
         Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
