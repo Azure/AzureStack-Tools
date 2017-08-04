@@ -483,6 +483,8 @@ function NewComputeQuota
     $memoryLimitMB  = 102400
     $coresLimit     = 100
     $ApiVersion     = "2015-12-01-preview"
+    $availabilitySetCount = 10
+    $vmScaleSetCount = 100
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Compute.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
     $RequestBody = @"
@@ -493,7 +495,9 @@ function NewComputeQuota
         "properties":{
             "virtualMachineCount":$vmCount,
             "memoryLimitMB":$memoryLimitMB,
-            "coresLimit":$coresLimit
+            "coresLimit":$coresLimit,
+            "availabilitySetCount":$availabilitySetCount,
+            "vmScaleSetCount":$vmScaleSetCount
         }
     }
 "@
