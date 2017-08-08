@@ -61,7 +61,7 @@ param (
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,99),
+    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,9999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
