@@ -232,7 +232,7 @@ while ($runCount -le $NumberOfIterations)
             Get-AzsScaleUnit -Location $ResourceLocation
         }
 
-        Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -RetryCount 2 -RetryDelayInSec 20 -UsecaseBlock `
         {
             Get-AzsScaleUnitNode -Location $ResourceLocation
         }
@@ -295,7 +295,7 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name)).SizeRemaining/1GB -gt 35)
+    if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name) -ErrorAction SilentlyContinue).SizeRemaining/1GB -gt 35)
     {
         [boolean]$invalidUri = $false
         try {Invoke-WebRequest -Uri $LinuxImagePath -UseBasicParsing -DisableKeepAlive -Method Head -ErrorAction SilentlyContinue | Out-Null} 
