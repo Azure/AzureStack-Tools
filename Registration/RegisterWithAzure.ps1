@@ -170,9 +170,9 @@ function Connect-AzureAccount
             $isConnected = $true;
         }
     }
-    catch [System.Management.Automation.PSInvalidOperationException]
+    catch
     {
-        
+        Write-Warning "Not currently connected to Azure: `r`n$($_.Exception)"
     }
 
     if (-not $isConnected)
