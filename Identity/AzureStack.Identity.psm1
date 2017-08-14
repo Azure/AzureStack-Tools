@@ -26,7 +26,7 @@ function Get-AzsDirectoryTenantidentifier {
     return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $authority.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]
 }
 
-Export-ModuleMember -Function 'Get-AzsDirectoryTenantidentifier' 
+
 
 <#
    .Synopsis
@@ -280,7 +280,7 @@ function Register-AzsGuestDirectoryTenant {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string] $ResourceGroupName = 'system',
+        [string] $ResourceGroupName = 'system.local',
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
@@ -316,7 +316,6 @@ function Register-AzsGuestDirectoryTenant {
     }
 }
 
-Export-ModuleMember -Function 'Publish-AzsApplicationsToARM' 
 
 <#
 .Synopsis
@@ -346,11 +345,6 @@ function Register-AzsWithMyDirectoryTenant {
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantName,
 
-        # Optional: The identifier (GUID) of the Resource Manager application. Pass this parameter to skip the need to complete the guest signup flow via the portal.
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string] $ResourceManagerApplicationId,
-
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
         [ValidateNotNull()]
@@ -359,6 +353,9 @@ function Register-AzsWithMyDirectoryTenant {
 
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
+
+    # Get the Application of Resource Manager
+    $ResourceManagerApplicationId = $(Invoke-RestMethod "$TenantResourceManagerEndpoint/metadata/identity?api-version=2015-01-01").applicationId
 
     # Install-Module AzureRm -RequiredVersion '1.2.8'
     Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
@@ -370,7 +367,7 @@ function Register-AzsWithMyDirectoryTenant {
     $refreshToken = Get-AzureRmUserRefreshToken -azureEnvironment $azureEnvironment -directoryTenantId $azureStackEnvironment.AdTenant -AutomationCredential $AutomationCredential
 
     # Initialize the Graph PowerShell module to communicate with the correct graph service
-    $graphEnvironment = ResolveGraphEnvironment $azureEnvironment
+    $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
     Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
 
     # Initialize the service principal for the Azure Stack Resource Manager application (allows us to acquire a token to ARM). If not specified, the sign-up flow must be completed via the Azure Stack portal first.
@@ -406,7 +403,7 @@ function Register-AzsWithMyDirectoryTenant {
         # Initialize the necessary tags for the registered application
         if ($applicationRegistration.tags)
         {
-            Update-GraphApplicationServicePrincipalTags -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
+            Update-GraphApplicationServicePrincipalTag -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
         }
 
         # Lookup the permission consent status for the application permissions (either to or from) that the registered application requires
@@ -451,8 +448,9 @@ function Register-AzsWithMyDirectoryTenant {
 }
 
 Export-ModuleMember -Function @(
-    "Register-AzureStackWithMyDirectoryTenant",
-    "Register-GuestDirectoryTenantToAzureStack",
-    "Get-DirectoryTenantIdentifier",
+    "Register-AzsGuestDirectoryTenant",
+    "Register-AzsWithMyDirectoryTenant",
+    "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
+
 )

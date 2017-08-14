@@ -28,6 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
+$Text_Generic.Version = "1.0.06"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -543,7 +544,11 @@ $Xaml = @'
     <Grid>
         <DockPanel LastChildFill="True" >
             <StackPanel DockPanel.Dock="Left" Width="550" HorizontalAlignment="Left" Margin="50,0,0,0" >
-                <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="0,25,0,0" Text="Microsoft Azure Stack" />
+                <StackPanel Orientation="Horizontal" Margin="0,25,0,0">
+                    <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Microsoft Azure Stack" />
+                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="210,3,0,0" Text="Installer UI version: " />
+                    <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#FF4590CE" Margin="0,3,0,0" />
+                </StackPanel>
                 <TextBlock FontSize="44" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Development Kit" />
                 <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Foreground="#EBEBEB" Margin="0,50,0,30" Text="Title" />
                 <!--#region Mode-->
@@ -836,6 +841,10 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | Wher
 #endregion
 
 #region Data
+#region Version
+$syncHash.Control_Header_Tbl_Version.Text = $Text_Generic.Version
+#endregion
+
 #region AuthEndpoints
 $AuthEndpoints = @{
     'Azure Cloud'= @{
@@ -1301,65 +1310,63 @@ Write-Host "." -NoNewline -ForegroundColor Cyan
 
 # Get environment details
 # CloudBuilder
-if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
-
-    if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")){
-        # Deployment not initialized
-        $Script:Initialized="CloudBuilder_Install"
-        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
-        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
-        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
-        }
-    else{
-        # Import module to check current deployment status
-        Import-Module "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1" -Force -Verbose:$false
-        $actionProgress = Get-ActionProgress -ActionType Deployment
-        # Deployment not started
-        if (!($actionProgress)){
+    if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
+        if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")){
+            # Deployment not initialized
             $Script:Initialized="CloudBuilder_Install"
             $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
             $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
             $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
             }
-        # Deployment in progress
-        elseif($actionProgress.LastAttribute.Value -eq 'InProgress'){
-            # Not deployed with deployment UI
-            if(!(test-path "C:\CloudDeployment\Rerun\config.xml")){
-                New-Item C:\CloudDeployment\Rerun -type directory -Force
-                '<config status="rerun" run="0"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
-                $Script:Initialized="CloudBuilder_Rerun"
-                $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
-                $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
-                $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
-                }
-            # Deployed with deployment UI
-            else {
-                $Status = [XML](Get-Content "C:\CloudDeployment\Rerun\config.xml")
-                # Contains only 1 or 2 deployment logs
-                if ($status.config.status -eq "Rerun" -and [int]$status.config.run -le 2){
+        else{
+            # Import module to check current deployment status
+            Import-Module "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1" -Force -Verbose:$false
+            $actionProgress = Get-ActionProgress -ActionType Deployment
+            # Deployment not started
+            if (!($actionProgress)){
+                $Script:Initialized="CloudBuilder_Install"
+                $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
+                $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
+                $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
+            }
+            # Deployment completed successfully
+            elseif($actionProgress.Attribute("Status").Value -eq 'Success'){
+                $Script:Initialized="CloudBuilder_Completed_GatherLogs"
+                $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
+                $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Completed.Mode_LeftTitle
+                $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Completed.Mode_LeftContent
+            }
+            # Deployment in progress or stopped
+            else{
+                # Not deployed with deployment UI
+                if(!(test-path "C:\CloudDeployment\Rerun\config.xml")){
+                    New-Item C:\CloudDeployment\Rerun -type directory -Force
+                    '<config status="rerun" run="0"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
                     $Script:Initialized="CloudBuilder_Rerun"
                     $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
                     $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
                     $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
-                    }
-                # Contains 2 or more deplployment logs
+                }
+                # Deployed with deployment UI
                 else {
-                    $Script:Initialized="CloudBuilder_Rerun_GatherLogs"
-                    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
-                    $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle_Logs 
-                    $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent_Logs
+                    $Status = [XML](Get-Content "C:\CloudDeployment\Rerun\config.xml")
+                    # Contains only 1 or 2 deployment logs
+                    if ($status.config.status -eq "Rerun" -and [int]$status.config.run -le 2){
+                        $Script:Initialized="CloudBuilder_Rerun"
+                        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
+                        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
+                        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent
+                    }
+                    # Contains 2 or more deployment logs
+                    else {
+                        $Script:Initialized="CloudBuilder_Rerun_GatherLogs"
+                        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
+                        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle_Logs
+                        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Rerun.Mode_LeftContent_Logs
                     }
                 }
             }
-        else{
-            # Deployment completed
-            $Script:Initialized="CloudBuilder_Completed_GatherLogs"
-            $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
-            $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Completed.Mode_LeftTitle
-            $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Completed.Mode_LeftContent
         }
-
-    }
 
     # Reboot options
     F_Reboot_Options
@@ -1679,6 +1686,10 @@ If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
         $InstallScript += " -TimeServer "
         $InstallScript += $synchash.Control_NetConfig_Tbx_TimeServer.Text
     }
+Else {
+        $InstallScript += " -TimeServer "
+        $InstallScript += "pool.ntp.org"
+}
 
 $syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
 
@@ -1753,6 +1764,9 @@ Function F_Install {
     If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
         ' -TimeServer "' + $synchash.Control_NetConfig_Tbx_TimeServer.Text + '"' |  Add-Content $filepath -NoNewline
     }
+    Else {
+        ' -TimeServer "' + 'pool.ntp.org' + '"' |  Add-Content $filepath -NoNewline
+    }
  
     #endregion
 
@@ -1764,7 +1778,7 @@ Function F_Install {
     #endregion Rerun Count
 
     #region Install
-    Start-Process powershell $filepath
+    Start-Process powershell -ArgumentList "-noexit", "-file $filepath"
     #endregion
 
 }

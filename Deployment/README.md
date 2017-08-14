@@ -7,6 +7,8 @@ The Azure Stack Development Kit installer provides a UI with the following featu
 - Rerun and Gather Logs
 - Reboot to SafeOS
 
+![](https://github.com/1RedOne/AzureStack-Tools/blob/master/Deployment/ScreenShot.png?raw=true)
+
 To install the Azure Stack Development Kit you require
 
 - A physical server that meets the requirements
