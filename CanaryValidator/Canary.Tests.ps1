@@ -61,7 +61,7 @@ param (
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,99),
+    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,9999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -232,7 +232,7 @@ while ($runCount -le $NumberOfIterations)
             Get-AzsScaleUnit -Location $ResourceLocation
         }
 
-        Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -UsecaseBlock `
+        Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -RetryCount 2 -RetryDelayInSec 20 -UsecaseBlock `
         {
             Get-AzsScaleUnitNode -Location $ResourceLocation
         }
@@ -295,7 +295,7 @@ while ($runCount -le $NumberOfIterations)
         }
     }
 
-    if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name)).SizeRemaining/1GB -gt 35)
+    if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name) -ErrorAction SilentlyContinue).SizeRemaining/1GB -gt 35)
     {
         [boolean]$invalidUri = $false
         try {Invoke-WebRequest -Uri $LinuxImagePath -UseBasicParsing -DisableKeepAlive -Method Head -ErrorAction SilentlyContinue | Out-Null} 

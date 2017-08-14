@@ -598,13 +598,53 @@ function Get-AzsBackup {
         [string] $Location
     )
 
-    $resourceType = "Microsoft.Backup.Admin/backupLocations/$Location/backups"
+    $resourceType = "Microsoft.Backup.Admin/backupLocations/backups"
 
     $backuplocation = Get-AzsInfrastructureResource -Location $Location -resourceType $resourceType
     $backuplocation.Properties
 }
 
 Export-ModuleMember -Function Get-AzsBackup
+
+<#
+    .SYNOPSIS
+    Set Azure Stack geographic location information
+#>
+
+function Set-AzSLocationInformation {
+    param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+		
+        [Parameter(Mandatory = $true)] 
+        [string] $Latitude = '47.608013', 
+
+        [Parameter(Mandatory = $true)] 
+        [string] $Longitude = '-122.335167' 
+	)
+	
+    $Location = Get-AzsHomeLocation -Location $Location
+	
+	$resourceType = "Microsoft.Subscriptions.Admin/locations"
+	$apiVersion = "2015-11-01"
+		
+	$locationResource = Get-AzureRmResource -ResourceType $resourceType -ResourceName $Location -ApiVersion $apiVersion
+	
+    $params = @{
+        ResourceName      = $Location
+        ResourceType      = $resourceType
+        ApiVersion        = $apiVersion
+        Properties        = @{
+            Id            = $locationResource.ResourceId
+            Name          = $locationResource.Name
+            DisplayName   = $locationResource.Name
+            Latitude      = $Latitude
+            Longitude     = $Longitude
+        }
+    }
+	
+	New-AzureRmResource @params -IsFullObject -Force
+}
 
 function Get-AzsHomeLocation {
     param(

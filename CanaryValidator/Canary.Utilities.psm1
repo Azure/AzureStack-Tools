@@ -283,7 +283,11 @@ function Invoke-Usecase
         [string]$Description, 
         [parameter(Mandatory=$true, Position = 2)]
         [ValidateNotNullOrEmpty()]
-        [ScriptBlock]$UsecaseBlock    
+        [ScriptBlock]$UsecaseBlock,
+        [parameter(Mandatory=$false, Position = 3)]
+        [int]$RetryCount = 0, 
+        [parameter(Mandatory=$false, Position = 4)]
+        [int]$RetryDelayInSec = 10
     )
 
     if ($Global:listAvailableUsecases)
@@ -324,7 +328,54 @@ function Invoke-Usecase
 
     try
     {
-        $result = Invoke-Command -ScriptBlock $UsecaseBlock
+        $currentRetryCount = 0
+
+        do
+        {
+            $useCaseError = $null
+
+            try
+            {
+                $result = Invoke-Command -ScriptBlock $UsecaseBlock
+            }
+            catch
+            {
+                $useCaseError = $_
+            }
+
+            # Dont retry or log errors on the parent cases
+            if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
+            {
+                $useCaseError = $null
+                break;
+            }
+
+            if ($useCaseError)
+            {       
+                $currentRetryCount++
+
+                if($currentRetryCount -gt $retryCount)
+                {
+                    break
+                }
+                else
+                {
+                    Start-Sleep -Seconds $RetryDelayInSec
+                }
+            }
+        }
+        while($useCaseError)
+
+        if ($useCaseError -and $RetryCount -gt 0)
+        {
+            throw "Test '$Name' failed and retried '$RetryCount' times. The last exception was: $useCaseError" 
+        }
+
+        if ($useCaseError)
+        {
+            throw $useCaseError
+        }
+
         if ($result -and (-not $UsecaseBlock.ToString().Contains("Invoke-Usecase")))
         {
             Log-Info ($result)
@@ -483,6 +534,8 @@ function NewComputeQuota
     $memoryLimitMB  = 102400
     $coresLimit     = 100
     $ApiVersion     = "2015-12-01-preview"
+    $availabilitySetCount = 10
+    $vmScaleSetCount = 100
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Compute.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
     $RequestBody = @"
@@ -493,7 +546,9 @@ function NewComputeQuota
         "properties":{
             "virtualMachineCount":$vmCount,
             "memoryLimitMB":$memoryLimitMB,
-            "coresLimit":$coresLimit
+            "coresLimit":$coresLimit,
+            "availabilitySetCount":$availabilitySetCount,
+            "vmScaleSetCount":$vmScaleSetCount
         }
     }
 "@

@@ -68,7 +68,7 @@ The command does the following:
  Review the Update Summary for a specified region.
 
 ```powershell
-Get-AzsUpdateSummary
+Get-AzsUpdateLocation
 ```
 
 The command does the following:
@@ -167,7 +167,7 @@ The command does the following:
  Does return the total capacity of the storage subsystem
 
 ```powershell
-Get-AzsStorageCapacity
+Get-AzSStorageSubsystem
 ```
 
 The command does the following:
@@ -223,7 +223,7 @@ The command does the following:
  Does list all SLB MUX Instances
 
 ```powershell
-Get-AzSLBMux
+Get-AzsSLBMux
 ```
 
 The command does the following:
@@ -359,7 +359,7 @@ Get-AzsIpPool
 
 ```powershell
 #Review Current Region Update Summary
-Get-AzsUpdateSummary
+Get-AzsUpdateLocation
 
 #Check for available and applicable updates
 Get-AzsUpdate
@@ -371,7 +371,7 @@ Install-AzsUpdate -Update "2.0.0.0"
 Get-AzsUpdateRun -Update "2.0.0.0"
 
 #Review Region Update Summary after successful run
-Get-AzsUpdateSummary
+Get-AzsUpdateLocation
 ```
 
 ### Perform FRU procedure
@@ -385,10 +385,10 @@ $node | fl
 #Enable Maintenance Mode for that node which drains all active resources
 Disable-AzsScaleUnitNode -Name $node.name
 
-#Power Off Server using build in KVN or physical power button
+#Power Off Server using build in KVM or physical power button
 #BMC IP Address is returned by previous command $node.properties | fl
 #Apply FRU Procedure
-#Power On Server using build in KVN or physical power button
+#Power On Server using build in KVM or physical power button
 
 #Resume ScaleUnitNode from Maintenance Mode
 Enable-AzsScaleUnitNode -Name $node.name
@@ -410,6 +410,6 @@ $latitude = '12.972442'
 $longitude = '77.580643'
 $regionName = 'local'
 
-Set-AzsLocationInformation -Region $regionName -Latitude $latitude -Longitude $longitude
+Set-AzsLocationInformation -Location $regionName -Latitude $latitude -Longitude $longitude
 
 ```
