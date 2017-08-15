@@ -803,7 +803,7 @@ while ($runCount -le $NumberOfIterations)
     Invoke-Usecase -Name 'RetrieveResourceDeploymentTimes' -Description "Retrieves the resources deployment times from the ARM template deployment" -UsecaseBlock `
     {
         $templateDeploymentName = "CanaryVMDeployment"
-        (Get-AzureRmResourceGroupDeploymentOperation -Deploymentname $templateDeploymentName -ResourceGroupName $CanaryVMRG).Properties | Select-Object ProvisioningOperation,Duration,ProvisioningState,StatusCode,TargetResource | Format-Table -AutoSize
+        (Get-AzureRmResourceGroupDeploymentOperation -Deploymentname $templateDeploymentName -ResourceGroupName $CanaryVMRG).Properties | Select-Object ProvisioningOperation,@{Name="ResourceType";Expression={$_.TargetResource.ResourceType}},@{Name="ResourceName";Expression={$_.TargetResource.ResourceName}},Duration,ProvisioningState,StatusCode | Format-Table -AutoSize
     }
 
     $canaryWindowsVMList = @()
