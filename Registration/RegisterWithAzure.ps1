@@ -84,13 +84,13 @@ This example registers your AzureStack account with Azure, enables syndication, 
 
 This example registers your AzureStack account with Azure, enables syndication and usage and gives a specific name to the resource group and registration resource. 
 
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "Prefix-ERCS01" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "Registration01"
+.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "<PreFix>-ERCS01" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "Registration01"
 
 .EXAMPLE
 
 This example un-Registers by disabling syndication and stopping usage push to Azure. Note that usage will still be collected, just not pushed to Azure.
 
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "Azs-ERC01" -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
+.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "<Prefix>-ERC01" -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
 
 .NOTES
 
@@ -235,10 +235,55 @@ try
     $tenantId = $connection.TenantId
     Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId." -Verbose
     $refreshToken = $connection.Token.RefreshToken
-    $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironmentName -TenantId $using:tenantId }
+
+    $currentAttempt = 0
+    $maxAttempts = 3
+    $opSuccessful = $false
+    $sleepSeconds = 10
+    do{
+        try
+        {
+            $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironmentName -TenantId $using:tenantId }
+            $opSuccessful = $true
+        }
+        catch
+        {
+            Write-Verbose "Creation of service principal failed:`r`n$($_.Exception.Message)"
+            Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -eq $maxAttempts)
+            {
+                throw $_.Exception
+            }
+        }
+    }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+    
 
     Write-Verbose "Creating registration token." -Verbose
-    $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
+    $currentAttempt = 0
+    $maxAttempts = 3
+    $opSuccessful = $false
+    $sleepSeconds = 10
+    do{
+        try
+        {
+            $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
+            $opSuccessful = $true
+        }
+        catch
+        {
+            Write-Verbose "Creation of service principal failed:`r`n$($_.Exception.Message)"
+            Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -eq $maxAttempts)
+            {
+                throw $_.Exception
+            }
+        }
+    }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+    
 
     Write-Verbose "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation." -Verbose
     $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
