@@ -139,8 +139,8 @@ param(
 
 
 #requires -Version 4.0
-#requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "2.7"} 
-#requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "3.7"} 
+#requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
+#requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
 
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
@@ -209,8 +209,30 @@ function Connect-AzureAccount
 Write-Verbose "Logging in to Azure."
 $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName
 
-Write-Verbose "Initializing privileged JEA session."
-$session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
+$currentAttempt = 0
+$maxAttempts = 3
+$sleepSeconds = 10
+$opSuccessful = $false
+do{
+    try
+    {
+        Write-Verbose "Initializing privileged JEA session."
+        $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
+        $opSuccessful = $true
+    }
+    catch
+    {
+        Write-Verbose "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
+        Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+        $currentAttempt++
+        Start-Sleep -Seconds $sleepSeconds
+        if ($currentAttempt -eq $maxAttempts)
+        {
+            throw $_.Exception
+        }
+    }
+}while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+
 
 try
 {
@@ -223,8 +245,7 @@ try
 
     Write-Verbose -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
 
-    $tenantId = $connection.TenantId
-    Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId."
+    $tenantId = $connection.TenantId    
     $refreshToken = $connection.Token.RefreshToken
 
     $currentAttempt = 0
@@ -234,6 +255,7 @@ try
     do{
         try
         {
+            Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId."
             $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironmentName -TenantId $using:tenantId }
             $opSuccessful = $true
         }
@@ -251,7 +273,7 @@ try
     }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
     
 
-    Write-Verbose "Creating registration token."
+    
     $currentAttempt = 0
     $maxAttempts = 3
     $opSuccessful = $false
@@ -259,12 +281,13 @@ try
     do{
         try
         {
+            Write-Verbose "Creating registration token."
             $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
             $opSuccessful = $true
         }
         catch
         {
-            Write-Verbose "Creation of service principal failed:`r`n$($_.Exception.Message)"
+            Write-Verbose "Creation of registration token failed:`r`n$($_.Exception.Message)"
             Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
