@@ -141,6 +141,7 @@ param(
 #requires -Version 4.0
 #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
 #requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
+#requires -RunAsAdministrator
 
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
@@ -204,6 +205,13 @@ function Connect-AzureAccount
         ManagementResourceId = $environment.ActiveDirectoryServiceEndpointResourceId
         Token = $token
     }
+}
+
+# Registration must be run as a domain admin
+$currentUser = whoami
+if ($currentUser -inotlike "*AzureStackAdmin")
+{
+    Throw "RegisterWithAzure must be run as a domain admin in an elevated powershell instance. `r`nCurrentUser: $currentUser"
 }
 
 Write-Verbose "Logging in to Azure."
