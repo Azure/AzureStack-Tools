@@ -217,26 +217,6 @@ do{
     try
     {
         Write-Verbose "Initializing privileged JEA session."
-
-        $currentTrustedRoot = (Get-Item wsman:\localhost\Client\TrustedHosts).Value
-        if([string]::IsNullOrEmpty($currentTrustedRoot) -or (-not $currentTrustedRoot.Contains($JeaComputerName)))
-        {
-            $allowAllHost = $false;
-            foreach($trustHost in $currentTrustedRoot.Split(","))
-            {
-                if($trustHost -eq "*")
-                {
-                    $allowAllHost = $true;
-                    break;
-                }
-            }
-
-            if(-not $allowAllHost)
-            {
-                Set-Item wsman:\localhost\Client\TrustedHosts -Value "$currentTrustedRoot, $JeaComputerName" -Force
-            }
-        }
-
         $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
         $opSuccessful = $true
     }
