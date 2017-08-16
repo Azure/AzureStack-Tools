@@ -5,73 +5,98 @@
 
 .SYNOPSIS
 
-This script can be used to register Azure Stack POC with Azure. To run this script, you must have a public Azure subscription of any type.
-There must also be an account that is an owner or contributor of the subscription, and you must have registered the AzureStack resource provider
+This script can be used to register Azure Stack with Azure. To run this script, you must have a public Azure subscription of any type.
+You must also have access to an account that is an owner or contributor to that subscription.
 
 .DESCRIPTION
 
-RegisterWithAzure runs scripts already present in Azure Stack (path: $root\CloudDeployment\Setup\Activation\Bridge)to connect your Azure Stack to Azure.
-After connecting with Azure, you can test marketplace syndication by downloading products from the marketplace. Usage data will also default to being reported to Azure for billing purposes.
+RegisterWithAzure runs scripts already present in Azure Stack (path: $env:HOMEDRIVE\CloudDeployment\Setup\Activation\Bridge)to connect your Azure Stack to Azure.
+After connecting with Azure, you can download products from the marketplace (See the documentation for more information: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-download-azure-marketplace-item).
+Running this script with default parameters will enable marketplace syndication and usage data will default to being reported to Azure.
 To turn these features off see examples below.
 
-The script will follow four steps:
-Configure bridge identity: Creates Azure AD application that is used by Azure Bridge for marketplace syndication and by Usage Bridge to send Usage records (if configured).
-Get registration request: get Azure Stack environment information to create a registration for this Azure Stack in azure
-Register with Azure: uses Azure powershell to create an "Azure Stack Registration" resource on your Azure subscription
-Activate Azure Stack: final step in connecting Azure Stack to be able to call out to Azure
+This script will create the following resources by default:
+- An activation resource group and resource in Azure Stack
+- A resource group in Azure
+- A registration resource in the created resource group in Azure
 
-.PARAMETER azureCredential
+See documentation for more detail: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register
 
-Powershell object that contains credential information such as user name and password. If not supplied script will request login via gui
+.PARAMETER CloudAdminCredential
 
-.PARAMETER azureAccountId
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+If not supplied script will request manual input of username and password
 
-Username for an owner/contributor of the azure subscription. This user must not be an MSA or 2FA account. This parameter is mandatory.
+.PARAMETER AzureSubscriptionId
 
-.PARAMETER azureSubscriptionId
+The subscription Id that will be used for marketplace syndication and usage. The Azure Account Id used during registration must have resource creation access to this subscription.
 
-Azure subscription ID that you want to register your Azure Stack with. This parameter is mandatory.
+.PARAMETER JeaComputerName
 
-.PARAMETER azureDirectoryTenantName
+Just-Enough-Access Computer Name, also known as Emergency Console VM.
 
-Name of your AAD Tenant which your Azure subscription is a part of. This parameter is mandatory.
+.PARAMETER ResourceGroupName
 
-.PARAMETER azureEnvironment
+This will be the name of the resource group in Azure where the registration resource is stored. Defaults to "azurestack"
 
-Environment name for use in retrieving tenant details and running several of the activation scripts. Defaults to "AzureCloud".
+.PARAMETER  ResourceGroupLocation
 
-.PARAMETER azureResourceManagerEndpoint
+The location where the resource group will be created. Defaults to "westcentralus"
 
-URI used for ActivateBridge.ps1 that refers to the endpoint for Azure Resource Manager. Defaults to "https://management.azure.com"
+.PARAMETER RegistrationName
 
-.PARAMETER enableSyndication
+The name of the registration resource that will be created in Azure. If none is supplied, defaults to "AzureStack-<CloudId>" where <CloudId> is the CloudId associated with the Azure Stack environment
 
-Boolean value used in Register-AzureStack.ps1 to enable marketplace syndication. Defaults to $true
+.PARAMETER AzureEnvironmentName
 
-.PARAMETER reportUsage
+The name of the Azure Environment where resources will be created. Defaults to "AzureCloud"
 
-Boolean value used in Register-AzureStack.ps1 to enable reporting of usage records to Azure. Defaults to $true
+.PARAMETER BillingModel
+
+The billing model that the subscription uses. Select from "Capacity","PayAsYouUse", and "Development". Defaults to "Development". Pleas see documentation for more information: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-billing-and-chargeback
+
+.PARAMETER MarketplaceSyndicationEnabled
+
+This is a switch that determines if this registration will allow you to download products from the Azure Marketplace. Defaults to $true
+
+.PARAMETER UsageReportingEnabled
+
+This is a switch that determines if usage records are reported to Azure. Defaults to $true
+
+.PARAMETER AgreementNumber
+
+Used when the billing model is set to capacity. If this is the case you will need to provide a specific agreement number associated with your billing agreement.
 
 .EXAMPLE
 
-This example registers your AzureStack account with Azure, enables syndication, and enables usage reporting to Azure.
-This script must be run from the Host machine of the POC.
+This example registers your AzureStack environment with Azure, enables syndication, and enables usage reporting to Azure.
 
-.\RegisterWithAzure.ps1 -azureCredential $yourCredentials -azureSubscriptionId $subsciptionId -azureDirectoryTenantName "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com"
+.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "Azs-ERC01"
 
 .EXAMPLE
 
-This example registers your AzureStack account with Azure, enables syndication, and disables usage reporting to Azure. 
+This example registers your AzureStack environment with Azure, enables syndication, and disables usage reporting to Azure. 
 
-.\RegisterWithAzure.ps1 -azureCredential $yourCredentials -azureSubscriptionId $subsciptionId -azureDirectoryTenantName "contoso.onmicrosoft.com" -azureAccountId "serviceadmin@contoso.onmicrosoft.com" -reportUsage:$false
+.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "Azs-ERC01" -UsageReportingEnabled:$false
+
+.EXAMPLE
+
+This example registers your AzureStack environment with Azure, enables syndication and usage and gives a specific name to the resource group and registration resource. 
+
+.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "<PreFix>-ERCS01" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "Registration01"
+
+.EXAMPLE
+
+This example un-registers by disabling syndication and stopping usage sent to Azure. Note that usage will still be collected, just not sent to Azure.
+
+.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "<Prefix>-ERC01" -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
 
 .NOTES
- Ensure that you have an Azure subscription and it is registered for Microsoft.AzureStack namespace in Azure.
- Namespace can be registered with the following command:
- Register-AzureRmResourceProvider -ProviderNamespace 'microsoft.azurestack' 
 
- If you would like to un-Register with you azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication
- and reportUsage set to false. This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported. 
+If you would like to un-Register with you azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication
+and reportUsage set to false. This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported.
+
+If you would like to use a different subscription for registration you must remove the activation resource from Azure and then re-run this script with a new subscription Id passed in.
 #>
 
 [CmdletBinding()]
@@ -95,7 +120,7 @@ param(
     [String] $RegistrationName,
 
     [Parameter(Mandatory = $false)]
-    [String] $AzureEnvironment = 'AzureCloud',
+    [String] $AzureEnvironmentName = 'AzureCloud',
 
     [Parameter(Mandatory = $false)]
     [ValidateSet('Capacity', 'PayAsYouUse', 'Development')]
@@ -113,20 +138,12 @@ param(
 )
 
 
-#requires -Module AzureRM.Profile
-#requires -Module AzureRM.Resources
+#requires -Version 4.0
+#requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
+#requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
 
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
-
-$profileVersion = (Get-Module -Name AzureRM.Profile).Version
-$resourcesVersion = (Get-Module -Name AzureRM.Profile).Version
-$maxVersion = "1.0.4.4"
-
-if (($profileVersion -gt $maxVersion) -or ($resourcesVersion -gt $maxVersion))
-{
-    Write-Error "You are using an incompatible version of Powershell Module: AzureRm. Please use the version outlined here: `r`n https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install"
-}
 
 function Connect-AzureAccount
 {
@@ -135,38 +152,40 @@ function Connect-AzureAccount
         [string]$SubscriptionId,
 
         [Parameter(Mandatory = $true)]
-        [string]$AzureEnvironment
+        [string]$AzureEnvironmentName
     )
 
     $isConnected = $false;
-
+    
     try
     {
         $context = Get-AzureRmContext
+        $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
+        $context.Environment = $environment
         if ($context.Subscription.SubscriptionId -eq $SubscriptionId)
         {
             $isConnected = $true;
         }
     }
-    catch [System.Management.Automation.PSInvalidOperationException]
+    catch
     {
+        Write-Warning "Not currently connected to Azure: `r`n$($_.Exception)"
     }
 
     if (-not $isConnected)
-        {
-            Add-AzureRmAccount -SubscriptionId $SubscriptionId
-            $context = Get-AzureRmContext
+    {
+        Add-AzureRmAccount -SubscriptionId $SubscriptionId
+        $context = Get-AzureRmContext
+    }
 
-        }
+    $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
+    $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
 
-        $environment = Get-AzureRmEnvironment -Name $AzureEnvironment
-        $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
-
-        $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-        if (-not $tokens -or ($tokens.Count -le 0))
-        {
-                throw "Token cache is empty"
-        }
+    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
+    if (-not $tokens -or ($tokens.Count -le 0))
+    {
+            throw "Token cache is empty"
+    }
 
     $token = $tokens |
         Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
@@ -187,33 +206,100 @@ function Connect-AzureAccount
     }
 }
 
+Write-Verbose "Logging in to Azure."
+$connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName
 
-Write-Verbose "Logging in to Azure." -Verbose
-$connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironment
+$currentAttempt = 0
+$maxAttempts = 3
+$sleepSeconds = 10
+$opSuccessful = $false
+do{
+    try
+    {
+        Write-Verbose "Initializing privileged JEA session."
+        $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
+        $opSuccessful = $true
+    }
+    catch
+    {
+        Write-Verbose "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
+        Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+        $currentAttempt++
+        Start-Sleep -Seconds $sleepSeconds
+        if ($currentAttempt -eq $maxAttempts)
+        {
+            throw $_.Exception
+        }
+    }
+}while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
 
-Write-Verbose "Initializing privileged JEA session." -Verbose
-$session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
 
 try
 {
-    Write-Verbose "Verifying stamp version." -Verbose
+    Write-Verbose "Verifying stamp version."
     $stampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation -WarningAction SilentlyContinue }
-    $minVersion = "1.0.170626.1"
-    if ($stampInfo.StampVersion -lt $minVersion) {
+    $minVersion = [Version]"1.0.170626.1"
+    if ([Version]$stampInfo.StampVersion -lt $minVersion) {
         Write-Error -Message "Script only applicable for Azure Stack builds $minVersion or later."
     }
 
-    Write-Verbose -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)" -Verbose
+    Write-Verbose -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
 
-    $tenantId = $connection.TenantId
-    Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId." -Verbose
+    $tenantId = $connection.TenantId    
     $refreshToken = $connection.Token.RefreshToken
-    $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironment -TenantId $using:tenantId }
 
-    Write-Verbose "Creating registration token." -Verbose
-    $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
+    $currentAttempt = 0
+    $maxAttempts = 3
+    $opSuccessful = $false
+    $sleepSeconds = 10
+    do{
+        try
+        {
+            Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId."
+            $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironmentName -TenantId $using:tenantId }
+            $opSuccessful = $true
+        }
+        catch
+        {
+            Write-Verbose "Creation of service principal failed:`r`n$($_.Exception.Message)"
+            Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -eq $maxAttempts)
+            {
+                throw $_.Exception
+            }
+        }
+    }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+    
 
-    Write-Verbose "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation." -Verbose
+    
+    $currentAttempt = 0
+    $maxAttempts = 3
+    $opSuccessful = $false
+    $sleepSeconds = 10
+    do{
+        try
+        {
+            Write-Verbose "Creating registration token."
+            $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
+            $opSuccessful = $true
+        }
+        catch
+        {
+            Write-Verbose "Creation of registration token failed:`r`n$($_.Exception.Message)"
+            Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -eq $maxAttempts)
+            {
+                throw $_.Exception
+            }
+        }
+    }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+    
+
+    Write-Verbose "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
     $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
 
     Write-Verbose "Registering Azure Stack resource provider."
@@ -242,19 +328,44 @@ try
         -ApiVersion "2017-06-01" `
         -Force
 
-    Write-Verbose "Setting Reader role on '$($registrationResource.ResourceId)' for service principal $($servicePrincipal.ObjectId)." -Verbose
-    $roleAssignments = Get-AzureRmRoleAssignment -Scope "/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)" -ObjectId $servicePrincipal.ObjectId -ErrorAction SilentlyContinue
-    if (-not $roleAssignments -or ($roleAssignments.Count -le 0))
+    Write-Verbose "Setting Registration Reader role on '$($registrationResource.ResourceId)' for service principal $($servicePrincipal.ObjectId)."
+    $customRoleAssigned = $false
+    $customRoleName = "Registration Reader"
+    $roleAssignments = Get-AzureRmRoleAssignment -Scope "/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationName)" -ObjectId $servicePrincipal.ObjectId -ErrorAction SilentlyContinue
+    foreach ($role in $roleAssignments)
     {
-        New-AzureRmRoleAssignment -Scope "/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)" -RoleDefinitionName Contributor -ObjectId $servicePrincipal.ObjectId
-    } 
+        if ($role.RoleDefinitionName -eq $customRoleName)
+        {
+            $customRoleAssigned = $true
+        }
+    }
+
+    if (-not $roleAssignments -or (-not $customRoleAssigned))
+    {
+        $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
+        if (-not $customRoleDefined)
+        {
+            # Create new RBAC role definition
+            $role = Get-AzureRmRoleDefinition -Name "Reader"
+            $role.Name = $customRoleName
+            $role.id = [guid]::newguid()
+            $role.IsCustom = $true
+            $role.Actions.Clear()            
+            $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
+            $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')            
+            $role.AssignableScopes.Clear()
+            $role.AssignableScopes.Add("/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationName)")
+            New-AzureRmRoleDefinition -Role $role
+        }
+        New-AzureRmRoleAssignment -Scope "/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationName)" -RoleDefinitionName $customRoleName -ObjectId $servicePrincipal.ObjectId         
+    }
     
-    Write-Verbose "Activating Azure Stack (this may take several minutes to complete)." -Verbose
+    Write-Verbose "Activating Azure Stack (this may take several minutes to complete)." 
     $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
 
-    Write-Verbose "Azure Stack registration and activation completed successfully." -Verbose
+    Write-Verbose "Azure Stack registration and activation completed successfully."
 }
 finally
 {
     $session | Remove-PSSession
-} 
+}
