@@ -9,9 +9,9 @@ To use these tools, obtain Azure Stack compatible Azure PowerShell module. Unles
 For PowerShell, install the following:
 
 ```powershell
-Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+Install-Module -Name 'AzureRm.Bootstrapper'
+Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+Install-Module -Name AzureStack -RequiredVersion 1.2.10
 ```
 
 Obtain the tools by cloning the git repository.
