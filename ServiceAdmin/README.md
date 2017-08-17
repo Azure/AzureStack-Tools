@@ -5,9 +5,9 @@ Instructions below are relative to the .\ServiceAdmin folder of the [AzureStack-
 Make sure you have the following module prerequisites installed:
 
 ```powershell
-Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+Install-Module -Name 'AzureRm.Bootstrapper'
+Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+Install-Module -Name AzureStack -RequiredVersion 1.2.10
 ```
 
 Then make sure the following modules are imported:
