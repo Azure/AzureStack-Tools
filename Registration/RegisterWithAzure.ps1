@@ -208,11 +208,20 @@ function Connect-AzureAccount
 }
 
 # Registration must be run as a domain admin
-$currentUser = whoami
-if ($currentUser -inotlike "*AzureStackAdmin")
+$currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
+$domain = Get-ADDomain
+$sid = "$($domain.DomainSID)-512"
+
+if($windowsPrincipal.IsInRole($sid))
 {
-    Throw "RegisterWithAzure must be run as a domain admin in an elevated powershell instance. `r`nCurrentUser: $currentUser"
+    Write-Verbose "Domain Admin check : ok"
 }
+else
+{
+    throw "Please re-run script as member of Domain Admins group"
+}
+
 
 Write-Verbose "Logging in to Azure."
 $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName
