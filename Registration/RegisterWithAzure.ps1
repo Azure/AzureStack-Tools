@@ -351,6 +351,13 @@ try
     if (-not $roleAssignments -or (-not $customRoleAssigned))
     {
         $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
+
+        if ($customRoleDefined)
+        {
+            $customRoleDefined.AssignableScopes.Clear()
+            $customRoleDefined.AssignableScopes.Add("/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)")
+        }
+
         if (-not $customRoleDefined)
         {
             # Create new RBAC role definition
@@ -362,7 +369,7 @@ try
             $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
             $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')            
             $role.AssignableScopes.Clear()
-            $role.AssignableScopes.Add("/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationName)")
+            $role.AssignableScopes.Add("/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)")
             New-AzureRmRoleDefinition -Role $role
         }
         New-AzureRmRoleAssignment -Scope "/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationName)" -RoleDefinitionName $customRoleName -ObjectId $servicePrincipal.ObjectId         
