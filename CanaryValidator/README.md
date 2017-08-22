@@ -15,9 +15,9 @@ Set-Location -Path ".\AzureStack-Tools-master\CanaryValidator" -PassThru
 ## To execute Canary as Tenant Administrator (if Windows Server 2016 or Windows Server 2012-R2 images are already present in the PIR)
 
 ```powershell
-# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+# Install-Module -Name 'AzureRm.Bootstrapper'
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module -Name AzureStack -RequiredVersion 1.2.10
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds
@@ -27,9 +27,9 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 
 ```powershell
 # Download the WS2016 ISO image from: https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016, and place it on your local machine
-# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+# Install-Module -Name 'AzureRm.Bootstrapper'
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module -Name AzureStack -RequiredVersion 1.2.10
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
@@ -38,9 +38,9 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 ## To execute Canary as Service Administrator
 
 ```powershell
-# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+# Install-Module -Name 'AzureRm.Bootstrapper'
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module -Name AzureStack -RequiredVersion 1.2.10
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds
 ```
@@ -48,9 +48,9 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 ## To list the usecases in Canary
 
 ```powershell
-# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+# Install-Module -Name 'AzureRm.Bootstrapper'
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module -Name AzureStack -RequiredVersion 1.2.10
 .\Canary.Tests.ps1 -ListAvailable
 
 Sample output:
@@ -134,9 +134,9 @@ List of scenarios in Canary:
 ## To exclude certain usecases from getting executed
 
 ```powershell
-# Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-# Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+# Install-Module -Name 'AzureRm.Bootstrapper'
+# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+# Install-Module -Name AzureStack -RequiredVersion 1.2.10
 # A new paramter called ExclusionList has been added which is a string array. Pass in the list of usecases you don't want to execute to this parameter.
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -ExclusionList "ListFabricResourceProviderInfo","ListUpdateResourceProviderInfo"
