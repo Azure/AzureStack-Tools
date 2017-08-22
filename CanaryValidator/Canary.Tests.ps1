@@ -1144,10 +1144,13 @@ while ($runCount -le $NumberOfIterations)
                         {
                             Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
                         } 
+                        $sw = [system.diagnostics.stopwatch]::startNew()
                         while ((Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName) -or (Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription))
                         {
+                            if ($sw.Elapsed.Seconds -gt 600) {break}
                             Start-Sleep -Seconds 30
                         }
+                        $sw.Stop()
                     }
 
                     Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
