@@ -8,23 +8,76 @@ $Global:VerbosePreference = 'SilentlyContinue'
 function Test-AzureRMTemplate() {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true, HelpMessage = "Template directory or TemplateFullPath to Validate")]
+        [Parameter(Mandatory = $true, HelpMessage = "Template directory or TemplateFullPath to Validate", ParameterSetName = "local")]
         [ValidateScript( { Test-Path -Path $_  })]
         [String] $TemplatePath,
+
+        [Parameter(Mandatory = $true, HelpMessage = "Template url to Validate", ParameterSetName = "url")]
+        [String] $TemplateUrl,
+
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Parameter(HelpMessage = "Template Pattern to match.Default is *azuredeploy.json")]
         [String] $TemplatePattern = "*azuredeploy.json",
+
         [Parameter(Mandatory = $true, HelpMessage = "Cloud Capabilities JSON File Name in the current folder or with full path")]
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [ValidateScript( { Test-Path -Path $_  })]
         [String] $CapabilitiesPath,
+
         [Parameter(HelpMessage = "Set to process VMImages , VMExtensions & VMSizes")]
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Switch] $IncludeComputeCapabilities,
+
         [Parameter(HelpMessage = "Set to process Storage Skus")]
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Switch] $IncludeStorageCapabilities,
+
         [Parameter(HelpMessage = "Output Report FileName")]
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [String] $Report = "TemplateValidationReport.html"
     )
+    
     $capabilities = ConvertFrom-Json (Get-Content -Path $CapabilitiesPath -Raw) -ErrorAction Stop
-    $TemplateDirectory = Get-ChildItem -Path $TemplatePath -Recurse -Include $TemplatePattern
+    
+    if ($PSCmdlet.ParameterSetName -eq "url")
+    {
+        $pathTokens = $TemplateUrl.Split("/")
+        $filename = $pathTokens[-1]
+        $fileDir = $pathTokens[-2]
+        $rootPath = $env:TEMP
+
+        $localDirPath = Join-Path -Path $rootPath -ChildPath $fileDir
+
+        if(Test-Path($localDirPath))
+        {
+            Remove-Item -Path $localDirPath -Recurse -Force -ErrorAction Stop
+        }
+
+        New-Item -Path $localDirPath -ItemType Directory -Force | Out-Null
+
+        $sourcePath = Join-Path -Path $localDirPath -ChildPath $filename
+        Invoke-WebRequest -Uri $TemplateUrl -OutFile $sourcePath -Verbose -ErrorAction Stop
+
+        if([IO.Path]::GetExtension($filename) -eq ".zip")
+        {
+            $expandedPath = Join-Path -Path $localDirPath -ChildPath ([IO.Path]::GetFileNameWithoutExtension($filename))
+            Expand-archive $sourcePath -DestinationPath $expandedPath -ErrorAction Stop
+            $sourcePath = $expandedPath
+        }
+        
+    }
+    else
+    {
+        $sourcePath = $TemplatePath
+    }
+    
+    
+    $TemplateDirectory = Get-ChildItem -Path $sourcePath -Recurse -Include $TemplatePattern
     $reportOutPut = @()
     $totalCount = 0
     $warningCount = 0
