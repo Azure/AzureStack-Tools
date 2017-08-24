@@ -214,18 +214,27 @@ function Connect-AzureAccount
 }
 
 # Registration must be run as a domain admin
-$currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
-$domain = Get-ADDomain
-$sid = "$($domain.DomainSID)-512"
+try{
+    $currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
+    $domain = Get-ADDomain
+    $sid = "$($domain.DomainSID)-512"
 
-if($windowsPrincipal.IsInRole($sid))
-{
-    Write-Verbose "Domain Admin check : ok"
+    if($windowsPrincipal.IsInRole($sid))
+    {
+        Write-Verbose "Domain Admin check : ok"
+    }
+    else
+    {
+        throw "Please re-run script as member of Domain Admins group"
+    }
 }
-else
-{
-    throw "Please re-run script as member of Domain Admins group"
+catch{
+    if ($_Exception.Message -ilike "*Cannot find an object with identity*")
+    {
+        $message = "User is not logged in as a domain admin. registration has been cancelled."
+        throw "$message `r`n$($_.Exception)"
+    }
 }
 
 Write-Verbose "Logging in to Azure."
@@ -361,7 +370,7 @@ try
         }
     }
 
-    if (-not $roleAssignments -or (-not $customRoleAssigned))
+    if (-not $customRoleAssigned)
     {
         $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
 
@@ -395,7 +404,7 @@ try
     Write-Verbose "Activating Azure Stack (this may take several minutes to complete)." 
     $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
 
-    Write-Verbose "Azure Stack registration and activation completed successfully. Logs can be found at: "
+    Write-Verbose "Azure Stack registration and activation completed successfully. Logs can be found at: \\$JeaComputerName\c$\maslogs"
 }
 finally
 {
