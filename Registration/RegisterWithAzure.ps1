@@ -152,6 +152,10 @@ param(
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+#
+# Helper Function for connecting with Azure
+#
+
 function Connect-AzureAccount
 {
     param(
@@ -191,7 +195,7 @@ function Connect-AzureAccount
     $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
     if (-not $tokens -or ($tokens.Count -le 0))
     {
-            throw "Token cache is empty"
+        throw "Token cache is empty"
     }
 
     $token = $tokens |
@@ -213,8 +217,13 @@ function Connect-AzureAccount
     }
 }
 
-# Registration must be run as a domain admin
-try{
+#
+# Domain Admin Check
+#
+
+try
+{
+    Write-Verbose "Checking for user logged in as Domain Admin"
     $currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
     $windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
     $domain = Get-ADDomain
@@ -229,27 +238,37 @@ try{
         throw "Please re-run script as member of Domain Admins group"
     }
 }
-catch{
-    if ($_Exception.Message -ilike "*Cannot find an object with identity*")
-    {
-        $message = "User is not logged in as a domain admin. registration has been cancelled."
-        throw "$message `r`n$($_.Exception)"
-    }
+catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException]
+{
+    $message = "User is not logged in as a domain admin. registration has been cancelled."
+    throw "$message `r`n$($_.Exception)"
 }
+catch
+{
+    throw "Unexpected error while checking for domain admin: `r`n$($_.Exception)"
+}
+
+#
+# Connect to Azure
+#
 
 Write-Verbose "Logging in to Azure."
 $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName
 
+#
+# Create PSSession with JEAComputer
+#
+
 $currentAttempt = 0
 $maxAttempts = 3
 $sleepSeconds = 10
-$opSuccessful = $false
-do{
+do
+{
     try
     {
         Write-Verbose "Initializing privileged JEA session. Attempt $currentAttempt of $maxAttempts"
         $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
-        $opSuccessful = $true
+        break
     }
     catch
     {
@@ -257,13 +276,16 @@ do{
         Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
         $currentAttempt++
         Start-Sleep -Seconds $sleepSeconds
-        if ($currentAttempt -eq $maxAttempts)
+        if ($currentAttempt -ge $maxAttempts)
         {
             throw $_.Exception
         }
     }
-}while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+}while ($currentAttempt -lt $maxAttempts)
 
+#
+# Register with Azure
+#
 
 try
 {
@@ -279,16 +301,18 @@ try
     $tenantId = $connection.TenantId    
     $refreshToken = $connection.Token.RefreshToken
 
-    $currentAttempt = 0
-    $maxAttempts = 3
-    $opSuccessful = $false
-    $sleepSeconds = 10
-    do{
+    #
+    # Create service principal in Azure
+    #
+
+    $currentAttempt = 0    
+    do
+    {
         try
         {
             Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId. Attempt $currentAttempt of $maxAttempts"
             $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironmentName -TenantId $using:tenantId }
-            $opSuccessful = $true
+            break
         }
         catch
         {
@@ -296,24 +320,25 @@ try
             Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
-            if ($currentAttempt -eq $maxAttempts)
+            if ($currentAttempt -ge $maxAttempts)
             {
                 throw $_.Exception
             }
         }
-    }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+    }while ($currentAttempt -lt $maxAttempts)
 
+    #
+    # Create registration token
+    #
 
     $currentAttempt = 0
-    $maxAttempts = 3
-    $opSuccessful = $false
-    $sleepSeconds = 10
-    do{
+    do
+    {
         try
         {
             Write-Verbose "Creating registration token. Attempt $currentAttempt of $maxAttempts"
             $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
-            $opSuccessful = $true
+            break
         }
         catch
         {
@@ -321,12 +346,16 @@ try
             Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
-            if ($currentAttempt -eq $maxAttempts)
+            if ($currentAttempt -ge $maxAttempts)
             {
                 throw $_.Exception
             }
         }
-    }while ((-not $opSuccessful) -and ($currentAttempt -lt $maxAttempts))
+    }while ($currentAttempt -lt $maxAttempts)
+
+    #
+    # Create Azure resources
+    #
 
     Write-Verbose "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
     $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
@@ -339,7 +368,7 @@ try
     Write-Verbose "Creating registration resource '$RegistrationName'."
     $registrationResource = New-AzureRmResource `
         -ResourceGroupName $ResourceGroupName `
-        -Location westcentralus `
+        -Location $ResourceGroupLocation `
         -ResourceName $RegistrationName `
         -ResourceType "Microsoft.AzureStack/registrations" `
         -Properties @{ registrationToken = "$registrationToken" } `
@@ -350,18 +379,58 @@ try
 
     Write-Verbose "Retrieving activation key."
     $actionResponse = Invoke-AzureRmResourceAction `
-        -Action "getActivationKey" `
+        -Action "GetActivationKey" `
         -ResourceName $RegistrationName `
         -ResourceType "Microsoft.AzureStack/registrations" `
         -ResourceGroupName $ResourceGroupName `
         -ApiVersion "2017-06-01" `
         -Force
 
+    #
+    # Set RBAC role on registration resource
+    #
+
     Write-Verbose "Setting Registration Reader role on '$($registrationResource.ResourceId)' for service principal $($servicePrincipal.ObjectId)."
     $customRoleAssigned = $false
     $customRoleName = "Registration Reader"
+
+    # Determine if the custom RBAC role has been defined
+    $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
+    if (-not $customRoleDefined)
+    {
+        # Create new RBAC role definition
+        $role = Get-AzureRmRoleDefinition -Name 'Reader'
+        $role.Name = $customRoleName
+        $role.id = [guid]::newguid()
+        $role.IsCustom = $true
+        $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
+        $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')
+        $role.AssignableScopes.Clear()
+        $role.AssignableScopes.Add("/subscriptions/$($registrationResource.SubscriptionId)")
+        $role.Description = "Custom RBAC role for registration actions such as downloading products from Azure marketplace"
+        try
+        {
+            New-AzureRmRoleDefinition -Role $role
+        }
+        catch
+        {
+            if ($_.Exception.Message -icontains "RoleDefinitionWithSameNameExists")
+            {
+                $message = "An RBAC role with the name $customRoleName already exists under this Azure account. Please remove this role from any other subscription before attempting registration again. `r`n"
+                $message += "Please ensure your subscription Id context is set to the Id previously registered and run Remove-AzureRmRoleDefinition -Name 'Registration Reader'"
+                throw "$message `r`n$($_Exception.Message)"
+            }
+            else
+            {
+                Throw "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)"
+            }
+        }
+    }
+
+    # Determine if custom RBAC role has been assigned
     $roleAssignmentScope = "/subscriptions/$($registrationResource.SubscriptionId)/resourceGroups/$($registrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationName)"
     $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $servicePrincipal.ObjectId -ErrorAction SilentlyContinue
+
     foreach ($role in $roleAssignments)
     {
         if ($role.RoleDefinitionName -eq $customRoleName)
@@ -371,39 +440,16 @@ try
     }
 
     if (-not $customRoleAssigned)
-    {
-        $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
-
-        if (-not $customRoleDefined)
-        {
-            # Create new RBAC role definition
-            $role = Get-AzureRmRoleDefinition -Name "Reader"
-            $role.Name = $customRoleName
-            $role.id = [guid]::newguid()
-            $role.IsCustom = $true
-            $role.Actions.Clear()            
-            $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
-            $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')
-            $role.AssignableScopes.Clear()
-            $role.AssignableScopes.Add("/subscriptions/$($registrationResource.SubscriptionId)")
-            $role.Description = "Custom RBAC role for registration actions such as downloading products from Azure marketplace"
-            try{
-                New-AzureRmRoleDefinition -Role $role
-            }
-            catch{
-                if ($_.Exception.Message -icontains "RoleDefinitionWithSameNameExists")
-                {
-                    $message = "An RBAC role with the name $customRoleName already exists under this Azure account. Please remove this role from any other subscription before attempting registration again."
-                    throw "$message  `r`n$($_Exception.Message)"
-                }
-            }
-        }
+    {        
         New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $customRoleName -ObjectId $servicePrincipal.ObjectId         
     }
 
+    #
+    # Activate Azure Stack
+    #
+
     Write-Verbose "Activating Azure Stack (this may take several minutes to complete)." 
     $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
-
     Write-Verbose "Azure Stack registration and activation completed successfully. Logs can be found at: \\$JeaComputerName\c$\maslogs"
 }
 finally
