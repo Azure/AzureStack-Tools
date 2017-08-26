@@ -153,135 +153,13 @@ $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
 #
-# Helper Function for connecting with Azure
+# Pre-registration setup
 #
 
-function Connect-AzureAccount
-{
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$SubscriptionId,
-
-        [Parameter(Mandatory = $true)]
-        [string]$AzureEnvironmentName
-    )
-
-    $isConnected = $false;
-
-    try
-    {
-        $context = Get-AzureRmContext
-        $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
-        $context.Environment = $environment
-        if ($context.Subscription.SubscriptionId -eq $SubscriptionId)
-        {
-            $isConnected = $true;
-        }
-    }
-    catch
-    {
-        Write-Warning "Not currently connected to Azure: `r`n$($_.Exception)"
-    }
-
-    if (-not $isConnected)
-    {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId
-        $context = Get-AzureRmContext
-    }
-
-    $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
-    $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
-
-    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-    if (-not $tokens -or ($tokens.Count -le 0))
-    {
-        throw "Token cache is empty"
-    }
-
-    $token = $tokens |
-        Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-        Where { $_.TenantId -eq $subscription.TenantId } |
-        Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-        Select -First 1
-
-    if (-not $token)
-    {
-        throw "Token not found for tenant id $($subscription.TenantId) and resource $($environment.ActiveDirectoryServiceEndpointResourceId)."
-    }
-
-    return @{
-        TenantId = $subscription.TenantId
-        ManagementEndpoint = $environment.ResourceManagerUrl
-        ManagementResourceId = $environment.ActiveDirectoryServiceEndpointResourceId
-        Token = $token
-    }
-}
-
-#
-# Domain Admin Check
-#
-
-try
-{
-    Write-Verbose "Checking for user logged in as Domain Admin"
-    $currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-    $windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
-    $domain = Get-ADDomain
-    $sid = "$($domain.DomainSID)-512"
-
-    if($windowsPrincipal.IsInRole($sid))
-    {
-        Write-Verbose "Domain Admin check : ok"
-    }
-    else
-    {
-        throw "Please re-run script as member of Domain Admins group"
-    }
-}
-catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException]
-{
-    $message = "User is not logged in as a domain admin. registration has been cancelled."
-    throw "$message `r`n$($_.Exception)"
-}
-catch
-{
-    throw "Unexpected error while checking for domain admin: `r`n$($_.Exception)"
-}
-
-#
-# Connect to Azure
-#
-
+Resolve-DomainAdminStatus -Verbose
 Write-Verbose "Logging in to Azure."
-$connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName
-
-#
-# Create PSSession with JEAComputer
-#
-
-$currentAttempt = 0
-$maxAttempts = 3
-$sleepSeconds = 10
-do
-{
-    try
-    {
-        Write-Verbose "Initializing privileged JEA session. Attempt $currentAttempt of $maxAttempts"
-        $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
-        break
-    }
-    catch
-    {
-        Write-Verbose "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
-        Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
-        $currentAttempt++
-        Start-Sleep -Seconds $sleepSeconds
-        if ($currentAttempt -ge $maxAttempts)
-        {
-            throw $_.Exception
-        }
-    }
-}while ($currentAttempt -lt $maxAttempts)
+$connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
+$session = Initalize-PrivilegedJeaSession -JeaComputerName $JeaComputerName -CloudAdminCredential $CloudAdminCredential -Verbose
 
 #
 # Register with Azure
@@ -289,13 +167,7 @@ do
 
 try
 {
-    Write-Verbose "Verifying stamp version."
-    $stampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation -WarningAction SilentlyContinue }
-    $minVersion = [Version]"1.0.170626.1"
-    if ([Version]$stampInfo.StampVersion -lt $minVersion) {
-        Write-Error -Message "Script only applicable for Azure Stack builds $minVersion or later."
-    }
-
+    $stampInfo = Confirm-StampVersion -PSSession $session
     Write-Verbose -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
 
     $tenantId = $connection.TenantId    
