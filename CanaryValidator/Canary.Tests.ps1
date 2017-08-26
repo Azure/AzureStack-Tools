@@ -16,12 +16,12 @@ param (
     [ValidateNotNullOrEmpty()]
     [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="Tenant ARM endpoint")]
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
@@ -200,6 +200,8 @@ while ($runCount -le $NumberOfIterations)
         }
     } 
     
+    if ($resLocation = (Get-AzsLocation -ErrorAction SilentlyContinue).Name) {if ($resLocation -ne $ResourceLocation) {$ResourceLocation = $resLocation}}
+
     Invoke-Usecase -Name 'ListFabricResourceProviderInfo' -Description "List FabricResourceProvider(FRP) information like storage shares, capacity, logical networks etc." -UsecaseBlock `
     {
         Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
@@ -1136,16 +1138,16 @@ while ($runCount -le $NumberOfIterations)
                 {
                     Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
                     {
-                        if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
+                        if ($subs = Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
                         {
-                            Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                            Remove-AzsSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
                         } 
-                        if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
+                        if ($subs = Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
                         {
-                            Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                            Remove-AzsSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
                         } 
                         $sw = [system.diagnostics.stopwatch]::startNew()
-                        while ((Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName) -or (Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription))
+                        while ((Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName) -or (Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription))
                         {
                             if ($sw.Elapsed.Seconds -gt 600) {break}
                             Start-Sleep -Seconds 30
