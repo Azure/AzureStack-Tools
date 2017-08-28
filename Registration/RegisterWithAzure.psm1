@@ -345,7 +345,7 @@ Function RegisterWithAzure{
 
         Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)." 
         $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
-        Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: \\$JeaComputerName\c$\maslogs"
+        Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: $Global:AzureRegistrationLog  and  \\$JeaComputerName\c$\maslogs"
     }
     finally
     {
