@@ -34,16 +34,7 @@ $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tena
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
 ```
-
-## To execute Canary as Service Administrator
-
-```powershell
-# Install-Module -Name 'AzureRm.Bootstrapper'
-# Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10
-$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
-.\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds
-```
+## NOTE: When running Canary against ADFS environment, please make sure to pass in the TenantAdminObjectId parameter
 
 ## To list the usecases in Canary
 
@@ -60,23 +51,24 @@ List of scenarios in Canary:
         LoginToAzureStackEnvAsSvcAdmin
         SelectDefaultProviderSubscription
         ListFabricResourceProviderInfo
-        |--GetAzureStackInfraRole
-        |--GetAzureStackInfraRoleInstance
-        |--GetAzureStackLogicalNetwork
-        |--GetAzureStackStorageCapacity
-        |--GetAzureStackStorageShare
-        |--GetAzureStackScaleUnit
-        |--GetAzureStackScaleUnitNode
-        |--GetAzureStackIPPool
-        |--GetAzureStackMacPool
-        |--GetAzureStackGatewayPool
-        |--GetAzureStackSLBMux
-        |--GetAzureStackGateway
+        |-- GetAzureStackInfraRole
+        |-- GetAzureStackInfraRoleInstance
+        |-- GetAzureStackLogicalNetwork
+        |-- GetAzureStackStorageCapacity
+        |-- GetAzureStackInfrastructureShare
+        |-- GetAzureStackScaleUnit
+        |-- GetAzureStackScaleUnitNode
+        |-- GetAzureStackIPPool
+        |-- GetAzureStackMacPool
+        |-- GetAzureStackGatewayPool
+        |-- GetAzureStackSLBMux
+        |-- GetAzureStackGateway
         ListHealthResourceProviderAlerts
-        |--GetAzureStackAlert
+        |-- GetAzureStackAlert
         ListUpdatesResourceProviderInfo
-        |--GetAzureStackUpdateSummary
-        |--GetAzureStackUpdateToApply
+        |-- GetAzureStackUpdateSummary
+        |-- GetAzureStackUpdateToApply
+        UploadLinuxImageToPIR
         CreateTenantAzureStackEnv
         CreateResourceGroupForTenantSubscription
         CreateTenantPlan
@@ -85,15 +77,15 @@ List of scenarios in Canary:
         LoginToAzureStackEnvAsTenantAdmin
         CreateTenantSubscription
         RoleAssignmentAndCustomRoleDefinition
-        |--ListAssignedRoles
-        |--ListExistingRoleDefinitions
-        |--GetProviderOperations
-        |--AssignReaderRole
-        |--VerifyReaderRoleAssignment
-        |--RemoveReaderRoleAssignment
-        |--CustomRoleDefinition
-        |--ListRoleDefinitionsAfterCustomRoleCreation
-        |--RemoveCustomRoleDefinition
+        |-- ListAssignedRoles
+        |-- ListExistingRoleDefinitions
+        |-- GetProviderOperations
+        |-- AssignReaderRole
+        |-- VerifyReaderRoleAssignment
+        |-- RemoveReaderRoleAssignment
+        |-- CustomRoleDefinition
+        |-- ListRoleDefinitionsAfterCustomRoleCreation
+        |-- RemoveCustomRoleDefinition
         RegisterResourceProviders
         CreateResourceGroupForUtilities
         CreateStorageAccountForUtilities
@@ -108,13 +100,14 @@ List of scenarios in Canary:
         RetrieveResourceDeploymentTimes
         QueryTheVMsDeployed
         CheckVMCommunicationPreVMReboot
+        TransmitMTUSizedPacketsBetweenTenantVMs
         AddDatadiskToVMWithPrivateIP
-        |--StopDeallocateVMWithPrivateIPBeforeAddingDatadisk
-        |--AddTheDataDiskToVMWithPrivateIP
-        |--StartVMWithPrivateIPAfterAddingDatadisk
+        |-- StopDeallocateVMWithPrivateIPBeforeAddingDatadisk
+        |-- AddTheDataDiskToVMWithPrivateIP
+        |-- StartVMWithPrivateIPAfterAddingDatadisk
         ApplyDataDiskCheckCustomScriptExtensionToVMWithPrivateIP
-        |--CheckForExistingCustomScriptExtensionOnVMWithPrivateIP
-        |--ApplyCustomScriptExtensionToVMWithPrivateIP
+        |-- CheckForExistingCustomScriptExtensionOnVMWithPrivateIP
+        |-- ApplyCustomScriptExtensionToVMWithPrivateIP
         RestartVMWithPublicIP
         StopDeallocateVMWithPrivateIP
         StartVMWithPrivateIP
@@ -125,10 +118,10 @@ List of scenarios in Canary:
         DeleteVMResourceGroup
         DeleteUtilitiesResourceGroup
         TenantRelatedcleanup
-        |--DeleteTenantSubscriptions
-        |--LoginToAzureStackEnvAsSvcAdminForCleanup
-        |--RemoveLinuxImageFromPIR
-        |--DeleteSubscriptionResourceGroup
+        |-- DeleteTenantSubscriptions
+        |-- LoginToAzureStackEnvAsSvcAdminForCleanup
+        |-- RemoveLinuxImageFromPIR
+        |-- DeleteSubscriptionResourceGroup
 ```
 
 ## To exclude certain usecases from getting executed
