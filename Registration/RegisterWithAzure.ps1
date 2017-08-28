@@ -180,13 +180,12 @@ function Connect-AzureAccount
     }
     catch
     {
-        Write-Warning "Not currently connected to Azure: `r`n$($_.Exception)"
+        Log-ErrorOutput "Not currently connected to Azure: `r`n$($_.Exception)"
     }
 
     if (-not $isConnected)
     {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId
-        $context = Get-AzureRmContext
+        Add-AzureRmAccount -SubscriptionId $SubscriptionId        
     }
 
     $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
@@ -217,15 +216,50 @@ function Connect-AzureAccount
     }
 }
 
-function Log-Output{
-[CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [String] $InputText
+function Log-Output
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [object] $Message
     )
-    
-    Write-Verbose "$(Get-Date -Format "MM/dd/yyy HH:mm:ss.ff"): $InputText"
+
+    $ErrorActionPreference = 'Stop'
+
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Global:AzureRegistrationLog -Append
+    Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
 }
+
+function Log-ErrorOutput
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+        [object] $Message
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    # Write Error: line seperately otherwise out message will not contain stack trace
+    "`r`n**************************** Error ****************************" | Out-File $Global:AzureRegistrationLog -Append
+    $Message | Out-File $Global:AzureRegistrationLog -Append
+    "***************************************************************" | Out-File $Global:AzureRegistrationLog -Append
+    Write-Warning "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
+}
+
+# Create log folder / prevent duplicate logs
+if(-not $Global:AzureRegistrationLog)
+{
+    $LogFolder = "$env:SystemDrive\MASLogs"
+    if (-not (Test-Path $LogFolder))
+    {
+        New-Item -Path $LogFolder -ItemType Directory -Force
+    }
+    $Global:AzureRegistrationLog = "$LogFolder\AzureStack.AzureRegistration.$(Get-Date -Format yyyy-MM-dd.hh-mm-ss).log"
+    $null = New-Item -Path $Global:AzureRegistrationLog -ItemType File -Force
+}
+
+Log-Output "*********************** Begin Log: RegisterWithAzure ***********************`r`n"
 
 #
 # Domain Admin Check
@@ -242,19 +276,17 @@ try
     if($windowsPrincipal.IsInRole($sid))
     {
         Log-Output "Domain Admin check : ok"
-    }
-    else
-    {
-        throw "Please re-run script as member of Domain Admins group"
-    }
+    }    
 }
 catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException]
 {
     $message = "User is not logged in as a domain admin. registration has been cancelled."
+    Log-ErrorOutput "$message `r`n$($_.Exception)"
     throw "$message `r`n$($_.Exception)"
 }
 catch
 {
+    Log-ErrorOutput "Unexpected error while checking for domain admin: `r`n$($_.Exception)"
     throw "Unexpected error while checking for domain admin: `r`n$($_.Exception)"
 }
 
@@ -282,12 +314,13 @@ do
     }
     catch
     {
-        Log-Output "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
+        Log-ErrorOutput "Creation of service principal failed:`r`n$($_.Exception.Message)"
         Log-Output "Waiting $sleepSeconds seconds and trying again..."
         $currentAttempt++
         Start-Sleep -Seconds $sleepSeconds
         if ($currentAttempt -ge $maxAttempts)
         {
+            Log-ErrorOutput $_.Exception
             throw $_.Exception
         }
     }
@@ -303,10 +336,10 @@ try
     $stampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation -WarningAction SilentlyContinue }
     $minVersion = [Version]"1.0.170626.1"
     if ([Version]$stampInfo.StampVersion -lt $minVersion) {
-        Write-Error -Message "Script only applicable for Azure Stack builds $minVersion or later."
+        Log-ErrorOutput "Script only applicable for Azure Stack builds $minVersion or later."
     }
 
-    Log-Output -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
+    Log-Output "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
 
     $tenantId = $connection.TenantId    
     $refreshToken = $connection.Token.RefreshToken
@@ -326,12 +359,13 @@ try
         }
         catch
         {
-            Log-Output "Creation of service principal failed:`r`n$($_.Exception.Message)"
+            Log-ErrorOutput "Creation of service principal failed:`r`n$($_.Exception.Message)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempts)
             {
+                Log-ErrorOutput $_.Exception
                 throw $_.Exception
             }
         }
@@ -352,12 +386,13 @@ try
         }
         catch
         {
-            Log-Output "Creation of registration token failed:`r`n$($_.Exception.Message)"
+            Log-ErrorOutput "Creation of registration token failed:`r`n$($_.Exception.Message)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempts)
             {
+                Log-ErrorOutput $_.Exception
                 throw $_.Exception
             }
         }
@@ -428,10 +463,12 @@ try
             {
                 $message = "An RBAC role with the name $customRoleName already exists under this Azure account. Please remove this role from any other subscription before attempting registration again. `r`n"
                 $message += "Please ensure your subscription Id context is set to the Id previously registered and run Remove-AzureRmRoleDefinition -Name 'Registration Reader'"
+                Log-ErrorOutput "$message `r`n$($_Exception.Message)"
                 throw "$message `r`n$($_Exception.Message)"
             }
             else
             {
+                Log-ErrorOutput "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)"
                 Throw "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)"
             }
         }
@@ -460,9 +497,10 @@ try
 
     Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)." 
     $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
-    Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: \\$JeaComputerName\c$\maslogs"
+    Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: $Global:AzureRegistrationLog  and  \\$JeaComputerName\c$\maslogs"
 }
 finally
 {
     $session | Remove-PSSession
+    Log-Output "*********************** End Log: RegisterWithAzure ***********************`r`n"
 }
