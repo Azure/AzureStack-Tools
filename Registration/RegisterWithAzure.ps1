@@ -217,13 +217,23 @@ function Connect-AzureAccount
     }
 }
 
+function Log-Output{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [String] $InputText
+    )
+    
+    Write-Verbose "$(Get-Date -Format "MM/dd/yyy HH:mm:ss.ff"): $InputText"
+}
+
 #
 # Domain Admin Check
 #
 
 try
 {
-    Write-Verbose "Checking for user logged in as Domain Admin"
+    Log-Output "Checking for user logged in as Domain Admin"
     $currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
     $windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
     $domain = Get-ADDomain
@@ -231,7 +241,7 @@ try
 
     if($windowsPrincipal.IsInRole($sid))
     {
-        Write-Verbose "Domain Admin check : ok"
+        Log-Output "Domain Admin check : ok"
     }
     else
     {
@@ -252,7 +262,7 @@ catch
 # Connect to Azure
 #
 
-Write-Verbose "Logging in to Azure."
+Log-Output "Logging in to Azure."
 $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName
 
 #
@@ -266,14 +276,14 @@ do
 {
     try
     {
-        Write-Verbose "Initializing privileged JEA session. Attempt $currentAttempt of $maxAttempts"
+        Log-Output "Initializing privileged JEA session. Attempt $currentAttempt of $maxAttempts"
         $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
         break
     }
     catch
     {
-        Write-Verbose "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
-        Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+        Log-Output "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
+        Log-Output "Waiting $sleepSeconds seconds and trying again..."
         $currentAttempt++
         Start-Sleep -Seconds $sleepSeconds
         if ($currentAttempt -ge $maxAttempts)
@@ -289,14 +299,14 @@ do
 
 try
 {
-    Write-Verbose "Verifying stamp version."
+    Log-Output "Verifying stamp version."
     $stampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation -WarningAction SilentlyContinue }
     $minVersion = [Version]"1.0.170626.1"
     if ([Version]$stampInfo.StampVersion -lt $minVersion) {
         Write-Error -Message "Script only applicable for Azure Stack builds $minVersion or later."
     }
 
-    Write-Verbose -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
+    Log-Output -Message "Running registration on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
 
     $tenantId = $connection.TenantId    
     $refreshToken = $connection.Token.RefreshToken
@@ -310,14 +320,14 @@ try
     {
         try
         {
-            Write-Verbose "Creating Azure Active Directory service principal in tenant: $tenantId. Attempt $currentAttempt of $maxAttempts"
+            Log-Output "Creating Azure Active Directory service principal in tenant: $tenantId. Attempt $currentAttempt of $maxAttempts"
             $servicePrincipal = Invoke-Command -Session $session -ScriptBlock { New-AzureBridgeServicePrincipal -RefreshToken $using:refreshToken -AzureEnvironment $using:AzureEnvironmentName -TenantId $using:tenantId }
             break
         }
         catch
         {
-            Write-Verbose "Creation of service principal failed:`r`n$($_.Exception.Message)"
-            Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+            Log-Output "Creation of service principal failed:`r`n$($_.Exception.Message)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempts)
@@ -336,14 +346,14 @@ try
     {
         try
         {
-            Write-Verbose "Creating registration token. Attempt $currentAttempt of $maxAttempts"
+            Log-Output "Creating registration token. Attempt $currentAttempt of $maxAttempts"
             $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
             break
         }
         catch
         {
-            Write-Verbose "Creation of registration token failed:`r`n$($_.Exception.Message)"
-            Write-Verbose "Waiting $sleepSeconds seconds and trying again..."
+            Log-Output "Creation of registration token failed:`r`n$($_.Exception.Message)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempts)
@@ -357,15 +367,15 @@ try
     # Create Azure resources
     #
 
-    Write-Verbose "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
+    Log-Output "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
     $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
 
-    Write-Verbose "Registering Azure Stack resource provider."
+    Log-Output "Registering Azure Stack resource provider."
     Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" -Force | Out-Null
 
     $RegistrationName = if ($RegistrationName) { $RegistrationName } else { "AzureStack-$($stampInfo.CloudID)" }
 
-    Write-Verbose "Creating registration resource '$RegistrationName'."
+    Log-Output "Creating registration resource '$RegistrationName'."
     $registrationResource = New-AzureRmResource `
         -ResourceGroupName $ResourceGroupName `
         -Location $ResourceGroupLocation `
@@ -375,9 +385,9 @@ try
         -ApiVersion "2017-06-01" `
         -Force
 
-    Write-Verbose "Registration resource: $(ConvertTo-Json $registrationResource)"
+    Log-Output "Registration resource: $(ConvertTo-Json $registrationResource)"
 
-    Write-Verbose "Retrieving activation key."
+    Log-Output "Retrieving activation key."
     $actionResponse = Invoke-AzureRmResourceAction `
         -Action "GetActivationKey" `
         -ResourceName $RegistrationName `
@@ -390,7 +400,7 @@ try
     # Set RBAC role on registration resource
     #
 
-    Write-Verbose "Setting Registration Reader role on '$($registrationResource.ResourceId)' for service principal $($servicePrincipal.ObjectId)."
+    Log-Output "Setting Registration Reader role on '$($registrationResource.ResourceId)' for service principal $($servicePrincipal.ObjectId)."
     $customRoleAssigned = $false
     $customRoleName = "Registration Reader"
 
@@ -448,9 +458,9 @@ try
     # Activate Azure Stack
     #
 
-    Write-Verbose "Activating Azure Stack (this may take several minutes to complete)." 
+    Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)." 
     $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
-    Write-Verbose "Azure Stack registration and activation completed successfully. Logs can be found at: \\$JeaComputerName\c$\maslogs"
+    Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: \\$JeaComputerName\c$\maslogs"
 }
 finally
 {
