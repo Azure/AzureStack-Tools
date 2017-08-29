@@ -727,6 +727,10 @@ $Xaml = @'
                             <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" />
+                        </StackPanel>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -734,18 +738,14 @@ $Xaml = @'
                                 <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="430" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="430"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="Control_NetConfig_Btn_Previous" Content="Previous" Height="23.5" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <Button x:Name="Control_NetConfig_Btn_Next" Content="Next" Height="23.5" Width="100" Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Button x:Name="Control_NetConfig_Btn_Next" Content="Next" Height="23.5" Width="100" Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" IsEnabled="False" />
                     </StackPanel>
                 </StackPanel>
                 <!--#endregion NetConfig-->
@@ -1519,12 +1519,14 @@ Function F_VerifyFields_NetConfig {
     else {
         if (
             (
-                $syncHash.Control_NetConfig_Rbt_DHCP.IsChecked -eq $true
+                $syncHash.Control_NetConfig_Rbt_DHCP.IsChecked -eq $true -and
+                ($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))
             ) -or
             (
                 $syncHash.Control_NetConfig_Rbt_Static.IsChecked -eq $true -and
                 ($syncHash.Control_NetConfig_Tbx_IpAddress.Text -and ($syncHash.Control_NetConfig_Tbx_IpAddress.BorderBrush.color -ne "#FFFF0000")) -and
-                ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000"))
+                ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000")) -and
+                ($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))
             )
             ) {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true}
         Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
@@ -2158,6 +2160,16 @@ $syncHash.Control_NetConfig_Tbx_Gateway.Add_TextChanged({
 
 $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
     F_Regex -field 'Control_NetConfig_Tbx_Dns' -field_value $syncHash.Control_NetConfig_Tbx_Dns.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_VerifyFields_NetConfig
+})
+
+$syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
+    F_Regex -field 'Control_NetConfig_Tbx_TimeServer' -field_value $syncHash.Control_NetConfig_Tbx_TimeServer.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_VerifyFields_NetConfig
+})
+
+$syncHash.Control_NetConfig_Tbx_DnsForwarder.Add_TextChanged({
+    F_Regex -field 'Control_NetConfig_Tbx_DnsForwarder' -field_value $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
