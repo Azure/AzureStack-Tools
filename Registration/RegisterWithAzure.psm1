@@ -15,6 +15,7 @@ if(-not $Global:AzureRegistrationLog)
 
 ################################################################
 # Core Functions
+################################################################
 
 <#
 .SYNOPSIS
@@ -414,9 +415,66 @@ reporting options to false then your environment will continue to attempt to pus
 
 #>
 
-Function Initialize-AlternateRegistration{
+Function Add-RegistrationRoleAssignment{
 [CmdletBinding()]
     param(    
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [String] $AzureSubscriptionId,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [String] $AlternateSubscriptionId,
+
+        [Parameter(Mandatory = $false)]
+        [String] $AzureEnvironmentName = "AzureCloud"
+    )
+
+    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+    $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue    
+
+    Log-Output "*********************** Begin Log: Add-RegistrationRoleAssignment ***********************`r`n"
+    Log-Output "This script will add $AlternateSubscriptionId to the assignable scope of custom registration RBAC role 'Registration Reader'"
+
+    Resolve-DomainAdminStatus -Verbose
+    Log-Output "Logging in to Azure."
+    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
+
+    $role = Get-AzureRmRoleDefinition -Name 'Registration Reader'
+    if($AlternateSubscriptionId -and $role)
+    {
+        if(-not($role.AssignableScopes -icontains "/subscriptions/$AlternateSubscriptionId"))
+        {
+            Log-Output "Adding alternate subscription Id to scope of custom RBAC role"
+            $role.AssignableScopes.Add("/subscriptions/$AlternateSubscriptionId")
+            Set-AzureRmRoleDefinition -Role $role
+        }
+        else
+        {
+            Log-Output "The provided subscription is already in the assignable scopes of RBAC role 'Registration Reader'"
+        }
+    }
+    Log-Output "*********************** End Log: Add-RegistrationRoleAssignment ***********************`r`n`r`n"
+}
+
+<#
+
+.SYNOPSIS
+
+.DESCRIPTION
+
+.PARAMETER
+
+.EXAMPLE
+
+.NOTES
+
+#>
+
+function Remove-RegistrationResource{
+[CmdletBinding()]
+    param(
 
         [Parameter(Mandatory=$true)]
         [PSCredential] $CloudAdminCredential,
@@ -425,10 +483,7 @@ Function Initialize-AlternateRegistration{
         [String] $AzureSubscriptionId,
 
         [Parameter(Mandatory = $true)]
-        [String] $JeaComputerName,
-
-        [Parameter(Mandatory=$false)]
-        [String] $AlternateSubscriptionId,
+        [String] $JeaComputerName,       
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -443,7 +498,8 @@ Function Initialize-AlternateRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue    
 
-    Log-Output "*********************** Begin Log: Initialize-AlternateRegistration ***********************`r`n"
+    Log-Output "*********************** Begin Log: Remove-RegistrationResource ***********************`r`n"
+    Log-Output "This script will remove the registration resource in Azure. If no registration name is input, it will default to the resource associated with this environment."
 
     Resolve-DomainAdminStatus -Verbose
     Log-Output "Logging in to Azure."
@@ -460,7 +516,7 @@ Function Initialize-AlternateRegistration{
     }
 
     $RegistrationName = if ($RegistrationName) { $RegistrationName } else { "AzureStack-$($stampInfo.CloudID)" }
-    
+
     $currentAttempt = 0
     $maxAttempts = 3
     $sleepSeconds = 10
@@ -472,18 +528,7 @@ Function Initialize-AlternateRegistration{
                 Log-Output "Found registration resource in azure: $(ConvertTo-Json $azureResource)"
                 Log-Output "Removing resource $($azureresource.Name) from Azure"
                 Remove-AzureRmResource -ResourceName $azureResource.Name -ResourceGroupName $ResourceGroupName -ResourceType "Microsoft.AzureStack/registrations" -Force -Verbose                
-                Log-Output "Cleanup successful. Registration resource removed from Azure"
-                            
-                $role = Get-AzureRmRoleDefinition -Name 'Registration Reader'
-                if($AlternateSubscriptionId)
-                {
-                    if(-not($role.AssignableScopes -icontains "/subscriptions/$AlternateSubscriptionId"))
-                    {
-                        Log-Output "Adding alternate subscription Id to scope of custom RBAC role"
-                        $role.AssignableScopes.Add("/subscriptions/$AlternateSubscriptionId")
-                        Set-AzureRmRoleDefinition -Role $role
-                    }
-                }
+                Log-Output "Cleanup successful. Registration resource removed from Azure"         
                 break
             }
             else
@@ -495,22 +540,22 @@ Function Initialize-AlternateRegistration{
         Catch
         {
             $exceptionMessage = $_.Exception.Message
-            Log-ErrorOutput "Failed while preparing Azure for new registration: `r`n$exceptionMessage"
-            Log-Output "Waiting $sleepSeconds seconds and trying again... attempt $currentAttempt of $maxRetries"
+            Log-ErrorOutput "Failed while removing resource from Azure: `r`n$exceptionMessage"
+            Log-Output "Waiting $sleepSeconds seconds and trying again... attempt $currentAttempt of $maxAttempts"
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
-            if ($currentAttempt -ge $maxRetries)
+            if ($currentAttempt -ge $maxAttempts)
             {
-                Log-ErrorOutput "Failed to prepare Azure for new registration on final attempt: `r`n$exceptionMessage"
+                Log-ErrorOutput "Failed to remove resource from Azure on final attempt: `r`n$exceptionMessage"
                 break
             }
         }
-    }while ($currentAttempt -le $maxRetries)
-    Log-Output "*********************** End Log: Initialize-AlternateRegistration ***********************`r`n`r`n"
+    }while ($currentAttempt -le $maxAttempts)
 }
 
 ################################################################
 # Helper Functions
+################################################################
 
 <#
 
@@ -563,7 +608,7 @@ function Log-ErrorOutput
 
 Determines if a new Azure connection is required.
 
-.Description
+.DESCRIPTION
 
 If the current powershell environment is not currently logged in to an Azure Account or is calling either RegisterWithAzure or
 Initialize-AlternateRegistration with a subscription id that does not match the current environment's subscription then Connect-AzureAccount will prompt the user to log in
