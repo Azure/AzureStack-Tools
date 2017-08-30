@@ -120,7 +120,7 @@ Once you have run the appropriate function you can call RegisterWithAzure again 
 
 #>
 
-Function RegisterWithAzure{
+Function Add-AzSRegistration{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -391,7 +391,7 @@ calling RegisterWithAzure again.
 
 #>
 
-Function Add-RegistrationRoleAssignment{
+Function Add-AzsRegistrationRoleAssignment{
 [CmdletBinding()]
     param(    
 
@@ -480,7 +480,7 @@ The name of the Azure Environment where registration resources have been created
 
 This example removes a registration resource in Azure that was created from a prior successful run of RegisterWithAzure and uses defaults for RegistrationName and ResourceGroupName.
 
-Remove-RegistrationResource -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -JeaComputerName
+Remove-RegistrationResource -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -JeaComputerName $JeaComputerName
 
 .NOTES
 
@@ -490,7 +490,7 @@ RBAC role for registration resources. To fix this, please run Add-RegistrationRo
 
 #>
 
-function Remove-RegistrationResource{
+function Remove-AzSRegistrationResource{
 [CmdletBinding()]
     param(
 
@@ -663,7 +663,7 @@ function Connect-AzureAccount{
 
     if (-not $isConnected)
     {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId        
+        Add-AzureRmAccount -SubscriptionId $SubscriptionId 
     }
 
     $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
@@ -801,3 +801,7 @@ Param(
         Log-ErrorOutput "An error occurred checking stamp information: `r`n$($_.Exception)"        
     }
 }
+
+Export-ModuleMember Add-AzsRegistration
+Export-ModuleMember Add-AzsRegistrationRoleAssignment
+Export-ModuleMember Remove-AzSRegistrationResource
