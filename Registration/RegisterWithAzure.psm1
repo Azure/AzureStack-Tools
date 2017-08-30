@@ -109,15 +109,15 @@ This example un-registers by disabling syndication and stopping usage sent to Az
 
 .NOTES
 
-If you would like to un-Register with you Azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication
-and reportUsage set to false. This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported.
+If you would like to un-Register with you Azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication and reportUsage set to false.
+This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported. This is only possible with billing model of Development or Capacity. 
 
-If you would like to use a different subscription for registration you must remove the activation resource from Azure and then re-run this script with a new subscription Id passed in.
+If you would like to use a different subscription for registration there are two functions to be run before re-registering: 
+- Add-RegistrationRoleAssignment: Use this function If your next subscription Id is under the same account as the current registration
+- Remove-RegistrationResource: Use this function if your next subscription Id is under a different account than the current registration
 
-example: 
+Once you have run the appropriate function you can call RegisterWithAzure again to re-register. 
 
-Remove-AzureRmResource -ResourceId "/subscriptions/4afd19a5-1cf7-4099-80ea-9aa2afdcb1e7/resourceGroups/ContosoStackRegistrations/providers/Microsoft.AzureStack/registrations/Registration01" `
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $NewSubscriptionId -JeaComputername "<PreFix>-ERCS01" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "Registration02"
 #>
 
 Function RegisterWithAzure{
@@ -173,6 +173,7 @@ Function RegisterWithAzure{
     #
 
     Log-Output "*********************** Begin Log: RegisterWithAzure ***********************`r`n"
+    Log-Output "This script will connect your Azure Stack with Azure, allowing for usage data to be sent and items to be downloaded from the marketplace."
 
     Resolve-DomainAdminStatus -Verbose
     Log-Output "Logging in to Azure."
@@ -359,18 +360,12 @@ Function RegisterWithAzure{
 
 .SYNOPSIS
 
-This script is used to prepare the current environment for registering with a new subscription Id. It can also be used to remove the current registration resource in Azure.
+This script is used to prepare the current environment for registering with a new subscription Id under the same account.
 
 .DESCRIPTION
 
-Initialize-AlternateRegistration uses common Azure powershell commandlets to find a registration resource in Azure and then remove it. It will then add the provided 
-alternate subscription Id to the list of assignable scopes for the custom RBAC role assigned to registration resources. If no alternate subscription Id is supplied
-this script will simply remove the existing registration resource from Azure.
-
-.PARAMETER CloudAdminCredential
-
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
-If not supplied script will request manual input of username and password.
+Add-RegistrationRoleAssignment will add the provided alternate subscription Id to the list of assignable scopes for the custom RBAC role that is defined  and assigned to registration resources.
+This RBAC role is created / assigned during the RegisterWithAzure function.
 
 .PARAMETER AzureSubscriptionId
 
@@ -380,38 +375,19 @@ The subscription Id that was previously used to register this Azure Stack enviro
 
 The new subscription Id that this environment will be registered to in Azure.
 
-.PARAMETER JeaComputerName
-
-Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK).
-
-.PARAMETER ResourceGroupName
-
-This is the name of the resource group in Azure where the previous registration resource was stored. Defaults to "azurestack"
-
-.PARAMETER RegistrationName
-
-This is the name of the previous registration resource that was created in Azure. This resource will be removed Defaults to "azurestack"
-
 .PARAMETER AzureEnvironmentName
 
-The name of the Azure Environment where resources will be created. Defaults to "AzureCloud"
+The name of the Azure Environment where registration resources have been created. Defaults to "AzureCloud"
 
 .EXAMPLE
 
-This example prepares your existing Azure Stack Environment for a new registration with Azure
-
-Initialize-AlternateRegistration -CloudAdminCredential $cloudAdminCredential -AzureSubscriptionId $azureSubscriptionId -JeaComputerName $JeaComputerName -AlternateSubscriptionId $AlternateSubscriptionId
-
-.EXAMPLE
-
-This Example removes the current registration resource from Azure
-
-Initialize-AlternateRegistration -CloudAdminCredential $cloudAdminCredential -AzureSubscriptionId $azureSubscriptionId -JeaComputerName $JeaComputerName
+Add-RegistrationRoleAssignment -AzureSubscriptionId $CurrentRegisteredSubscription -AlternateSubscriptionId $FutureRegisteredSubscription
 
 .NOTES
 
-If you call Initialize-AlternateRegistration with no subscription Id to remove the registration resource from Azure but do not call RegisterWithAzure and set the syndication and usage
-reporting options to false then your environment will continue to attempt to push usage data to Azure and you will not be able to download any items from the Azure marketplace
+This function should only be used if you have a currently registered environment and would like to switch the subscription used to register to a different subscription 
+that is under the same account. If you would like to register to a subscription Id that is under a separate account then you must use Remove-RegistrationResource before
+calling RegisterWithAzure again.
 
 #>
 
@@ -442,7 +418,7 @@ Function Add-RegistrationRoleAssignment{
     $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
 
     $role = Get-AzureRmRoleDefinition -Name 'Registration Reader'
-    if($AlternateSubscriptionId -and $role)
+    if($role)
     {
         if(-not($role.AssignableScopes -icontains "/subscriptions/$AlternateSubscriptionId"))
         {
@@ -455,6 +431,10 @@ Function Add-RegistrationRoleAssignment{
             Log-Output "The provided subscription is already in the assignable scopes of RBAC role 'Registration Reader'"
         }
     }
+    else
+    {
+        Log-Output "The 'Registration Reader' custom RBAC role has not been defined. Please run RegisterWithAzure to ensure it is created."
+    }
     Log-Output "*********************** End Log: Add-RegistrationRoleAssignment ***********************`r`n`r`n"
 }
 
@@ -462,13 +442,51 @@ Function Add-RegistrationRoleAssignment{
 
 .SYNOPSIS
 
+Removes a registration resource from Azure
+
 .DESCRIPTION
 
-.PARAMETER
+If no registration resource name is supplied then then this script will use this environments CloudId to search for a registration resource and remove it from Azure.
+If a RegistrationName and ResourceGroupName are supplied this script will remove the specified registration resource from Azure. This will disable marketplace syndication
+and allow you to run RegisterWithAzure with a different subscription Id. Note: If the provided subscription for a subsequent RegisterWithAzure is under the same Azure Account
+as the previous registration you MUST run Add-RegistrationRoleAssignment before attempting RegisterWithAzure.
+
+.PARAMETER CloudAdminCredential
+
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+If not supplied script will request manual input of username and password.
+
+.PARAMETER AzureSubscriptionId
+
+The subscription Id that was previously used to register this Azure Stack environment with Azure.
+
+.PARAMETER JeaComputerName
+
+Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK).
+
+.PARAMETER ResourceGroupName
+
+This is the name of the resource group in Azure where the previous registration resource was stored. Defaults to "azurestack"
+
+.PARAMETER RegistrationName
+
+This is the name of the previous registration resource that was created in Azure. This resource will be removed Defaults to "AzureStack-<CloudId>"
+
+.PARAMETER AzureEnvironmentName
+
+The name of the Azure Environment where registration resources have been created. Defaults to "AzureCloud"
 
 .EXAMPLE
 
+This example removes a registration resource in Azure that was created from a prior successful run of RegisterWithAzure and uses defaults for RegistrationName and ResourceGroupName.
+
+Remove-RegistrationResource -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -JeaComputerName
+
 .NOTES
+
+This script should be used in conjuction with running RegisterWithAzure to disable marketplace syndication and usage reporting (if able). If after running this script
+you attempt to re-register with a different subscription Id that is under the same account as the previous registration you will recieve an error related to the custom 
+RBAC role for registration resources. To fix this, please run Add-RegistrationRoleAssignment to re-register with a subscription under the previously registered account. 
 
 #>
 
@@ -551,6 +569,7 @@ function Remove-RegistrationResource{
             }
         }
     }while ($currentAttempt -le $maxAttempts)
+    Log-Output "*********************** End Log: Remove-RegistrationResource ***********************`r`n`r`n"
 }
 
 ################################################################
