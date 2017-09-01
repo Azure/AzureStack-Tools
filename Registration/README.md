@@ -9,7 +9,7 @@ Once you have downloaded this module, to run the functions contained:
 ```powershell
 CD "<path to RegisterWithAzure.psm1>"
 Import-Module RegisterWithAzure.psm1
-RegisterWithAzure -CloudAdminCredential $cloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -JeaComputerName $JeaComputerName
+Add-AzSRegistration -CloudAdminCredential $cloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -JeaComputerName $JeaComputerName
 ```
 
 If you are not logged into an Azure account during your powershell session you will be prompted for your Azure credentials before registration completes.
