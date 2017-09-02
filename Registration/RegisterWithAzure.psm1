@@ -130,6 +130,9 @@ Function Add-AzSRegistration{
         [String] $AzureSubscriptionId,
 
         [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
+
+        [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
 
         [Parameter(Mandatory = $false)]
@@ -239,6 +242,9 @@ function Remove-AzSRegistration{
 
         [Parameter(Mandatory = $true)]
         [String] $AzureSubscriptionId,
+
+        [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
@@ -357,7 +363,7 @@ calling RegisterWithAzure again.
 
 #>
 
-function Switch-AzSRegistration{
+function Set-AzsRegistrationSubscription{
 [CmdletBinding()]
     param(
 
@@ -365,11 +371,14 @@ function Switch-AzSRegistration{
         [PSCredential] $CloudAdminCredential,
 
         [Parameter(Mandatory = $true)]
-        [String] $AzureSubscriptionId,
+        [String] $CurrentAzureSubscriptionId,
+
+        [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
-        [String] $AlternateSubscriptionId,
+        [String] $NewAzureSubscriptionId,
 
         [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
@@ -412,15 +421,15 @@ function Switch-AzSRegistration{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n"
 
     Log-Output "Logging in to Azure."
-    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
+    $connection = Connect-AzureAccount -SubscriptionId $CurrentAzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
 
     $role = Get-AzureRmRoleDefinition -Name 'Registration Reader'
     if($role)
     {
-        if(-not($role.AssignableScopes -icontains "/subscriptions/$AlternateSubscriptionId"))
+        if(-not($role.AssignableScopes -icontains "/subscriptions/$NewAzureSubscriptionId"))
         {
             Log-Output "Adding alternate subscription Id to scope of custom RBAC role"
-            $role.AssignableScopes.Add("/subscriptions/$AlternateSubscriptionId")
+            $role.AssignableScopes.Add("/subscriptions/$NewAzureSubscriptionId")
             Set-AzureRmRoleDefinition -Role $role
         }
         else
@@ -434,10 +443,12 @@ function Switch-AzSRegistration{
     }
     
     $params = @{}
-    $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})
-    $params.Remove('AlternateSubscriptionId')
+    $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})    
+    $params.Add('AzureSubscriptionId',$CurrentAzureSubscriptionId)    
+    $params.Remove('NewAzureSubscriptionId')
+    $params.Remove('CurrentAzureSubscriptionId')  
     Remove-AzSRegistration @params
-    $params["AzureSubscriptionId"] = $AlternateSubscriptionId
+    $params["AzureSubscriptionId"] = $NewAzureSubscriptionId
     RegistrationWorker @params
 
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
@@ -462,6 +473,9 @@ function RegistrationWorker{
 
         [Parameter(Mandatory = $true)]
         [String] $AzureSubscriptionId,
+
+        [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,        
@@ -502,7 +516,7 @@ function RegistrationWorker{
 
     Resolve-DomainAdminStatus -Verbose
     Log-Output "Logging in to Azure."
-    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
+    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
     $session = Initialize-PrivilegedJeaSession -JeaComputerName $JeaComputerName -CloudAdminCredential $CloudAdminCredential -Verbose
     $stampInfo = Confirm-StampVersion -PSSession $session
     $tenantId = $connection.TenantId    
@@ -712,6 +726,9 @@ function Connect-AzureAccount{
         [string]$SubscriptionId,
 
         [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
+
+        [Parameter(Mandatory = $true)]
         [string]$AzureEnvironmentName
     )
 
@@ -722,6 +739,7 @@ function Connect-AzureAccount{
         $context = Get-AzureRmContext
         $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
         $context.Environment = $environment
+        $AzureDirectoryTenantId = Get-TenantIdFromName -AzureEnvironment $AzureEnvironmentName -TenantName $AzureDirectoryTenantName
         if ($context.Subscription.SubscriptionId -eq $SubscriptionId)
         {
             $isConnected = $true;
@@ -734,7 +752,7 @@ function Connect-AzureAccount{
 
     if (-not $isConnected)
     {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId
+        Add-AzureRmAccount -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
         Set-AzureRmContext -SubscriptionId $SubscriptionId
     }
 
