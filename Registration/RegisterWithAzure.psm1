@@ -120,7 +120,7 @@ Once you have run the appropriate function you can call RegisterWithAzure again 
 
 #>
 
-Function Add-AzSRegistration{
+Function Add-AzsRegistration{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -233,7 +233,7 @@ RBAC role for registration resources. To fix this, please run Add-RegistrationRo
 
 #>
 
-function Remove-AzSRegistration{
+function Remove-AzsRegistration{
 [CmdletBinding()]
     param(
 
