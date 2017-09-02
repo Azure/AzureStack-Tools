@@ -130,6 +130,9 @@ Function Add-AzSRegistration{
         [String] $AzureSubscriptionId,
 
         [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
+
+        [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
 
         [Parameter(Mandatory = $false)]
@@ -167,15 +170,15 @@ Function Add-AzSRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-    Log-Output "*********************** Begin Log: $($PSCmdlet.MyInvocation.InvocationName)  ***********************`r`n"
+    Log-Output "*********************** Begin Log: $($MyInvocation.MyCommand.Name)  ***********************`r`n"
     Log-Output "This script will connect your Azure Stack with Azure, allowing for usage data to be sent and items to be downloaded from the marketplace."
 
     $params = @{}
-    $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})
+    $MyInvocation.MyCommand.Parameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$data[$_]=$value}})
 
     RegistrationWorker @params
 
-    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
+    Log-Output "*********************** End log: $($MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
 <#
@@ -241,6 +244,9 @@ function Remove-AzSRegistration{
         [String] $AzureSubscriptionId,
 
         [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
+
+        [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
 
         [Parameter(Mandatory = $false)]
@@ -278,13 +284,13 @@ function Remove-AzSRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n"
+    Log-Output "*********************** Begin log: $($MyInvocation.MyCommand.Name) ***********************`r`n"
     Log-Output "This script will disable syndication and remove the registration resource in Azure. If no registration name is input, it will default to the resource associated with this environment."    
 
     $params = @{}
-    $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})
-    $params['MarketplaceSyndicationEnabled'] = $false
-    $RegistrationName = RegistrationWorker @params -ReturnRegistrationName
+    $MyInvocation.MyCommand.Parameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$data[$_]=$value}})
+
+    $RegistrationData = RegistrationWorker @params -MarketplaceSyndicationEnabled:$false
 
     $currentAttempt = 0
     $maxAttempts = 3
@@ -315,11 +321,11 @@ function Remove-AzSRegistration{
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempts)
             {
-                Log-Throw -Message "Failed to remove resource from Azure on final attempt: `r`n$exceptionMessage" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+                Log-Throw -Message "Failed to remove resource from Azure on final attempt: `r`n$exceptionMessage" -CallingFunction $MyInvocation.MyCommand.Name
             }
         }
     }while ($currentAttempt -le $maxAttempts)
-    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
+    Log-Output "*********************** End log: $($MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
 <#
@@ -357,7 +363,7 @@ calling RegisterWithAzure again.
 
 #>
 
-function Switch-AzSRegistration{
+function Set-AzsRegistrationSubscription{
 [CmdletBinding()]
     param(
 
@@ -365,11 +371,14 @@ function Switch-AzSRegistration{
         [PSCredential] $CloudAdminCredential,
 
         [Parameter(Mandatory = $true)]
-        [String] $AzureSubscriptionId,
+        [String] $CurrentAzureSubscriptionId,
 
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
-        [String] $AlternateSubscriptionId,
+        [String] $NewAzureSubscriptionId,
+
+        [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
@@ -409,10 +418,10 @@ function Switch-AzSRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n"
+    Log-Output "*********************** Begin log: $($MyInvocation.MyCommand.Name) ***********************`r`n"
 
     Log-Output "Logging in to Azure."
-    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
+    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
 
     $role = Get-AzureRmRoleDefinition -Name 'Registration Reader'
     if($role)
@@ -430,17 +439,16 @@ function Switch-AzSRegistration{
     }
     else
     {
-        Log-Throw -Message "The 'Registration Reader' custom RBAC role has not been defined. Please run Add-AzsRegistration to ensure it is created." -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+        Log-Throw -Message "The 'Registration Reader' custom RBAC role has not been defined. Please run Add-AzsRegistration to ensure it is created." -CallingFunction $MyInvocation.MyCommand.Name
     }
     
     $params = @{}
-    $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})
+    $MyInvocation.MyCommand.Parameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$data[$_]=$value}})
     $params.Remove('AlternateSubscriptionId')
     Remove-AzSRegistration @params
-    $params["AzureSubscriptionId"] = $AlternateSubscriptionId
-    RegistrationWorker @params
+    RegistrationWorker @params -AzureSubscriptionId $AlternateSubscriptionId
 
-    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
+    Log-Output "*********************** End log: $($MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
 ################################################################
@@ -462,6 +470,9 @@ function RegistrationWorker{
 
         [Parameter(Mandatory = $true)]
         [String] $AzureSubscriptionId,
+
+        [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,        
@@ -490,10 +501,7 @@ function RegistrationWorker{
 
         [Parameter(Mandatory=$false)]
         [ValidateNotNull()]
-        [string] $AgreementNumber,
-
-        [Parameter(Mandatory=$false)]
-        [Switch] $ReturnRegistrationName
+        [string] $AgreementNumber
     )    
 
     #
@@ -502,7 +510,7 @@ function RegistrationWorker{
 
     Resolve-DomainAdminStatus -Verbose
     Log-Output "Logging in to Azure."
-    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -Verbose
+    $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
     $session = Initialize-PrivilegedJeaSession -JeaComputerName $JeaComputerName -CloudAdminCredential $CloudAdminCredential -Verbose
     $stampInfo = Confirm-StampVersion -PSSession $session
     $tenantId = $connection.TenantId    
@@ -539,7 +547,7 @@ function RegistrationWorker{
                 Start-Sleep -Seconds $sleepSeconds
                 if ($currentAttempt -ge $maxAttempts)
                 {
-                    Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+                    Log-Throw -Message $_.Exception -CallingFunction $MyInvocation.MyCommand.Name
                 }
             }
         }while ($currentAttempt -lt $maxAttempts)
@@ -565,7 +573,7 @@ function RegistrationWorker{
                 Start-Sleep -Seconds $sleepSeconds
                 if ($currentAttempt -ge $maxAttempts)
                 {
-                    Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+                    Log-Throw -Message $_.Exception -CallingFunction $MyInvocation.MyCommand.Name
                 }
             }
         }while ($currentAttempt -lt $maxAttempts)
@@ -607,7 +615,7 @@ function RegistrationWorker{
         # Set RBAC role on registration resource
         #
 
-        New-RBACAssignment -RegistrationResource $registrationResource -ServicePrincipalObjectId $servicePrincipal.ObjectId
+        New-RBACAssignment -Resource $registrationResource -ServicePrincipalObjectId $servicePrincipal.ObjectId
 
         #
         # Activate Azure Stack
@@ -620,12 +628,7 @@ function RegistrationWorker{
     finally
     {
         $session | Remove-PSSession
-    }
-
-    if ($ReturnRegistrationName)
-    {
-        return $RegistrationName
-    }
+    }    
 }
 
 <#
@@ -670,7 +673,7 @@ function New-RBACAssignment{
         }
         catch
         {
-            Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+            Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)" -CallingFunction $MyInvocation.MyCommand.Name
         }
     }
 
@@ -712,7 +715,10 @@ function Connect-AzureAccount{
         [string]$SubscriptionId,
 
         [Parameter(Mandatory = $true)]
-        [string]$AzureEnvironmentName
+        [string]$AzureEnvironmentName,
+
+        [Parameter(Mandatory = $true)]
+        [String] $AzureDirectoryTenantName
     )
 
     $isConnected = $false;
@@ -722,6 +728,7 @@ function Connect-AzureAccount{
         $context = Get-AzureRmContext
         $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
         $context.Environment = $environment
+        $AzureDirectoryTenantId = Get-TenantIdFromName -AzureEnvironment $AzureEnvironmentName -TenantName $AzureDirectoryTenantName
         if ($context.Subscription.SubscriptionId -eq $SubscriptionId)
         {
             $isConnected = $true;
@@ -734,7 +741,7 @@ function Connect-AzureAccount{
 
     if (-not $isConnected)
     {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId
+        Add-AzureRmAccount -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
         Set-AzureRmContext -SubscriptionId $SubscriptionId
     }
 
@@ -792,11 +799,11 @@ Param()
     catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException]
     {
         $message = "User is not logged in as a domain admin. registration has been cancelled."        
-        Log-Throw -Message "$message `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+        Log-Throw -Message "$message `r`n$($_.Exception)" -CallingFunction $MyInvocation.MyCommand.Name
     }
     catch
     {        
-        Log-Throw -Message "Unexpected error while checking for domain admin: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+        Log-Throw -Message "Unexpected error while checking for domain admin: `r`n$($_.Exception)" -CallingFunction $MyInvocation.MyCommand.Name
     }
 }
 
@@ -836,7 +843,7 @@ Param(
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempts)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+                Log-Throw -Message $_.Exception -CallingFunction $MyInvocation.MyCommand.Name
             }
         }
     }while ($currentAttempt -lt $maxAttempts)
@@ -861,13 +868,13 @@ Param(
         $stampInfo = Invoke-Command -Session $PSSession -ScriptBlock { Get-AzureStackStampInformation -WarningAction SilentlyContinue }
         $minVersion = [Version]"1.0.170626.1"
         if ([Version]$stampInfo.StampVersion -lt $minVersion) {
-            Log-Throw -Message "Script only applicable for Azure Stack builds $minVersion or later." -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+            Log-Throw -Message "Script only applicable for Azure Stack builds $minVersion or later." -CallingFunction $MyInvocation.MyCommand.Name
         }
         return $stampInfo
     }
     Catch
     {
-        Log-Throw "An error occurred checking stamp information: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+        Log-Throw "An error occurred checking stamp information: `r`n$($_.Exception)" -CallingFunction $MyInvocation.MyCommand.Name
     }
 }
 
@@ -933,7 +940,7 @@ function Log-Throw
     "`r`n**************************** Error ****************************" | Out-File $Global:AzureRegistrationLog -Append
     "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Global:AzureRegistrationLog -Append
     "***************************************************************`r`n" | Out-File $Global:AzureRegistrationLog -Append
-    Log-Output "*********************** Ending registration action during $CallingFunction ***********************`r`n`r`n"
+    Log-Output "*********************** End log: $CallingFunction ***********************`r`n`r`n"
 
     throw "Logs can be found at: $Global:AzureRegistrationLog  and  \\$JeaComputerName\c$\maslogs `r`n$Message"
 }
