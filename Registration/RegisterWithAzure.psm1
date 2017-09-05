@@ -170,7 +170,7 @@ Function Add-AzsRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-    Log-Output "*********************** Begin Log: $($PSCmdlet.MyInvocation.InvocationName)  ***********************`r`n"
+    Log-Output "*********************** Begin Log: Add-AzsRegistration  ***********************`r`n"
     Log-Output "This script will connect your Azure Stack with Azure, allowing for usage data to be sent and items to be downloaded from the marketplace."
 
     $params = @{}
@@ -178,7 +178,7 @@ Function Add-AzsRegistration{
 
     RegistrationWorker @params
 
-    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
+    Log-Output "*********************** End log: Add-AzsRegistration ***********************`r`n`r`n"
 }
 
 <#
@@ -284,7 +284,7 @@ function Remove-AzsRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n"
+    Log-Output "*********************** Begin log: Remove-AzsRegistration ***********************`r`n"
     Log-Output "This script will disable syndication and remove the registration resource in Azure. If no registration name is input, it will default to the resource associated with this environment."    
 
     $params = @{}
@@ -325,7 +325,7 @@ function Remove-AzsRegistration{
             }
         }
     }while ($currentAttempt -le $maxAttempts)
-    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
+    Log-Output "*********************** End log: Remove-AzsRegistration ***********************`r`n`r`n"
 }
 
 <#
@@ -418,7 +418,7 @@ function Set-AzsRegistrationSubscription{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n"
+    Log-Output "*********************** Begin log: Set-AzsRegistrationSubscription ***********************`r`n"
 
     Log-Output "Logging in to Azure."
     $connection = Connect-AzureAccount -SubscriptionId $CurrentAzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
@@ -451,7 +451,7 @@ function Set-AzsRegistrationSubscription{
     $params["AzureSubscriptionId"] = $NewAzureSubscriptionId
     RegistrationWorker @params
 
-    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.InvocationName) ***********************`r`n`r`n"
+    Log-Output "*********************** End log: Set-AzsRegistrationSubscription ***********************`r`n`r`n"
 }
 
 ################################################################
@@ -919,7 +919,7 @@ function Get-TenantIdFromName
 
     Write-Verbose -Message "using token_endpoint $($response.token_endpoint) to parse tenant id" -Verbose
     $tenantId = $response.token_endpoint.Split('/')[3]
- 
+
     $tenantIdGuid = [guid]::NewGuid()
     $result = [guid]::TryParse($tenantId, [ref] $tenantIdGuid)
 
