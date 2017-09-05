@@ -738,8 +738,8 @@ function Connect-AzureAccount{
     {
         $context = Get-AzureRmContext
         $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
-        $context.Environment = $environment
         $AzureDirectoryTenantId = Get-TenantIdFromName -AzureEnvironment $AzureEnvironmentName -TenantName $AzureDirectoryTenantName
+        $context.Environment = $environment
         if ($context.Subscription.SubscriptionId -eq $SubscriptionId)
         {
             $isConnected = $true;
@@ -749,11 +749,11 @@ function Connect-AzureAccount{
     {
         Log-Warning "Not currently connected to Azure: `r`n$($_.Exception)"
     }
-
+    
     if (-not $isConnected)
     {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
-        Set-AzureRmContext -SubscriptionId $SubscriptionId
+        Add-AzureRmAccount -SubscriptionId $SubscriptionId
+        Set-AzureRmContext -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
     }
 
     $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
@@ -886,6 +886,88 @@ Param(
     Catch
     {
         Log-Throw "An error occurred checking stamp information: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+    }
+}
+
+<#
+.SYNOPSIS
+    Returns Azure AD directory tenant ID given the login endpoint and the directory tenant name
+.DESCRIPTION
+    Makes an unauthenticated REST call to the given Azure environment's login endpoint to retrieve directory tenant id
+.EXAMPLE
+  $tenantId = Get-TenantIdFromName -azureEnvironment "Public Azure" -tenantName "msazurestack.onmicrosoft.com"
+#>
+function Get-TenantIdFromName
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [string] $azureEnvironment,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [string] $tenantName
+    )
+
+    $azureURIs = Get-AzureURIs -AzureEnvironment $AzureEnvironment
+
+    $uri = "{0}/{1}/.well-known/openid-configuration" -f ($azureURIs.LoginUri).TrimEnd('/'), $tenantName
+
+    $response = Invoke-RestMethod -Uri $uri -Method Get -Verbose
+
+    Write-Verbose -Message "using token_endpoint $($response.token_endpoint) to parse tenant id" -Verbose
+    $tenantId = $response.token_endpoint.Split('/')[3]
+ 
+    $tenantIdGuid = [guid]::NewGuid()
+    $result = [guid]::TryParse($tenantId, [ref] $tenantIdGuid)
+
+    if(-not $result)
+    {
+        Write-Error "Error obtaining tenant id from tenant name"
+    }
+    else
+    {
+        Write-Verbose -Message "Tenant Name: $tenantName Tenant id: $tenantId" -Verbose
+        return $tenantId
+    }
+}
+
+function Get-AzureURIs
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [string] $AzureEnvironment
+    )
+
+    if ($AzureEnvironment -eq "AzureChinaCloud")
+    {
+        return @{
+                    GraphUri = "https://graph.chinacloudapi.cn/"
+                    LoginUri = "https://login.chinacloudapi.cn/"
+                    ManagementServiceUri = "https://management.core.chinacloudapi.cn/"
+                    ARMUri = "https://management.chinacloudapi.cn/"
+                }
+    }
+    elseif ($AzureEnvironment -eq "AzureGermanCloud")
+    {
+        return @{
+                    GraphUri = "https://graph.cloudapi.de/"
+                    LoginUri = "https://login.microsoftonline.de/"
+                    ManagementServiceUri = "https://management.core.cloudapi.de/"
+                    ARMUri = "https://management.microsoftazure.de/"
+                }
+    }
+    else
+    {
+        return @{
+                    GraphUri = "https://graph.windows.net/"
+                    LoginUri = "https://login.windows.net/"
+                    ManagementServiceUri = "https://management.core.windows.net/"
+                    ARMUri = "https://management.azure.com/"
+                }
     }
 }
 
