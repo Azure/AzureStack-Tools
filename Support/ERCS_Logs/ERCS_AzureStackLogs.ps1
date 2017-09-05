@@ -91,7 +91,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.4.6
+#    1.4.7
 #  
 #------------------------------------------------------------------------------ 
  
@@ -109,10 +109,10 @@ else
 " PowerShell Source Code " | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 " NAME: " | Write-Host -ForegroundColor Yellow 
-"    ERCS_AzureStackLogs_1.4.6.ps1 " | Write-Host -ForegroundColor Yellow 
+"    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.4.6" | Write-Host -ForegroundColor Yellow 
+"    1.4.7" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -127,7 +127,6 @@ If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exi
 #clear var $ip
 $IP = $null
 Clear-Host
-[console]::bufferwidth = 271
 
 #Test for Module
 function load_module($name)
@@ -731,19 +730,17 @@ if($IP)
 		}
         if((get-job -Id $job.id).State -eq "Failed")
 	    {
+            Write-Progress -Activity "Please wait while Get-AzureStackLog is running on $($IP)" -Status "Ready" -Completed
 			Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
 			Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation} -OutVariable StampInformation | Out-Null
-			Write-Host "`n `t[INFO] Getting Azure Stack transcript" -ForegroundColor Green
-	        Invoke-Command -Session $s -ScriptBlock {Close-PrivilegedEndpoint -TranscriptsPathDestination $using:ShareINFO}
-            Remove-PSSession $s
+
         }
         if((get-job -Id $job.id).State -eq "Completed")
 	    {
+            Write-Progress -Activity "Please wait while Get-AzureStackLog is running on $($IP)" -Status "Ready" -Completed
 			Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
 			Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation} -OutVariable StampInformation | Out-Null
-			Write-Host "`n `t[INFO] Getting Azure Stack transcript" -ForegroundColor Green
-	        Invoke-Command -Session $s -ScriptBlock {Close-PrivilegedEndpoint -TranscriptsPathDestination $using:ShareINFO}
-            Remove-PSSession $s
+
         }
 		#output Get-AzureStackStampInformation
 		if($StampInformation)
@@ -753,6 +750,21 @@ if($IP)
 			Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:SystemDrive)\$($sharename)" -ForegroundColor Green
 			$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:SystemDrive)\$($sharename)\AzureStackStampInformation.json" -Force
 		}
+
+        # output for transcript
+        try
+        {
+        Write-Host "`n `t[INFO] Getting Azure Stack transcript" -ForegroundColor Green
+        Invoke-Command -Session $s -ScriptBlock {Close-PrivilegedEndpoint -TranscriptsPathDestination $using:ShareINFO}
+        }
+        catch [System.Management.Automation.RemoteException]
+        {
+            Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+        }
+        finally
+        {
+            Remove-PSSession $s
+        }
 		#get files for user
 		$Files = Get-ChildItem -Path "$($Env:SystemDrive)\$($sharename)" | Where {(($_.attributes -eq 'directory') -and ($_.Name -like "AzureStackLogs-*"))} | sort -Descending -Property CreationTime | select -first 1
 		Invoke-Item "$($Files.FullName)"
