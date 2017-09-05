@@ -1039,5 +1039,5 @@ function Log-Throw
 }
 
 Export-ModuleMember Add-AzsRegistration
-Export-ModuleMember Remove-AzSRegistration
-Export-ModuleMember Switch-AzSRegistration
+Export-ModuleMember Remove-AzsRegistration
+Export-ModuleMember Set-AzsRegistrationSubscription
