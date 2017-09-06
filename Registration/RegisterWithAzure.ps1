@@ -196,18 +196,25 @@ function Connect-AzureAccount
     if (-not $tokens -or ($tokens.Count -le 0))
     {
         $tokens = $context.TokenCache.ReadItems()
+
         if (-not $tokens -or ($tokens.Count -le 0))
         {
             throw "Token cache is empty"
         }
+        else
+        {
+            $token = $tokens[0]
+        }
 
     }
-
-    $token = $tokens |
-        Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-        Where { $_.TenantId -eq $subscription.TenantId } |
-        Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-        Select -First 1
+    else
+    {
+        $token = $tokens |
+            Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+            Where { $_.TenantId -eq $subscription.TenantId } |
+            Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
+            Select -First 1
+    }
 
     if (-not $token)
     {
