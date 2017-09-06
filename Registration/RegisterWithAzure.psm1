@@ -767,13 +767,19 @@ function Connect-AzureAccount{
         {
             throw "Token cache is empty"
         }
+        else
+        {
+            $token = $tokens[0]
+        }
     }
-
-    $token = $tokens |
-        Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-        Where { $_.TenantId -eq $subscription.TenantId } |
-        Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-        Select -First 1
+    else
+    {
+        $token = $tokens |
+            Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+            Where { $_.TenantId -eq $subscription.TenantId } |
+            Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
+            Select -First 1
+    }
 
     if (-not $token)
     {
