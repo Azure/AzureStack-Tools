@@ -762,7 +762,11 @@ function Connect-AzureAccount{
     $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
     if (-not $tokens -or ($tokens.Count -le 0))
     {
-        throw "Token cache is empty"
+        $tokens = $context.TokenCache.ReadItems()
+        if (-not $tokens -or ($tokens.Count -le 0))
+        {
+            throw "Token cache is empty"
+        }
     }
 
     $token = $tokens |
@@ -919,7 +923,7 @@ function Get-TenantIdFromName
 
     Write-Verbose -Message "using token_endpoint $($response.token_endpoint) to parse tenant id" -Verbose
     $tenantId = $response.token_endpoint.Split('/')[3]
-
+ 
     $tenantIdGuid = [guid]::NewGuid()
     $result = [guid]::TryParse($tenantId, [ref] $tenantIdGuid)
 
