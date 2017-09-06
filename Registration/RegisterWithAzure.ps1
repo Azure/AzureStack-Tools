@@ -188,13 +188,19 @@ function Connect-AzureAccount
         Add-AzureRmAccount -SubscriptionId $SubscriptionId        
     }
 
+    $context = Get-AzureRmContext
     $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
     $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
 
     $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
     if (-not $tokens -or ($tokens.Count -le 0))
     {
-        throw "Token cache is empty"
+        $tokens = $context.TokenCache.ReadItems()
+        if (-not $tokens -or ($tokens.Count -le 0))
+        {
+            throw "Token cache is empty"
+        }
+
     }
 
     $token = $tokens |
