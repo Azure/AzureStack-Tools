@@ -290,6 +290,11 @@ function Remove-AzsRegistration{
     $params = @{}
     $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})
     $params['MarketplaceSyndicationEnabled'] = $false
+    if (($params['BillingModel'] -eq 'Development') -or ($params['BillingModel'] -eq 'Capacity'))
+    {
+        $params['UsageReportingEnabled'] = $false
+    }
+
     $RegistrationName = RegistrationWorker @params -ReturnRegistrationName
 
     $currentAttempt = 0
