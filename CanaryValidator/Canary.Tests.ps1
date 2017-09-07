@@ -319,7 +319,7 @@ while ($runCount -le $NumberOfIterations)
                         $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
                         Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
                         Remove-Item $CanaryCustomImageFolder -Force -Recurse
-                        $linuxUpload = $true
+                        Set-Variable -Name linuxUpload -Value $true -Scrope 1
                     }    
                 }
                 catch
@@ -1162,7 +1162,7 @@ while ($runCount -le $NumberOfIterations)
 
                     Invoke-Usecase -Name 'RemoveLinuxImageFromPIR' -Description "Remove the Linux image uploaded during setup from the Platform Image Respository" -UsecaseBlock `
                     {
-                        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
+                        if ((Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue) -and ($linuxUpload))
                         {
                             Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation -Force
                         }
