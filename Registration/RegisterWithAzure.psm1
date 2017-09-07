@@ -384,6 +384,9 @@ function Set-AzsRegistrationSubscription{
         [String] $JeaComputerName,
 
         [Parameter(Mandatory = $false)]
+        [String] $NewAzureDirectoryTenantName,
+
+        [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
@@ -428,13 +431,27 @@ function Set-AzsRegistrationSubscription{
     {
         if(-not($role.AssignableScopes -icontains "/subscriptions/$NewAzureSubscriptionId"))
         {
-            Log-Output "Adding alternate subscription Id to scope of custom RBAC role"
-            $role.AssignableScopes.Add("/subscriptions/$NewAzureSubscriptionId")
-            Set-AzureRmRoleDefinition -Role $role
+            try
+            {
+                Log-Output "Adding alternate subscription Id to scope of custom RBAC role"
+                $role.AssignableScopes.Add("/subscriptions/$NewAzureSubscriptionId")
+                Set-AzureRmRoleDefinition -Role $role
+            }
+            catch
+            {
+                if($_.Exception -ilike "*LinkedAuthorizationFailed:*")
+                {
+                    Log-Warning "Unable to add the new subscription: $NewAzureSubscriptionId  to the scope of existing RBAC role definition. Continuing with transfer of registration"
+                }
+                else
+                {
+                    Log-Throw "Unable to swap to the provided NewAzureSubscriptionId $NewAzureSubscriptionId `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+                }
+            }
         }
         else
         {
-            Log-Output "The provided subscription is already in the assignable scopes of RBAC role 'Registration Reader'"
+            Log-Output "The provided subscription is already in the assignable scopes of RBAC role 'Registration Reader'. Continuing with transfer of registration."
         }
     }
     else
@@ -445,10 +462,15 @@ function Set-AzsRegistrationSubscription{
     $params = @{}
     $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})    
     $params.Add('AzureSubscriptionId',$CurrentAzureSubscriptionId)    
+    $params.Remove('NewAzureDirectoryTenantName')
     $params.Remove('NewAzureSubscriptionId')
     $params.Remove('CurrentAzureSubscriptionId')  
     Remove-AzSRegistration @params
     $params["AzureSubscriptionId"] = $NewAzureSubscriptionId
+    if($NewAzureDirectoryTenantName)
+    {
+        $params["AzureDirectoryTenantName"] = $NewAzureDirectoryTenantName
+    }
     RegistrationWorker @params
 
     Log-Output "*********************** End log: Set-AzsRegistrationSubscription ***********************`r`n`r`n"
@@ -736,9 +758,11 @@ function Connect-AzureAccount{
 
     try
     {
+        $AzureDirectoryTenantId = Get-TenantIdFromName -AzureEnvironment $AzureEnvironmentName -TenantName $AzureDirectoryTenantName
+        Set-AzureRmContext -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
         $context = Get-AzureRmContext
         $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
-        $AzureDirectoryTenantId = Get-TenantIdFromName -AzureEnvironment $AzureEnvironmentName -TenantName $AzureDirectoryTenantName
+        $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
         $context.Environment = $environment
         if ($context.Subscription.SubscriptionId -eq $SubscriptionId)
         {
@@ -752,12 +776,22 @@ function Connect-AzureAccount{
     
     if (-not $isConnected)
     {
-        Add-AzureRmAccount -SubscriptionId $SubscriptionId
-        Set-AzureRmContext -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
+        try
+        {
+            Add-AzureRmAccount -SubscriptionId $SubscriptionId       
+            Set-AzureRmContext -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
+            $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
+            $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId 
+        }
+        catch
+        {
+            Log-Throw "Unable to connect to Azure: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+        }
     }
-
-    $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
-    $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
+    else
+    {
+        Log-Output "Currently connected to Azure with context: `r`n$context"
+    }
 
     $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
     if (-not $tokens -or ($tokens.Count -le 0))
