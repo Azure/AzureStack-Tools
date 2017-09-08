@@ -192,28 +192,48 @@ function Connect-AzureAccount
     $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
     $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
 
-    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-    if (-not $tokens -or ($tokens.Count -le 0))
-    {
-        $tokens = $context.TokenCache.ReadItems()
+    [Version]$azurePSVersion = (Get-Module AzureRm.Profile).Version
+    Log-Output "Using AzureRm.Profile version: $azurePSVersion"
 
+    if ($azurePSVersion -ge [Version]"3.3.2")
+    {
+        $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
         if (-not $tokens -or ($tokens.Count -le 0))
         {
-            throw "Token cache is empty"
+            $tokens = $context.TokenCache.ReadItems()
+
+            if (-not $tokens -or ($tokens.Count -le 0))
+            {
+                throw "Token cache is empty"
+            }
+            else
+            {
+                $token = $tokens[0]
+            }
         }
         else
         {
             $token = $tokens[0]
         }
-
     }
     else
     {
-        $token = $tokens |
-            Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-            Where { $_.TenantId -eq $subscription.TenantId } |
-            Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-            Select -First 1
+        $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
+        if (-not $tokens -or ($tokens.Count -le 0))
+        {            
+            if (-not $tokens -or ($tokens.Count -le 0))
+            {
+                throw "Token cache is empty"
+            }
+        }
+        else
+        {
+            $token = $tokens |
+                Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+                Where { $_.TenantId -eq $subscription.TenantId } |
+                Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
+                Select -First 1
+        }
     }
 
     if (-not $token)
@@ -419,7 +439,15 @@ try
     $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
 
     Log-Output "Registering Azure Stack resource provider."
-    Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" -Force | Out-Null
+    [Version]$azurePSVersion = (Get-Module AzureRm.Resources).Version
+    if ($azurePSVersion -ge [Version]"4.3.2")
+    {
+        Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" | Out-Null
+    }
+    else
+    {
+        Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" -Force | Out-Null
+    }
 
     $RegistrationName = if ($RegistrationName) { $RegistrationName } else { "AzureStack-$($stampInfo.CloudID)" }
 
