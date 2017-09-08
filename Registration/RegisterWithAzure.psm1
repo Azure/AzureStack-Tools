@@ -624,25 +624,30 @@ function RegistrationWorker{
         $RegistrationName = if ($RegistrationName) { $RegistrationName } else { "AzureStack-$($stampInfo.CloudID)" }
 
         Log-Output "Creating registration resource '$RegistrationName'."
-        $registrationResource = New-AzureRmResource `
-            -ResourceGroupName $ResourceGroupName `
-            -Location $ResourceGroupLocation `
-            -ResourceName $RegistrationName `
-            -ResourceType "Microsoft.AzureStack/registrations" `
-            -Properties @{ registrationToken = "$registrationToken" } `
-            -ApiVersion "2017-06-01" `
-            -Force
+
+        $resourceCreationParams = @{
+            ResourceGroupName = $ResourceGroupName
+            Location          = $ResourceGroupLocation
+            ResourceName      = $RegistrationName
+            ResourceType      = "Microsoft.AzureStack/registrations"
+            Properties        = @{ registrationToken = "$registrationToken" } 
+            ApiVersion        = "2017-06-01" 
+        }
+
+        $registrationResource = New-AzureRmResource $resourceCreationParams -Force
 
         Log-Output "Registration resource: $(ConvertTo-Json $registrationResource)"
 
         Log-Output "Retrieving activation key."
-        $actionResponse = Invoke-AzureRmResourceAction `
-            -Action "GetActivationKey" `
-            -ResourceName $RegistrationName `
-            -ResourceType "Microsoft.AzureStack/registrations" `
-            -ResourceGroupName $ResourceGroupName `
-            -ApiVersion "2017-06-01" `
-            -Force
+        $resourceActionparams = @{
+            Action            = "GetActivationKey"
+            ResourceName      = $RegistrationName
+            ResourceType      = "Microsoft.AzureStack/registrations"
+            ResourceGroupName = $ResourceGroupName
+            ApiVersion        = "2017-06-01"
+        }
+
+        $actionResponse = Invoke-AzureRmResourceAction $resourceActionparams -Force
 
         #
         # Set RBAC role on registration resource
@@ -890,7 +895,7 @@ Param(
     {
         try
         {
-            Log-Output "Initializing privileged JEA session. Attempt $currentAttempt of $maxAttempts"
+            Log-Output "Initializing privileged JEA session with $JeaComputerName. Attempt $currentAttempt of $maxAttempts"
             $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
             Log-Output "Connection to $JeaComputerName successful"
             return $session
