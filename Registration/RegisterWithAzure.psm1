@@ -389,7 +389,7 @@ function Set-AzsRegistrationSubscription{
         [Parameter(Mandatory = $true)]
         [String] $JeaComputerName,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [String] $NewAzureDirectoryTenantName,
 
         [Parameter(Mandatory = $false)]
@@ -474,10 +474,7 @@ function Set-AzsRegistrationSubscription{
     Log-Output "Remove-AzsRegistration params: `r`n $(ConvertTo-Json $params)"
     Remove-AzSRegistration @params
     $params["AzureSubscriptionId"] = $NewAzureSubscriptionId
-    if($NewAzureDirectoryTenantName)
-    {
-        $params["AzureDirectoryTenantName"] = $NewAzureDirectoryTenantName
-    }
+    $params["AzureDirectoryTenantName"] = $NewAzureDirectoryTenantName
     Log-Output "Add-AzsRegistration params: `r`n $(ConvertTo-Json $params)"
     RegistrationWorker @params
 

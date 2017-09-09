@@ -727,6 +727,10 @@ $Xaml = @'
                             <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" />
+                        </StackPanel>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -734,18 +738,14 @@ $Xaml = @'
                                 <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="430" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="430"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="Control_NetConfig_Btn_Previous" Content="Previous" Height="23.5" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <Button x:Name="Control_NetConfig_Btn_Next" Content="Next" Height="23.5" Width="100" Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Button x:Name="Control_NetConfig_Btn_Next" Content="Next" Height="23.5" Width="100" Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" IsEnabled="False" />
                     </StackPanel>
                 </StackPanel>
                 <!--#endregion NetConfig-->
@@ -967,7 +967,7 @@ $S_PrepareVHDX = {
 
     #Logic
     # Disable Autoplay
-    If (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers\EventHandlersDefaultSelection\StorageOnArrival"){
+    If (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers\EventHandlersDefaultSelection\StorageOnArrival") {
         $Autoplay = (Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers\EventHandlersDefaultSelection\StorageOnArrival").'(default)'
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers\EventHandlersDefaultSelection\StorageOnArrival" -Name '(default)' -Type String -Value 'MSTakeNoAction'
         }
@@ -1007,12 +1007,11 @@ $S_PrepareVHDX = {
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
     $bootOptions | ForEach-Object {
-    if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack')))
-    {
-    $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
-    bcdedit /set $BootID description "Azure Stack"
+        if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack'))) {
+            $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
+            bcdedit /set $BootID description "Azure Stack"
+        }
     }
-    }   
     #endregion
 
     #region Unattend
@@ -1045,9 +1044,8 @@ $S_PrepareVHDX = {
     $U_Unattend_input_adminpassword = $SyncHash.Control_Unattend_Pwb_LocalPassword.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Pwb_LocalPassword.Password})
     $U_Unattend_input_productkey ="74YFP-3QFB3-KQT8W-PMXWJ-7M648"
 
-
-        #region minimal
-[XML]$U_Unattend = @"
+    #region minimal
+    [XML]$U_Unattend = @"
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
   <settings pass="windowsPE">
     <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1097,10 +1095,10 @@ $S_PrepareVHDX = {
   </settings>
 </unattend>
 "@
-        #endregion minimal
+    #endregion minimal
 
-        #region specialize
-[XML]$U_Unattend_specialize_IPAddress=@"
+    #region specialize
+    [XML]$U_Unattend_specialize_IPAddress=@"
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
   <settings pass="specialize">
     <component name="Microsoft-Windows-TCPIP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1130,7 +1128,7 @@ $S_PrepareVHDX = {
 </unattend>
 "@
 
-[XML]$U_Unattend_specialize_DNS=@"
+    [XML]$U_Unattend_specialize_DNS=@"
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
   <settings pass="specialize">
     <component name="Microsoft-Windows-DNS-Client" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1148,10 +1146,10 @@ $S_PrepareVHDX = {
   </settings>
 </unattend>
 "@
-        #endregion specialize
+    #endregion specialize
 
-        #region oobeSystem
-[XML]$U_Unattend_oobeSysten_AdminPassword=@"
+    #region oobeSystem
+    [XML]$U_Unattend_oobeSysten_AdminPassword=@"
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
   <settings pass="oobeSystem">
     <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1168,7 +1166,7 @@ $S_PrepareVHDX = {
   </settings>
 </unattend>
 "@
-        #endregion oobeSystem
+    #endregion oobeSystem
 
     
     if($Unattend_Apply_LocalAdmin) {
@@ -1191,8 +1189,7 @@ $S_PrepareVHDX = {
         $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='90'},"Normal")
         $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Add drivers..'},"Normal")
         $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
-        foreach ($subdirectory in $Prepare_Drivers_Path)
-        {
+        foreach ($subdirectory in $Prepare_Drivers_Path) {
             Add-WindowsDriver -Driver $subdirectory -Path "$($Prepare_Vhdx_DriveLetter):\" -Recurse
         }
     }
@@ -1222,28 +1219,28 @@ $S_Netbxnda = {
     $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='40'},"Normal")
     $PnPDevice = Get-PnpDevice -InstanceId $SelectedNetAdapter.PnPDeviceID
     # netbxnda.inf used in selected NIC?
-    If ((Get-PnpDeviceProperty -InputObject $PnPDevice -KeyName DEVPKEY_Device_DriverInfPath).Data -eq "netbxnda.inf"){
+    If ((Get-PnpDeviceProperty -InputObject $PnPDevice -KeyName DEVPKEY_Device_DriverInfPath).Data -eq "netbxnda.inf") {
         $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='60'},"Normal")
         $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Downloading update..'},"Normal")
-        try{
-                Start-Transcript -Path C:\CloudDeployment\Setup\netbxnda.txt -Append 
-                $filepath = "$env:TEMP\netbxnda.exe"
-                Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=852544" -OutFile $filepath
+        try {
+            Start-Transcript -Path C:\CloudDeployment\Setup\netbxnda.txt -Append
+            $filepath = "$env:TEMP\netbxnda.exe"
+            Invoke-WebRequest "https://go.microsoft.com/fwlink/?linkid=852544" -OutFile $filepath
 
-                $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='80'},"Normal")
-                $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Applying update..'},"Normal")
+            $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='80'},"Normal")
+            $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Applying update..'},"Normal")
 
-                Invoke-Expression $filepath
-                Remove-Item -Path $filepath
-                Stop-Transcript
-                }
-        catch{
+            Invoke-Expression $filepath
+            Remove-Item -Path $filepath
+            Stop-Transcript
+        }
+        catch {
                 $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='60'},"Normal")
                 $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Downloading update..'},"Normal")
                 $syncHash.Control_Job_Stp_Netbxnda.Dispatcher.Invoke([action]{$synchash.Control_Job_Stp_Netbxnda.Visibility='Visible'},"Normal")
                 Break
-                }
         }
+    }
 
     #region Finalize
     $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='100'},"Normal")
@@ -1288,40 +1285,38 @@ $Runspace_Jobs = [PowerShell]::Create()
 
 #region Functions
 Function F_Initialize {
+    Write-Host "Initialize environment. Please wait." -NoNewline -ForegroundColor Cyan
 
-Write-Host "Initialize environment. Please wait." -NoNewline -ForegroundColor Cyan
+    # Initialize runspace
+    $Runspace_Jobs.Commands.Clear()
+    $Runspace_Jobs.AddScript($S_Initialize) | Out-Null
+    $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+    $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
 
-# Initialize runspace
-$Runspace_Jobs.Commands.Clear()
-$Runspace_Jobs.AddScript($S_Initialize) | Out-Null
-$Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
-$Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+    Write-Host "." -NoNewline -ForegroundColor Cyan
 
-Write-Host "." -NoNewline -ForegroundColor Cyan
-
-# Get environment details
-# CloudBuilder
+    # Get environment details CloudBuilder
     if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
-        if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")){
+        if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")) {
             # Deployment not initialized
             $Script:Initialized="CloudBuilder_Install"
             $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
             $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
             $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
-            }
-        else{
+        }
+        else {
             # Import module to check current deployment status
             Import-Module "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1" -Force -Verbose:$false
             $actionProgress = Get-ActionProgress -ActionType Deployment
             # Deployment not started
-            if (!($actionProgress)){
+            if (!($actionProgress)) {
                 $Script:Initialized="CloudBuilder_Install"
                 $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
                 $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Install.Mode_LeftTitle
                 $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_Install.Mode_LeftContent
             }
-            # Deployment completed successfully
-            elseif($actionProgress.Attribute("Status").Value -eq 'Success'){
+            elseif($actionProgress.Attribute("Status").Value -eq 'Success') {
+                # Deployment completed
                 $Script:Initialized="CloudBuilder_Completed_GatherLogs"
                 $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
                 $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Completed.Mode_LeftTitle
@@ -1330,7 +1325,7 @@ Write-Host "." -NoNewline -ForegroundColor Cyan
             # Deployment in progress or stopped
             else{
                 # Not deployed with deployment UI
-                if(!(test-path "C:\CloudDeployment\Rerun\config.xml")){
+                if(!(test-path "C:\CloudDeployment\Rerun\config.xml")) {
                     New-Item C:\CloudDeployment\Rerun -type directory -Force
                     '<config status="rerun" run="0"/>' | Out-File C:\CloudDeployment\Rerun\config.xml
                     $Script:Initialized="CloudBuilder_Rerun"
@@ -1342,7 +1337,7 @@ Write-Host "." -NoNewline -ForegroundColor Cyan
                 else {
                     $Status = [XML](Get-Content "C:\CloudDeployment\Rerun\config.xml")
                     # Contains only 1 or 2 deployment logs
-                    if ($status.config.status -eq "Rerun" -and [int]$status.config.run -le 2){
+                    if ($status.config.status -eq "Rerun" -and [int]$status.config.run -le 2) {
                         $Script:Initialized="CloudBuilder_Rerun"
                         $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
                         $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_Rerun.Mode_LeftTitle
@@ -1359,25 +1354,25 @@ Write-Host "." -NoNewline -ForegroundColor Cyan
             }
         }
 
-    # Reboot options
-    F_Reboot_Options
-    $syncHash.Control_Mode_Tbl_RightTitle.Text = $Text_Install.Mode_RightTitle
-    $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_Install.Mode_RightContent
+        # Reboot options
+        F_Reboot_Options
+        $syncHash.Control_Mode_Tbl_RightTitle.Text = $Text_Install.Mode_RightTitle
+        $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_Install.Mode_RightContent
     }
-# Booted from vhdx, but not CloudBuilder.vhdx
-elseif ((get-disk | Where-Object {$_.isboot -eq $true}).Model -match 'Virtual Disk'){
-    Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server." -ForegroundColor Red
-    Exit
+    # Booted from vhdx, but not CloudBuilder.vhdx
+    elseif ((get-disk | Where-Object {$_.isboot -eq $true}).Model -match 'Virtual Disk') {
+        Write-Host "The server is currently already booted from a virtual hard disk, to boot the server from the CloudBuilder.vhdx you will need to run this script on an Operating System that is installed on the physical disk of this server." -ForegroundColor Red
+        Exit
     }
 
-# Booted in the SafeOS
-else {
-    $Script:Initialized="SafeOS"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
-    $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_SafeOS.Mode_LeftTitle
-    $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_SafeOS.Mode_LeftContent
-    $syncHash.Control_Mode_Tbl_RightTitle.Text = $Text_SafeOS.Mode_RightTitle
-    $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_SafeOS.Mode_RightContent
+    # Booted in the SafeOS
+    else {
+        $Script:Initialized="SafeOS"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
+        $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_SafeOS.Mode_LeftTitle
+        $syncHash.Control_Mode_Tbl_LeftContent.Text = $Text_SafeOS.Mode_LeftContent
+        $syncHash.Control_Mode_Tbl_RightTitle.Text = $Text_SafeOS.Mode_RightTitle
+        $syncHash.Control_Mode_Tbl_RightContent.Text = $Text_SafeOS.Mode_RightContent
     }
 
 Write-Host "." -ForegroundColor Cyan
@@ -1385,90 +1380,92 @@ Write-Host "." -ForegroundColor Cyan
 }
 
 function F_Browse_File {
-Param(
-[string]$title,
-[string]$filter
-)
-[System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-	$Script:F_Browse_obj = New-Object System.Windows.Forms.OpenFileDialog
-	$Script:F_Browse_obj.Filter = $filter
-	$Script:F_Browse_obj.Title = $title
-	$Script:F_Browse_obj.ShowDialog()
+    Param(
+    [string]$title,
+    [string]$filter
+    )
+
+    [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+    $Script:F_Browse_obj = New-Object System.Windows.Forms.OpenFileDialog
+    $Script:F_Browse_obj.Filter = $filter
+    $Script:F_Browse_obj.Title = $title
+    $Script:F_Browse_obj.ShowDialog()
 }
 
 function F_Browse_Folder {
-Param(
-[string]$title
-)
-[System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
-	$Script:F_Browse_obj = New-Object System.Windows.Forms.FolderBrowserDialog
-	$Script:F_Browse_obj.Description = $title
-	$Script:F_Browse_obj.ShowDialog()
+    Param(
+    [string]$title
+    )
+
+    [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+    $Script:F_Browse_obj = New-Object System.Windows.Forms.FolderBrowserDialog
+    $Script:F_Browse_obj.Description = $title
+    $Script:F_Browse_obj.ShowDialog()
 }
 
 Function F_Regex {
-Param(
-[string]$field,
-[string]$regex,
-[switch]$nocondition,
-[switch]$validpath,
-[string]$field_value,
-[string]$message
-)
+    Param(
+        [string]$field,
+        [string]$regex,
+        [switch]$nocondition,
+        [switch]$validpath,
+        [string]$field_value,
+        [string]$message
+    )
 
-$Script:validation_error = $false
+    $Script:validation_error = $false
 
-if ($regex){
-            if (($field_value.Length -gt 0) -and ($field_value -notmatch "^($regex)$")){
-    $Script:validation_error = $true
-    }
-}
-
-if ($nocondition){ 
-        $Script:validation_error = $true 
-}
-
-if ($validpath){
-    if (!(test-path $field_value)){
-    $Script:validation_error = $true
-    }
-}
-
-# Validation Actions
-$control = ($syncHash.GetEnumerator() | Where-Object {$_.name -eq $field}) 
-
-if ($Script:validation_error) {
-        $tooltip = new-object System.Windows.Controls.ToolTip
-        $tooltip.Background = "#282D32"
-        $tooltip.Foreground = "white"
-        $tooltip.BorderThickness = 1
-        $tooltip.Padding = 15
-        $tooltip.HorizontalOffset = -5
-        $tooltip.VerticalOffset = -50
-        $tooltip.Content = $message
-        $tooltip.Placement = "left"
-        $control.value.ToolTip = $tooltip
-        $control.value.BorderBrush = "Red"
+    if ($regex) {
+        if (($field_value.Length -gt 0) -and ($field_value -notmatch "^($regex)$")) {
+            $Script:validation_error = $true
         }
- else {
-        #parent stackpanel
-        $control.value.ToolTip = $null
-        $control.value.BorderBrush="#ABADB3"
+    }
+
+    if ($nocondition) {
+        $Script:validation_error = $true
+    }
+
+    if ($validpath) {
+        if (!(test-path $field_value)) {
+            $Script:validation_error = $true
         }
+    }
+
+    # Validation Actions
+    $control = ($syncHash.GetEnumerator() | Where-Object {$_.name -eq $field})
+
+    if ($Script:validation_error) {
+            $tooltip = new-object System.Windows.Controls.ToolTip
+            $tooltip.Background = "#282D32"
+            $tooltip.Foreground = "white"
+            $tooltip.BorderThickness = 1
+            $tooltip.Padding = 15
+            $tooltip.HorizontalOffset = -5
+            $tooltip.VerticalOffset = -50
+            $tooltip.Content = $message
+            $tooltip.Placement = "left"
+            $control.value.ToolTip = $tooltip
+            $control.value.BorderBrush = "Red"
+    }
+        else {
+            #parent stackpanel
+            $control.value.ToolTip = $null
+            $control.value.BorderBrush="#ABADB3"
+    }
 }
 
 Function F_Reboot_Options {
-$syncHash.Control_Reboot_Btn_Next.IsEnabled = $false
-$syncHash.Control_Reboot_Lvw_Options.Items.Clear()
+    $syncHash.Control_Reboot_Btn_Next.IsEnabled = $false
+    $syncHash.Control_Reboot_Lvw_Options.Items.Clear()
 
-$bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
+    $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
 
-$bootOptions | ForEach-Object {
-    $bootOption = New-Object -TypeName PSObject
-    $bootOption | Add-Member -Type NoteProperty -Name Description -Value ($_.Context.PostContext[0] -replace '^description +')
-    $bootOption | Add-Member -Type NoteProperty -Name ID -Value ($_.Context.PreContext[0] -replace '^identifier +')
+    $bootOptions | ForEach-Object {
+        $bootOption = New-Object -TypeName PSObject
+        $bootOption | Add-Member -Type NoteProperty -Name Description -Value ($_.Context.PostContext[0] -replace '^description +')
+        $bootOption | Add-Member -Type NoteProperty -Name ID -Value ($_.Context.PreContext[0] -replace '^identifier +')
 
-    $syncHash.Control_Reboot_Lvw_Options.AddChild($bootOption)
+        $syncHash.Control_Reboot_Lvw_Options.AddChild($bootOption)
     }
 }
 
@@ -1482,72 +1479,72 @@ Function F_Reboot {
 }
 
 Function F_Verify_LocalAdminCreds {
-$dsa = New-Object System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
-$pass = $syncHash.Control_Creds_Pwb_LocalPassword.Password
-if ($dsa.ValidateCredentials('Administrator', $pass)){
+    $dsa = New-Object System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
+    $pass = $syncHash.Control_Creds_Pwb_LocalPassword.Password
+    if ($dsa.ValidateCredentials('Administrator', $pass)){
     }
-else {
-    F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
+    else {
+        F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
     }
 }
 
 Function F_VerifyFields_Creds {
-if (
-    ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS' -and
-    ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0)) -or
-    (
-    $syncHash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS' -and
-    $syncHash.Control_Creds_Cbx_Idp.SelectedItem -and
-    ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000")) -and
-    ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0))
-) {
-  $syncHash.Control_Creds_Btn_Next.IsEnabled = $true  
-}
-Else {
-  $syncHash.Control_Creds_Btn_Next.IsEnabled = $false  
+    if (
+        ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS' -and
+        ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0)) -or
+        (
+        $syncHash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS' -and
+        $syncHash.Control_Creds_Cbx_Idp.SelectedItem -and
+        ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000")) -and
+        ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0))
+    ) {
+        $syncHash.Control_Creds_Btn_Next.IsEnabled = $true
+    }
+    Else {
+        $syncHash.Control_Creds_Btn_Next.IsEnabled = $false
     }
 }
 
 Function F_VerifyFields_NetConfig {
-if ($Script:Initialized -eq "SafeOS"){
-    if (
-        (
-            ($syncHash.Control_NetConfig_Tbx_IpAddress.Text -and ($syncHash.Control_NetConfig_Tbx_IpAddress.BorderBrush.color -ne "#FFFF0000")) -and
-            ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000")) -and
-            ($syncHash.Control_NetConfig_Tbx_DNS.Text -and ($syncHash.Control_NetConfig_Tbx_DNS.BorderBrush.color -ne "#FFFF0000"))
-        )
-       ) {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true}
-    Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
+    if ($Script:Initialized -eq "SafeOS"){
+        if (
+            (
+                ($syncHash.Control_NetConfig_Tbx_IpAddress.Text -and ($syncHash.Control_NetConfig_Tbx_IpAddress.BorderBrush.color -ne "#FFFF0000")) -and
+                ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000")) -and
+                ($syncHash.Control_NetConfig_Tbx_DNS.Text -and ($syncHash.Control_NetConfig_Tbx_DNS.BorderBrush.color -ne "#FFFF0000"))
+            )
+            ) {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true}
+        Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
     }
-else {
-    if (
-        (
-            $syncHash.Control_NetConfig_Rbt_DHCP.IsChecked -eq $true
-        ) -or
-        (
-            $syncHash.Control_NetConfig_Rbt_Static.IsChecked -eq $true -and
-            ($syncHash.Control_NetConfig_Tbx_IpAddress.Text -and ($syncHash.Control_NetConfig_Tbx_IpAddress.BorderBrush.color -ne "#FFFF0000")) -and
-            ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000"))
-        )
-       ) {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true}
-    Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
+    else {
+        if (
+            (
+                $syncHash.Control_NetConfig_Rbt_DHCP.IsChecked -eq $true -and
+                ($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))
+            ) -or
+            (
+                $syncHash.Control_NetConfig_Rbt_Static.IsChecked -eq $true -and
+                ($syncHash.Control_NetConfig_Tbx_IpAddress.Text -and ($syncHash.Control_NetConfig_Tbx_IpAddress.BorderBrush.color -ne "#FFFF0000")) -and
+                ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000")) -and
+                ($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))
+            )
+            ) {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true}
+        Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
     }
 }
 
 Function F_VerifyFields_Prepare {
+    $EnableButton=$false
 
-$EnableButton=$false
+    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text){$EnableButton=$true}
 
-if ($syncHash.Control_Prepare_Tbx_Vhdx.Text){$EnableButton=$true}
-
-if ($syncHash.Control_Prepare_Tbx_Vhdx.Text -and
-    $syncHash.Control_Prepare_Chb_Drivers.IsChecked){
-    if ($syncHash.Control_Prepare_Tbx_Drivers.Text){$EnableButton=$true}
-    else {$EnableButton=$false}
+    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text -and $syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
+        if ($syncHash.Control_Prepare_Tbx_Drivers.Text){$EnableButton=$true}
+        else {$EnableButton=$false}
     }
 
-if ($EnableButton){$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true}
-Else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    if ($EnableButton){$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true}
+    Else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
 }
 
 Function F_VerifyFields_Unattend {
@@ -1556,141 +1553,132 @@ Function F_VerifyFields_Unattend {
     $Computername = $true
     $Timezone = $true
 
-if ($syncHash.Control_Unattend_Chb_LocalAdmin.IsChecked){
-    if ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -and
-        $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password){$LocalAdmin=$true}
-    else {$LocalAdmin=$false}
+    if ($syncHash.Control_Unattend_Chb_LocalAdmin.IsChecked) {
+        if ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -and
+            $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password){$LocalAdmin=$true}
+        else {$LocalAdmin=$false}
     }
 
-if ($syncHash.Control_Unattend_Chb_Computername.IsChecked){
-    if ($syncHash.Control_Unattend_Tbx_Computername.Text){$Computername=$true}
-    else {$Computername=$false}
+    if ($syncHash.Control_Unattend_Chb_Computername.IsChecked) {
+        if ($syncHash.Control_Unattend_Tbx_Computername.Text){$Computername=$true}
+        else {$Computername=$false}
     }
 
-if ($syncHash.Control_Unattend_Chb_Timezone.IsChecked){
-    if ($syncHash.Control_Unattend_Cbx_TimeZone.SelectedValue){$Timezone=$true}
-    else {$Timezone=$false}
+    if ($syncHash.Control_Unattend_Chb_Timezone.IsChecked) {
+        if ($syncHash.Control_Unattend_Cbx_TimeZone.SelectedValue){$Timezone=$true}
+        else {$Timezone=$false}
     }
 
-if (
-    $LocalAdmin -eq $true -and
-    $Computername -eq $true -and
-    $Timezone -eq $true
-    ){$syncHash.Control_Unattend_Btn_Next.IsEnabled = $true}
-Else {$syncHash.Control_Unattend_Btn_Next.IsEnabled = $false}
+    if ($LocalAdmin -eq $true -and $Computername -eq $true -and $Timezone -eq $true){ $syncHash.Control_Unattend_Btn_Next.IsEnabled = $true}
+    Else {$syncHash.Control_Unattend_Btn_Next.IsEnabled = $false}
 }
 
 Function F_CopyNicProperties {
-$syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $true
-$syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $true
-$syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $true
-$syncHash.Control_NetConfig_Tbx_IpAddress.Text=$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.Ipv4Address + '/' + $syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.Ipv4PrefixLength
-$syncHash.Control_NetConfig_Tbx_Gateway.Text=$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.Ipv4DefaultGateway
-$SyncHash.Control_NetConfig_Tbx_DNS.Text=$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.DNS[0]
+    $syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $true
+    $syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $true
+    $syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $true
+    $syncHash.Control_NetConfig_Tbx_IpAddress.Text=$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.Ipv4Address + '/' + $syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.Ipv4PrefixLength
+    $syncHash.Control_NetConfig_Tbx_Gateway.Text=$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.Ipv4DefaultGateway
+    $SyncHash.Control_NetConfig_Tbx_DNS.Text=$syncHash.Control_NetInterface_Lvw_Nics.SelectedItem.DNS[0]
 }
 
 Function F_GetNetworkID {
-$CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
+    $CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
 
-$ipBinary = $null
-$dottedDecimal = $null
+    $ipBinary = $null
+    $dottedDecimal = $null
 
+    $IPAddress = $CIDRIPAddress.Split("/")[0] 
+    $cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
 
-$IPAddress = $CIDRIPAddress.Split("/")[0] 
-$cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
+    $IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
 
-$IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
-
-if($cidr -le 32){ 
-    [Int[]]$array = (1..32) 
-    for($i=0;$i -lt $array.length;$i++){ 
-        if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
-        } 
+    if($cidr -le 32) {
+        [Int[]]$array = (1..32) 
+        for($i=0;$i -lt $array.length;$i++) { 
+            if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
+        }
         $smBinary =$array -join "" 
-    } 
+    }
 
- 
+    $netBits=$smBinary.indexOf("0") 
+    if ($netBits -ne -1) { 
+        #identify subnet boundaries 
+        $binary = $($ipBinary.substring(0,$netBits).padright(32,"0"))
+        $i = 0
+        do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+        $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    } 
+    else { 
+        #identify subnet boundaries 
+        $binary = $($ipBinary) 
+        $i = 0
+        do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
 
-$netBits=$smBinary.indexOf("0") 
-if ($netBits -ne -1) { 
-    #identify subnet boundaries 
-    $binary = $($ipBinary.substring(0,$netBits).padright(32,"0"))
-    $i = 0
-    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
-
-   } 
-else { 
-    #identify subnet boundaries 
-    $binary = $($ipBinary) 
-    $i = 0
-    do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-    $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+        $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
     } 
+
     return $networkID
 }
 
 Function F_Summary {
-If ($Script:Initialized -eq "CloudBuilder_Install"){
-$syncHash.Control_Summary_Tbl_Header1.Text = $Text_Install.Summary_Content
+    If ($Script:Initialized -eq "CloudBuilder_Install") {
+        $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Install.Summary_Content
 
-$syncHash.Control_Summary_Tbx_Content1.Visibility = "Visible"
-$syncHash.Control_Summary_Tbx_Content1.Text = $null
+        $syncHash.Control_Summary_Tbx_Content1.Visibility = "Visible"
+        $syncHash.Control_Summary_Tbx_Content1.Text = $null
 
-$InstallScript += '$adminpass = ConvertTo-SecureString ' + "'" + ($syncHash.Control_Creds_Pwb_LocalPassword.PasswordChar.ToString() * $syncHash.Control_Creds_Pwb_LocalPassword.Password.Length) +"'" + '-AsPlainText -Force'
-$InstallScript += "`r`n"
-$InstallScript += 'cd C:\CloudDeployment\Setup'
-$InstallScript += "`r`n"
-$InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
+        $InstallScript += '$adminpass = ConvertTo-SecureString ' + "'" + ($syncHash.Control_Creds_Pwb_LocalPassword.PasswordChar.ToString() * $syncHash.Control_Creds_Pwb_LocalPassword.Password.Length) +"'" + '-AsPlainText -Force'
+        $InstallScript += "`r`n"
+        $InstallScript += 'cd C:\CloudDeployment\Setup'
+        $InstallScript += "`r`n"
+        $InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
 
-If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
-        
-        $InstallScript += " -InfraAzureDirectoryTenantName "
-        $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
+        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
+                $InstallScript += " -InfraAzureDirectoryTenantName "
+                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
+        }
+
+        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
+                $InstallScript += " -UseADFS"
+        }
+
+        If ($synchash.Control_NetConfig_Rbt_Static.IsChecked) {
+                $NetworkID = F_GetNetworkID
+                $InstallScript += " -NatIPv4Subnet "
+                $InstallScript += $NetworkID
+                $InstallScript += " -NatIPv4Address "
+                $InstallScript += $synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0]
+                $InstallScript += " -NatIPv4DefaultGateway "
+                $InstallScript += $synchash.Control_NetConfig_Tbx_Gateway.Text
+        }
+
+        If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0) {
+                $InstallScript += " -PublicVlanId "
+                $InstallScript += $synchash.Control_NetConfig_Tbx_VlanID.Text
+        }
+
+        If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0) {
+                $InstallScript += " -DNSForwarder "
+                $InstallScript += $synchash.Control_NetConfig_Tbx_DnsForwarder.Text
+        }
+
+        If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0) {
+            $InstallScript += " -TimeServer "
+            $InstallScript += $synchash.Control_NetConfig_Tbx_TimeServer.Text
+        }
+
+        $syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
+
+        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
+            $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
+            $syncHash.Control_Summary_Tbl_Content1.Width = "510"
+            $SyncHash.Control_Summary_Tbl_Content1.Text = $Text_Install.Summary_Warning
+        }
     }
-
-If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
-        $InstallScript += " -UseADFS"
+    If ($Script:Initialized -eq "SafeOS") {
+        $syncHash.Control_Summary_Tbl_Content1.Text = $Text_SafeOS.Summary_Content
     }
-
-If ($synchash.Control_NetConfig_Rbt_Static.IsChecked){
-        $NetworkID = F_GetNetworkID
-        $InstallScript += " -NatIPv4Subnet " 
-        $InstallScript += $NetworkID
-        $InstallScript += " -NatIPv4Address "
-        $InstallScript += $synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0]
-        $InstallScript += " -NatIPv4DefaultGateway "
-        $InstallScript += $synchash.Control_NetConfig_Tbx_Gateway.Text
-    }
-
-If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
-        $InstallScript += " -PublicVlanId "
-        $InstallScript += $synchash.Control_NetConfig_Tbx_VlanID.Text
-    }
-
-If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
-        $InstallScript += " -DNSForwarder "
-        $InstallScript += $synchash.Control_NetConfig_Tbx_DnsForwarder.Text
-    }
-
-If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
-        $InstallScript += " -TimeServer "
-        $InstallScript += $synchash.Control_NetConfig_Tbx_TimeServer.Text
-    }
-
-$syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
-
-If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
-    $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
-    $syncHash.Control_Summary_Tbl_Content1.Width = "510"
-    $SyncHash.Control_Summary_Tbl_Content1.Text = $Text_Install.Summary_Warning
-}
-
-}
-If ($Script:Initialized -eq "SafeOS"){
-    $syncHash.Control_Summary_Tbl_Content1.Text = $Text_SafeOS.Summary_Content
-}
-
 }
 
 Function F_Install {
@@ -1703,14 +1691,14 @@ Function F_Install {
     #endregion wrapper
 
     #region disable non selected NICs
-    if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -gt 1)){
+    if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -gt 1)) {
         Write-Host "Disabling non selected NICs" -ForegroundColor Cyan
         $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | Where-Object {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
         $disable_nics | ForEach-Object {
             $IntID = $_.InterfaceIndex
             Get-NetAdapter -InterfaceIndex $IntID | Disable-NetAdapter -Confirm:$false
-            }
         }
+    }
     else {
         write-output "no NIC interface was selected"
         break
@@ -1725,30 +1713,30 @@ Function F_Install {
     ".\InstallAzureStackPOC.ps1" |  Add-Content $filepath -NoNewline
     ' -AdminPassword $adminpass' |  Add-Content $filepath -NoNewline
 
-    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud'){
+    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
-    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
+    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
         ' -UseADFS' |  Add-Content $filepath -NoNewline
     }
 
-    If ($synchash.Control_NetConfig_Rbt_Static.IsChecked){
+    If ($synchash.Control_NetConfig_Rbt_Static.IsChecked) {
         $NetworkID = F_GetNetworkID
         ' -NatIPv4Subnet "' + $NetworkID + '"' |  Add-Content $filepath -NoNewline
         ' -NatIPv4Address "' + $synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0] + '"' |  Add-Content $filepath -NoNewline
         ' -NatIPv4DefaultGateway "' + $synchash.Control_NetConfig_Tbx_Gateway.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
-    If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0){
+    If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0) {
         ' -PublicVlanId "' + $synchash.Control_NetConfig_Tbx_VlanID.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
-    If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0){
+    If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0) {
         ' -DNSForwarder "' + $synchash.Control_NetConfig_Tbx_DnsForwarder.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
-    If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0){
+    If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0) {
         ' -TimeServer "' + $synchash.Control_NetConfig_Tbx_TimeServer.Text + '"' |  Add-Content $filepath -NoNewline
     }
  
@@ -1794,343 +1782,341 @@ Function F_GetAzureStackLogs {
 
 #region Events Mode
 $syncHash.Control_Mode_Btn_Left.Add_Click({
-$syncHash.Control_Mode_Stp.Visibility = "Collapsed"
-if ($Script:Initialized -eq "SafeOS") {
-    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
+    $syncHash.Control_Mode_Stp.Visibility = "Collapsed"
+    if ($Script:Initialized -eq "SafeOS") {
+        $syncHash.Control_Prepare_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Install") {
-    $syncHash.Control_Creds_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
+    elseif ($Script:Initialized -eq "CloudBuilder_Install") {
+        $syncHash.Control_Creds_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Rerun") {
-    $syncHash.Control_Summary_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title
-    $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content
-    $syncHash.Control_Summary_Btn_Next.Content = "Rerun"
+    elseif ($Script:Initialized -eq "CloudBuilder_Rerun") {
+        $syncHash.Control_Summary_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title
+        $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content
+        $syncHash.Control_Summary_Btn_Next.Content = "Rerun"
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
-    $syncHash.Control_Summary_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
-    $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content_Logs
-    $syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
+    elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
+        $syncHash.Control_Summary_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
+        $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Rerun.Summary_Content_Logs
+        $syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
-$syncHash.Control_Summary_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Summary_Title
-$syncHash.Control_Summary_Tbl_Header1.Text = $Text_Completed.Summary_Content
-$syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
-}
-
+    elseif ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
+        $syncHash.Control_Summary_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Summary_Title
+        $syncHash.Control_Summary_Tbl_Header1.Text = $Text_Completed.Summary_Content
+        $syncHash.Control_Summary_Btn_Next.Content = "Gather Logs"
+    }
 })
 
 $syncHash.Control_Mode_Btn_Right.Add_Click({
-if ($Script:Initialized -eq "SafeOS"){
-    Start-Process $Text_SafeOS.Mode_RightLink
-}
-else{
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Reboot_Title
-    $syncHash.Control_Mode_Stp.Visibility = "Collapsed"
-    $syncHash.Control_Reboot_Stp.Visibility = "Visible"
-    F_Reboot_Options
-}
+    if ($Script:Initialized -eq "SafeOS") {
+        Start-Process $Text_SafeOS.Mode_RightLink
+    }
+    else {
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Reboot_Title
+        $syncHash.Control_Mode_Stp.Visibility = "Collapsed"
+        $syncHash.Control_Reboot_Stp.Visibility = "Visible"
+        F_Reboot_Options
+    }
 })
 #endregion Events Mode
 
 #region Events Prepare
 $syncHash.Control_Prepare_Btn_Previous.Add_Click({
-$syncHash.Control_Prepare_Stp.Visibility = "Collapsed"
-$syncHash.Control_Mode_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
+    $syncHash.Control_Prepare_Stp.Visibility = "Collapsed"
+    $syncHash.Control_Mode_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
 })
 
 $syncHash.Control_Prepare_Btn_Next.Add_Click({
-$syncHash.Control_Prepare_Stp.Visibility = "Collapsed"
-$syncHash.Control_Unattend_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Unattend_Title
+    $syncHash.Control_Prepare_Stp.Visibility = "Collapsed"
+    $syncHash.Control_Unattend_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Unattend_Title
 })
 
 $syncHash.Control_Prepare_Btn_Vhdx.Add_Click({
-F_Browse_File -title "Select Cloudbuilder vhdx" -filter "*.vhdx|*.vhdx"
-if ($Script:F_Browse_obj.FileName) {
-    $syncHash.Control_Prepare_Tbx_Vhdx.Text = $Script:F_Browse_obj.FileName
-    if ((Get-DiskImage -ImagePath $syncHash.Control_Prepare_Tbx_Vhdx.Text).Attached) {
-        F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -nocondition -message $Text_SafeOS.Prepare_VHDX_IsMounted
-        $syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
+    F_Browse_File -title "Select Cloudbuilder vhdx" -filter "*.vhdx|*.vhdx"
+    if ($Script:F_Browse_obj.FileName) {
+        $syncHash.Control_Prepare_Tbx_Vhdx.Text = $Script:F_Browse_obj.FileName
+        if ((Get-DiskImage -ImagePath $syncHash.Control_Prepare_Tbx_Vhdx.Text).Attached) {
+            F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -nocondition -message $Text_SafeOS.Prepare_VHDX_IsMounted
+            $syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
         }
-    else {
-        F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text
-        F_VerifyFields_Prepare
-    }
+        else {
+            F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text
+            F_VerifyFields_Prepare
+        }
     }
 })
 
 $syncHash.Control_Prepare_Tbx_Vhdx.Add_TextChanged({
-if ($syncHash.Control_Prepare_Tbx_Vhdx.Text.Length -gt 0){
-    F_Regex -field 'Control_Prepare_Tbx_Vhdx'-field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -validpath -message $Text_SafeOS.Prepare_VHDX_InvalidPath
-    if (!($script:validation_error)){F_VerifyFields_Prepare}
-    else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text.Length -gt 0) {
+        F_Regex -field 'Control_Prepare_Tbx_Vhdx'-field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -validpath -message $Text_SafeOS.Prepare_VHDX_InvalidPath
+        if (!($script:validation_error)){F_VerifyFields_Prepare}
+        else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
     }
 })
 
 $syncHash.Control_Prepare_Chb_Drivers.Add_Click({
-if ($syncHash.Control_Prepare_Chb_Drivers.IsChecked){
-    $syncHash.Control_Prepare_Stp_Drivers.Visibility = "Visible"
-    F_VerifyFields_Prepare
+    if ($syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
+        $syncHash.Control_Prepare_Stp_Drivers.Visibility = "Visible"
+        F_VerifyFields_Prepare
     }
-else {
-    $syncHash.Control_Prepare_Stp_Drivers.Visibility = "Collapsed"
-    $syncHash.Control_Prepare_Tbx_Drivers.Clear()
-    F_VerifyFields_Prepare
+    else {
+        $syncHash.Control_Prepare_Stp_Drivers.Visibility = "Collapsed"
+        $syncHash.Control_Prepare_Tbx_Drivers.Clear()
+        F_VerifyFields_Prepare
     }
 })
 
 $syncHash.Control_Prepare_Btn_Drivers.Add_Click({
-F_Browse_Folder -title "Select Driver Path"
-if ($Script:F_Browse_obj.SelectedPath) {
-    $syncHash.Control_Prepare_Tbx_Drivers.Text = $Script:F_Browse_obj.SelectedPath
+    F_Browse_Folder -title "Select Driver Path"
+    if ($Script:F_Browse_obj.SelectedPath) {
+        $syncHash.Control_Prepare_Tbx_Drivers.Text = $Script:F_Browse_obj.SelectedPath
     }
 })
 
 $syncHash.Control_Prepare_Tbx_Drivers.Add_TextChanged({
-if ($syncHash.Control_Prepare_Tbx_Drivers.Text.Length -gt 0){
-    F_Regex -field 'Control_Prepare_Tbx_Drivers'-field_value $syncHash.Control_Prepare_Tbx_Drivers.Text -validpath -message $Text_SafeOS.Prepare_Drivers_InvalidPath
-    if (!($script:validation_error)){F_VerifyFields_Prepare}
-    else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    if ($syncHash.Control_Prepare_Tbx_Drivers.Text.Length -gt 0) {
+        F_Regex -field 'Control_Prepare_Tbx_Drivers'-field_value $syncHash.Control_Prepare_Tbx_Drivers.Text -validpath -message $Text_SafeOS.Prepare_Drivers_InvalidPath
+        if (!($script:validation_error)){F_VerifyFields_Prepare}
+        else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
     }
 })
 #endregion Events Prepare
 
 #region Events Unattend
 $syncHash.Control_Unattend_Btn_Previous.Add_Click({
-$syncHash.Control_Unattend_Stp.Visibility = "Collapsed"
-$syncHash.Control_Prepare_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
+    $syncHash.Control_Unattend_Stp.Visibility = "Collapsed"
+    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
 })
 
 $syncHash.Control_Unattend_Btn_Next.Add_Click({
-F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
-If (!($Script:validation_error)){
-    $syncHash.Control_Unattend_Stp.Visibility = "Collapsed"
+    F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
+    If (!($Script:validation_error)) {
+        $syncHash.Control_Unattend_Stp.Visibility = "Collapsed"
 
-    If ($syncHash.Control_Unattend_Chb_StaticIP.IsChecked){
-        $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
-        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetInterface_Title
-        $syncHash.Control_NetInterface_Tbl_Warning.Text = $Text_SafeOS.NetInterface_Warning
-        $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $false
-        $Runspace_Jobs.Commands.Clear()
-        $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
-        $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
-        $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+        If ($syncHash.Control_Unattend_Chb_StaticIP.IsChecked){
+            $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
+            $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetInterface_Title
+            $syncHash.Control_NetInterface_Tbl_Warning.Text = $Text_SafeOS.NetInterface_Warning
+            $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $false
+            $Runspace_Jobs.Commands.Clear()
+            $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
+            $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+            $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
         }
-    Else{
-        $syncHash.Control_Job_Stp.Visibility = "Visible"
-        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Job_Title
-        $syncHash.Control_Job_Btn_Next.IsEnabled = $false
-        $Runspace_Jobs.Commands.Clear()
-        $Runspace_Jobs.AddScript($S_PrepareVhdx) | Out-Null
-        $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
-        $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+        Else{
+            $syncHash.Control_Job_Stp.Visibility = "Visible"
+            $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Job_Title
+            $syncHash.Control_Job_Btn_Next.IsEnabled = $false
+            $Runspace_Jobs.Commands.Clear()
+            $Runspace_Jobs.AddScript($S_PrepareVhdx) | Out-Null
+            $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+            $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
         }
     }
 })
 
 $syncHash.Control_Unattend_Chb_LocalAdmin.Add_Click({
-if ($syncHash.Control_Unattend_Chb_LocalAdmin.IsChecked){
-    $syncHash.Control_Unattend_Stp_LocalAdmin.Visibility = "Visible"
-    $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+    if ($syncHash.Control_Unattend_Chb_LocalAdmin.IsChecked) {
+        $syncHash.Control_Unattend_Stp_LocalAdmin.Visibility = "Visible"
+        $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
     }
-else {
-    $syncHash.Control_Unattend_Stp_LocalAdmin.Visibility = "Collapsed"
-    $syncHash.Control_Unattend_Pwb_LocalPassword.Clear()
-    $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Clear()
-    F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
-    $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.IsEnabled = $false
-    F_VerifyFields_Unattend
+    else {
+        $syncHash.Control_Unattend_Stp_LocalAdmin.Visibility = "Collapsed"
+        $syncHash.Control_Unattend_Pwb_LocalPassword.Clear()
+        $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Clear()
+        F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
+        $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.IsEnabled = $false
+        F_VerifyFields_Unattend
     }
 })
 
 $syncHash.Control_Unattend_Pwb_LocalPassword.Add_PasswordChanged({
-#Enable the confirmation box if the First box contains any characters
-If (($syncHash.Control_Unattend_Pwb_LocalPassword.Password) -and (!($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.IsEnabled))) {
-    $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.IsEnabled = $true
+    #Enable the confirmation box if the First box contains any characters
+    If (($syncHash.Control_Unattend_Pwb_LocalPassword.Password) -and (!($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.IsEnabled))) {
+        $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.IsEnabled = $true
     }
-#Match the password with the confirmation field (only if it contains a value) while typing
-If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password){
-    If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -cne $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password) {
-    F_Regex -field 'Control_Unattend_Pwb_LocalPassword'-nocondition -message $Text_Generic.Password_NotMatch
-    $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+    #Match the password with the confirmation field (only if it contains a value) while typing
+    If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password) {
+        If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -cne $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password) {
+            F_Regex -field 'Control_Unattend_Pwb_LocalPassword'-nocondition -message $Text_Generic.Password_NotMatch
+            $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+        }
+        Else {
+            F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
+            F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'
+            F_VerifyFields_Unattend
+        }
     }
-    Else {
-    F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
-    F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'
-    F_VerifyFields_Unattend
-    }
-}
 })
 
 $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Add_PasswordChanged({
-#Match the password with the confirmation field (only if it contains a value) while typing
-If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password){
-    If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password -cne $syncHash.Control_Unattend_Pwb_LocalPassword.Password) {
-        F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
-        $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+    #Match the password with the confirmation field (only if it contains a value) while typing
+    If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password) {
+        If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password -cne $syncHash.Control_Unattend_Pwb_LocalPassword.Password) {
+            F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
+            $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+        }
+        Else {
+            F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'
+            F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
+            F_VerifyFields_Unattend
+        }
     }
-    Else {
-        F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'
-        F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
-        F_VerifyFields_Unattend
-    }
-}
 })
 
 $syncHash.Control_Unattend_Chb_Computername.Add_Click({
-if ($syncHash.Control_Unattend_Chb_Computername.IsChecked){
-    $syncHash.Control_Unattend_Stp_Computername.Visibility = "Visible"
-    $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+    if ($syncHash.Control_Unattend_Chb_Computername.IsChecked) {
+        $syncHash.Control_Unattend_Stp_Computername.Visibility = "Visible"
+        $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
     }
-else {
-    $syncHash.Control_Unattend_Stp_Computername.Visibility = "Collapsed"
-    $syncHash.Control_Unattend_Tbx_Computername.Clear()
-    F_VerifyFields_Unattend
+    else {
+        $syncHash.Control_Unattend_Stp_Computername.Visibility = "Collapsed"
+        $syncHash.Control_Unattend_Tbx_Computername.Clear()
+        F_VerifyFields_Unattend
     }
 })
 
 $syncHash.Control_Unattend_Tbx_Computername.Add_TextChanged({
-F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
-F_VerifyFields_Unattend
+    F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
+    F_VerifyFields_Unattend
 })
 
 $syncHash.Control_Unattend_Chb_Timezone.Add_Click({
-if ($syncHash.Control_Unattend_Chb_Timezone.IsChecked){
-    $syncHash.Control_Unattend_Stp_Timezone.Visibility = "Visible"
-    $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
+    if ($syncHash.Control_Unattend_Chb_Timezone.IsChecked) {
+        $syncHash.Control_Unattend_Stp_Timezone.Visibility = "Visible"
+        $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
     }
-else {
-    $syncHash.Control_Unattend_Stp_Timezone.Visibility = "Collapsed"
-    $syncHash.Control_Unattend_Cbx_Timezone.SelectedItem = $null
-    F_VerifyFields_Unattend
+    else {
+        $syncHash.Control_Unattend_Stp_Timezone.Visibility = "Collapsed"
+        $syncHash.Control_Unattend_Cbx_Timezone.SelectedItem = $null
+        F_VerifyFields_Unattend
     }
 })
 
 $syncHash.Control_Unattend_Cbx_Timezone.Add_SelectionChanged({
-F_VerifyFields_Unattend
+    F_VerifyFields_Unattend
 })
 #endregion Events Unattend
 
 #region Events Creds
 $syncHash.Control_Creds_Btn_Previous.Add_Click({
-$syncHash.Control_Creds_Stp.Visibility = "Collapsed"
-$syncHash.Control_Mode_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
+    $syncHash.Control_Creds_Stp.Visibility = "Collapsed"
+    $syncHash.Control_Mode_Stp.Visibility = "Visible"
+    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
 })
 
 $syncHash.Control_Creds_Btn_Next.Add_Click({
-F_Verify_LocalAdminCreds
-If (!($Script:validation_error)){
-    $syncHash.Control_Creds_Stp.Visibility = "Collapsed"
-    $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetInterface_Title
-    $syncHash.Control_NetInterface_Tbl_Warning.Text = $Text_Install.NetInterface_Warning
-    $syncHash.Control_NetInterface_Lvw_Nics.Items.Clear()
-    $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $false
-    $Runspace_Jobs.Commands.Clear()
-    $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
-    $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
-    $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
-}
+    F_Verify_LocalAdminCreds
+    If (!($Script:validation_error)){
+        $syncHash.Control_Creds_Stp.Visibility = "Collapsed"
+        $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetInterface_Title
+        $syncHash.Control_NetInterface_Tbl_Warning.Text = $Text_Install.NetInterface_Warning
+        $syncHash.Control_NetInterface_Lvw_Nics.Items.Clear()
+        $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $false
+        $Runspace_Jobs.Commands.Clear()
+        $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
+        $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+        $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+    }
 })
 
 $syncHash.Control_Creds_Cbx_Idp.Add_SelectionChanged({
-
-If ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS'){
-    $syncHash.Control_Creds_Tbx_AADTenant.Clear()
-    $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $false
-    $syncHash.Control_Creds_Pwb_LocalPassword.IsEnabled = $true
+    If ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
+        $syncHash.Control_Creds_Tbx_AADTenant.Clear()
+        $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $false
+        $syncHash.Control_Creds_Pwb_LocalPassword.IsEnabled = $true
     }
-Else {
-    $syncHash.Control_Creds_Tbx_AADTenant.Clear()
-    $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $true
-    $syncHash.Control_Creds_Pwb_LocalPassword.IsEnabled = $true
+    Else {
+        $syncHash.Control_Creds_Tbx_AADTenant.Clear()
+        $syncHash.Control_Creds_Tbx_AADTenant.IsEnabled = $true
+        $syncHash.Control_Creds_Pwb_LocalPassword.IsEnabled = $true
     }
-F_VerifyFields_Creds
+    F_VerifyFields_Creds
 })
 
 $syncHash.Control_Creds_Tbx_AADTenant.Add_TextChanged({
-F_Regex -field 'Control_Creds_Tbx_AADTenant' -field_value $syncHash.Control_Creds_Tbx_AADTenant.Text -regex $Regex.Fqdn -message $Text_Generic.Regex_Fqdn
-F_VerifyFields_Creds
+    F_Regex -field 'Control_Creds_Tbx_AADTenant' -field_value $syncHash.Control_Creds_Tbx_AADTenant.Text -regex $Regex.Fqdn -message $Text_Generic.Regex_Fqdn
+    F_VerifyFields_Creds
 })
 
 $syncHash.Control_Creds_Pwb_LocalPassword.Add_PasswordChanged({
-F_Regex -field 'Control_Creds_Pwb_LocalPassword'
-F_VerifyFields_Creds
+    F_Regex -field 'Control_Creds_Pwb_LocalPassword'
+    F_VerifyFields_Creds
 })
 #endregion Events Creds
 
 #region Events NetInterface
 $syncHash.Control_NetInterface_Btn_Previous.Add_Click({
-$syncHash.Control_NetInterface_Stp.Visibility = "Collapsed"
-$syncHash.Control_NetInterface_Stp_Wait.Visibility = "Visible"
-If ($Script:Initialized -eq "SafeOS"){
-$syncHash.Control_Unattend_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Unattend_Title
-}
-Else {
-$syncHash.Control_Creds_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
-}
+    $syncHash.Control_NetInterface_Stp.Visibility = "Collapsed"
+    $syncHash.Control_NetInterface_Stp_Wait.Visibility = "Visible"
+    If ($Script:Initialized -eq "SafeOS") {
+        $syncHash.Control_Unattend_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Unattend_Title
+    }
+    Else {
+        $syncHash.Control_Creds_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
+    }
 })
 
 $syncHash.Control_NetInterface_Btn_Next.Add_Click({
-$syncHash.Control_NetInterface_Stp.Visibility = "Collapsed"
-If ($Script:Initialized -eq "SafeOS"){
-    $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetConfig_Title
-    $SyncHash.Control_NetConfig_Rbt_Static.Visibility="Collapsed"
-    $SyncHash.Control_NetConfig_Rbt_DHCP.Visibility="Collapsed"
-    $SyncHash.Control_NetConfig_Stp_Optional.Visibility="Collapsed"
-    F_CopyNicProperties
-}
-Else {
-$syncHash.Control_NetConfig_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
-$syncHash.Control_NetConfig_Stp_DNS.Visibility="Collapsed"
-}
+    $syncHash.Control_NetInterface_Stp.Visibility = "Collapsed"
+    If ($Script:Initialized -eq "SafeOS") {
+        $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetConfig_Title
+        $SyncHash.Control_NetConfig_Rbt_Static.Visibility="Collapsed"
+        $SyncHash.Control_NetConfig_Rbt_DHCP.Visibility="Collapsed"
+        $SyncHash.Control_NetConfig_Stp_Optional.Visibility="Collapsed"
+        F_CopyNicProperties
+    }
+    Else {
+        $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
+        $syncHash.Control_NetConfig_Stp_DNS.Visibility="Collapsed"
+    }
 })
 
 $syncHash.Control_NetInterface_Lvw_Nics.Add_SelectionChanged({
-$syncHash.Control_NetInterface_Btn_Next.IsEnabled = $true
+    $syncHash.Control_NetInterface_Btn_Next.IsEnabled = $true
 })
 
 #endregion Events NetInterface
 
 #region Events NetConfig
 $syncHash.Control_NetConfig_Btn_Previous.Add_Click({
-$syncHash.Control_NetConfig_Stp.Visibility = "Collapsed"
-if ($script:Initialized -eq "SafeOS"){
-    $syncHash.Control_NetInterface_Stp.Visibility = "Visible" 
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetInterface_Title
+    $syncHash.Control_NetConfig_Stp.Visibility = "Collapsed"
+    if ($script:Initialized -eq "SafeOS") {
+        $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetInterface_Title
     }
-if ($script:Initialized -eq "Cloudbuilder_Install"){
-    $syncHash.Control_NetInterface_Stp.Visibility = "Visible" 
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetInterface_Title
+    if ($script:Initialized -eq "Cloudbuilder_Install") {
+        $syncHash.Control_NetInterface_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetInterface_Title
     }
 })
 
 $syncHash.Control_NetConfig_Btn_Next.Add_Click({
-$syncHash.Control_NetConfig_Stp.Visibility = "Collapsed"
-if ($script:Initialized -eq "SafeOS"){
+    $syncHash.Control_NetConfig_Stp.Visibility = "Collapsed"
+    if ($script:Initialized -eq "SafeOS"){
+            $syncHash.Control_Job_Stp.Visibility = "Visible"
+            $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Job_Title
+            $syncHash.Control_Job_Btn_Next.IsEnabled = $false
+            $Runspace_Jobs.Commands.Clear()
+            $Runspace_Jobs.AddScript($S_PrepareVhdx) | Out-Null
+            $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+            $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+    }
+    if ($script:Initialized -eq "Cloudbuilder_Install"){
         $syncHash.Control_Job_Stp.Visibility = "Visible"
-        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Job_Title
-        $syncHash.Control_Job_Btn_Next.IsEnabled = $false
-        $Runspace_Jobs.Commands.Clear()
-        $Runspace_Jobs.AddScript($S_PrepareVhdx) | Out-Null
-        $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
-        $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
-}
-if ($script:Initialized -eq "Cloudbuilder_Install"){
-    $syncHash.Control_Job_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Job_Title
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Job_Title
 
         $syncHash.Control_Job_Btn_Next.IsEnabled = $false
         $Runspace_Jobs.Commands.Clear()
@@ -2141,168 +2127,179 @@ if ($script:Initialized -eq "Cloudbuilder_Install"){
 })
 
 $syncHash.Control_NetConfig_Rbt_DHCP.Add_Click({
-$syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $false
-$syncHash.Control_NetConfig_Tbx_IpAddress.Clear()
-$syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $false
-$syncHash.Control_NetConfig_Tbx_Gateway.Clear()
-$syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $false
-$syncHash.Control_NetConfig_Tbx_DNS.Clear()
-F_VerifyFields_NetConfig
+    $syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $false
+    $syncHash.Control_NetConfig_Tbx_IpAddress.Clear()
+    $syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $false
+    $syncHash.Control_NetConfig_Tbx_Gateway.Clear()
+    $syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $false
+    $syncHash.Control_NetConfig_Tbx_DNS.Clear()
+    F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Rbt_Static.Add_Click({
-$syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $true
-$syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $true
-$syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $true
-if ($script:Initialized -eq "SafeOS"){
-F_CopyNicProperties
-}
-F_VerifyFields_NetConfig
+    $syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $true
+    $syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $true
+    $syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $true
+
+    if ($script:Initialized -eq "SafeOS"){
+        F_CopyNicProperties
+    }
+
+    F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_IpAddress.Add_TextChanged({
-F_Regex -field 'Control_NetConfig_Tbx_IpAddress' -field_value $syncHash.Control_NetConfig_Tbx_IpAddress.Text -regex $Regex.IpAddressCidr -message $Text_Generic.Regex_IpAddressCidr
-F_VerifyFields_NetConfig
+    F_Regex -field 'Control_NetConfig_Tbx_IpAddress' -field_value $syncHash.Control_NetConfig_Tbx_IpAddress.Text -regex $Regex.IpAddressCidr -message $Text_Generic.Regex_IpAddressCidr
+    F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_Gateway.Add_TextChanged({
-F_Regex -field 'Control_NetConfig_Tbx_Gateway' -field_value $syncHash.Control_NetConfig_Tbx_Gateway.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
-F_VerifyFields_NetConfig
+    F_Regex -field 'Control_NetConfig_Tbx_Gateway' -field_value $syncHash.Control_NetConfig_Tbx_Gateway.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
-F_Regex -field 'Control_NetConfig_Tbx_Dns' -field_value $syncHash.Control_NetConfig_Tbx_Dns.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
-F_VerifyFields_NetConfig
+    F_Regex -field 'Control_NetConfig_Tbx_Dns' -field_value $syncHash.Control_NetConfig_Tbx_Dns.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_VerifyFields_NetConfig
+})
+
+$syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
+    F_Regex -field 'Control_NetConfig_Tbx_TimeServer' -field_value $syncHash.Control_NetConfig_Tbx_TimeServer.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_VerifyFields_NetConfig
+})
+
+$syncHash.Control_NetConfig_Tbx_DnsForwarder.Add_TextChanged({
+    F_Regex -field 'Control_NetConfig_Tbx_DnsForwarder' -field_value $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_VerifyFields_NetConfig
 })
 
 #endregion Events NetConfig
 
 #region Events Job
 $syncHash.Control_Job_Btn_Previous.Add_Click({
-$syncHash.Control_Job_Stp.Visibility = "Collapsed"
-if ($Script:Initialized -eq "SafeOS"){
-    $syncHash.Control_Prepare_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
-}
-if ($Script:Initialized -eq "CloudBuilder_Install"){
-    $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
-    $synchash.Control_Job_Stp_Netbxnda.Visibility="Collapsed"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
-}
-if ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
-    $syncHash.Control_Mode_Stp.Visibility = "Visible"
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
-}
+    $syncHash.Control_Job_Stp.Visibility = "Collapsed"
+    if ($Script:Initialized -eq "SafeOS"){
+        $syncHash.Control_Prepare_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
+    }
+    if ($Script:Initialized -eq "CloudBuilder_Install") {
+        $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
+        $synchash.Control_Job_Stp_Netbxnda.Visibility="Collapsed"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
+    }
+    if ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
+        $syncHash.Control_Mode_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
+    }
 })
 
 $syncHash.Control_Job_Btn_Next.Add_Click({
-$syncHash.Control_Job_Stp.Visibility = "Collapsed"
-if ($Script:Initialized -eq "SafeOS"){
-$syncHash.Control_Summary_Stp.Visibility = "Visible"
-$syncHash.Control_Summary_Btn_Previous.Content = "Reboot later"
-$syncHash.Control_Summary_Btn_Next.Content = "Reboot now"
-F_Summary
-}
-else {
-$syncHash.Control_Summary_Stp.Visibility = "Visible"
-$SyncHash.Control_Summary_Btn_Next.Content = "Deploy"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Summary_Title
-F_Summary
-}
+    $syncHash.Control_Job_Stp.Visibility = "Collapsed"
+
+    if ($Script:Initialized -eq "SafeOS"){
+        $syncHash.Control_Summary_Stp.Visibility = "Visible"
+        $syncHash.Control_Summary_Btn_Previous.Content = "Reboot later"
+        $syncHash.Control_Summary_Btn_Next.Content = "Reboot now"
+        F_Summary
+    }
+    else {
+        $syncHash.Control_Summary_Stp.Visibility = "Visible"
+        $SyncHash.Control_Summary_Btn_Next.Content = "Deploy"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Summary_Title
+        F_Summary
+    }
 })
 
 $syncHash.Control_Job_Btn_Netbxnda.Add_Click({
-F_Browse_File -title "Select netbxnda.exe" -filter "netbxnda.exe|netbxnda.exe"
-if ($Script:F_Browse_obj.FileName) {
-    $syncHash.Control_Job_Tbx_Netbxnda.Text = $Script:F_Browse_obj.FileName
-    $syncHash.Control_Job_Stp_Netbxnda.Visibility = "Collapsed"
-    $Runspace_Jobs.Commands.Clear()
-    $Runspace_Jobs.AddScript($S_NetbxndaOffline) | Out-Null
-    $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
-    $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
-    }
+    F_Browse_File -title "Select netbxnda.exe" -filter "netbxnda.exe|netbxnda.exe"
+    if ($Script:F_Browse_obj.FileName) {
+        $syncHash.Control_Job_Tbx_Netbxnda.Text = $Script:F_Browse_obj.FileName
+        $syncHash.Control_Job_Stp_Netbxnda.Visibility = "Collapsed"
+        $Runspace_Jobs.Commands.Clear()
+        $Runspace_Jobs.AddScript($S_NetbxndaOffline) | Out-Null
+        $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
+        $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+        }
 })
 #endregion Events Job
 
 #region Events Summary
 $syncHash.Control_Summary_Btn_Previous.Add_Click({
-$syncHash.Control_Summary_Stp.Visibility = "Collapsed"
-If ($Script:Initialized -eq "SafeOS"){
-    $Form.Close()
+    $syncHash.Control_Summary_Stp.Visibility = "Collapsed"
+    If ($Script:Initialized -eq "SafeOS") {
+        $Form.Close()
     }
-ElseIf ($Script:Initialized -eq "CloudBuilder_Install") {
-$syncHash.Control_NetConfig_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
-}
-ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun") {
-$syncHash.Control_Mode_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
-}
-ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
-$syncHash.Control_Mode_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
-}
-ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
-$syncHash.Control_Mode_Stp.Visibility = "Visible"
-$syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Install") {
+        $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
+    }
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun") {
+        $syncHash.Control_Mode_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
+    }
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
+        $syncHash.Control_Mode_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
+    }
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
+        $syncHash.Control_Mode_Stp.Visibility = "Visible"
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Summary_Title_Logs
     }
 
 })
 
 $syncHash.Control_Summary_Btn_Next.Add_Click({
-
-If ($Script:Initialized -eq "SafeOS"){
-    $Form.Close()
-    Restart-Computer -Force
-}
-ElseIf ($Script:Initialized -eq "Cloudbuilder_Install"){
-$Form.Close()
-F_Install
-}
-ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun"){
-$Form.Close()
-F_Rerun
-}
-ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs"){
-$Form.Close()
-F_GetAzureStackLogs
-}
-ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs"){
-$Form.Close()
-F_GetAzureStackLogs
-}
-
+    If ($Script:Initialized -eq "SafeOS") {
+        $Form.Close()
+        Restart-Computer -Force
+    }
+    ElseIf ($Script:Initialized -eq "Cloudbuilder_Install") {
+        $Form.Close()
+        F_Install
+    }
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun") {
+        $Form.Close()
+        F_Rerun
+    }
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
+        $Form.Close()
+        F_GetAzureStackLogs
+    }
+    ElseIf ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
+        $Form.Close()
+        F_GetAzureStackLogs
+    }
 })
 #endregion Events NetConfig
 
 #region Events Reboot
 $syncHash.Control_Reboot_Btn_Previous.Add_Click({
-$syncHash.Control_Reboot_Stp.Visibility = "Collapsed"
-$syncHash.Control_Mode_Stp.Visibility = "Visible"
+    $syncHash.Control_Reboot_Stp.Visibility = "Collapsed"
+    $syncHash.Control_Mode_Stp.Visibility = "Visible"
 
-if ($Script:Initialized -eq "CloudBuilder_Install") {
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
+    if ($Script:Initialized -eq "CloudBuilder_Install") {
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Mode_Title
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Rerun") {
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
+    elseif ($Script:Initialized -eq "CloudBuilder_Rerun") {
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
+    elseif ($Script:Initialized -eq "CloudBuilder_Rerun_GatherLogs") {
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Rerun.Mode_Title_Logs
     }
-elseif ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
-}
-elseif ($Script:Initialized -eq "SafeOS") {
-    $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
+    elseif ($Script:Initialized -eq "CloudBuilder_Completed_GatherLogs") {
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_Completed.Mode_Title
+    }
+    elseif ($Script:Initialized -eq "SafeOS") {
+        $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
     }
 })
 
 $syncHash.Control_Reboot_Lvw_Options.Add_SelectionChanged({
-$syncHash.Control_Reboot_Btn_Next.IsEnabled = $true
+    $syncHash.Control_Reboot_Btn_Next.IsEnabled = $true
 })
 
 $syncHash.Control_Reboot_Btn_Next.Add_Click({
-F_Reboot
+    F_Reboot
 })
 #endregion Events Reboot
 

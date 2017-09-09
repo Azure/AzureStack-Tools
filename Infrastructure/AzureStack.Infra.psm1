@@ -559,7 +559,7 @@ function Repair-AzsScaleUnitNode {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
-        [string] $ScaleUnitNodeName,
+        [string] $Name,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
@@ -575,7 +575,7 @@ function Repair-AzsScaleUnitNode {
             bmcIPv4Address = $BMCIPv4Address
         }
 
-        Invoke-AzsInfrastructureAction -Action "Repair" -Name $ScaleUnitNodeName -Location $Location -ResourceType $resourceType -Parameters $parameters
+        Invoke-AzsInfrastructureAction -Action "Repair" -Name $Name -Location $Location -ResourceType $resourceType -Parameters $parameters
     }
 }
 
@@ -594,7 +594,7 @@ function Stop-AzsScaleUnitNode {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
-        [string] $ScaleUnitNodeName,
+        [string] $Name,
 
         [switch] $Force
     )
@@ -602,7 +602,7 @@ function Stop-AzsScaleUnitNode {
     if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to stop scale unit node $ScaleUnitNodeName ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
 
-        Invoke-AzsInfrastructureAction -Action "PowerOff" -Name $ScaleUnitNodeName -Location $Location -ResourceType $resourceType
+        Invoke-AzsInfrastructureAction -Action "PowerOff" -Name $Name -Location $Location -ResourceType $resourceType
     }
 }
 
@@ -621,7 +621,7 @@ function Start-AzsScaleUnitNode {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
-        [string] $ScaleUnitNodeName,
+        [string] $Name,
 
         [switch] $Force
     )
@@ -629,7 +629,7 @@ function Start-AzsScaleUnitNode {
     if ($Force.IsPresent -or $PSCmdlet.ShouldContinue("Are you sure you want to start scale unit node $ScaleUnitNodeName ?", "")) {
         $resourceType = "Microsoft.Fabric.Admin/fabricLocations/scaleunitnodes"
 
-        Invoke-AzsInfrastructureAction -Action "PowerOn" -Name $ScaleUnitNodeName -Location $Location -ResourceType $resourceType
+        Invoke-AzsInfrastructureAction -Action "PowerOn" -Name $Name -Location $Location -ResourceType $resourceType
     }
 }
 
@@ -860,6 +860,40 @@ function Get-AzsInfrastructureResource {
 }
 
 Export-ModuleMember -Function Set-AzsLocationInformation
+
+<#
+    .SYNOPSIS
+    Set Backup Share
+#>
+function Set-AzSBackupShare {
+    Param(
+        [Parameter(Mandatory = $false)]
+        [string] $Location,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$UserName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Password
+    )
+
+    $Location = Get-AzsHomeLocation -Location $Location
+    
+    $params = @{
+        ResourceName      = "{0}/{1}" -f $Location
+        ResourceType      = "Microsoft.Backup.Admin/backupLocations"
+        ResourceGroupName = "system.{0}" -f $Location
+        ApiVersion        = "2016-05-01"
+        Properties        = @{externalStoreDefault=@{path = $Path;userName = $UserName;password = $Password }} 
+    }
+
+    New-AzureRmResource @params -Force
+}
+
+Export-ModuleMember -Function Set-AzSBackupShare
 
 
 function Invoke-AzsInfrastructureAction {
