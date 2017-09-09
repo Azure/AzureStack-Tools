@@ -175,6 +175,7 @@ Function Add-AzsRegistration{
 
     $params = @{}
     $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})
+    Log-Output "Add-AzsRegistration params: `r`n $(ConvertTo-Json $params)"
 
     RegistrationWorker @params
 
@@ -294,7 +295,7 @@ function Remove-AzsRegistration{
     {
         $params['UsageReportingEnabled'] = $false
     }
-
+    Log-Output "Remove-AzsRegistration params: `r`n $(ConvertTo-Json $params)"
     $RegistrationName = RegistrationWorker @params -ReturnRegistrationName
 
     $currentAttempt = 0
@@ -469,13 +470,15 @@ function Set-AzsRegistrationSubscription{
     $params.Add('AzureSubscriptionId',$CurrentAzureSubscriptionId)    
     $params.Remove('NewAzureDirectoryTenantName')
     $params.Remove('NewAzureSubscriptionId')
-    $params.Remove('CurrentAzureSubscriptionId')  
+    $params.Remove('CurrentAzureSubscriptionId')
+    Log-Output "Remove-AzsRegistration params: `r`n $(ConvertTo-Json $params)"
     Remove-AzSRegistration @params
     $params["AzureSubscriptionId"] = $NewAzureSubscriptionId
     if($NewAzureDirectoryTenantName)
     {
         $params["AzureDirectoryTenantName"] = $NewAzureDirectoryTenantName
     }
+    Log-Output "Add-AzsRegistration params: `r`n $(ConvertTo-Json $params)"
     RegistrationWorker @params
 
     Log-Output "*********************** End log: Set-AzsRegistrationSubscription ***********************`r`n`r`n"
@@ -624,17 +627,16 @@ function RegistrationWorker{
         $RegistrationName = if ($RegistrationName) { $RegistrationName } else { "AzureStack-$($stampInfo.CloudID)" }
 
         Log-Output "Creating registration resource '$RegistrationName'."
-
         $resourceCreationParams = @{
             ResourceGroupName = $ResourceGroupName
             Location          = $ResourceGroupLocation
             ResourceName      = $RegistrationName
             ResourceType      = "Microsoft.AzureStack/registrations"
-            Properties        = @{ registrationToken = "$registrationToken" } 
             ApiVersion        = "2017-06-01" 
+            Properties        = @{ registrationToken = "$registrationToken" }
         }
 
-        $registrationResource = New-AzureRmResource $resourceCreationParams -Force
+        $registrationResource = New-AzureRmResource @resourceActionparams  -Force
 
         Log-Output "Registration resource: $(ConvertTo-Json $registrationResource)"
 
@@ -647,7 +649,7 @@ function RegistrationWorker{
             ApiVersion        = "2017-06-01"
         }
 
-        $actionResponse = Invoke-AzureRmResourceAction $resourceActionparams -Force
+        $actionResponse = Invoke-AzureRmResourceAction @resourceActionparams -Force
 
         #
         # Set RBAC role on registration resource
@@ -800,16 +802,28 @@ function Connect-AzureAccount{
     }
     else
     {
-        Log-Output "Currently connected to Azure with context: `r`n$context"
+        Log-Output "Currently connected to Azure."
     }
 
-    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-    if (-not $tokens -or ($tokens.Count -le 0))
+
+    [Version]$azurePSVersion = (Get-Module AzureRm.Profile).Version
+    Log-Output "Using AzureRm.Profile version: $azurePSVersion"
+
+    if ($azurePSVersion -ge [Version]"3.3.2")
     {
-        $tokens = $context.TokenCache.ReadItems()
+        $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
         if (-not $tokens -or ($tokens.Count -le 0))
         {
-            throw "Token cache is empty"
+            $tokens = $context.TokenCache.ReadItems()
+
+            if (-not $tokens -or ($tokens.Count -le 0))
+            {
+                Log-Throw -Message "Token cache is empty `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+            }
+            else
+            {
+                $token = $tokens[0]
+            }
         }
         else
         {
@@ -818,18 +832,31 @@ function Connect-AzureAccount{
     }
     else
     {
-        $token = $tokens |
-            Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-            Where { $_.TenantId -eq $subscription.TenantId } |
-            Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-            Select -First 1
+        $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
+        if (-not $tokens -or ($tokens.Count -le 0))
+        {            
+            if (-not $tokens -or ($tokens.Count -le 0))
+            {
+                Log-Throw -Message "Token cache is empty `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+            }
+        }
+        else
+        {
+            $token = $tokens |
+                Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+                Where { $_.TenantId -eq $subscription.TenantId } |
+                Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
+                Select -First 1
+        }
     }
+
 
     if (-not $token)
     {
-        throw "Token not found for tenant id $($subscription.TenantId) and resource $($environment.ActiveDirectoryServiceEndpointResourceId)."
+        Log-Throw -Message "Token not found for tenant id $($subscription.TenantId) and resource $($environment.ActiveDirectoryServiceEndpointResourceId)." -CallingFunction $PSCmdlet.MyInvocation.InvocationName
     }
 
+    Log-Output "Current Azure Context: `r`n $(ConvertTo-Json $context)"
     return @{
         TenantId = $subscription.TenantId
         ManagementEndpoint = $environment.ResourceManagerUrl
