@@ -619,7 +619,15 @@ function RegistrationWorker{
         $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
 
         Log-Output "Registering Azure Stack resource provider."
-        Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" -Force | Out-Null
+        [Version]$azurePSVersion = (Get-Module AzureRm.Resources).Version
+        if ($azurePSVersion -ge [Version]"4.3.2")
+        {
+            Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" | Out-Null
+        }
+        else
+        {
+            Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" -Force | Out-Null
+        }
 
         $RegistrationName = if ($RegistrationName) { $RegistrationName } else { "AzureStack-$($stampInfo.CloudID)" }
 
@@ -633,7 +641,7 @@ function RegistrationWorker{
             Properties        = @{ registrationToken = "$registrationToken" }
         }
 
-        $registrationResource = New-AzureRmResource @resourceActionparams  -Force
+        $registrationResource = New-AzureRmResource @resourceCreationParams -Force
 
         Log-Output "Registration resource: $(ConvertTo-Json $registrationResource)"
 
