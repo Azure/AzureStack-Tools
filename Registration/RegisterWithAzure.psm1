@@ -20,20 +20,22 @@ if(-not $Global:AzureRegistrationLog)
 <#
 .SYNOPSIS
 
-This script can be used to register Azure Stack with Azure. To run this script, you must have a public Azure subscription of any type.
+Add-AzsRegistration can be used to register Azure Stack with Azure. To run this function, you must have a public Azure subscription of any type.
 You must also have access to an account that is an owner or contributor to that subscription.
 
 .DESCRIPTION
 
-RegisterWithAzure runs scripts already present in Azure Stack from the ERCS VM to connect your Azure Stack to Azure.
+Add-AzsRegistration runs scripts already present in Azure Stack from the ERCS VM to connect your Azure Stack to Azure.
 After connecting with Azure, you can download products from the marketplace (See the documentation for more information: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-download-azure-marketplace-item).
 Running this script with default parameters will enable marketplace syndication and usage data will default to being reported to Azure.
-To turn these features off see examples below.
+NOTE: Default billing model is 'Development' and is only usable for proof of concept builds.
+To disable syndication or usage reporting see examples below.
 
 This script will create the following resources by default:
 - A service principal to perform resource actions
 - A resource group in Azure (if needed)
 - A registration resource in the created resource group in Azure
+- A custom RBAC role for the resource in Azure
 - An activation resource group and resource in Azure Stack
 
 See documentation for more detail: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register
@@ -46,6 +48,10 @@ If not supplied script will request manual input of username and password
 .PARAMETER AzureSubscriptionId
 
 The subscription Id that will be used for marketplace syndication and usage. The Azure Account Id used during registration must have resource creation access to this subscription.
+
+.PARAMETER AzureDirectoryTenantName
+
+The Azure tenant directory where you would like your registration resource in Azure to be created.
 
 .PARAMETER JeaComputerName
 
@@ -69,7 +75,8 @@ The name of the Azure Environment where resources will be created. Defaults to "
 
 .PARAMETER BillingModel
 
-The billing model that the subscription uses. Select from "Capacity","PayAsYouUse", and "Development". Defaults to "Development". Please see documentation for more information: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-billing-and-chargeback
+The billing model that the subscription uses. Select from "Capacity","PayAsYouUse", and "Development". Defaults to "Development" which is usable for POC installments.
+Please see documentation for more information: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-billing-and-chargeback
 
 .PARAMETER MarketplaceSyndicationEnabled
 
@@ -77,7 +84,7 @@ This is a switch that determines if this registration will allow you to download
 
 .PARAMETER UsageReportingEnabled
 
-This is a switch that determines if usage records are reported to Azure. Defaults to $true
+This is a switch that determines if usage records are reported to Azure. Defaults to $true. Note: This cannot be disabled with billing model set to PayAsYouUse.
 
 .PARAMETER AgreementNumber
 
@@ -87,36 +94,31 @@ Used when the billing model is set to capacity. If this is the case you will nee
 
 This example registers your AzureStack environment with Azure, enables syndication, and enables usage reporting to Azure.
 
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "Azs-ERCS01"
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com" -JeaComputername "Azs-ERCS01"
 
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication, and disables usage reporting to Azure. 
 
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "Azs-ERC01" -UsageReportingEnabled:$false
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -JeaComputername "Azs-ERCS01" -BillingMode 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication and usage and gives a specific name to the resource group and registration resource. 
 
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "<PreFix>-ERCS01" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "Registration01"
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -JeaComputername "Azs-ERCS02" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "ContosoRegistration"
 
 .EXAMPLE
 
-This example un-registers by disabling syndication and stopping usage sent to Azure. Note that usage will still be collected, just not sent to Azure.
+This example disables syndication and disables usage reporting to Azure. Note that usage will still be collected, just not sent to Azure.
 
-.\RegisterWithAzure.ps1 -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -JeaComputername "<Prefix>-ERC01" -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -JeaComputername "Azs-ERCS01" -BillingModel Development -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
 
 .NOTES
 
-If you would like to un-Register with you Azure by turning off marketplace syndication and usage reporting you can run this script again with both enableSyndication and reportUsage set to false.
-This will unconfigure usage bridge so that syndication isn't possible and usage data is not reported. This is only possible with billing model of Development or Capacity. 
+If you would like to un-Register with you Azure by turning off marketplace syndication, disabling usage reporting, and removing the registration resource from Azure you can run Remove-AzsRegistration.
 
-If you would like to use a different subscription for registration there are two functions to be run before re-registering: 
-- Add-RegistrationRoleAssignment: Use this function If your next subscription Id is under the same account as the current registration
-- Remove-RegistrationResource: Use this function if your next subscription Id is under a different account than the current registration
-
-Once you have run the appropriate function you can call RegisterWithAzure again to re-register. 
+If you would like to use a different subscription for registration you can run Set-AzsRegistrationSubscription
 
 #>
 
@@ -186,14 +188,12 @@ Function Add-AzsRegistration{
 
 .SYNOPSIS
 
-Removes a registration resource from Azure
+Sets current registration parameters MarketplaceSyndicationEnabled and EnableUsageReporting to $false, then removes registration resource from Azure.
 
 .DESCRIPTION
 
 If no registration resource name is supplied then then this script will use this environments CloudId to search for a registration resource and remove it from Azure.
-If a RegistrationName and ResourceGroupName are supplied this script will remove the specified registration resource from Azure. This will disable marketplace syndication
-and allow you to run RegisterWithAzure with a different subscription Id. Note: If the provided subscription for a subsequent RegisterWithAzure is under the same Azure Account
-as the previous registration you MUST run Add-RegistrationRoleAssignment before attempting RegisterWithAzure.
+If a RegistrationName and ResourceGroupName are supplied this script will remove the specified registration resource from Azure.
 
 .PARAMETER CloudAdminCredential
 
@@ -203,6 +203,10 @@ If not supplied script will request manual input of username and password.
 .PARAMETER AzureSubscriptionId
 
 The subscription Id that was previously used to register this Azure Stack environment with Azure.
+
+.PARAMETER AzureDirectoryTenantName
+
+The Azure tenant directory previously used to register this Azure Stack environment with Azure.
 
 .PARAMETER JeaComputerName
 
@@ -214,7 +218,7 @@ This is the name of the resource group in Azure where the previous registration 
 
 .PARAMETER RegistrationName
 
-This is the name of the previous registration resource that was created in Azure. This resource will be removed Defaults to "AzureStack-<CloudId>"
+This is the name of the previous registration resource that was created in Azure. This resource will be removed. Defaults to "AzureStack-<CloudId>"
 
 .PARAMETER AzureEnvironmentName
 
@@ -222,15 +226,13 @@ The name of the Azure Environment where registration resources have been created
 
 .EXAMPLE
 
-This example removes a registration resource in Azure that was created from a prior successful run of RegisterWithAzure and uses defaults for RegistrationName and ResourceGroupName.
+This example removes a registration resource in Azure that was created from a prior successful run of Add-AzsRegistration and uses defaults for RegistrationName and ResourceGroupName.
 
-Remove-RegistrationResource -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -JeaComputerName $JeaComputerName
+Remove-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -JeaComputerName $JeaComputerName
 
 .NOTES
 
-This script should be used in conjuction with running RegisterWithAzure to disable marketplace syndication and usage reporting (if able). If after running this script
-you attempt to re-register with a different subscription Id that is under the same account as the previous registration you will recieve an error related to the custom 
-RBAC role for registration resources. To fix this, please run Add-RegistrationRoleAssignment to re-register with a subscription under the previously registered account. 
+This will always set syndication and usage reporting to false as well as remove the provided registration resource from Azure. 
 
 #>
 
@@ -338,20 +340,47 @@ function Remove-AzsRegistration{
 
 .SYNOPSIS
 
-This script is used to prepare the current environment for registering with a new subscription Id under the same account.
+Set-AzsRegistrationSubscription calls Remove-AzsRegistration on the current registration resource and then calls Add-AzsRegistration with the new parameters
 
 .DESCRIPTION
 
-Add-RegistrationRoleAssignment will add the provided alternate subscription Id to the list of assignable scopes for the custom RBAC role that is defined  and assigned to registration resources.
-This RBAC role is created / assigned during the RegisterWithAzure function.
+Set-AzsRegistrationSubsription requires the parameters for the current registration as well as parameters for a new registration resource. The function 
+attempts to add the custom RBAC role created during Add-AzsRegistration to the new subscription passed in. If not possible the function will continue as normal.
+Set-AzsRegistrationSubscription will call Remove-AzsRegistration on the current registration resource and then pass the new subscription Id and new 
+Azure directory tenant name into Add-AzsRegistration.
 
-.PARAMETER AzureSubscriptionId
+.PARAMETER CloudAdminCredential
+
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+If not supplied script will request manual input of username and password.
+
+.PARAMETER CurrentAzureSubscriptionId
 
 The subscription Id that was previously used to register this Azure Stack environment with Azure.
 
-.PARAMETER AlternateSubscriptionId
+.PARAMETER AzureDirectoryTenantName
 
-The new subscription Id that this environment will be registered to in Azure.
+The Azure tenant directory previously used to register this Azure Stack environment with Azure.
+
+.PARAMETER NewAzureSubscriptionId
+
+The subscription Id you would like to change your registration to.
+
+.PARAMETER JeaComputerName
+
+Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK).
+
+.PARAMETER NewAzureDirectoryTenantName
+
+The new Azure tenant directory you would like used during registration. This can be the same as the previous tenant name.
+
+.PARAMETER ResourceGroupName
+
+This is the name of the resource group in Azure where the previous registration resource was stored. Defaults to "azurestack"
+
+.PARAMETER RegistrationName
+
+This is the name of the previous registration resource that was created in Azure. This resource will be removed. Defaults to "AzureStack-<CloudId>"
 
 .PARAMETER AzureEnvironmentName
 
@@ -359,13 +388,13 @@ The name of the Azure Environment where registration resources have been created
 
 .EXAMPLE
 
-Add-RegistrationRoleAssignment -AzureSubscriptionId $CurrentRegisteredSubscription -AlternateSubscriptionId $FutureRegisteredSubscription
+Set-AzsRegistrationSubscription -CloudAdminCredential $CloudAdminCredential -CurrentAzureSubscriptionId $CurrentSubscriptionId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -NewAzureSubscriptionId $NewAzureSubscriptionId `
+-JeaComputerName <Prefix>-ERCS01 -NewAzureDirectoryTenantname 'microsoft.onmicrosoft.com'
 
 .NOTES
 
-This function should only be used if you have a currently registered environment and would like to switch the subscription used to register to a different subscription 
-that is under the same account. If you would like to register to a subscription Id that is under a separate account then you must use Remove-RegistrationResource before
-calling RegisterWithAzure again.
+If you would like to register with a different resource group, resource name, or resource group location you cannot currently use Set-AzsRegistrationSubsription for that. 
+To do so you should call Remove-AzsRegistration followed by Add-AzsRegistration with the new parameters you would like. 
 
 #>
 
@@ -432,7 +461,7 @@ function Set-AzsRegistrationSubscription{
     Log-Output "Logging in to Azure."
     $connection = Connect-AzureAccount -SubscriptionId $CurrentAzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
 
-    $role = Get-AzureRmRoleDefinition -Name 'Registration Reader'
+    $role = Get-AzureRmRoleDefinition -Name 'Registration Reader' -Scope "/subscriptions/$CurrentAzureSubscriptionId"
     if($role)
     {
         if(-not($role.AssignableScopes -icontains "/subscriptions/$NewAzureSubscriptionId"))
@@ -445,9 +474,9 @@ function Set-AzsRegistrationSubscription{
             }
             catch
             {
-                if($_.Exception -ilike "*LinkedAuthorizationFailed:*")
+                if($_.Exception -ilike "*AuthorizationFailed:*")
                 {
-                    Log-Warning "Unable to add the new subscription: $NewAzureSubscriptionId  to the scope of existing RBAC role definition. Continuing with transfer of registration"
+                    Log-Warning "Unable to add the new subscription: $NewAzureSubscriptionId  to the scope of existing RBAC role definition. Continuing with transfer of registration `r`n$($_.Exception)"
                 }
                 else
                 {
@@ -753,8 +782,8 @@ Determines if a new Azure connection is required.
 
 .DESCRIPTION
 
-If the current powershell environment is not currently logged in to an Azure Account or is calling either RegisterWithAzure or
-Initialize-AlternateRegistration with a subscription id that does not match the current environment's subscription then Connect-AzureAccount will prompt the user to log in
+If the current powershell environment is not currently logged in to an Azure Account or is calling Add-AzsRegistration
+with a subscription id that does not match one available under the current context then Connect-AzureAccount will prompt the user to log in
 to the correct account. 
 
 #>
@@ -1003,7 +1032,6 @@ function Get-TenantIdFromName
 
     $response = Invoke-RestMethod -Uri $uri -Method Get -Verbose
 
-    Write-Verbose -Message "using token_endpoint $($response.token_endpoint) to parse tenant id" -Verbose
     $tenantId = $response.token_endpoint.Split('/')[3]
  
     $tenantIdGuid = [guid]::NewGuid()
@@ -1011,15 +1039,21 @@ function Get-TenantIdFromName
 
     if(-not $result)
     {
-        Write-Error "Error obtaining tenant id from tenant name"
+        Log-Throw -Message "Error obtaining tenant id from tenant name $tenantName `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
     }
     else
     {
-        Write-Verbose -Message "Tenant Name: $tenantName Tenant id: $tenantId" -Verbose
+        Log-Output "Tenant Name: $tenantName Tenant id: $tenantId" -Verbose
         return $tenantId
     }
 }
 
+<#
+.SYNOPSIS
+
+Returns the common AzureURIs associated with the provided AzureEnvironmentName
+
+#>
 function Get-AzureURIs
 {
     [CmdletBinding()]
