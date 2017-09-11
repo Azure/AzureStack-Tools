@@ -569,7 +569,14 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
         {
-            ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault") | ForEach-Object {Get-AzureRmResourceProvider -ProviderNamespace $_} | Register-AzureRmResourceProvider -Force
+            $azureRMVersion = (Get-Module AzureRM -ListAvailable).Version
+            $paramHash = @{}
+            if ($azureRMVersion -eq "1.2.10" -or $azureRMVersion -eq "1.2.9")
+            {
+                $paramHash = @{"Force" = $True}
+            }
+
+            ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault") | ForEach-Object {Get-AzureRmResourceProvider -ProviderNamespace $_} | Register-AzureRmResourceProvider @paramHash
             $sleepTime = 0        
             while($true)
             {
