@@ -570,7 +570,6 @@ function RegistrationWorker{
     # Pre-registration setup
     #    
 
-    Resolve-DomainAdminStatus -Verbose
     Log-Output "Logging in to Azure."
     $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
     $session = Initialize-PrivilegedJeaSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
@@ -904,40 +903,6 @@ function Connect-AzureAccount{
         ManagementEndpoint = $environment.ResourceManagerUrl
         ManagementResourceId = $environment.ActiveDirectoryServiceEndpointResourceId
         Token = $token
-    }
-}
-
-<#
-
-.SYNOPSIS
-
-Determines if the currently running user is part of the Domain Admin's group
-
-#>
-function Resolve-DomainAdminStatus{
-[CmdletBinding()]
-Param()
-    try
-    {
-        Log-Output "Checking for user logged in as Domain Admin"
-        $currentUser     = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-        $windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($CurrentUser)
-        $domain = Get-ADDomain
-        $sid = "$($domain.DomainSID)-512"
-
-        if($windowsPrincipal.IsInRole($sid))
-        {
-            Log-Output "Domain Admin check : ok"
-        }    
-    }
-    catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException]
-    {
-        $message = "User is not logged in as a domain admin. registration has been cancelled."        
-        Log-Throw -Message "$message `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-    }
-    catch
-    {        
-        Log-Throw -Message "Unexpected error while checking for domain admin: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
     }
 }
 
