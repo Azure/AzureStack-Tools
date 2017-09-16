@@ -53,7 +53,7 @@ The subscription Id that will be used for marketplace syndication and usage. The
 
 The Azure tenant directory where you would like your registration resource in Azure to be created.
 
-.PARAMETER JeaComputerName
+.PARAMETER PrivilegedEndpoint
 
 Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
 
@@ -94,25 +94,25 @@ Used when the billing model is set to capacity. If this is the case you will nee
 
 This example registers your AzureStack environment with Azure, enables syndication, and enables usage reporting to Azure.
 
-Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com" -JeaComputername "Azs-ERCS01"
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com" -PrivilegedEndpoint "Azs-ERCS01"
 
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication, and disables usage reporting to Azure. 
 
-Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -JeaComputername "Azs-ERCS01" -BillingMode 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -PrivilegedEndpoint "Azs-ERCS01" -BillingMode 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication and usage and gives a specific name to the resource group and registration resource. 
 
-Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -JeaComputername "Azs-ERCS02" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "ContosoRegistration"
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -PrivilegedEndpoint "Azs-ERCS02" -ResourceGroupName "ContosoStackRegistrations" -RegistrationName "ContosoRegistration"
 
 .EXAMPLE
 
 This example disables syndication and disables usage reporting to Azure. Note that usage will still be collected, just not sent to Azure.
 
-Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -JeaComputername "Azs-ERCS01" -BillingModel Development -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
+Add-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -PrivilegedEndpoint "Azs-ERCS01" -BillingModel Development -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
 
 .NOTES
 
@@ -135,7 +135,7 @@ Function Add-AzsRegistration{
         [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
-        [String] $JeaComputerName,
+        [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -208,7 +208,7 @@ The subscription Id that was previously used to register this Azure Stack enviro
 
 The Azure tenant directory previously used to register this Azure Stack environment with Azure.
 
-.PARAMETER JeaComputerName
+.PARAMETER PrivilegedEndpoint
 
 Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK).
 
@@ -228,7 +228,7 @@ The name of the Azure Environment where registration resources have been created
 
 This example removes a registration resource in Azure that was created from a prior successful run of Add-AzsRegistration and uses defaults for RegistrationName and ResourceGroupName.
 
-Remove-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -JeaComputerName $JeaComputerName
+Remove-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $AzureSubscriptionId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -PrivilegedEndpoint $PrivilegedEndpoint
 
 .NOTES
 
@@ -250,7 +250,7 @@ function Remove-AzsRegistration{
         [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
-        [String] $JeaComputerName,
+        [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -366,7 +366,7 @@ The Azure tenant directory previously used to register this Azure Stack environm
 
 The subscription Id you would like to change your registration to.
 
-.PARAMETER JeaComputerName
+.PARAMETER PrivilegedEndpoint
 
 Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK).
 
@@ -389,7 +389,7 @@ The name of the Azure Environment where registration resources have been created
 .EXAMPLE
 
 Set-AzsRegistrationSubscription -CloudAdminCredential $CloudAdminCredential -CurrentAzureSubscriptionId $CurrentSubscriptionId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -NewAzureSubscriptionId $NewAzureSubscriptionId `
--JeaComputerName <Prefix>-ERCS01 -NewAzureDirectoryTenantname 'microsoft.onmicrosoft.com'
+-PrivilegedEndpoint <Prefix>-ERCS01 -NewAzureDirectoryTenantname 'microsoft.onmicrosoft.com'
 
 .NOTES
 
@@ -416,7 +416,7 @@ function Set-AzsRegistrationSubscription{
         [String] $NewAzureSubscriptionId,
 
         [Parameter(Mandatory = $true)]
-        [String] $JeaComputerName,
+        [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $true)]
         [String] $NewAzureDirectoryTenantName,
@@ -534,7 +534,7 @@ function RegistrationWorker{
         [String] $AzureDirectoryTenantName,
 
         [Parameter(Mandatory = $true)]
-        [String] $JeaComputerName,        
+        [String] $PrivilegedEndpoint,        
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -572,7 +572,7 @@ function RegistrationWorker{
 
     Log-Output "Logging in to Azure."
     $connection = Connect-AzureAccount -SubscriptionId $AzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
-    $session = Initialize-PrivilegedJeaSession -JeaComputerName $JeaComputerName -CloudAdminCredential $CloudAdminCredential -Verbose
+    $session = Initialize-PrivilegedJeaSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
     $stampInfo = Confirm-StampVersion -PSSession $session
     $tenantId = $connection.TenantId    
     $refreshToken = $connection.Token.RefreshToken
@@ -696,7 +696,7 @@ function RegistrationWorker{
 
         Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)." 
         $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:actionResponse.ActivationKey }
-        Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: $Global:AzureRegistrationLog  and  \\$JeaComputerName\c$\maslogs"
+        Log-Output "Azure Stack registration and activation completed successfully. Logs can be found at: $Global:AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs"
     }
     finally
     {
@@ -855,12 +855,20 @@ function Connect-AzureAccount{
             }
             else
             {
-                $token = $tokens[0]
+                $token = $tokens |
+                    Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+                    Where { $_.TenantId -eq $subscription.TenantId } |
+                    Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
+                    Select -First 1
             }
         }
         else
         {
-            $token = $tokens[0]
+            $token = $tokens |
+                Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+                Where { $_.TenantId -eq $subscription.TenantId } |
+                Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
+                Select -First 1
         }
     }
     else
@@ -902,14 +910,14 @@ function Connect-AzureAccount{
 
 .SYNOPSIS
 
-Creates a powershell session with the JeaComputer for registration actions
+Creates a powershell session with the PrivilegedEndpoint for registration actions
 
 #>
 function Initialize-PrivilegedJeaSession{
 [CmdletBinding()]
 Param(
     [Parameter(Mandatory=$true)]
-    [String] $JeaComputerName,
+    [String] $PrivilegedEndpoint,
 
     [Parameter(Mandatory=$true)]
     [PSCredential] $CloudAdminCredential
@@ -921,14 +929,14 @@ Param(
     {
         try
         {
-            Log-Output "Initializing privileged JEA session with $JeaComputerName. Attempt $currentAttempt of $maxAttempts"
-            $session = New-PSSession -ComputerName $JeaComputerName -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
-            Log-Output "Connection to $JeaComputerName successful"
+            Log-Output "Initializing privileged JEA session with $PrivilegedEndpoint. Attempt $currentAttempt of $maxAttempts"
+            $session = New-PSSession -ComputerName $PrivilegedEndpoint -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
+            Log-Output "Connection to $PrivilegedEndpoint successful"
             return $session
         }
         catch
         {
-            Log-Warning "Creation of session with $JeaComputerName failed:`r`n$($_.Exception.Message)"
+            Log-Warning "Creation of session with $PrivilegedEndpoint failed:`r`n$($_.Exception.Message)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
@@ -944,7 +952,7 @@ Param(
 
 .SYNOPSIS
 
-Uses the current session with the JeaComputer to determine the version of Azure Stack that has been deployed
+Uses the current session with the PrivilegedEndpoint to determine the version of Azure Stack that has been deployed
 
 #>
 function Confirm-StampVersion{
@@ -1120,7 +1128,7 @@ function Log-Throw
     "***************************************************************`r`n" | Out-File $Global:AzureRegistrationLog -Append
     Log-Output "*********************** Ending registration action during $CallingFunction ***********************`r`n`r`n"
 
-    throw "Logs can be found at: $Global:AzureRegistrationLog  and  \\$JeaComputerName\c$\maslogs `r`n$Message"
+    throw "Logs can be found at: $Global:AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n$Message"
 }
 
 Export-ModuleMember Add-AzsRegistration
