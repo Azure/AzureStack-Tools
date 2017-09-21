@@ -926,5 +926,5 @@ function Invoke-AzsInfrastructureAction {
         $params.Parameters = $Parameters
     }
 
-    Invoke-AzureRmResourceAction @params -Force -Debug
+    Invoke-AzureRmResourceAction @params -Force
 }
