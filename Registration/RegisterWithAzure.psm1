@@ -735,6 +735,7 @@ function New-RBACAssignment{
     $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
     if (-not $customRoleDefined)
     {
+        $customRoleName = "Registration Reader-$($RegistrationResource.SubscriptionId)"
         # Create new RBAC role definition
         $role = Get-AzureRmRoleDefinition -Name 'Reader'
         $role.Name = $customRoleName
