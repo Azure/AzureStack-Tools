@@ -736,24 +736,28 @@ function New-RBACAssignment{
     if (-not $customRoleDefined)
     {
         $customRoleName = "Registration Reader-$($RegistrationResource.SubscriptionId)"
-        # Create new RBAC role definition
-        $role = Get-AzureRmRoleDefinition -Name 'Reader'
-        $role.Name = $customRoleName
-        $role.id = [guid]::newguid()
-        $role.IsCustom = $true
-        $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
-        $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')
-        $role.AssignableScopes.Clear()
-        $role.AssignableScopes.Add("/subscriptions/$($RegistrationResource.SubscriptionId)")
-        $role.Description = "Custom RBAC role for registration actions such as downloading products from Azure marketplace"
-        try
+        $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
+        if (-not $customRoleDefined)
         {
-            New-AzureRmRoleDefinition -Role $role
-        }
-        catch
-        {
-            Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-        }
+            # Create new RBAC role definition
+            $role = Get-AzureRmRoleDefinition -Name 'Reader'
+            $role.Name = $customRoleName
+            $role.id = [guid]::newguid()
+            $role.IsCustom = $true
+            $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
+            $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')
+            $role.AssignableScopes.Clear()
+            $role.AssignableScopes.Add("/subscriptions/$($RegistrationResource.SubscriptionId)")
+            $role.Description = "Custom RBAC role for registration actions such as downloading products from Azure marketplace"
+            try
+            {
+                New-AzureRmRoleDefinition -Role $role
+            }
+            catch
+            {
+                Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+            }
+        }        
     }
 
     # Determine if custom RBAC role has been assigned
@@ -827,7 +831,8 @@ function Connect-AzureAccount{
             Add-AzureRmAccount -SubscriptionId $SubscriptionId       
             Set-AzureRmContext -SubscriptionId $SubscriptionId -TenantId $AzureDirectoryTenantId
             $environment = Get-AzureRmEnvironment -Name $AzureEnvironmentName
-            $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId 
+            $subscription = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
+            $context = Get-AzureRmContext
         }
         catch
         {
@@ -840,57 +845,21 @@ function Connect-AzureAccount{
     }
 
 
-    [Version]$azurePSVersion = (Get-Module AzureRm.Profile).Version
-    Log-Output "Using AzureRm.Profile version: $azurePSVersion"
+    $tokens = @()
+    try{$tokens += [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()}catch{}
+    try{$tokens += [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()}catch{}
+    try{$tokens += $context.TokenCache.ReadItems()}catch{}
 
-    if ($azurePSVersion -ge [Version]"3.3.2")
+    if (-not $tokens -or ($tokens.Count -le 0))
     {
-        $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-        if (-not $tokens -or ($tokens.Count -le 0))
-        {
-            $tokens = $context.TokenCache.ReadItems()
+        Log-Throw -Message "Token cache is empty `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
+    }
 
-            if (-not $tokens -or ($tokens.Count -le 0))
-            {
-                Log-Throw -Message "Token cache is empty `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-            }
-            else
-            {
-                $token = $tokens |
-                    Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-                    Where { $_.TenantId -eq $subscription.TenantId } |
-                    Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-                    Select -First 1
-            }
-        }
-        else
-        {
-            $token = $tokens |
-                Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-                Where { $_.TenantId -eq $subscription.TenantId } |
-                Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-                Select -First 1
-        }
-    }
-    else
-    {
-        $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-        if (-not $tokens -or ($tokens.Count -le 0))
-        {            
-            if (-not $tokens -or ($tokens.Count -le 0))
-            {
-                Log-Throw -Message "Token cache is empty `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-            }
-        }
-        else
-        {
-            $token = $tokens |
-                Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
-                Where { $_.TenantId -eq $subscription.TenantId } |
-                Where { $_.ExpiresOn -gt [datetime]::UtcNow } |
-                Select -First 1
-        }
-    }
+    $token = $tokens |
+        Where Resource -EQ $environment.ActiveDirectoryServiceEndpointResourceId |
+        Where { $_.TenantId -eq $subscription.TenantId } |
+        Sort ExpiresOn |
+        Select -Last 1
 
 
     if (-not $token)
