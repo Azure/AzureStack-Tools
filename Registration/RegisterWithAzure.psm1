@@ -462,6 +462,11 @@ function Set-AzsRegistrationSubscription{
     $connection = Connect-AzureAccount -SubscriptionId $CurrentAzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
 
     $role = Get-AzureRmRoleDefinition -Name 'Registration Reader' -Scope "/subscriptions/$CurrentAzureSubscriptionId"
+    if (-not $role)
+    {
+        $role = Get-AzureRmRoleDefinition -Name "Registration Reader-$($CurrentAzureSubscriptionId)" -Scope "/subscriptions/$CurrentAzureSubscriptionId"
+    }
+
     if($role)
     {
         if(-not($role.AssignableScopes -icontains "/subscriptions/$NewAzureSubscriptionId"))
