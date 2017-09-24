@@ -519,7 +519,7 @@ if($IP)
 			}
 	    #username and password
         $global:progresspreference ="Continue"
-	    $user = "azurestack\CloudAdmin"
+	    $user = "CloudAdmin"
 	    Write-Host "`n`t[PROMPT] Enter password for $($user)"
 	    $secpasswd = Read-Host "`n `t`tEnter the password for $($user)" -AsSecureString
 	    $mySecureCredentials = New-Object System.Management.Automation.PSCredential ($user, $secpasswd)
