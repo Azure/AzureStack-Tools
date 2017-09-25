@@ -648,7 +648,7 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(concat(variables('VMNamePrefix'), '1'),'/Microsoft.Insights.VMDiagnosticsSettings')]",           
+            "name": "[concat(concat(variables('VMNamePrefix'), '1'),'/VMDiagnosticsSettings')]",           
             "location": "[variables('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName3'))]",
