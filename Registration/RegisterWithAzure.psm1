@@ -1,6 +1,14 @@
 ﻿# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
+<#
+
+This module contains functions for registering your environment and enabling marketplace syndication / usage reporting. 
+To run registration and activation functions you must have a public Azure subscription of any type.
+You must also have access to an account / directory that is an owner or contributor to that subscription.
+
+#>
+
 # Create log folder / prevent duplicate logs
 $LogFolder = "$env:SystemDrive\MASLogs"
 if (-not (Test-Path $LogFolder))
@@ -128,13 +136,72 @@ If you would like to use a different subscription for registration you can run S
 <#
 .SYNOPSIS
 
+Get-AzsRegistrationToken will generate a registration token from the input parameters.
+
 .DESCRIPTION
 
-.PARAMETER 
+Get-AzsRegistrationToken will use the BillingModel, MarketplaceSyndicationEnabled, UsageReportingEnabled, and AgreementNumber (if necessary) parameters to generate a registration token. 
+This token is used to enable / disable Azure Stack features such as Azure marketplace product syndication and Azure Stack usage reporting. 
+A registration token is required to call Register-AzureStack. 
+
+.PARAMETER CloudAdminCredential
+
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the privileged endpoint to call approved cmdlets and scripts.
+This parameter is mandatory and if not supplied then this function will request manual input of username and password
+
+.PARAMETER PrivilegedEndpoint
+
+The name of the VM that has permissions to perform approved powershell cmdlets and scripts. Usually has a name in the format of <ComputerName>-ERCSxx where <ComputerName>
+is the name of the machine and ERCS is followed by a number between 01 and 03. Example: Azs-ERCS01 (from the ASDK)
+
+.PARAMETER BillingModel
+
+The billing model that will be used for this environment. Select from "Capacity","PayAsYouUse", and "Development". Defaults to "Development" which is usable for POC / ASDK installments.
+Please see documentation for more information: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-billing-and-chargeback
+
+.PARAMETER AgreementNumber
+
+A valid agreement number must be provided if the 'capacity' BillingModel parameter is provided.
+
+.PARAMETER MarketplaceSyndicationEnabled
+
+Switch parameter that enables this environment to download products from the Azure Marketplace. Defaults to $true
+
+.PARAMETER UsageReportingEnabled
+
+Switch parameter that determines if usage records are reported to Azure. Defaults to $true. 
+Note: This cannot be disabled with billing model set to PayAsYouUse.
+
+.PARAMETER WriteRegistrationToken
+
+Switch parameter used in conjunction with TokenOutputFilePath. Pass in this parameter when the registration token needs to be manually copied and used in a separate environment.
+
+.PARAMETER TokenOutputFilePath
+
+Used in conjunction with the WriteRegistrationToken switch, this parameter sets the output location for the registration token.
 
 .EXAMPLE
 
+This example generates a registration token for use in a follow up function. All features will be enabled.
+$registrationToken = Get-AzsRegistrationToken -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development
+
+.EXAMPLE
+
+This example generates a registration token and writes it to a text file. All features will be enabled.
+Get-AzsRegistrationToken -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development -WriteRegistrationToken -TokenOutputFilePath "C:\Temp\RegistrationToken.txt"
+
+.EXAMPLE
+
+This example generates a registration token and writes it to a text file. All features will be disabled. This is used only to register an environment.
+Get-AzsRegistrationToken -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false -WriteRegistrationToken -TokenOutputFilePath "C:\Temp\RegistrationToken.txt"
+
 .NOTES
+
+This function can be used in conjunction with the others if you would like to perform full registration and activation. For example:
+
+$registrationToken = Get-AzsRegistrationToken -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development
+Register-AzureStack -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -AzureSubscriptionId $ContosoSubId -AzureDirectoryTenantName $ContosoDirectory -RegistrationToken $registrationToken
+Enable-AzureStackFeature -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -AzureSubscriptionId $ContosoSubId -AzureDirectoryTenantName $ContosoDirectory
 
 #>
 Function Get-AzsRegistrationToken{
@@ -197,24 +264,65 @@ Function Get-AzsRegistrationToken{
 <#
 .SYNOPSIS
 
+Register-AzureStack will register your environment with Azure but will not enable syndication or usage reporting.
+
 .DESCRIPTION
 
-.PARAMETER
+Register-AzureStack creates a resource group and registration resource in Azure that can be used to activate at a later date.
+A registration token is required to register with Azure. This is a required step before activating marketplace syndication or 
+usage reporting features. 
+
+.PARAMETER AzureSubscriptionId
+
+The subscription that will be used for creation of a resource group and registration resource. If activation occurs on this registration with a 
+BillingModel set to PayAsYouUse then this subscription will be billed for usage data that is reported. 
+
+.PARAMETER AzureDirectoryTenantName
+
+The directory that is associated with the subscription provided. Example: "Contoso.onmicrosoft.com"
+
+.PARAMETER RegistrationToken
+
+The registration token created after running Get-AzsRegistrationToken. This contains BillingModel, marketplace syndication, and usage reporting parameter information
+that will later be used in Enable-AzureStackFeature to activate Azure Stack.
+
+.PARAMETER AzureEnvironmentName
+
+The Azure environment that will be used to create registration resource. defaults to AzureCloud
+
+.PARAMETER ResourceGroupName
+
+The name of the resource group that will contain the registration resource. Defaults to 'azurestack'
+
+.PARAMETER ResourceGroupLocation
+
+The Azure location where the registration resource group will be created. Defaults to 'westcentralus'
+
+.PARAMETER RegistrationName
+
+The name of the registration resource created during Register-Azurestack. Defaults to 'AzureStack-<Cloud Id>' where <Cloud Id> is the unique cloud
+identifier for this Azure Stack environment.
 
 .EXAMPLE
 
+This example will register your Azure Stack environment with all default parameters.
+
+Register-AzureStack -AzureSubscriptionId $ContosoSubId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -RegistrationToken $registrationToken
+
+.EXAMPLE
+
+This example will register your Azure Stack environment with specific names for resource group and registration resource
+
+Register-AzureStack -AzureSubscriptionId $ContosoSubId -AzureDirectoryTenantName 'contoso.onmicrosoft.com' -RegistrationToken $registrationToken -ResourceGroupName 'ContosoAzureStack' -RegistrationName 'ContosoAzureStackRegistration'
+
 .NOTES
+
+This function will not enable marketplace syndication or usage reporting but it is a required step before those features can be enabled. 
 
 #>
 Function Register-AzureStack{
 [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [PSCredential] $CloudAdminCredential,
-
-        [Parameter(Mandatory = $true)]
-        [String] $PrivilegedEndpoint,
-
         [Parameter(Mandatory = $true)]
         [String] $AzureSubscriptionId,
 
@@ -248,8 +356,6 @@ Function Register-AzureStack{
     Log-Output "*********************** Begin log: New-AzsRegistration ***********************`r`n"
 
     $workerParams = @{
-        CloudAdminCredential     = $CloudAdminCredential
-        PrivilegedEndpoint       = $PrivilegedEndpoint
         AzureSubscriptionId      = $AzureSubscriptionId
         AzureDirectoryTenantName = $AzureDirectoryTenantName
         AzureEnvironmentName     = $AzureEnvironmentName
@@ -424,7 +530,7 @@ function RegistrationWorker{
                 {
                     Log-Output "Registration token will be written to: $TokenOutputFilePath"
                     $RegistrationToken | Out-File $TokenOutputFilePath
-                }                
+                }
                 return $RegistrationToken
             }
 
