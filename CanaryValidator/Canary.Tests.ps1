@@ -407,7 +407,7 @@ while ($runCount -le $NumberOfIterations)
             $asTenantSubscription = New-AzureRmTenantSubscription -OfferId $asCanaryOffer.Id -DisplayName $tenantSubscriptionName -ErrorAction Stop
             if ($asTenantSubscription)
             {
-                $asTenantSubscription | Select-AzureRmSubscription -ErrorAction Stop
+                Get-AzureRmSubscription -SubscriptionName $asTenantSubscription.DisplayName | Select-AzureRmSubscription -ErrorAction Stop
             }           
         } 
 
@@ -502,11 +502,13 @@ while ($runCount -le $NumberOfIterations)
 
             Invoke-Usecase -Name 'RemoveReaderRoleAssignment' -Description "Remove Reader role assignment from Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
             {
+                $parameters = @{}
+                if ((Get-Module AzureRM -ListAvailable).Version -le "1.2.10") {$parameters = @{"Force" = $True}}
                 $readerRole = Get-AzureRmRoleDefinition -Name Reader 
                 $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
                 if ($subscriptionID -and $readerRole -and (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
                 {                
-	                Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -Force -ErrorAction Stop
+	                Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop @parameters
                 }
             }           
             
