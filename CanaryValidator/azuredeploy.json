@@ -83,6 +83,12 @@
             "metadata": {
                 "description": "Maps to the sku in the Azure Stack Platform Image Repository manifest file Eg: 12.SP1, 6.7 , 7.2"
             }
+        },
+        "storageAccountEndPoint": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account endpoint to be used to collect the diagnostic information from the VMs"
+            }
         }
     },
 
@@ -642,7 +648,7 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(concat(variables('VMNamePrefix'), '1'),'/Microsoft.Insights.VMDiagnosticsSettings')]",           
+            "name": "[concat(concat(variables('VMNamePrefix'), '1'),'/VMDiagnosticsSettings')]",           
             "location": "[variables('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName3'))]",
@@ -662,7 +668,7 @@
                 "protectedSettings": {
                     "storageAccountName": "[variables('storageAccountName3')]",
                     "storageAccountKey": "[listKeys(variables('storageAccountName3ID'), variables('apiVersionSRP')).key1]",
-                    "storageAccountEndPoint": "http://azurestack.local"
+                    "storageAccountEndPoint": "[parameters('storageAccountEndPoint')]"
                 }
             }
         },
@@ -764,7 +770,7 @@
                     "storageProfile": {
                         "osDisk": {
                             "vhdContainers": [
-                                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName4')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName4'),'/',variables('OSDiskName'),'.vhd')]"
+                                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName4')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('storageAccountContainerName4'),'/',variables('OSDiskName'),'vhd')]"
                             ],
                             "name": "osdisk",
                             "caching": "ReadOnly",

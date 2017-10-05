@@ -16,12 +16,12 @@ param (
     [ValidateNotNullOrEmpty()]
     [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="Tenant ARM endpoint")]
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
@@ -39,11 +39,11 @@ param (
     [parameter(HelpMessage="Path for Linux VHD")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $LinuxImagePath = "https://partner-images.canonical.com/azure/azure_stack/ubuntu-14.04-LTS-microsoft_azure_stack-20161208-9.vhd.zip",
+    [string] $LinuxImagePath = "http://cloud-images.ubuntu.com/releases/xenial/release/ubuntu-16.04-server-cloudimg-amd64-disk1.vhd.zip",
     [parameter(HelpMessage="Linux OS sku")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
-    [string] $LinuxOSSku = "14.04.3-LTS",
+    [string] $LinuxOSSku = "16.04-LTS",
     [parameter(HelpMessage="Fully qualified domain name of the azure stack environment. Ex: contoso.com")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
@@ -59,21 +59,20 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$EnvironmentName = "AzureStackCanaryCloud",   
     [parameter(HelpMessage="Resource group under which all the utilities need to be placed")]
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
-    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryUtilitiesRG = "canur" + [Random]::new().Next(1,999),
+    [string]$CanaryUtilitiesRG = "cnur" + [Random]::new().Next(1,9999),
     [parameter(HelpMessage="Resource group under which the virtual machines need to be placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryVMRG = "canvr" + [Random]::new().Next(1,999),
+    [string]$CanaryVMRG = "cnvr" + [Random]::new().Next(1,99),
     [parameter(HelpMessage="Location where all the resource need to deployed and placed")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [string]$ResourceLocation = "local",
-    [parameter(HelpMessage="Flag to cleanup resources after exception")]
+    [parameter(HelpMessage="Flag to indicate whether to continue Canary after an exception")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [bool] $ContinueOnFailure = $false,
@@ -87,40 +86,66 @@ param (
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
     [switch]$NoCleanup,
+    [parameter(HelpMessage="Specifies whether Canary needs to clean up resources when a failure is encountered")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]
+    [ValidateNotNullOrEmpty()]
+    [switch]$NoCleanupOnFailure,        
     [parameter(HelpMessage="Specifies the path for log files")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).ToString("-yyMMdd-hhmmss"))",
+    [string]$CanaryLogPath = $env:TMP + "\CanaryLogs$((Get-Date).Ticks)",
 	[parameter(HelpMessage="Specifies the file name for canary log file")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]
     [ValidateNotNullOrEmpty()]
-    [string]$CanaryLogFileName = "Canary-Basic$((Get-Date).ToString("-yyMMdd-hhmmss")).log"    
+    [string]$CanaryLogFileName = "Canary-Basic-$((Get-Date).Ticks).log",
+    [parameter(HelpMessage="List of usecases to be excluded from execution")]
+    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "DeleteSubscriptionResourceGroup"),
+    [parameter(HelpMessage="Lists the available usecases in Canary")]
+    [Parameter(ParameterSetName="listavl", Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]  
+    [switch]$ListAvailable     
 )
 
-#Requires -Modules AzureRM
-#Requires -RunAsAdministrator
-Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force
-Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
-Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
-Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
+Import-Module -Name $PSScriptRoot\Canary.Utilities.psm1 -Force -DisableNameChecking
+if (-not $ListAvailable.IsPresent)
+{
+    #requires -Modules AzureRM.Profile, AzureRM.AzureStackAdmin
+    #Requires -RunAsAdministrator
 
-$storageAccName         = $CanaryUtilitiesRG + "sa"
-$storageCtrName         = $CanaryUtilitiesRG + "sc"
-$keyvaultName           = $CanaryUtilitiesRG + "kv"
-$keyvaultCertName       = "ASCanaryVMCertificate"
-$kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
-$VMAdminUserName        = "CanaryAdmin" 
-$VMAdminUserPass        = "CanaryAdmin@123"
-$canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-$linuxImagePublisher    = "Canonical"
-$linuxImageOffer        = "UbuntuServer"
-$linuxImageVersion      = "1.0.0"
-
+    Import-Module -Name $PSScriptRoot\..\Connect\AzureStack.Connect.psm1 -Force
+    Import-Module -Name $PSScriptRoot\..\Infrastructure\AzureStack.Infra.psm1 -Force
+    Import-Module -Name $PSScriptRoot\..\ComputeAdmin\AzureStack.ComputeAdmin.psm1 -Force
+}
+else
+{
+    $ErrorActionPreference = "SilentlyContinue"
+}
 $runCount = 1
+$tmpLogname = $CanaryLogFileName
 while ($runCount -le $NumberOfIterations)
 {
+    if ($NumberOfIterations -gt 1)
+    {
+        $CanaryUtilitiesRG      = $CanaryUtilitiesRG + $runCount
+        $CanaryVMRG             = $CanaryVMRG + $runCount
+    }
+    $storageAccName         = $CanaryUtilitiesRG + "sa"
+    $storageCtrName         = $CanaryUtilitiesRG + "sc"
+    $keyvaultName           = $CanaryUtilitiesRG + "kv"
+    $keyvaultCertName       = "ASCanaryVMCertificate"
+    $kvSecretName           = $keyvaultName.ToLowerInvariant() + "secret"
+    $VMAdminUserName        = "CanaryAdmin" 
+    $VMAdminUserPass        = "CanaryAdmin@123"
+    $canaryUtilPath         = Join-Path -Path $env:TEMP -ChildPath "CanaryUtilities$((Get-Date).Ticks)"
+    $linuxImagePublisher    = "Canonical"
+    $linuxImageOffer        = "UbuntuServer"
+    $linuxImageVersion      = "1.0.0"
+    [boolean]$linuxUpload   = $false
     if (Test-Path -Path $canaryUtilPath)
     {
         Remove-Item -Path $canaryUtilPath -Force -Recurse 
@@ -129,15 +154,16 @@ while ($runCount -le $NumberOfIterations)
 
     #
     # Start Canary 
-    #
-    $CanaryLogFile      = $CanaryLogPath + "\$CanaryLogFileName"
-
-    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure
+    #  
+    if($ListAvailable){Write-Host "List of scenarios in Canary:" -ForegroundColor Green; $listAvl = $true} else{$listAvl = $false}
+    $CanaryLogFileName = [IO.Path]::GetFileNameWithoutExtension($tmpLogname) + "-$runCount" + [IO.Path]::GetExtension($tmpLogname)
+    $CanaryLogFile = Join-Path -Path $CanaryLogPath -ChildPath $CanaryLogFileName
+    Start-Scenario -Name 'Canary' -Type 'Basic' -LogFilename $CanaryLogFile -ContinueOnFailure $ContinueOnFailure -ListAvailable $listAvl -ExclusionList $ExclusionList
 
     $SvcAdminEnvironmentName = $EnvironmentName + "-SVCAdmin"
     $TntAdminEnvironmentName = $EnvironmentName + "-Tenant"
 
-    if(-not $EnvironmentDomainFQDN)
+    if((-not $EnvironmentDomainFQDN) -and (-not $listAvl))
     {
         $endptres = Invoke-RestMethod "${AdminArmEndpoint}/metadata/endpoints?api-version=1.0" -ErrorAction Stop 
         $EnvironmentDomainFQDN = $endptres.portalEndpoint
@@ -153,6 +179,7 @@ while ($runCount -le $NumberOfIterations)
                                 -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
                                 -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
                                 -GraphEndpoint ($asEndpoints.GraphEndpoint) `
+                                -GraphAudience ($asEndpoints.GraphEndpoint) `
                                 -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
                                 -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
                                 -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
@@ -172,43 +199,147 @@ while ($runCount -le $NumberOfIterations)
             $defaultSubscription | Select-AzureRmSubscription
         }
     } 
-       
+    
+    if ($resLocation = (Get-AzsLocation -ErrorAction SilentlyContinue).Name) {if ($resLocation -ne $ResourceLocation) {$ResourceLocation = $resLocation}}
+
+    Invoke-Usecase -Name 'ListFabricResourceProviderInfo' -Description "List FabricResourceProvider(FRP) information like storage shares, capacity, logical networks etc." -UsecaseBlock `
+    {
+        Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
+        {
+            Get-AzsInfrastructureRole -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackInfraRoleInstance' -Description "List all infrastructure role instances" -UsecaseBlock `
+        {
+            Get-AzsInfrastructureRoleInstance -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackLogicalNetwork' -Description "List all logical networks" -UsecaseBlock `
+        {
+            Get-AzsLogicalNetwork -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackStorageCapacity' -Description "List storage capacity" -UsecaseBlock `
+        {
+            Get-AzSStorageSubsystem -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackInfrastructureShare' -Description "List all storage file shares" -UsecaseBlock `
+        {
+            Get-AzsInfrastructureShare -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackScaleUnit' -Description "List Azure Stack scale units in specified Region" -UsecaseBlock `
+        {
+            Get-AzsScaleUnit -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackScaleUnitNode' -Description "List nodes in scale unit" -RetryCount 2 -RetryDelayInSec 20 -UsecaseBlock `
+        {
+            Get-AzsScaleUnitNode -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackIPPool' -Description "List all IP pools" -UsecaseBlock `
+        {
+            Get-AzsIpPool -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackMacPool' -Description "List all MAC address pools " -UsecaseBlock `
+        {
+            Get-AzsMacPool -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackGatewayPool' -Description "List all gateway pools" -UsecaseBlock `
+        {
+            Get-AzsGatewayPool -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackSLBMux' -Description "List all SLB MUX instances" -UsecaseBlock `
+        {
+            Get-AzsSlbMux -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackGateway' -Description "List all gateway" -UsecaseBlock `
+        {
+            Get-AzsGateway -Location $ResourceLocation
+        }            
+    }
+   
+    Invoke-Usecase -Name 'ListHealthResourceProviderAlerts' -Description "List all HealthResourceProvider(HRP) alerts " -UsecaseBlock `
+    {     
+        Invoke-Usecase -Name 'GetAzureStackAlert' -Description "List all alerts" -UsecaseBlock `
+        {
+            Get-AzsAlert -Location $ResourceLocation
+        }
+    }
+
+    Invoke-Usecase -Name 'ListUpdatesResourceProviderInfo' -Description "List URP information like summary of updates available, update to be applied, last update applied etc." -UsecaseBlock `
+    {        
+        Invoke-Usecase -Name 'GetAzureStackUpdateSummary' -Description "List summary of updates status" -UsecaseBlock `
+        {
+            Get-AzSUpdateLocation -Location $ResourceLocation
+        }
+
+        Invoke-Usecase -Name 'GetAzureStackUpdateToApply' -Description "List all updates that can be applied" -UsecaseBlock `
+        {
+            Get-AzsUpdate -Location $ResourceLocation
+        }         
+    }
+    
     if ($WindowsISOPath)
     {
         Invoke-Usecase -Name 'UploadWindows2016ImageToPIR' -Description "Uploads a windows server 2016 image to the PIR" -UsecaseBlock `
         {
             if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue))
             {
-                New-Server2016VMImage -ISOPath $WindowsISOPath -TenantId $TenantID -ArmEndpoint $AdminArmEndpoint -Version Core -AzureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false
+                New-AzsServer2016VMImage -ISOPath $WindowsISOPath -Location $ResourceLocation -Version Core -CreateGalleryItem $false
             }
         }
     }
 
-    Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
+    if ((Get-Volume ((Get-Item -Path $ENV:TMP).PSDrive.Name) -ErrorAction SilentlyContinue).SizeRemaining/1GB -gt 35)
     {
-        if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+        [boolean]$invalidUri = $false
+        try {Invoke-WebRequest -Uri $LinuxImagePath -UseBasicParsing -DisableKeepAlive -Method Head -ErrorAction SilentlyContinue | Out-Null} 
+        catch {$invalidUri = $true}
+        if (-not $invalidUri)
         {
-            $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).ToString("-yyMMdd-hhmmss"))"
-            if (Test-Path -Path $CanaryCustomImageFolder)
+            Invoke-Usecase -Name 'UploadLinuxImageToPIR' -Description "Uploads Linux image to the PIR" -UsecaseBlock `
             {
-                Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+                try 
+                {
+                    if (-not (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue))
+                    {
+                        $CanaryCustomImageFolder = Join-Path -Path $env:TMP -childPath "CanaryCustomImage$((Get-Date).Ticks)"
+                        if (Test-Path -Path $CanaryCustomImageFolder)
+                        {
+                            Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse 
+                        }
+                        New-Item -Path $CanaryCustomImageFolder -ItemType Directory
+                        $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
+                        Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
+                        Remove-Item $CanaryCustomImageFolder -Force -Recurse
+                        $linuxUpload = $true
+                    }    
+                }
+                catch
+                {
+                    Remove-Item -Path $CanaryCustomImageFolder -Force -Recurse
+                    throw [System.Exception]"Failed to upload the linux image to PIR. `n$($_.Exception.Message)"            
+                }
             }
-            New-Item -Path $CanaryCustomImageFolder -ItemType Directory
-            $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
-            Add-VMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -tenantID $TenantID -azureStackCredentials $ServiceAdminCredentials -CreateGalleryItem $false -ArmEndpoint $AdminArmEndpoint
-            Remove-Item $CanaryCustomImageFolder -Recurse
         }
     }
 
-    if ($TenantAdminCredentials)
+    if (($TenantAdminCredentials) -or ($ListAvailable))
     {
-        $subscriptionRGName                 = "ascansubscrrg" + [Random]::new().Next(1,999)
-        $tenantPlanName                     = "ascantenantplan" + [Random]::new().Next(1,999)        
-        $tenantOfferName                    = "ascantenantoffer" + [Random]::new().Next(1,999)
-        $tenantSubscriptionName             = "ascanarytenantsubscription" + [Random]::new().Next(1,999)            
-        $canaryDefaultTenantSubscription    = "canarytenantdefaultsubscription"
+        $subscriptionRGName                 = $CanaryUtilitiesRG + "subscrrg" + [Random]::new().Next(1,999)
+        $tenantPlanName                     = $CanaryUtilitiesRG + "tenantplan" + [Random]::new().Next(1,999)        
+        $tenantOfferName                    = $CanaryUtilitiesRG + "tenantoffer" + [Random]::new().Next(1,999)
+        $tenantSubscriptionName             = $CanaryUtilitiesRG + "tenantsubscription" + [Random]::new().Next(1,999)            
+        $canaryDefaultTenantSubscription    = $CanaryUtilitiesRG + "tenantdefaultsubscription" + [Random]::new().Next(1,999) 
 
-        if (-not $TenantArmEndpoint)
+        if ((-not $TenantArmEndpoint) -and (-not $ListAvailable.IsPresent))
         {
             throw [System.Exception] "Tenant ARM endpoint is required."
         }
@@ -222,11 +353,13 @@ while ($runCount -le $NumberOfIterations)
                                     -ResourceManagerEndpoint ($asEndpoints.ResourceManagerEndpoint) `
                                     -GalleryEndpoint ($asEndpoints.GalleryEndpoint) `
                                     -GraphEndpoint ($asEndpoints.GraphEndpoint) `
+                                    -GraphAudience ($asEndpoints.GraphEndpoint) `
                                     -StorageEndpointSuffix ($asEndpoints.StorageEndpointSuffix) `
                                     -AzureKeyVaultDnsSuffix ($asEndpoints.AzureKeyVaultDnsSuffix) `
                                     -EnableAdfsAuthentication:$asEndpoints.ActiveDirectoryEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase) `
                                     -ErrorAction Stop
         }
+
         Invoke-Usecase -Name 'CreateResourceGroupForTenantSubscription' -Description "Create a resource group $subscriptionRGName for the tenant subscription" -UsecaseBlock `
         {        
             if (Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction SilentlyContinue)
@@ -274,13 +407,173 @@ while ($runCount -le $NumberOfIterations)
             $asTenantSubscription = New-AzureRmTenantSubscription -OfferId $asCanaryOffer.Id -DisplayName $tenantSubscriptionName -ErrorAction Stop
             if ($asTenantSubscription)
             {
-                $asTenantSubscription | Select-AzureRmSubscription -ErrorAction Stop
+                Get-AzureRmSubscription -SubscriptionName $asTenantSubscription.DisplayName | Select-AzureRmSubscription -ErrorAction Stop
             }           
         } 
 
+        Invoke-Usecase -Name 'RoleAssignmentAndCustomRoleDefinition' -Description "Assign a reader role and create a custom role definition" -UsecaseBlock `
+        {
+            if (-not $ListAvailable.IsPresent)
+            {         
+                $servicePrincipal = (Get-AzureRmADServicePrincipal)[0]             
+                $customRoleName = "CustomCanaryRole-" + [Random]::new().Next(1,99)            
+            }
+        
+            Invoke-Usecase -Name 'ListAssignedRoles' -Description "List assigned roles to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
+            {
+	            Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
+            }
+
+            Invoke-Usecase -Name 'ListExistingRoleDefinitions' -Description "List existing Role Definitions" -UsecaseBlock `
+            {
+	            $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop                
+                if (-not $availableRoles)
+                {
+                    throw [System.Exception] "No roles are available."
+                }   
+                else
+                {
+                    $availableRoles
+                    $availableRolesNames = $availableRoles.Name
+                    $mustHaveRoles = @("Owner", "Reader", "Contributor")
+                    $match = Compare-Object $mustHaveRoles $availableRolesNames
+                    if ($match -and ($match | Where-Object {$_.SideIndicator -eq "<="}))
+                    {
+                        $notAvailableRoles = ($match | Where-Object {$_.SideIndicator -eq "<="}).InputObject
+                        throw [System.Exception] "Some must have Role Definitions are not available. Number of missing Role Definitions - $($notAvailableRoles.Count). Missing Role Definitions - $notAvailableRoles"
+                    }
+                }                
+            }
+
+            Invoke-Usecase -Name 'GetProviderOperations' -Description "Get provider operations for all resource providers" -UsecaseBlock `
+            {
+	            $resourceProviders = Get-AzureRmResourceProvider -ListAvailable
+                # Some of the RPs have not implemented their operations API yet. So update this exclusion list whenever any RP implements its operations API
+                $rpOperationsExclusionList = @("Microsoft.Commerce", "Microsoft.Gallery", "Microsoft.Insights")
+                $totalOperationsPerRP = @()    
+                foreach($rp in $resourceProviders)
+                {
+                    $operations = Get-AzureRMProviderOperation "$($rp.ProviderNamespace)/*" -ErrorAction Stop
+                    $operationObj = New-Object -TypeName System.Object            
+                    $operationObj | Add-Member -Type NoteProperty -Name ResourceProvider -Value $rp.ProviderNamespace 
+                    if (-not $operations)
+                    {
+                        $operationObj | Add-Member -Type NoteProperty -Name TotalProviderOperations -Value 0 
+                    }
+                    else
+                    {
+                        $operationObj | Add-Member -Type NoteProperty -Name TotalProviderOperations -Value $operations.Count 
+                    }
+                    $totalOperationsPerRP += $operationObj                    
+                }
+                $totalOperationsPerRP
+                if ($totalOperationsPerRP -and ($totalOperationsPerRP | Where-Object {$_.TotalProviderOperations -eq 0}))
+                {
+                    $rpWithNoOperations = ($totalOperationsPerRP | Where-Object {$_.TotalProviderOperations -eq 0}).ResourceProvider
+                    $match = Compare-Object $rpOperationsExclusionList $rpWithNoOperations
+                    if ($match -and ($match | Where-Object {$_.SideIndicator -eq "=>"}))
+                    {
+                        $missed = ($match | Where-Object {$_.SideIndicator -eq "=>"}).InputObject
+                        throw [System.Exception] "Some Resource Providers have zero Provider Operations. Number of Resource Providers with zero Provider Operations - $($missed.Count). Resource Providers with zero Provider Operations - $missed"
+                    }
+                }
+            }
+
+            Invoke-Usecase -Name 'AssignReaderRole' -Description "Assign Reader role to Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
+            {
+                $readerRole = Get-AzureRmRoleDefinition -Name Reader 
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId                
+                $allAssignedRoles = Get-AzureRmRoleAssignment -ObjectId $servicePrincipal.Id -ErrorAction Stop
+                if ($subscriptionID -and $readerRole -and (-not $allAssignedRoles -or ($allAssignedRoles -and -not ($allAssignedRoles | Where-Object {$_.RoleDefinitionName -eq $readerRole.Name}))))
+                {
+	                New-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop
+                }                
+            }
+
+            Invoke-Usecase -Name 'VerifyReaderRoleAssignment' -Description "Verify if the Service Principle has got Reader role assigned successfully" -UsecaseBlock `
+            {
+                $readerRole = Get-AzureRmRoleDefinition -Name Reader 
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
+	            if ($subscriptionID -and $readerRole -and (-not (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop)))
+                {
+                    throw [System.Exception] "Unable to assign role ($readerRole.Name) to Service Principle ($servicePrincipal.Id) for subscription $tenantSubscriptionName"
+                }                    
+            }
+
+            Invoke-Usecase -Name 'RemoveReaderRoleAssignment' -Description "Remove Reader role assignment from Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
+            {
+                $parameters = @{}
+                if ((Get-Module AzureRM -ListAvailable).Version -le "1.2.10") {$parameters = @{"Force" = $True}}
+                $readerRole = Get-AzureRmRoleDefinition -Name Reader 
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
+                if ($subscriptionID -and $readerRole -and (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
+                {                
+	                Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop @parameters
+                }
+            }           
+            
+            Invoke-Usecase -Name 'CustomRoleDefinition' -Description "Create a custom Role Definition - $customRoleName" -UsecaseBlock `
+            {
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId                
+                if (Get-AzureRmRoleDefinition -Name $customRoleName)
+                {
+                    Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop
+                }                               
+	            $role = Get-AzureRmRoleDefinition -Name Reader                
+                $role.Id = $null                
+                $role.Name = $customRoleName
+                $role.Description = "Custom role definition for Canary"
+                $role.Actions.Clear()
+                $role.Actions.Add("Microsoft.Authorization/*/Read")
+                $role.AssignableScopes.Clear()
+                $role.AssignableScopes.Add("/Subscriptions/$subscriptionID")
+                New-AzureRmRoleDefinition -Role $role -ErrorAction Stop
+                if (-not (Get-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
+                {
+                    throw [System.Exception] "Unable to create custom role definition ($customRoleName) for subscription $tenantSubscriptionName"
+                }                               
+            }
+
+            Invoke-Usecase -Name 'ListRoleDefinitionsAfterCustomRoleCreation' -Description "List existing Role Definitions" -UsecaseBlock `
+            {
+	            $availableRoles = Get-AzureRmRoleDefinition -ErrorAction Stop               
+                if (-not $availableRoles)
+                {
+                    throw [System.Exception] "No roles are available."
+                }   
+                else
+                {
+                    $availableRoles
+                    $availableRolesNames = $availableRoles.Name
+                    $mustHaveRoles = @("Owner", "Reader", "Contributor")
+                    $match = Compare-Object $mustHaveRoles $availableRolesNames
+                    if ($match -and ($match | Where-Object {$_.SideIndicator -eq "<="}))
+                    {
+                        $notAvailableRoles = ($match | Where-Object {$_.SideIndicator -eq "<="}).InputObject
+                        throw [System.Exception] "Some must have Role Definitions are not available. Number of missing Role Definitions - $($notAvailableRoles.Count). Missing Role Definitions - $notAvailableRoles"
+                    }
+                }                
+            }
+
+            Invoke-Usecase -Name 'RemoveCustomRoleDefinition' -Description "Remove custom role definition - $customRoleName" -UsecaseBlock `
+            {
+                $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
+                if(Get-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop)
+                {
+	                Remove-AzureRmRoleDefinition -Name $customRoleName -Scope "/Subscriptions/$subscriptionID" -Force -ErrorAction Stop                
+                }
+                else
+                {
+                    throw [System.Exception] "Custom role definition ($customRoleName) for subscription $tenantSubscriptionName is not available"
+                }
+            }
+        }
+
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
         {
-            Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force        
+            $parameters = @{}
+            if ((Get-Module AzureRM -ListAvailable).Version -le "1.2.10") {$parameters = @{"Force" = $True}}
+            ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault") | ForEach-Object {Get-AzureRmResourceProvider -ProviderNamespace $_} | Register-AzureRmResourceProvider @parameters
             $sleepTime = 0        
             while($true)
             {
@@ -352,26 +645,36 @@ while ($runCount -le $NumberOfIterations)
     }
         
     Invoke-Usecase -Name 'UploadUtilitiesToBlobStorage' -Description "Upload the canary utilities to the blob storage" -UsecaseBlock `
-    {      
-        $asStorageAccountKey = Get-AzureRmStorageAccountKey -ResourceGroupName $CanaryUtilitiesRG -Name $storageAccName -ErrorAction Stop
-        if ($asStorageAccountKey)
-        {
-            $storageAccountKey = $asStorageAccountKey.Key1
-        }
-        $asStorageContext = New-AzureStorageContext -StorageAccountName $storageAccName -StorageAccountKey $storageAccountKey -ErrorAction Stop
-        if ($asStorageContext)
-        {
-            $files = Get-ChildItem -Path $canaryUtilPath -File
-            foreach ($file in $files)
+    {    
+        try
+        {  
+            $asStorageAccountKey = Get-AzureRmStorageAccountKey -ResourceGroupName $CanaryUtilitiesRG -Name $storageAccName -ErrorAction Stop
+            if ($asStorageAccountKey)
             {
-                if ($file.Extension -match "VHD")
+                $storageAccountKey = $asStorageAccountKey.Key1
+            }
+            $asStorageContext = New-AzureStorageContext -StorageAccountName $storageAccName -StorageAccountKey $storageAccountKey -ErrorAction Stop
+            if ($asStorageContext)
+            {
+                $files = Get-ChildItem -Path $canaryUtilPath -File
+                foreach ($file in $files)
                 {
-                    Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -BlobType Page -Context $asStorageContext -Force -ErrorAction Stop     
+                    if ($file.Extension -match "VHD")
+                    {
+                        Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -BlobType Page -Context $asStorageContext -Force -ErrorAction Stop     
+                    }
+                    else 
+                    {
+                        Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -Context $asStorageContext -Force -ErrorAction Stop             
+                    }
                 }
-                else 
-                {
-                    Set-AzureStorageBlobContent -Container $storageCtrName -File $file.FullName -Context $asStorageContext -Force -ErrorAction Stop             
-                }
+            }
+        }
+        finally
+        {
+            if (Test-Path -Path $canaryUtilPath)
+            {
+                Remove-Item -Path $canaryUtilPath -Recurse -Force
             }
         }
     }
@@ -418,44 +721,95 @@ while ($runCount -le $NumberOfIterations)
         New-AzureRmResourceGroup -Name $CanaryVMRG -Location $ResourceLocation -ErrorAction Stop 
     }
 
+    $pirQueryRes = Invoke-Usecase -Name 'QueryImagesFromPIR' -Description "Queries the images in Platform Image Repository to retrieve the OS Version to deploy on the VMs" -UsecaseBlock `
+    {
+        $osVersion = ""
+        [boolean]$linuxImgExists = $false
+        $sw = [system.diagnostics.stopwatch]::startNew()
+        while (([string]::IsNullOrEmpty($osVersion)) -and ($sw.ElapsedMilliseconds -lt 300000))
+        {
+            # Returns all the images that are available in the PIR
+            $pirImages = Get-AzureRmVMImagePublisher -Location $ResourceLocation | Get-AzureRmVMImageOffer | Get-AzureRmVMImageSku | Get-AzureRMVMImage | Get-AzureRmVMImage
+
+            foreach($image in $pirImages)
+            {
+                # Canary specific check to see if the required Ubuntu image was successfully uploaded and available in PIR
+                if ($image.PublisherName.Equals("Canonical") -and $image.Offer.Equals("UbuntuServer") -and $image.Skus.Equals($LinuxOSSku))
+                {
+                    $linuxImgExists = $true
+                }
+
+                if ($image.PublisherName.Equals("MicrosoftWindowsServer") -and $image.Offer.Equals("WindowsServer") -and $image.Skus.Equals("2016-Datacenter-Core"))
+                {
+                    $osVersion = "2016-Datacenter-Core"
+                }
+                elseif ($image.PublisherName.Equals("MicrosoftWindowsServer") -and $image.Offer.Equals("WindowsServer") -and $image.Skus.Equals("2016-Datacenter"))
+                {
+                    $osVersion = "2016-Datacenter"
+                }
+                elseif ($image.PublisherName.Equals("MicrosoftWindowsServer") -and $image.Offer.Equals("WindowsServer") -and $image.Skus.Equals("2012-R2-Datacenter"))
+                {
+                    $osVersion = "2012-R2-Datacenter"
+                }
+            }
+            Start-Sleep -Seconds 20  
+        } 
+        $sw.Stop()
+        if (($linuxUpload) -and (-not $linuxImgExists))
+        {
+            throw [System.Exception] "Unable to find Ubuntu image (Ubuntu $LinuxOSSku) in PIR or failed to retrieve the image from PIR"
+        }
+        if ([string]::IsNullOrEmpty($osVersion))
+        {
+            throw [System.Exception] "Unable to find windows image in PIR or failed to retrieve the image from PIR"
+        }
+        $osVersion, $linuxImgExists
+    }
+    [string]$osVersion = $pirQueryRes[2]
+    [boolean]$linuxImgExists = $pirQueryRes[3]
+
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {        
         $kvSecretId = (Get-AzureKeyVaultSecret -VaultName $keyVaultName -Name $kvSecretName -IncludeVersions -ErrorAction Stop).Id  
-        $osVersion = ""
-        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter-Core" -ErrorAction SilentlyContinue)
-        {
-            $osVersion = "2016-Datacenter-Core"
-        }
-        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2016-Datacenter" -ErrorAction SilentlyContinue)
-        {
-            $osVersion = "2016-Datacenter"
-        }
-        elseif (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName "MicrosoftWindowsServer" -Offer "WindowsServer" -Sku "2012-R2-Datacenter" -ErrorAction SilentlyContinue)
-        {
-            $osVersion = "2012-R2-Datacenter"
-        }        
-        
         $templateDeploymentName = "CanaryVMDeployment"
-        $parameters = @{"VMAdminUserName"       = $VMAdminUserName;
-                        "VMAdminUserPassword"   = $VMAdminUserPass;
-                        "ASCanaryUtilRG"        = $CanaryUtilitiesRG;
-                        "ASCanaryUtilSA"        = $storageAccName;
-                        "ASCanaryUtilSC"        = $storageCtrName;
-                        "vaultName"             = $keyvaultName;
-                        "windowsOSVersion"      = $osVersion;
-                        "secretUrlWithVersion"  = $kvSecretId;
-                        "LinuxImagePublisher"   = $linuxImagePublisher;
-                        "LinuxImageOffer"       = $linuxImageOffer;
-                        "LinuxImageSku"         = $LinuxOSSku}   
-        $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
-        if (-not $templateError)
+        $parameters = @{"VMAdminUserName"           = $VMAdminUserName;
+                        "VMAdminUserPassword"       = $VMAdminUserPass;
+                        "ASCanaryUtilRG"            = $CanaryUtilitiesRG;
+                        "ASCanaryUtilSA"            = $storageAccName;
+                        "ASCanaryUtilSC"            = $storageCtrName;
+                        "vaultName"                 = $keyvaultName;
+                        "windowsOSVersion"          = $osVersion;
+                        "secretUrlWithVersion"      = $kvSecretId;
+                        "LinuxImagePublisher"       = $linuxImagePublisher;
+                        "LinuxImageOffer"           = $linuxImageOffer;
+                        "LinuxImageSku"             = $LinuxOSSku;
+                        "storageAccountEndPoint"    = "https://$EnvironmentDomainFQDN/"}   
+        if (-not $linuxImgExists)
+        {
+            $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters
+        }
+        elseif ($linuxImgExists) 
+        {
+            $templateError = Test-AzureRmResourceGroupDeployment -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.nolinux.json -TemplateParameterObject $parameters
+        }
+        
+        if ((-not $templateError) -and ($linuxImgExists))
         {
             New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop
+        }
+        elseif (-not $templateError) {
+            New-AzureRmResourceGroupDeployment -Name $templateDeploymentName -ResourceGroupName $CanaryVMRG -TemplateFile $PSScriptRoot\azuredeploy.nolinux.json -TemplateParameterObject $parameters -Verbose -ErrorAction Stop    
         }
         else 
         {
             throw [System.Exception] "Template validation failed. `n$($templateError.Message)"
         }
+    }
+
+    Invoke-Usecase -Name 'RetrieveResourceDeploymentTimes' -Description "Retrieves the resources deployment times from the ARM template deployment" -UsecaseBlock `
+    {
+        $templateDeploymentName = "CanaryVMDeployment"
+        (Get-AzureRmResourceGroupDeploymentOperation -Deploymentname $templateDeploymentName -ResourceGroupName $CanaryVMRG).Properties | Select-Object @{Name="ResourceName";Expression={$_.TargetResource.ResourceName}},Duration,ProvisioningState,@{Name="ResourceType";Expression={$_.TargetResource.ResourceType}},ProvisioningOperation,StatusCode | Format-Table -AutoSize
     }
 
     $canaryWindowsVMList = @()
@@ -521,18 +875,59 @@ while ($runCount -le $NumberOfIterations)
         if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
-            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
             {
                 Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
-                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock -ErrorVariable remoteExecError 2>$null
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
                 if ($privateVMResponseFromRemoteSession)
                 {
-                    $publicVMSession | Remove-PSSession -Confirm:$false
                     $privateVMResponseFromRemoteSession
                 }
                 else 
                 {
-                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                    throw [System.Exception]"The expected certificate from KV was not found on the tenant VM with private IP: $privateVMIP"
+                }
+            }    
+        }
+    }
+
+    Invoke-Usecase -Name 'TransmitMTUSizedPacketsBetweenTenantVMs' -Description "Check if the tenant VMs can transmit MTU sized packets between themselves" -UsecaseBlock `
+    {
+        $vmUser = ".\$VMAdminUserName"
+        $vmCreds = New-Object System.Management.Automation.PSCredential $vmUser, (ConvertTo-SecureString $VMAdminUserPass -AsPlainText -Force)
+        if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
+        {
+            Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
+            {
+                $remoteExecError = $null
+                Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
+                Invoke-Command -Session $publicVMSession -Script{Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False} | Out-Null
+                $publicVMHost = Invoke-Command -Session $publicVMSession -Script{(Get-ItemProperty "HKLM:\Software\Microsoft\Virtual Machine\Guest\Parameters" ).PhysicalHostName}
+                $privateVMHost = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False | Out-Null; (Get-ItemProperty "HKLM:\Software\Microsoft\Virtual Machine\Guest\Parameters" ).PhysicalHostName} } -ArgumentList $privateVMIP, $vmCreds -ErrorVariable remoteExecError 2>$null
+                Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False | Out-Null} } -ArgumentList $privateVMIP, $vmCreds -ErrorVariable remoteExecError 2>$null
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param($targetIP) $targetName = $targetIP; $pingOptions = New-Object Net.NetworkInformation.PingOptions(64, $true); [int]$PingDataSize = 1472; [int]$TimeoutMilliseconds = 1000; $pingData = New-Object byte[]($PingDataSize); $ping = New-Object Net.NetworkInformation.Ping; $task = $ping.SendPingAsync($targetName, $TimeoutMilliseconds, $pingData, $pingOptions); [Threading.Tasks.Task]::WaitAll($task); if ($task.Result.Status -ne "Success") {throw "Ping request returned error $($task.Result.Status)"} else {return "Success"} } -ArgumentList $privateVMIP -ErrorVariable remoteExecError 2>$null               
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
+                if ($privateVMResponseFromRemoteSession)
+                {
+                    "MTU sized packet transfer between tenant VM1 on host $publicVMHost and tenant VM2 on host $privateVMHost succeeded"
+                }
+                else 
+                {
+                    throw [System.Exception]"Failed to transmit MTU sized packets between the tenant VMs"
                 }
             }    
         }
@@ -669,88 +1064,131 @@ while ($runCount -le $NumberOfIterations)
         if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
         {
             Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
-            if ($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction Stop)
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
             {
                 Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
-                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds, $scriptToRun) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{param($script) Invoke-Expression $script} -ArgumentList $scriptToRun} -ArgumentList $privateVMIP, $vmCreds, $vmCommsScriptBlock -ErrorVariable remoteExecError 2>$null
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
                 if ($privateVMResponseFromRemoteSession)
                 {
-                    $publicVMSession | Remove-PSSession -Confirm:$false
                     $privateVMResponseFromRemoteSession
                 }
                 else 
                 {
-                    throw [System.Exception]"Public VM was not able to talk to the Private VM via the private IP"
+                    throw [System.Exception]"Host name could not be retrieved from the tenant VM with private IP: $privateVMIP"
                 }
             }    
         }
     }
+    
+    Invoke-Usecase -Name 'CheckExistenceOfScreenShotForVMWithPrivateIP' -Description "Check if screen shots are available for Windows VM with private IP and store the screen shot in log folder" -UsecaseBlock `
+    {
+        $sa = Get-AzureRmStorageAccount -ResourceGroupName $CanaryVMRG -Name "$($CanaryVMRG)2sa"
+        $diagSC = $sa | Get-AzureStorageContainer | Where-Object {$_.Name -like "bootdiagnostics-$CanaryVMRG*"}
+        $screenShotBlob = $diagSC | Get-AzureStorageBlob | Where-Object {$_.Name -like "$privateVMName*screenshot.bmp"}
+        $sa | Get-AzureStorageBlobContent -Blob $screenShotBlob.Name -Container $diagSC.Name -Destination $CanaryLogPath -Force
+        if (-not (Get-ChildItem -Path $CanaryLogPath -File -Filter $screenShotBlob.name))
+        {
+            throw [System.Exception]"Unable to download screen shot for a Windows VM with private IP"
+        }
+    }
+
+    Invoke-Usecase -Name 'EnumerateAllResources' -Description "List out all the resources that have been deployed" -UsecaseBlock `
+    {
+        Get-AzureRmResource
+    }
 
     if (-not $NoCleanup)
     {
-        Invoke-Usecase -Name 'DeleteVMWithPrivateIP' -Description "Delete the VM with private IP" -UsecaseBlock `
+        if (-not ($NoCleanupOnFailure -and (Get-CanaryFailureStatus)))
         {
-            if ($vmObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop)
+            Invoke-Usecase -Name 'DeleteVMWithPrivateIP' -Description "Delete the VM with private IP" -UsecaseBlock `
             {
-                $deleteVM = $vmObject | Remove-AzureRmVM -Force -ErrorAction Stop
-                if (-not (($deleteVM.StatusCode -eq "OK") -and ($deleteVM.IsSuccessStatusCode)))
+                if ($vmObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop)
                 {
-                    throw [System.Exception]"Failed to delete the VM $privateVMName"
-                }
-            }
-        }
-
-        Invoke-Usecase -Name 'DeleteVMResourceGroup' -Description "Delete the resource group that contains all the VMs and corresponding resources" -UsecaseBlock `
-        {
-            if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryVMRG -ErrorAction Stop)
-            {
-                $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
-            }
-        }
-
-        Invoke-Usecase -Name 'DeleteUtilitiesResourceGroup' -Description "Delete the resource group that contains all the utilities and corresponding resources" -UsecaseBlock `
-        {
-            if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryUtilitiesRG -ErrorAction Stop)
-            {
-                $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
-            }
-        }
-
-        if ($TenantAdminCredentials)
-        {
-            Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related stuff" -UsecaseBlock `
-            {
-                Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
-                {
-                    if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
+                    $deleteVM = $vmObject | Remove-AzureRmVM -Force -ErrorAction Stop
+                    if (-not (($deleteVM.StatusCode -eq "OK") -and ($deleteVM.IsSuccessStatusCode)))
                     {
-                        Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
-                    } 
-                    if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
-                    {
-                        Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
-                    } 
-                }
-
-                Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
-                {     
-                    Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
-                }
-
-                Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
-                {
-                    if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
-                    {
-                        $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                        throw [System.Exception]"Failed to delete the VM $privateVMName"
                     }
-                } 
-            }   
+                }
+            }
+
+            Invoke-Usecase -Name 'DeleteVMResourceGroup' -Description "Delete the resource group that contains all the VMs and corresponding resources" -UsecaseBlock `
+            {
+                if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryVMRG -ErrorAction Stop)
+                {
+                    $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                }
+            }
+
+            Invoke-Usecase -Name 'DeleteUtilitiesResourceGroup' -Description "Delete the resource group that contains all the utilities and corresponding resources" -UsecaseBlock `
+            {
+                if ($removeRG = Get-AzureRmResourceGroup -Name $CanaryUtilitiesRG -ErrorAction Stop)
+                {
+                    $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                }
+            }
+
+            if (($TenantAdminCredentials) -or ($listAvl))
+            {
+                Invoke-Usecase -Name 'TenantRelatedcleanup' -Description "Remove all the tenant related resources" -UsecaseBlock `
+                {
+                    Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
+                    {
+                        if ($subs = Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
+                        {
+                            Remove-AzsSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                        } 
+                        if ($subs = Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
+                        {
+                            Remove-AzsSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                        } 
+                        $sw = [system.diagnostics.stopwatch]::startNew()
+                        while ((Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName) -or (Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription))
+                        {
+                            if ($sw.Elapsed.Seconds -gt 600) {break}
+                            Start-Sleep -Seconds 30
+                        }
+                        $sw.Stop()
+                    }
+
+                    Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
+                    {     
+                        Add-AzureRmAccount -EnvironmentName $SvcAdminEnvironmentName -Credential $ServiceAdminCredentials -TenantId $TenantID -ErrorAction Stop
+                    }
+
+                    Invoke-Usecase -Name 'RemoveLinuxImageFromPIR' -Description "Remove the Linux image uploaded during setup from the Platform Image Respository" -UsecaseBlock `
+                    {
+                        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
+                        {
+                            Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation -Force
+                        }
+                    }
+                    Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
+                    {
+                        if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
+                        {
+                            $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
+                        }
+                    } 
+                }   
+            }
         }
     }
 
     End-Scenario
     $runCount += 1
-    Get-CanaryResult
+    if (-not $ListAvailable)
+    {
+        Get-CanaryResult
+    }    
 }
 
 if ($NumberOfIterations -gt 1)

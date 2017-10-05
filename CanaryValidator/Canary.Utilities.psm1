@@ -1,7 +1,9 @@
-$Global:ContinueOnFailure = $false
-$Global:JSONLogFile  = "Run-Canary.JSON"
-$Global:TxtLogFile  = "AzureStackCanaryLog.Log"
-$Global:wttLogFileName= ""
+$Global:ContinueOnFailure       = $false
+$Global:JSONLogFile             = "Run-Canary.JSON"
+$Global:TxtLogFile              = "AzureStackCanaryLog.Log"
+$Global:wttLogFileName          = ""
+$Global:listAvailableUsecases   = $false
+$Global:exclusionList           = @()
 if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 {
     Import-Module -Name "$PSScriptRoot\..\WTTLog.ps1" -Force
@@ -10,7 +12,7 @@ if (Test-Path -Path "$PSScriptRoot\..\WTTLog.ps1")
 
 $CurrentUseCase = @{}
 [System.Collections.Stack] $UseCaseStack = New-Object System.Collections.Stack
-filter timestamp {"$(Get-Date -Format HH:mm:ss.ffff): $_"}
+filter timestamp {"$(Get-Date -Format "yyyy-MM-dd HH:mm:ss.ffff") $_"}
 
 
 function Log-Info
@@ -49,14 +51,11 @@ function Log-JSONReport
         [string] $Message
     )
     if ($Message)
-    {
-        if ($Message.Contains(": ["))
-        {
-            $time = $Message.Substring(0, $Message.IndexOf(": ["))
-        }    
+    {    
         if ($Message.Contains("[START]"))
         {
-            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim().Replace("######", "").Trim()
+            $time = $Message.Substring(0, $Message.IndexOf("[")).Trim()
+            $name = $Message.Substring($Message.LastIndexOf(":") + 1).Trim()
             if ($UseCaseStack.Count)
             {
                 $nestedUseCase = @{
@@ -79,14 +78,19 @@ function Log-JSONReport
         }
         elseif ($Message.Contains("[END]"))
         {
+            $time = $Message.Substring(0, $Message.IndexOf("[")).Trim()
             $result = ""            
             if ($UseCaseStack.Peek().UseCase -and ($UseCaseStack.Peek().UseCase | Where-Object {$_.Result -eq "FAIL"}))
             {
                 $result = "FAIL" 
             }
-            else
+            elseif ($Message.Contains("[RESULT = PASS]"))
             {
-                $result = $Message.Substring($Message.LastIndexOf("=") + 1).Trim().Replace("] ######", "").Trim()
+                $result = "PASS"
+            }
+            elseif ($Message.Contains("[RESULT = FAIL]"))
+            {
+                $result = "FAIL"
             }
             $UseCaseStack.Peek().Add("Result", $result)
             $UseCaseStack.Peek().Add("EndTime", $time)            
@@ -114,11 +118,53 @@ function Log-JSONReport
 
 function Get-CanaryResult
 {    
-    $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json
-    Log-Info ($logContent.UseCases | Format-Table -AutoSize @{Expression = {$_.Name}; Label = "Name"; Align = "Left"}, 
-                                                            @{Expression = {$_.Result}; Label="Result"; Align = "Left"}, 
-                                                            @{Expression = {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalSeconds}; Label = "Duration`n[Seconds]"; Align = "Left"},
-                                                            @{Expression = {$_.Description}; Label = "Description"; Align = "Left"})                                                    
+    [CmdletBinding()]
+    param(
+        [parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$LogFilename
+    )
+
+    if ($LogFilename)
+    {
+        $logContent = Get-Content -Raw -Path $LogFilename | ConvertFrom-Json
+    }
+    else 
+    {
+        $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json    
+    }
+    $results = @()   
+    foreach ($usecase in $logContent.UseCases)
+    {
+        $ucObj = New-Object -TypeName PSObject
+        if ([bool]($usecase.PSobject.Properties.name -match "UseCase"))
+        {
+            $ucObj | Add-Member -Type NoteProperty -Name Name -Value $usecase.Name
+            $ucObj | Add-Member -Type NoteProperty -Name Result -Value $usecase.Result
+            $ucObj | Add-Member -Type NoteProperty -Name "Duration`n[Seconds]" -Value ((Get-Date $usecase.EndTime) - (Get-Date $usecase.StartTime)).TotalSeconds     
+            $ucObj | Add-Member -Type NoteProperty -Name Description -Value $usecase.Description
+            $results += $ucObj               
+            
+            foreach ($subusecase in $usecase.UseCase)
+            {                                                                                                                                                          
+                $ucObj = New-Object -TypeName PSObject
+                $ucObj | Add-Member -Type NoteProperty -Name Name -Value ("|-- $($subusecase.Name)")
+                $ucObj | Add-Member -Type NoteProperty -Name Result -Value $subusecase.Result
+                $ucObj | Add-Member -Type NoteProperty -Name "Duration`n[Seconds]" -Value ((Get-Date $subusecase.EndTime) - (Get-Date $subusecase.StartTime)).TotalSeconds     
+                $ucObj | Add-Member -Type NoteProperty -Name Description -Value ("|-- $($subusecase.Description)")
+                $results += $ucObj  
+            }
+        }
+        else
+        {
+            $ucObj | Add-Member -Type NoteProperty -Name Name -Value $usecase.Name
+            $ucObj | Add-Member -Type NoteProperty -Name Result -Value $usecase.Result
+            $ucObj | Add-Member -Type NoteProperty -Name "Duration`n[Seconds]" -Value ((Get-Date $usecase.EndTime) - (Get-Date $usecase.StartTime)).TotalSeconds     
+            $ucObj | Add-Member -Type NoteProperty -Name Description -Value $usecase.Description   
+            $results += $ucObj
+        }
+    }   
+    Log-Info($results | Format-Table -AutoSize)                                               
 }
 
 function Get-CanaryLonghaulResult
@@ -147,6 +193,16 @@ function Get-CanaryLonghaulResult
                                             @{Expression={$pCount = ($_.Group | Where-Object Result -eq "PASS").Count; $times = ($_.Group | Where-Object Result -eq "PASS" | ForEach-Object {((Get-Date $_.EndTime) - (Get-Date $_.StartTime)).TotalMilliseconds}); $avgTime = ($times | Measure-Object -Average).Average; $sd = 0; foreach ($time in $times){$sd += [math]::Pow(($time - $avgTime), 2)}; [math]::Round(([math]::Round([math]::Sqrt($sd/$pCount), 0)/$avgTime), 0) * 100};Label="RelativeStdDev`n[Goal: <50%]"; Align = "Left"}
 }
 
+function Get-CanaryFailureStatus
+{
+    $logContent = Get-Content -Raw -Path $Global:JSONLogFile | ConvertFrom-Json
+    if ($logContent.Usecases.Result -contains "FAIL")
+    {
+        return $true
+    }
+    return $false
+}
+
 function Start-Scenario
 {
     [CmdletBinding()]
@@ -161,7 +217,11 @@ function Start-Scenario
         [ValidateNotNullOrEmpty()]
         [string]$LogFilename,
         [parameter(Mandatory=$false)]
-        [bool] $ContinueOnFailure = $false
+        [bool]$ContinueOnFailure = $false,
+        [parameter(Mandatory=$false)]
+        [bool]$ListAvailable = $false,
+        [parameter(Mandatory=$false)]
+        [string[]]$ExclusionList
     )
 
     if ($LogFileName)
@@ -181,14 +241,25 @@ function Start-Scenario
     {
         OpenWTTLogger $Global:wttLogFileName    
     }
-    
-    New-Item -Path $Global:JSONLogFile -Type File -Force
-    New-Item -Path $Global:TxtLogFile -Type File -Force
-    $jsonReport = @{
-    "Scenario" = ($Name + "-" + $Type)
-    "UseCases" = @()
-    }    
-    $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    if ($ListAvailable)
+    {
+        $Global:listAvailableUsecases = $true
+    }
+    if ($ExclusionList)
+    {
+        $Global:exclusionList = $ExclusionList
+    }
+    if (-not $ListAvailable)
+    {
+        New-Item -Path $Global:JSONLogFile -Type File -Force
+        New-Item -Path $Global:TxtLogFile -Type File -Force
+        $jsonReport = @{
+        "Scenario" = ($Name + "-" + $Type)
+        "UseCases" = @()
+        }    
+        $jsonReport | ConvertTo-Json -Depth 10 | Out-File -FilePath $Global:JSONLogFile
+    }
+
     $Global:ContinueOnFailure = $ContinueOnFailure
 }
 
@@ -212,9 +283,39 @@ function Invoke-Usecase
         [string]$Description, 
         [parameter(Mandatory=$true, Position = 2)]
         [ValidateNotNullOrEmpty()]
-        [ScriptBlock]$UsecaseBlock    
+        [ScriptBlock]$UsecaseBlock,
+        [parameter(Mandatory=$false, Position = 3)]
+        [int]$RetryCount = 0, 
+        [parameter(Mandatory=$false, Position = 4)]
+        [int]$RetryDelayInSec = 10
     )
-    Log-Info ("###### [START] Usecase: $Name ######`n") 
+
+    if ($Global:listAvailableUsecases)
+    {
+        $parentUsecase = $Name
+        if ((Get-PSCallStack)[1].Arguments.Contains($parentUsecase))
+        {
+            "  `t"*([math]::Floor((Get-PSCallStack).Count/3)) + "|-- " + $Name
+        }
+        else
+        {
+
+            "`t" + $Name
+        }
+        if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
+        {
+            try {Invoke-Command -ScriptBlock $UsecaseBlock -ErrorAction SilentlyContinue}
+            catch {}
+        }
+        return
+    }
+
+    if (($Global:exclusionList).Contains($Name))
+    {
+        Log-Info ("Skipping Usecase: $Name")
+        return
+    }
+    Log-Info ("[START] Usecase: $Name`n") 
     if ($Global:wttLogFileName)
     {
         StartTest "CanaryGate:$Name"
@@ -227,7 +328,54 @@ function Invoke-Usecase
 
     try
     {
-        $result = Invoke-Command -ScriptBlock $UsecaseBlock
+        $currentRetryCount = 0
+
+        do
+        {
+            $useCaseError = $null
+
+            try
+            {
+                $result = Invoke-Command -ScriptBlock $UsecaseBlock
+            }
+            catch
+            {
+                $useCaseError = $_
+            }
+
+            # Dont retry or log errors on the parent cases
+            if ($UsecaseBlock.ToString().Contains("Invoke-Usecase"))
+            {
+                $useCaseError = $null
+                break;
+            }
+
+            if ($useCaseError)
+            {       
+                $currentRetryCount++
+
+                if($currentRetryCount -gt $retryCount)
+                {
+                    break
+                }
+                else
+                {
+                    Start-Sleep -Seconds $RetryDelayInSec
+                }
+            }
+        }
+        while($useCaseError)
+
+        if ($useCaseError -and $RetryCount -gt 0)
+        {
+            throw "Test '$Name' failed and retried '$RetryCount' times. The last exception was: $useCaseError" 
+        }
+
+        if ($useCaseError)
+        {
+            throw $useCaseError
+        }
+
         if ($result -and (-not $UsecaseBlock.ToString().Contains("Invoke-Usecase")))
         {
             Log-Info ($result)
@@ -236,13 +384,16 @@ function Invoke-Usecase
         {
             EndTest "CanaryGate:$Name" $true
         }
-        Log-Info ("###### [END] Usecase: $Name ###### [RESULT = PASS] ######`n")
+        Log-Info ("[END] [RESULT = PASS] Usecase: $Name`n")
         return $result | Out-Null
     }
     catch [System.Exception]
     {        
         Log-Exception ($_.Exception)
-        Log-Error ("###### [END] Usecase: $Name ###### [RESULT = FAIL] ######`n")
+        Log-Info ("###### <FAULTING SCRIPTBLOCK> ######")
+        Log-Info ("$UsecaseBlock")
+        Log-Info ("###### </FAULTING SCRIPTBLOCK> ######")
+        Log-Error ("[END] [RESULT = FAIL] Usecase: $Name`n")
         if ($Global:wttLogFileName)
         {
             EndTest "CanaryGate:$Name" $false
@@ -383,6 +534,8 @@ function NewComputeQuota
     $memoryLimitMB  = 102400
     $coresLimit     = 100
     $ApiVersion     = "2015-12-01-preview"
+    $availabilitySetCount = 10
+    $vmScaleSetCount = 100
 
     $uri = "{0}/subscriptions/{1}/providers/Microsoft.Compute.Admin/locations/{2}/quotas/{3}?api-version={4}" -f $AdminUri, $SubscriptionId, $ArmLocation, $quotaName, $ApiVersion
     $RequestBody = @"
@@ -393,7 +546,9 @@ function NewComputeQuota
         "properties":{
             "virtualMachineCount":$vmCount,
             "memoryLimitMB":$memoryLimitMB,
-            "coresLimit":$coresLimit
+            "coresLimit":$coresLimit,
+            "availabilitySetCount":$availabilitySetCount,
+            "vmScaleSetCount":$vmScaleSetCount
         }
     }
 "@
@@ -501,8 +656,12 @@ function NewAzureStackToken
     )
     
     $endpoints = GetAzureStackEndpoints -EnvironmentDomainFQDN $EnvironmentDomainFQDN -ArmEndPoint $ArmEndpoint
-    $asToken = Get-AzureStackToken -Authority $endpoints.ActiveDirectoryEndpoint -Resource $endpoints.ActiveDirectoryServiceEndpointResourceId -AadTenantId $aadTenantId -Credential $Credentials -ErrorAction Stop
-    return $asToken  
+    $clientId = "1950a258-227b-4e31-a9cf-717495945fc2"
+    
+    $contextAuthorityEndpoint = ([System.IO.Path]::Combine($endpoints.ActiveDirectoryEndpoint, $AADTenantID)).Replace('\','/')
+    $authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($contextAuthorityEndpoint, $false)
+    $userCredential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential($Credentials.UserName, $Credentials.Password)
+    return ($authContext.AcquireToken($endpoints.ActiveDirectoryServiceEndpointResourceId, $clientId, $userCredential)).AccessToken  
 }
 
 function NewAzureStackDefaultQuotas

@@ -8,8 +8,8 @@
     .SYNOPSIS
     Produces Azure Resource Manager Policy document to apply to restrict Azure subscriptions to Azure Stack compatible functionality
 #>
-function Get-AzureStackRmPolicy 
-{
+
+function Get-AzsPolicy {
     $defaults = [System.IO.Path]::GetDirectoryName($PSCommandPath)
 
     $providerMetadata = ConvertFrom-Json (Get-Content -Path ($defaults + "\AzureStack.Provider.Metadata.json") -Raw)
@@ -18,10 +18,8 @@ function Get-AzureStackRmPolicy
     
     $allowResources = @()
 
-    foreach ($p in $providerMetadata.value) 
-    {
-        foreach ($r in $p.resourceTypes)
-        {
+    foreach ($p in $providerMetadata.value) {
+        foreach ($r in $p.resourceTypes) {
             $allowResources += @{ field = "type"; equals = $p.namespace + "/" + $r.ResourceType}
             $allowResources += @{ field = "type"; like = $p.namespace + "/" + $r.ResourceType + "/*" }
         }
@@ -31,7 +29,7 @@ function Get-AzureStackRmPolicy
     $storageSkuField = "Microsoft.Storage/storageAccounts/sku.name"
 
     $policy = @{
-        if = @{
+        if   = @{
             not = @{
                 allOf = @(
                     @{
@@ -43,13 +41,13 @@ function Get-AzureStackRmPolicy
                                 @{
                                     allOf = @(
                                         @{
-                                            field = $vmSkuField;
+                                            field  = $vmSkuField;
                                             exists = "true"
                                         },
                                         @{
                                             not = @{
                                                 field = $vmSkuField;
-                                                in = $vmSkus
+                                                in    = $vmSkus
                                             }
                                         }
                                     )
@@ -57,13 +55,13 @@ function Get-AzureStackRmPolicy
                                 @{
                                     allOf = @(
                                         @{
-                                            field = $storageSkuField;
+                                            field  = $storageSkuField;
                                             exists = "true"
                                         },
                                         @{
                                             not = @{
                                                 field = $storageSkuField;
-                                                in = $storageSkus
+                                                in    = $storageSkus
                                             }
                                         }
                                     )
@@ -82,4 +80,4 @@ function Get-AzureStackRmPolicy
     ConvertTo-Json $policy -Depth 100
 }
 
-Export-ModuleMember Get-AzureStackRmPolicy
+Export-ModuleMember Get-AzsPolicy

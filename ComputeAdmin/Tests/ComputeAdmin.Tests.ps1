@@ -11,13 +11,13 @@ Describe $script:ModuleName {
                 Should Not Be $null
         }
 
-        It 'Add-VMImage should be exported' {
-            Get-Command -Name Add-VMImage -ErrorAction SilentlyContinue | 
+        It 'Add-AzsVMImage should be exported' {
+            Get-Command -Name Add-AzsVMImage -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
 
-        It 'Remove-VMImage should be exported' {
-            Get-Command -Name Remove-VMImage -ErrorAction SilentlyContinue | 
+        It 'Remove-AzsVMImage should be exported' {
+            Get-Command -Name Remove-AzsVMImage -ErrorAction SilentlyContinue | 
                 Should Not Be $null
         }
     }
@@ -28,16 +28,12 @@ InModuleScope $script:ModuleName {
     $HostComputer = $global:HostComputer
     $ArmEndpoint = $global:ArmEndpoint
     $natServer = $global:natServer 
-    $AdminUser= $global:AdminUser 
+    $AdminUser = $global:AdminUser 
     $AadServiceAdmin = $global:AadServiceAdmin 
-
     $AdminPassword = $global:AdminPassword
     $AadServiceAdminPassword = $global:AadServiceAdminPassword
-    $stackLoginCreds = $global:AzureStackLoginCredentials
-
     $VPNConnectionName = $global:VPNConnectionName
-
-    $AadTenant = $global:AadTenantID
+    $EnvironmentName = $global:EnvironmentName
 
     # Generate Fake VHD for testing image upload
     $osDiskPath = ".\osDisk_1.vhd"
@@ -57,44 +53,38 @@ InModuleScope $script:ModuleName {
 
     Describe 'ComputeAdmin - Functional Tests' {
         It 'CreateGalleryItem = "$false" -and title = specified should throw' {
-            { Add-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -osDiskLocalPath $osDiskPath -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds -CreateGalleryItem $false -title 'testTitle' } |
+            { Add-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -osDiskLocalPath $osDiskPath -CreateGalleryItem $false -title 'testTitle' } |
                 Should Throw
         }
 
         It 'CreateGalleryItem = "$false" -and description = specified should throw' {
-            { Add-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -osDiskLocalPath $osDiskPath -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds -CreateGalleryItem $false -title 'testTitle'  -CreateGalleryItem $false -description 'testdescription' } | Should Throw
+            { Add-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -osDiskLocalPath $osDiskPath -CreateGalleryItem $false -title 'testTitle'  -CreateGalleryItem $false -description 'testdescription' } | Should Throw
         }
 
-        It 'Add-VMImage via local path and upload to storage account should succeed' {
-            { Add-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -osDiskLocalPath $osDiskPath -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds -CreateGalleryItem $false } |
+        It 'Add-AzsVMImage via local path and upload to storage account should succeed' {
+            { Add-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -osDiskLocalPath $osDiskPath -CreateGalleryItem $false } |
                 Should Not Throw
         }
 
-        It 'Remove-VMImage should successfully remove added VM Image' {
-            { Remove-VMImage -publisher $publisher -offer $offer -sku $sku -version $version -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds} |
+        It 'Remove-AzsVMImage should successfully remove added VM Image' {
+            { Remove-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version} |
                 Should Not Throw
         }
 
-        It 'Add-VMImage via local path and upload to storage account with gallery item should succeed' {
-            { Add-VMImage -publisher $publisher -offer $offer -sku $gallerySku -version $version -osType $osType -osDiskLocalPath $osDiskPath -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds } |
+        It 'Add-AzsVMImage via local path and upload to storage account with gallery item should succeed' {
+            { Add-AzsVMImage -publisher $publisher -offer $offer -sku $gallerySku -version $version -osType $osType -osDiskLocalPath $osDiskPath } |
                 Should Not Throw
         }
 
-        It 'Remove-VMImage and Removing Marketplace Item should successfully complete' {
+        It 'Remove-AzsVMImage and Removing Marketplace Item should successfully complete' {
             { 
-                Remove-VMImage -publisher $publisher -offer $offer -sku $gallerySku -version $version -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds
-                if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
-                    Get-AzureRMGalleryItem
-                    Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$offer$gallerySku.$version"} | Remove-AzureRMGalleryItem 
-                }else{
-                    Get-AzureRMGalleryItem -ApiVersion 2015-04-01
-                    Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$publisher.$offer$gallerySku.$version"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
-                }
+                Remove-AzsVMImage -publisher $publisher -offer $offer -sku $gallerySku -version $version
+                Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$publisher.$offer$gallerySku.$version"} | Remove-AzureRMGalleryItem 
             } | Should Not Throw
         }
 
         It 'Adding Ubuntu Linux 16.04 Image and Marketplace Item Succeeds' {
-            { Add-VMImage -publisher "Canonical" -offer "UbuntuServer" -sku "16.04.1-LTS" -version "1.0.4" -osType Linux -ArmEndpoint $ArmEndpoint -osDiskLocalPath $ubuntuPath -tenantID $AadTenant -AzureStackCredential $stackLoginCreds} | 
+            { Add-AzsVMImage -publisher "Canonical" -offer "UbuntuServer" -sku "16.04.1-LTS" -version "1.0.4" -osType Linux -osDiskLocalPath $ubuntuPath} | 
                 Should Not Throw
         }
 
@@ -104,14 +94,11 @@ InModuleScope $script:ModuleName {
                 $newOffer = "UbuntuServer"
                 $newSKU = "16.04.1-LTS"
                 $newVersion = "1.0.4"
-                Remove-VMImage -publisher $newPub -offer $newOffer -sku $newSKU -version $newVersion -tenantID $AadTenant -ArmEndpoint $ArmEndpoint -AzureStackCredential $stackLoginCreds
+                Remove-AzsVMImage -publisher $newPub -offer $newOffer -sku $newSKU -version $newVersion
+
                 $GalleryItemName = "$newOffer$newSKU"
-                $GalleryItemName = $GalleryItemName -replace "\.","-"
-                if((Get-Module AzureStack).Version -ge [System.Version] "1.2.9"){
-                    Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem
-                }else{
-                    Get-AzureRMGalleryItem -ApiVersion 2015-04-01 | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem -ApiVersion 2015-04-01
-                }
+                $GalleryItemName = $GalleryItemName -replace "\.", "-"
+                Get-AzureRMGalleryItem | Where-Object {$_.Name -contains "$newPub.$GalleryItemName.$newVersion"} | Remove-AzureRMGalleryItem
             } | Should Not Throw
         }
 
