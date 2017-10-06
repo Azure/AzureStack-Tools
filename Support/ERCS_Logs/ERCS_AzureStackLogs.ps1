@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 	Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 .DESCRIPTION
@@ -36,8 +36,12 @@
 	Specifies credentials the script will use to build a local share Format must be in one of the 2 formats:
 	(Get-Credential -Message "Local share credentials" -UserName $env:USERNAME)
 	(Get-Credential)
+.PARAMETER InStamp
+	Specifies if script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM.
+	Yes
+	No
 .EXAMPLE
- .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName 192.168.200.225 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME)
+ .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName 192.168.200.225 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No
 #>
 
 Param(
@@ -56,11 +60,17 @@ Param(
 	[Parameter(Mandatory=$false,HelpMessage="Credentials the script will use to connect to Azure Stack privileged endpoint")]
     [PSCredential]$AzSCredentials,
 	[Parameter(Mandatory=$false,HelpMessage="Credentials the script will use to build a local share")]
-    [PSCredential]$ShareCred
+    [PSCredential]$ShareCred,
+	[Parameter(Mandatory=$false,HelpMessage="Script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM? Valid formats are: Yes or No")]
+    [ValidateSet("Yes", "No")]
+    [String] $InStamp
 )
 
 #Run as Admin
 $ScriptPath = $script:MyInvocation.MyCommand.Path
+
+# Check to see if we are in FullLanguage
+$LanguageMode = $ExecutionContext.SessionState.LanguageMode
 
 #load .net assembly 
 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
@@ -86,60 +96,73 @@ else
 		$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		exit
 	}
+
+# Check to see if we are currently running in FullLanguage
+if($LanguageMode -eq "FullLanguage")
+	{
+    # We are running in FullLanguage
+    Write-Host "`n[SUCCESS] Script is running in FullLanguage Powershell Mode`n" -ForegroundColor Green
+	}
+else
+	{
+    # We are not running in FullLanguage so stop.
+		Write-Host "`n `t [ERROR] Script must be run in FullLanguage Powershell Mode" -ForegroundColor Red
+		Write-Host "`n `tFor more information run `"Get-Help about_Language_Modes`" "
+		Write-Host "`n Press any key to continue ...`n"
+		$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+		exit
+	}
 	
-if((!($ContinueAnswer)) -or ($ContinueAnswer -ne "Y"))
-{ 
-	#------------------------------------------------------------------------------  
-	#  
-	# Copyright © 2017 Microsoft Corporation.  All rights reserved.  
-	#  
-	# THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED “AS IS” WITHOUT  
-	# WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT  
-	# LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS  
-	# FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR   
-	# RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER.  
-	#  
-	#------------------------------------------------------------------------------  
-	#  
-	# PowerShell Source Code  
-	#  
-	# NAME:  
-	#    ERCS_AzureStackLogs
-	#  
-	# VERSION:  
-	#    1.5.0
-	#  
-	#------------------------------------------------------------------------------ 
+#------------------------------------------------------------------------------  
+#  
+# Copyright © 2017 Microsoft Corporation.  All rights reserved.  
+#  
+# THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED “AS IS” WITHOUT  
+# WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT  
+# LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS  
+# FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR   
+# RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER.  
+#  
+#------------------------------------------------------------------------------  
+#  
+# PowerShell Source Code  
+#  
+# NAME:  
+#    ERCS_AzureStackLogs
+#  
+# VERSION:  
+#    1.5.1
+#  
+#------------------------------------------------------------------------------ 
  
-	"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
-	""  | Write-Host -ForegroundColor Yellow 
-	" Copyright © 2017 Microsoft Corporation.  All rights reserved. " | Write-Host -ForegroundColor Yellow 
-	""  | Write-Host -ForegroundColor Yellow 
-	" THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED `“AS IS`” WITHOUT " | Write-Host -ForegroundColor Yellow 
-	" WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT " | Write-Host -ForegroundColor Yellow 
-	" LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS " | Write-Host -ForegroundColor Yellow 
-	" FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR  " | Write-Host -ForegroundColor Yellow 
-	" RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER. " | Write-Host -ForegroundColor Yellow 
-	"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
-	""  | Write-Host -ForegroundColor Yellow 
-	" PowerShell Source Code " | Write-Host -ForegroundColor Yellow 
-	""  | Write-Host -ForegroundColor Yellow 
-	" NAME: " | Write-Host -ForegroundColor Yellow 
-	"    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
-	"" | Write-Host -ForegroundColor Yellow 
-	" VERSION: " | Write-Host -ForegroundColor Yellow 
-	"    1.5.0" | Write-Host -ForegroundColor Yellow 
-	""  | Write-Host -ForegroundColor Yellow 
-	"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
-	"" | Write-Host -ForegroundColor Yellow 
-	"`n This script SAMPLE is provided and intended only to act as a SAMPLE ONLY," | Write-Host -ForegroundColor Yellow 
-	" and is NOT intended to serve as a solution to any known technical issue."  | Write-Host -ForegroundColor Yellow 
-	"`n By executing this SAMPLE AS-IS, you agree to assume all risks and responsibility associated."  | Write-Host -ForegroundColor Yellow 
+"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
+""  | Write-Host -ForegroundColor Yellow 
+" Copyright © 2017 Microsoft Corporation.  All rights reserved. " | Write-Host -ForegroundColor Yellow 
+""  | Write-Host -ForegroundColor Yellow 
+" THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED `“AS IS`” WITHOUT " | Write-Host -ForegroundColor Yellow 
+" WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT " | Write-Host -ForegroundColor Yellow 
+" LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS " | Write-Host -ForegroundColor Yellow 
+" FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR  " | Write-Host -ForegroundColor Yellow 
+" RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER. " | Write-Host -ForegroundColor Yellow 
+"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
+""  | Write-Host -ForegroundColor Yellow 
+" PowerShell Source Code " | Write-Host -ForegroundColor Yellow 
+""  | Write-Host -ForegroundColor Yellow 
+" NAME: " | Write-Host -ForegroundColor Yellow 
+"    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
+"" | Write-Host -ForegroundColor Yellow 
+" VERSION: " | Write-Host -ForegroundColor Yellow 
+"    1.5.1" | Write-Host -ForegroundColor Yellow 
+""  | Write-Host -ForegroundColor Yellow 
+"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
+"" | Write-Host -ForegroundColor Yellow 
+"`n This script SAMPLE is provided and intended only to act as a SAMPLE ONLY," | Write-Host -ForegroundColor Yellow 
+" and is NOT intended to serve as a solution to any known technical issue."  | Write-Host -ForegroundColor Yellow 
+"`n By executing this SAMPLE AS-IS, you agree to assume all risks and responsibility associated."  | Write-Host -ForegroundColor Yellow 
  
-	$ErrorActionPreference = "SilentlyContinue" 
-	$ContinueAnswer = Read-Host "`n Do you wish to proceed at your own risk? (Y/N)" 
-	If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exit } 
-}
+$ErrorActionPreference = "SilentlyContinue" 
+$ContinueAnswer = Read-Host "`n Do you wish to proceed at your own risk? (Y/N)" 
+If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exit } 
 
 #clear var $ip
 $IP = $null
@@ -187,7 +210,6 @@ If(!($IP))
 	Write-Host "`n `t[INFO] Load AzureStackStampInformation.json" -ForegroundColor Green
 	$FoundJSONFile = Get-Content -Raw -Path "$($Env:ProgramData)\AzureStackStampInformation.json" | ConvertFrom-Json
 	[string]$FoundDomainFQDN = $FoundJSONFile.DomainFQDN
-	$CheckADSK = $FoundJSONFile.NumberOfNodes
 	$FoundSelERCSIP  = $FoundJSONFile.EmergencyConsoleIPAddresses | Out-GridView -Title "Please Select Emergency Console IP Address" -PassThru
 	$IP = $FoundSelERCSIP
 	}
@@ -222,7 +244,6 @@ if(!($IP))
                 If($JSONFile)
 	                {
 					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
-					$CheckADSK = $FoundJSONFile.NumberOfNodes
                     Write-Host "`n `t[INFO] Loaded $($FileBrowser.FileNames)" -ForegroundColor Green
                     [array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
 	                $selERCSIP = $ERCSIPS | Out-GridView -Title "Please Select Emergency Console IPAddress" -PassThru
@@ -265,6 +286,85 @@ if(!($IP))
 	$global:progresspreference ="Continue"
     $selName = $ListeningNames |Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
     $IP = $selName
+}
+
+#InStamp Check 
+if ($InStamp -ne "NO")
+{
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$OnStampForm = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$OnStampLabel = $null
+	[System.Windows.Forms.Button]$OnStampYes = $null
+	[System.Windows.Forms.Button]$OnStampNo = $null
+	[System.Windows.Forms.Button]$button1 = $null
+	function InitializeComponent
+	{
+	$OnStampLabel = New-Object -TypeName System.Windows.Forms.Label
+	$OnStampYes = New-Object -TypeName System.Windows.Forms.Button
+	$OnStampNo = New-Object -TypeName System.Windows.Forms.Button
+	$OnStampForm.SuspendLayout()
+	#
+	#OnStampLabel
+	#
+	$OnStampLabel.AutoSize = $true
+	$OnStampLabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,22)
+	$OnStampLabel.Name = 'OnStampLabel'
+	$OnStampLabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(270,13)
+	$OnStampLabel.TabIndex = 0
+	$OnStampLabel.Text = 'Are you running script from the ASDK or DVM machine?'
+	$OnStampLabel.TextAlign = [System.Drawing.ContentAlignment]::TopCenter
+	$OnStampLabel.add_Click($OnStampLabel_Click)
+	#
+	#OnStampYes
+	#
+	$OnStampYes.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(62,55)
+	$OnStampYes.Name = 'OnStampYes'
+	$OnStampYes.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$OnStampYes.TabIndex = 1
+	$OnStampYes.Text = 'Yes'
+	$OnStampYes.UseVisualStyleBackColor = $true
+	$OnStampYes.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+	#
+	#OnStampNo
+	#
+	$OnStampNo.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(143,55)
+	$OnStampNo.Name = 'OnStampNo'
+	$OnStampNo.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$OnStampNo.TabIndex = 2
+	$OnStampNo.Text = 'No'
+	$OnStampNo.UseVisualStyleBackColor = $true
+	$OnStampNo.DialogResult = [System.Windows.Forms.DialogResult]::No
+	#
+	#OnStampForm
+	#
+	$OnStampForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(298,99)
+	$OnStampForm.Controls.Add($OnStampNo)
+	$OnStampForm.Controls.Add($OnStampYes)
+	$OnStampForm.Controls.Add($OnStampLabel)
+	$OnStampForm.Name = 'OnStampForm'
+	$OnStampForm.Text = 'On Stamp Prompt'
+	$OnStampForm.add_Load($MainForm_Load)
+	$OnStampForm.ResumeLayout($false)
+	$OnStampForm.AcceptButton = $OnStampNo
+	$OnStampForm.PerformLayout()
+	Add-Member -InputObject $OnStampForm -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $OnStampForm -Name OnStampLabel -Value $OnStampLabel -MemberType NoteProperty
+	Add-Member -InputObject $OnStampForm -Name OnStampYes -Value $OnStampYes -MemberType NoteProperty
+	Add-Member -InputObject $OnStampForm -Name OnStampNo -Value $OnStampNo -MemberType NoteProperty
+	Add-Member -InputObject $OnStampForm -Name button1 -Value $button1 -MemberType NoteProperty
+	$OnStampForm.Topmost = $True
+	$OnStampForm.StartPosition = "CenterScreen"
+	}
+	. InitializeComponent
+
+	$ASDKQuestion = $OnStampForm.ShowDialog()
+
+	if ($ASDKQuestion -eq [System.Windows.Forms.DialogResult]::yes)
+	{
+	Write-Host "`n `t[INFO] Using Azure Stack Development Kit or DVM" -ForegroundColor Green
+	$CheckADSK = 1
+	}
 }
 
 #AD Query
@@ -699,6 +799,7 @@ if($IP)
 			Write-Host "`n`t[ERROR] Authentication failed for $($localusername)" -ForegroundColor Red
 			Write-Host "`n Press any key to continue ...`n"
 			$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+			exit
 			} 
 			else 
 			{ 
@@ -958,7 +1059,6 @@ if($IP)
 			#
 			#buttonselect
 			#
-			$buttonselect.DialogResult = [System.Windows.Forms.DialogResult]::OK
 			$buttonselect.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,258)
 			$buttonselect.Name = 'buttonselect'
 			$buttonselect.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(121,23)
@@ -969,7 +1069,6 @@ if($IP)
 			#
 			#buttondefault
 			#
-			$buttondefault.DialogResult = [System.Windows.Forms.DialogResult]::Ignore
 			$buttondefault.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(139,258)
 			$buttondefault.Name = 'buttondefault'
 			$buttondefault.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(133,23)
