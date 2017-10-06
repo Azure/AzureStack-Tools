@@ -37,5 +37,17 @@ Specifies parameter to filter log collection. Valid formats are comma separated 
 ## ErcsName ##
 Specifies privileged endpoint virtual machine name or IP address to use. Example: AzS-ERCS01 or 192.168.200.255
 
+## AzSCredentials ##
+Specifies credentials the script will use to connect to Azure Stack privileged endpoint. Format must be in one of the 2 formats:
+
+- (Get-Credential -Message "Azure Stack Credentials")
+- (Get-Credential)
+
+## ShareCred ##
+Specifies credentials the script will use to build a local share Format must be in one of the 2 formats:
+
+- (Get-Credential -Message "Local Share Credentials" -UserName $env:USERNAME)
+- (Get-Credential)
+
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName 192.168.200.225 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME)
