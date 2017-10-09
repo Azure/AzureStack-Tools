@@ -247,7 +247,7 @@ Export-ModuleMember -Function Install-AzsUpdate
     .SYNOPSIS
     Close Active Alert
 #>
-function Close-AsSAlert {
+function Close-AzSAlert {
     Param(
         [Parameter(Mandatory = $false)]
         [string] $Location,
