@@ -7,9 +7,9 @@ Instructions below are relative to the .\ComputeAdmin folder of the [AzureStack-
 Make sure you have the following module prerequisites installed:
 
 ```powershell
-Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.10 -Scope CurrentUser
+Install-Module -Name 'AzureRm.Bootstrapper'
+Install-AzureRmProfile -profile '2017-03-09-profile' -Force
+Install-Module -Name AzureStack -RequiredVersion 1.2.10
 ```
 
 Then make sure the following modules are imported:
@@ -116,7 +116,7 @@ VM Scale Set allows deployment of multi-VM collections. To add a gallery item wi
 $Arm = "<AzureStack administrative Azure Resource Manager endpoint URL>"
 $Location = "<The location name of your AzureStack Environment>"
 
-Add-AzsEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm
+Add-AzureRMEnvironment -Name AzureStackAdmin -ArmEndpoint $Arm
 
 $Password = ConvertTo-SecureString -AsPlainText -Force "<your AzureStack admin user password>"
 $User = "<your AzureStack admin user name>"

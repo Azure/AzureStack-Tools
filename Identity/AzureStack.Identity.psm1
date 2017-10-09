@@ -342,11 +342,6 @@ function Register-AzsWithMyDirectoryTenant {
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantName,
 
-        # Optional: The identifier (GUID) of the Resource Manager application. Pass this parameter to skip the need to complete the guest signup flow via the portal.
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string] $ResourceManagerApplicationId,
-
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
         [ValidateNotNull()]
@@ -355,6 +350,9 @@ function Register-AzsWithMyDirectoryTenant {
 
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
+
+    # Get the Application of Resource Manager
+    $ResourceManagerApplicationId = $(Invoke-RestMethod "$TenantResourceManagerEndpoint/metadata/identity?api-version=2015-01-01").applicationId
 
     # Install-Module AzureRm -RequiredVersion '1.2.8'
     Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
@@ -402,7 +400,7 @@ function Register-AzsWithMyDirectoryTenant {
         # Initialize the necessary tags for the registered application
         if ($applicationRegistration.tags)
         {
-            Update-GraphApplicationServicePrincipalTags -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
+            Update-GraphApplicationServicePrincipalTag -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
         }
 
         # Lookup the permission consent status for the application permissions (either to or from) that the registered application requires

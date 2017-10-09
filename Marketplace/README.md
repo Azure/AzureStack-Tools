@@ -29,7 +29,7 @@ $LocalPath = 'c:\AzureStack_Marketplace'
 New-Item $LocalPath -Type directory
 
 # Files
-$files = @{
+$files = @(
     '40.png',
     '90.png',
     '115.png',
@@ -37,7 +37,7 @@ $files = @{
     '533.png',
     'MarketplaceToolkit.ps1',
     'MarketplaceToolkit_parameters.ps1'
-}
+)
 
 # Download files 
 $files | foreach { Invoke-WebRequest ($uri + $_) -OutFile ($LocalPath + '\' + $_) }  

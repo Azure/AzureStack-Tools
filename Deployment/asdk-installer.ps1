@@ -28,6 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
+$Text_Generic.Version = "1.0.06"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -543,7 +544,11 @@ $Xaml = @'
     <Grid>
         <DockPanel LastChildFill="True" >
             <StackPanel DockPanel.Dock="Left" Width="550" HorizontalAlignment="Left" Margin="50,0,0,0" >
-                <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="0,25,0,0" Text="Microsoft Azure Stack" />
+                <StackPanel Orientation="Horizontal" Margin="0,25,0,0">
+                    <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Microsoft Azure Stack" />
+                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="210,3,0,0" Text="Installer UI version: " />
+                    <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#FF4590CE" Margin="0,3,0,0" />
+                </StackPanel>
                 <TextBlock FontSize="44" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Development Kit" />
                 <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Foreground="#EBEBEB" Margin="0,50,0,30" Text="Title" />
                 <!--#region Mode-->
@@ -836,6 +841,10 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | Wher
 #endregion
 
 #region Data
+#region Version
+$syncHash.Control_Header_Tbl_Version.Text = $Text_Generic.Version
+#endregion
+
 #region AuthEndpoints
 $AuthEndpoints = @{
     'Azure Cloud'= @{
@@ -1738,6 +1747,9 @@ Function F_Install {
 
     If ($synchash.Control_NetConfig_Tbx_TimeServer.Text.Length -gt 0) {
         ' -TimeServer "' + $synchash.Control_NetConfig_Tbx_TimeServer.Text + '"' |  Add-Content $filepath -NoNewline
+    }
+    Else {
+        ' -TimeServer "' + 'pool.ntp.org' + '"' |  Add-Content $filepath -NoNewline
     }
  
     #endregion
