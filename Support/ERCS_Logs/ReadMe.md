@@ -49,5 +49,11 @@ Specifies credentials the script will use to build a local share Format must be 
 - (Get-Credential -Message "Local Share Credentials" -UserName $env:USERNAME)
 - (Get-Credential)
 
+## InStamp ##
+Specifies if script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM.
+
+- Yes
+- No
+
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName 192.168.200.225 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME)
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName 192.168.200.225 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No
