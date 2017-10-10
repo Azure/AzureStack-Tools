@@ -1,0 +1,28 @@
+@RuleTemplate = "LdapClaims"
+@RuleName = "Name claim"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+=> issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"), query = ";userPrincipalName;{0}", param = c.Value);
+
+@RuleTemplate = "LdapClaims"
+@RuleName = "UPN claim"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+=> issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"), query = ";userPrincipalName;{0}", param = c.Value);
+
+@RuleTemplate = "LdapClaims"
+@RuleName = "ObjectID claim"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid"]
+=> issue(Type = "http://schemas.microsoft.com/identity/claims/objectidentifier", Issuer = c.Issuer, OriginalIssuer = c.OriginalIssuer, Value = c.Value, ValueType = c.ValueType);
+
+@RuleName = "Family Name and Given claim"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+=> issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname", "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"), query = ";sn,givenName;{0}", param = c.Value);
+
+@RuleTemplate = "PassThroughClaims"
+@RuleName = "Pass through all Group SID claims"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid", Issuer =~ "^(AD AUTHORITY|SELF AUTHORITY|LOCAL AUTHORITY)$"]
+=> issue(claim = c);
+
+@RuleTemplate = "PassThroughClaims"
+@RuleName = "Pass through all windows account name claims"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname"]
+=> issue(claim = c);

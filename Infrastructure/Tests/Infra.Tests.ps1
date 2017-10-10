@@ -12,7 +12,7 @@ Describe $script:ModuleName {
         }
 
         It 'Get-AzsAlert should be exported' {
-            Get-Command -Name Get-AzsAlert -ErrorAction SilentlyContinue | 
+            Get-Command -Name Get-AzsAlert -ErrorAction SilentlyContinue |
                 Should Not Be $null
         }
     }
@@ -22,9 +22,9 @@ InModuleScope $script:ModuleName {
 
     $HostComputer = $global:HostComputer
     $ArmEndpoint = $global:ArmEndpoint
-    $natServer = $global:natServer 
-    $AdminUser = $global:AdminUser 
-    $AadServiceAdmin = $global:AadServiceAdmin 
+    $natServer = $global:natServer
+    $AdminUser = $global:AdminUser
+    $AadServiceAdmin = $global:AadServiceAdmin
 
     $AdminPassword = $global:AdminPassword
     $AadServiceAdminPassword = $global:AadServiceAdminPassword
@@ -64,7 +64,6 @@ InModuleScope $script:ModuleName {
             { Get-Azslogicalnetwork } |
                 Should Not Throw
         }
-        
         It 'Get-AzsUpdateLocation should not throw' {
             { Get-AzsUpdateLocation } |
                 Should Not Throw
@@ -75,6 +74,6 @@ InModuleScope $script:ModuleName {
         }
 
     }
-    
+
 
 }
