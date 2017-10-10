@@ -138,7 +138,7 @@ function Initialize-AzureRmEnvironment([string]$EnvironmentName, [string] $Resou
         GraphAudience                            = $endpoints.graphEndpoint
     }
 
-    Remove-AzureRmEnvironment -Name $EnvironmentName -Force -ErrorAction Ignore | Out-Null
+    Remove-AzureRmEnvironment -Name $EnvironmentName -ErrorAction Ignore | Out-Null
     $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams
     $azureEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName
     

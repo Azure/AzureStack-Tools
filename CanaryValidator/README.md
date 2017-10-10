@@ -17,7 +17,7 @@ Set-Location -Path ".\AzureStack-Tools-master\CanaryValidator" -PassThru
 ```powershell
 # Install-Module -Name 'AzureRm.Bootstrapper'
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10
+# Install-Module -Name AzureStack -RequiredVersion 1.2.11
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds
@@ -29,7 +29,7 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 # Download the WS2016 ISO image from: https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016, and place it on your local machine
 # Install-Module -Name 'AzureRm.Bootstrapper'
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10
+# Install-Module -Name AzureStack -RequiredVersion 1.2.11
 $TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
@@ -41,7 +41,7 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 ```powershell
 # Install-Module -Name 'AzureRm.Bootstrapper'
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10
+# Install-Module -Name AzureStack -RequiredVersion 1.2.11
 .\Canary.Tests.ps1 -ListAvailable
 
 Sample output:
@@ -129,7 +129,7 @@ List of scenarios in Canary:
 ```powershell
 # Install-Module -Name 'AzureRm.Bootstrapper'
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-# Install-Module -Name AzureStack -RequiredVersion 1.2.10
+# Install-Module -Name AzureStack -RequiredVersion 1.2.11
 # A new paramter called ExclusionList has been added which is a string array. Pass in the list of usecases you don't want to execute to this parameter.
 $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1 -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -ExclusionList "ListFabricResourceProviderInfo","ListUpdateResourceProviderInfo"
