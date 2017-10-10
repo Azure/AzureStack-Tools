@@ -56,4 +56,4 @@ Specifies if script is running on Azure Stack machine such as Azure Stack Develo
 - No
 
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName 192.168.200.225 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No
