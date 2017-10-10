@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-	Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
+	Built to be run on the HLH or DVM from an administrative Powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 .DESCRIPTION
 	The script will use one of the below seven methods; Gather requested logs, Transcript, and AzureStackStampInformation.json. The script will also save AzureStackStampInformation.json in %ProgramData% and in created log folder. AzureStackStampInformation.json in %ProgramData% allows future runs to have ERCS IP information populated at beginning of script.
 	
@@ -73,52 +73,58 @@ else
 	}
 	
 
-#------------------------------------------------------------------------------  
-#  
-# Copyright © 2017 Microsoft Corporation.  All rights reserved.  
-#  
-# THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED “AS IS” WITHOUT  
-# WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT  
-# LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS  
-# FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR   
-# RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER.  
-#  
-#------------------------------------------------------------------------------  
-#  
-# PowerShell Source Code  
-#  
-# NAME:  
-#    ERCS_AzureStackLogs
-#  
-# VERSION:  
-#    1.4.8
-#  
-#------------------------------------------------------------------------------ 
- 
-"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
-""  | Write-Host -ForegroundColor Yellow 
-" Copyright © 2017 Microsoft Corporation.  All rights reserved. " | Write-Host -ForegroundColor Yellow 
-""  | Write-Host -ForegroundColor Yellow 
-" THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED `“AS IS`” WITHOUT " | Write-Host -ForegroundColor Yellow 
-" WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT " | Write-Host -ForegroundColor Yellow 
-" LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS " | Write-Host -ForegroundColor Yellow 
-" FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR  " | Write-Host -ForegroundColor Yellow 
-" RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER. " | Write-Host -ForegroundColor Yellow 
-"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
-""  | Write-Host -ForegroundColor Yellow 
-" PowerShell Source Code " | Write-Host -ForegroundColor Yellow 
-""  | Write-Host -ForegroundColor Yellow 
-" NAME: " | Write-Host -ForegroundColor Yellow 
-"    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
-"" | Write-Host -ForegroundColor Yellow 
-" VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.4.8" | Write-Host -ForegroundColor Yellow 
-""  | Write-Host -ForegroundColor Yellow 
-"------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
-"" | Write-Host -ForegroundColor Yellow 
-"`n This script SAMPLE is provided and intended only to act as a SAMPLE ONLY," | Write-Host -ForegroundColor Yellow 
-" and is NOT intended to serve as a solution to any known technical issue."  | Write-Host -ForegroundColor Yellow 
-"`n By executing this SAMPLE AS-IS, you agree to assume all risks and responsibility associated."  | Write-Host -ForegroundColor Yellow 
+<#
+------------------------------------------------------------------------------  
+  
+ Copyright © 2017 Microsoft Corporation.  All rights reserved.  
+  
+ THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED “AS IS” WITHOUT  
+ WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT  
+ LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS  
+ FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR   
+ RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER.  
+  
+------------------------------------------------------------------------------  
+  
+ PowerShell Source Code  
+  
+ NAME:  
+    ERCS_AzureStackLogs
+  
+ VERSION:  
+    1.4.8
+  
+------------------------------------------------------------------------------ 
+#>
+
+$agreement = @"
+------------------------------------------------------------------------------
+
+Copyright © 2017 Microsoft Corporation.  All rights reserved.
+
+THIS CODE AND ANY ASSOCIATED INFORMATION ARE PROVIDED `"AS IS`" WITHOUT
+WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
+FOR A PARTICULAR PURPOSE. THE ENTIRE RISK OF USE, INABILITY TO USE, OR
+RESULTS FROM THE USE OF THIS CODE REMAINS WITH THE USER.
+------------------------------------------------------------------------------
+
+ PowerShell Source Code
+
+ NAME:
+    ERCS_AzureStackLogs.ps1
+
+ VERSION:
+    1.4.8
+
+------------------------------------------------------------------------------
+
+ This script SAMPLE is provided and intended only to act as a SAMPLE ONLY,
+ and is NOT intended to serve as a solution to any known technical issue.
+
+By executing this SAMPLE AS-IS, you agree to assume all risks and responsibility associated.
+"@
+$agreement | Write-Host -ForegroundColor Yellow
  
 $ErrorActionPreference = "SilentlyContinue" 
 $ContinueAnswer = Read-Host "`n Do you wish to proceed at your own risk? (Y/N)" 
@@ -297,10 +303,10 @@ if(!($IP))
 	$ERCIPInfo = $null
 	$selERC = $null
 	Write-Host "`n`t[Info] Querying for Emergency Recovery Console Session with AD" -ForegroundColor Green
-	[Array] $ERCSNames = Get-ADComputer -Filter 'ObjectClass -eq "Computer"' | where {$_.name -like "*-Ercs*"} | Select -Expand Name
+	[Array] $ERCSNames = Get-ADComputer -Filter 'ObjectClass -eq "Computer"' | Where-Object {$_.name -like "*-Ercs*"} | Select-Object -Expand Name
 	foreach ($name in $ERCSNames)
 		{
-			$ERCName = Resolve-DnsName -name $name | select Name, Ipaddress
+			$ERCName = Resolve-DnsName -name $name | Select-Object Name, Ipaddress
 			[array]$ERCIPInfo += $ERCName
 		}
 		
@@ -368,13 +374,13 @@ if(!($IP))
 	$ERCSSERVER = $null
 	Write-Host "`n`t[INFO] Querying for Emergency Recovery Console Session A records" -ForegroundColor White
 	[array]$DnsServers = Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object –ExpandProperty ServerAddresses
-	$DnsServers = $DnsServers | select -uniq
+	$DnsServers = $DnsServers | Select-Object -Unique
 	ForEach ($server in $DnsServers)
 		{
 			$Zones = @(Get-DnsServerZone -ComputerName $server)
 			ForEach ($Zone in $Zones)
 			{
-			[array]$ERCSSERVER= Get-DnsServerResourceRecord -ZoneName $Zone.ZoneName -ComputerName $server -RRType "A" | select HostName,RecordType,Timestamp,TimeToLive,@{Name='RecordData';Expression={$_.RecordData.IPv4Address.ToString()}} | where {$_.Hostname -like "*-ERCS*"} 
+			[array]$ERCSSERVER= Get-DnsServerResourceRecord -ZoneName $Zone.ZoneName -ComputerName $server -RRType "A" | Select-Object HostName,RecordType,Timestamp,TimeToLive,@{Name='RecordData';Expression={$_.RecordData.IPv4Address.ToString()}} | Where-Object {$_.Hostname -like "*-ERCS*"} 
 			[array]$ErcServers += $ERCSSERVER
 			}
 		}
@@ -388,10 +394,10 @@ if(!($IP))
 			Write-host "`n`t[INFO] Unable to locate via DNS A record search." -ForegroundColor White
 			Write-host "`n`t[INFO] Searching for AzureStack.local zones" -ForegroundColor White
 
-			[array]$DNSServers=Get-DNSClientServerAddress -AddressFamily IPv4 | ?{$_.ServerAddresses -ne $null} | Select ServerAddresses -Unique
+			[array]$DNSServers=Get-DNSClientServerAddress -AddressFamily IPv4 | Where-Object {$_.ServerAddresses -ne $null} | Select-Object ServerAddresses -Unique
 				foreach ($DNSServer in $DNSServers)
 				{
-					[array]$AzSDNSSvrs+= get-dnsserverzone -computername $($DNSServer.ServerAddresses) | ?{$_.ZoneName -like "*azurestack.local"} 
+					[array]$AzSDNSSvrs+= get-dnsserverzone -computername $($DNSServer.ServerAddresses) | Where-Object {$_.ZoneName -like "*azurestack.local"} 
 				}
                 If ($AzSDNSSvrs.ZoneType -contains "Forwarder")
                 {
@@ -399,7 +405,7 @@ if(!($IP))
 				    {
 					    [array]$IPArrays+=(($AzSDNSSvr.IPAddressToString -split "\.")[0..2]) -join "."
 				    }
-			    $IPArrays = $IPArrays| select -Unique
+			    $IPArrays = $IPArrays| Select-Object -Unique
                 foreach($iparray in $IPArrays)
                 {
 			        [Array]$GuessERCS += $IPArray + "." + "225"
@@ -505,7 +511,7 @@ if($IP)
                 $date = Get-Date -format MM-dd
                 $foldername = "-AzureStackLogs"
                 $sharename = $date + $foldername
-                If (!(Test-Path "$($Env:SystemDrive)\$($sharename)")) {$folder = New-Item -Path "$($Env:SystemDrive)\$($sharename)" -ItemType directory} 
+                If (!(Test-Path "$($Env:SystemDrive)\$($sharename)")) {New-Item -Path "$($Env:SystemDrive)\$($sharename)" -ItemType directory | Out-Null} 
                 $foldershare= New-SMBShare –Name $sharename –Path "$($Env:SystemDrive)\$($sharename)" -FullAccess $myname
                 If($foldershare){[string]$ShareINFO = "\\$($share)\$sharename"}
 			}
@@ -524,10 +530,10 @@ if($IP)
 	    $secpasswd = Read-Host "`n `t`tEnter the password for $($user)" -AsSecureString
 	    $mySecureCredentials = New-Object System.Management.Automation.PSCredential ($user, $secpasswd)
 
-	    #ShareUserINFO
+		#ShareUserINFO
 	    $name = whoami
 	    Write-Host "`n`t[PROMPT] Enter password for $($name)"
-	    $currsecpasswd = Read-Host "`n`t`tEnter the password for $($name)" -AsSecureString
+		$currsecpasswd = Read-Host "`n`t`tEnter the password for $($name)" -AsSecureString
 	    $shareCred = New-Object System.Management.Automation.PSCredential($name,$currsecpasswd)
         
 		#form for start question
@@ -756,7 +762,7 @@ if($IP)
         {
         Write-Host "`n `t[INFO] Getting Azure Stack transcript" -ForegroundColor Green
 		Invoke-Command -Session $s -ScriptBlock {Close-PrivilegedEndpoint -TranscriptsPathDestination "\\127.0.0.1\C`$"}
-		$Transcript = Get-ChildItem -Path "\\$($IP)\C`$" | Where {($_.Name -like "Transcripts_*")} | sort -Descending -Property CreationTime | select -first 1
+		$Transcript = Get-ChildItem -Path "\\$($IP)\C`$" | Where-Object {($_.Name -like "Transcripts_*")} | Sort-Object -Descending -Property CreationTime | Select-Object -first 1
 		#copy the transcript to share 
 		Copy-Item -Path $Transcript.FullName -Destination $ShareINFO -Force
 		#test to make sure the transcript is copied
@@ -772,12 +778,12 @@ if($IP)
             Remove-PSSession $s
         }
 		#get files for user
-		$Files = Get-ChildItem -Path "$($Env:SystemDrive)\$($sharename)" | Where {(($_.attributes -eq 'directory') -and ($_.Name -like "AzureStackLogs-*"))} | sort -Descending -Property CreationTime | select -first 1
+		$Files = Get-ChildItem -Path "$($Env:SystemDrive)\$($sharename)" | Where-Object {(($_.attributes -eq 'directory') -and ($_.Name -like "AzureStackLogs-*"))} | Sort-Object -Descending -Property CreationTime | Select-Object -first 1
 		Invoke-Item "$($Files.FullName)"
         Write-Host "`n `t[INFO] Opening $($Files.FullName)" -ForegroundColor Green
         
 		#look at output AzureStackLog_Output for issues
-		$stacklog = Get-ChildItem -Path "$($Files.FullName)" | Where {($_.Name -like "Get-AzureStackLog_Output*")} | sort -Descending -Property CreationTime | select -first 1
+		$stacklog = Get-ChildItem -Path "$($Files.FullName)" | Where-Object {($_.Name -like "Get-AzureStackLog_Output*")} | Sort-Object -Descending -Property CreationTime | Select-Object -first 1
 		$stacklogerr = Select-String -Path $stacklog.FullName -Pattern "TerminatingError"
 		$stacklogeerrdisk = Select-String -Path $stacklog.FullName -Pattern "There is not enough space on the disk."
 		$stacklogeerrcode = Select-String -Path $stacklog.FullName -Pattern "0x85200001"
