@@ -57,9 +57,11 @@ $adminARMEndpoint = "https://adminmanagement.<region>.<domain>"
 $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com" # this is the primary tenant Azure Stack is registered to
 $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com" # this is the new tenant that needs to be onboarded to Azure Stack
 $location = "local"
+
 Register-AzsGuestDirectoryTenant -AdminResourceManagerEndpoint $adminARMEndpoint `
     -DirectoryTenantName $azureStackDirectoryTenant `
     -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded `
+    -ResourceGroupName "system.local" `
     -Location $location
 ```
 
@@ -67,14 +69,7 @@ With this step, the work of the Azure Stack administrator is done.
 
 ### Guest Directory Tenant Administrator
 
-The following steps need to be completed by the **Directory Tenant Administrator** of the directory that needs to be onboarded to Azure Stack.
-
-#### Step 2: Providing UI-based consent to Azure Stack Portal and ARM
-
-- This is an important step. Open up a web browser, and go to `https://portal.<region>.<domain>/guest/signup/<guestDirectoryName>`. Note that this is the directory tenant that needs to be onboarded to Azure Stack.
-- This will take you to an AAD sign in page where you need to enter your credentials and click on 'Accept' on the consent screen.
-
-#### Step 3: Registering Azure Stack applications with the Guest Directory
+#### Step 2: Registering Azure Stack applications with the Guest Directory
 
 Execute the following cmdlet as the administrator of the directory that needs to be onboarded, replacing ```$guestDirectoryTenantName``` with your directory domain name
 

@@ -118,116 +118,6 @@ function New-AzsAdGraphServicePrincipal {
     return $output
 }
 
-# Helper Functions
-
-function Initialize-AzureRmEnvironment([string]$EnvironmentName, [string] $ResourceManagerEndpoint, [string] $DirectoryTenantName) {
-    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
-    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
-
-    # resolve the directory tenant ID from the name
-    $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($endpoints.authentication.loginEndpoint.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
-
-    $azureEnvironmentParams = @{
-        Name                                     = $EnvironmentName
-        ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
-        ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
-        AdTenant                                 = $directoryTenantId
-        ResourceManagerEndpoint                  = $ResourceManagerEndpoint
-        GalleryEndpoint                          = $endpoints.galleryEndpoint
-        GraphEndpoint                            = $endpoints.graphEndpoint
-        GraphAudience                            = $endpoints.graphEndpoint
-    }
-
-    Remove-AzureRmEnvironment -Name $EnvironmentName -Force -ErrorAction Ignore | Out-Null
-    $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams
-    $azureEnvironment = Get-AzureRmEnvironment -Name $EnvironmentName
-    
-    return $azureEnvironment
-}
-
-function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
-    $azureEnvironment = Get-AzureRmEnvironment |
-        Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
-        Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
-
-    # Differentiate between AzureCloud and AzureUSGovernment
-    if ($azureEnvironment.Count -ge 2) {
-        $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/') { 'AzureUSGovernment' } else { 'AzureCloud' }
-        $azureEnvironment = $azureEnvironment | Where Name -EQ $name
-    }
-
-    return $azureEnvironment
-}
-
-function Initialize-AzureRmUserAccount([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment, [string] $SubscriptionName, [string] $SubscriptionId, [pscredential] $AutomationCredential) {
-    
-    $params = @{
-        EnvironmentName = $azureEnvironment.Name
-        TenantId        = $azureEnvironment.AdTenant
-    }
-
-    if ($AutomationCredential)
-    {
-        $params += @{ Credential = $AutomationCredential }
-    }
-
-    # Prompts the user for interactive login flow if automation credential is not specified
-    $azureAccount = Add-AzureRmAccount @params
-
-    if ($SubscriptionName)
-    {
-        Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
-    }
-    elseif ($SubscriptionId)
-    {
-        Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
-    }
-
-    return $azureAccount
-}
-
-function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment)
-{
-    $graphEnvironment = switch ($azureEnvironment.ActiveDirectoryAuthority) {
-        'https://login.microsoftonline.com/' { 'AzureCloud'        }
-        'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
-        'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-        'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
-
-        Default { throw "Unsupported graph resource identifier: $_" }
-    }
-
-    return $graphEnvironment
-}
-
-function Get-AzureRmUserRefreshToken([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment, [string]$directoryTenantId, [pscredential]$AutomationCredential)
-{
-    $params = @{
-        EnvironmentName = $azureEnvironment.Name
-        TenantId        = $directoryTenantId
-    }
-
-    if ($AutomationCredential)
-    {
-        $params += @{ Credential = $AutomationCredential }
-    }
-
-    # Prompts the user for interactive login flow if automation credential is not specified
-    $azureAccount = Add-AzureRmAccount @params
-
-    # Retrieve the refresh token
-    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-    $refreshToken = $tokens |
-        Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
-        Where IsMultipleResourceRefreshToken -EQ $true |
-        Where DisplayableId -EQ $azureAccount.Context.Account.Id |
-        Sort ExpiresOn |
-        Select -Last 1 -ExpandProperty RefreshToken |
-        ConvertTo-SecureString -AsPlainText -Force
-
-    return $refreshToken
-}
-
 # Exposed Functions
 
 <#
@@ -276,42 +166,102 @@ function Register-AzsGuestDirectoryTenant {
         [ValidateNotNull()]
         [string] $SubscriptionName = $null,
 
-        [Parameter()]
+        # The name of the resource group in which the directory tenant registration resource should be created (resource group must already exist).
+        [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string] $ResourceGroupName = 'system.local',
+        [string] $ResourceGroupName = $null,
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
         [ValidateNotNull()]
         [pscredential] $AutomationCredential = $null
     )
+
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm -RequiredVersion '1.2.8'
+    # Install-Module AzureRm -RequiredVersion '1.2.11'
     Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
 
-    # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
-    $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint -DirectoryTenantName $DirectoryTenantName
-    $azureAccount = Initialize-AzureRmUserAccount -azureEnvironment $azureEnvironment -SubscriptionName $SubscriptionName -SubscriptionId $SubscriptionId -AutomationCredential $AutomationCredential
-
-    foreach ($directoryTenantName in $GuestDirectoryTenantName)
+    function Invoke-Main
     {
-        # Resolve the guest directory tenant ID from the name
-        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($azureEnvironment.ActiveDirectoryAuthority.TrimEnd('/'))/$directoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+        # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
+        $azureEnvironment = Initialize-AzureRmEnvironment 'AzureStackAdmin'
+        $azureAccount     = Initialize-AzureRmUserAccount $azureEnvironment
 
-        # Add (or update) the new directory tenant to the Azure Stack deployment
-        $params = @{
-            ApiVersion        = '2015-11-01'
-            ResourceType      = "Microsoft.Subscriptions.Admin/directoryTenants"
-            ResourceGroupName = $ResourceGroupName
-            ResourceName      = $directoryTenantName
-            Location          = $Location
-            Properties        = @{ tenantId = $directoryTenantId }
+        foreach ($directoryTenantName in $GuestDirectoryTenantName)
+        {
+            # Resolve the guest directory tenant ID from the name
+            $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($azureEnvironment.ActiveDirectoryAuthority.TrimEnd('/'))/$directoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+
+            # Add (or update) the new directory tenant to the Azure Stack deployment
+            $params = @{
+                ApiVersion        = '2015-11-01'
+                ResourceType      = "Microsoft.Subscriptions.Admin/directoryTenants"
+                ResourceGroupName = $ResourceGroupName
+                ResourceName      = $directoryTenantName
+                Location          = $Location
+                Properties        = @{ tenantId = $directoryTenantId }
+            }
+            $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
+            Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
         }
-        $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
-        Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
     }
+
+    function Initialize-AzureRmEnvironment([string]$environmentName)
+    {
+        $endpoints = Invoke-RestMethod -Method Get -Uri "$($AdminResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+        Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+
+        # resolve the directory tenant ID from the name
+        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($endpoints.authentication.loginEndpoint.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+
+        $azureEnvironmentParams = @{
+            Name                                     = $environmentName
+            ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+            ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+            AdTenant                                 = $directoryTenantId
+            ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+            GalleryEndpoint                          = $endpoints.galleryEndpoint
+            GraphEndpoint                            = $endpoints.graphEndpoint
+            GraphAudience                            = $endpoints.graphEndpoint
+        }
+
+        $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
+        $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
+
+        return $azureEnvironment
+    }
+
+    function Initialize-AzureRmUserAccount([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment)
+    {
+        $params = @{
+            EnvironmentName = $azureEnvironment.Name
+            TenantId        = $azureEnvironment.AdTenant
+        }
+
+        if ($AutomationCredential)
+        {
+            $params += @{ Credential = $AutomationCredential }
+        }
+
+        # Prompts the user for interactive login flow if automation credential is not specified
+        #$DebugPreference = "Continue"
+        $azureAccount = Add-AzureRmAccount @params
+
+        if ($SubscriptionName)
+        {
+            Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
+        }
+        elseif ($SubscriptionId)
+        {
+            Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
+        }
+
+        return $azureAccount
+    }
+
+    Invoke-Main
 }
 
 <#
@@ -342,11 +292,6 @@ function Register-AzsWithMyDirectoryTenant {
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantName,
 
-        # Optional: The identifier (GUID) of the Resource Manager application. Pass this parameter to skip the need to complete the guest signup flow via the portal.
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string] $ResourceManagerApplicationId,
-
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
         [ValidateNotNull()]
@@ -356,94 +301,288 @@ function Register-AzsWithMyDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm -RequiredVersion '1.2.8'
+    # Install-Module AzureRm -RequiredVersion '1.2.11'
     Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Force -Verbose:$false 4> $null
 
-    # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager corresponding to their home Graph Service. Will prompt user for credentials.
-    $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint -DirectoryTenantName $DirectoryTenantName
-    $azureEnvironment = Resolve-AzureEnvironment $azureStackEnvironment
-    $refreshToken = Get-AzureRmUserRefreshToken -azureEnvironment $azureEnvironment -directoryTenantId $azureStackEnvironment.AdTenant -AutomationCredential $AutomationCredential
-
-    # Initialize the Graph PowerShell module to communicate with the correct graph service
-    $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
-    Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
-
-    # Initialize the service principal for the Azure Stack Resource Manager application (allows us to acquire a token to ARM). If not specified, the sign-up flow must be completed via the Azure Stack portal first.
-    if ($ResourceManagerApplicationId)
+    function Invoke-Main
     {
-        $resourceManagerServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $ResourceManagerApplicationId
-    }
+        # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
+        Write-Host "Authenticating user..."
+        $azureStackEnvironment = Initialize-AzureRmEnvironment 'AzureStack'
+        $azureEnvironment      = Resolve-AzureEnvironment $azureStackEnvironment
+        $refreshToken          = Initialize-AzureRmUserAccount $azureEnvironment $azureStackEnvironment.AdTenant
 
-    # Authorize the Azure Powershell module to act as a client to call the Azure Stack Resource Manager in the onboarding directory tenant
-    Initialize-GraphOAuth2PermissionGrant -ClientApplicationId (Get-GraphEnvironmentInfo).Applications.PowerShell.Id -ResourceApplicationIdentifierUri $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId
-    Write-Host "Delaying for 15 seconds to allow the permission for Azure PowerShell to be initialized..."
-    Start-Sleep -Seconds 15
+        # Initialize the Graph PowerShell module to communicate with the correct graph service
+        $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
+        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
 
-    # Authorize the Azure Powershell module to act as a client to call the Azure Stack Resource Manager in the onboarded tenant
-    Initialize-GraphOAuth2PermissionGrant -ClientApplicationId (Get-GraphEnvironmentInfo).Applications.PowerShell.Id -ResourceApplicationIdentifierUri $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId
+        # Initialize the service principal for the Azure Stack Resource Manager application
+        Write-Host "Installing Resource Manager in your directory ('$DirectoryTenantName')..."
+        $resourceManagerServicePrincipal = Initialize-ResourceManagerServicePrincipal
 
-    # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be initialized in the onboarding directory tenant
-    $armAccessToken = (Get-GraphToken -Resource $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
-    $applicationRegistrationParams = @{
-        Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
-        Headers = @{ Authorization = "Bearer $armAccessToken" }
-        Uri     = "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
-    }
-    $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select-Object -ExpandProperty value
+        # Authorize the Azure Powershell module to act as a client to call the Azure Stack Resource Manager in the onboarding directory tenant
+        Write-Host "Authorizing the Azure PowerShell module to communicate with Resource Manager in your directory..."
+        Initialize-GraphOAuth2PermissionGrant -ClientApplicationId (Get-GraphEnvironmentInfo).Applications.PowerShell.Id -ResourceApplicationIdentifierUri $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId
 
-    # Identify which permissions have already been granted to each registered application and which additional permissions need consent
-    $permissions = @()
-    foreach ($applicationRegistration in $applicationRegistrations)
-    {
-        # Initialize the service principal for the registered application
-        $applicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $applicationRegistration.appId
+        # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be initialized in the onboarding directory tenant
+        Write-Host "Acquiring an access token to communicate with Resource Manager... (this may take up to a few minutes to complete)"
+        $armAccessToken = Get-ArmAccessToken $azureStackEnvironment
 
-        # Initialize the necessary tags for the registered application
-        if ($applicationRegistration.tags)
-        {
-            Update-GraphApplicationServicePrincipalTags -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
+        Write-Host "Looking-up the registered identity applications which need to be installed in your directory..."
+        $applicationRegistrationParams = @{
+            Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
+            Headers = @{ Authorization = "Bearer $armAccessToken" }
+            Uri     = "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
         }
+        $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select -ExpandProperty value
 
-        # Lookup the permission consent status for the application permissions (either to or from) that the registered application requires
-        foreach($appRoleAssignment in $applicationRegistration.appRoleAssignments)
+        # Identify which permissions have already been granted to each registered application and which additional permissions need to be granted
+        $permissions = @()
+        $count = 0
+        foreach ($applicationRegistration in $applicationRegistrations)
         {
-            $params = @{
-                ClientApplicationId   = $appRoleAssignment.client
-                ResourceApplicationId = $appRoleAssignment.resource
-                PermissionType        = 'Application'
-                PermissionId          = $appRoleAssignment.roleId
+            # Initialize the service principal for the registered application
+            $count++
+            $applicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $applicationRegistration.appId
+            Write-Host "Installing Application... ($($count) of $($applicationRegistrations.Count)): $($applicationServicePrincipal.appId) '$($applicationServicePrincipal.appDisplayName)'"
+
+            # Initialize the necessary tags for the registered application
+            if ($applicationRegistration.tags)
+            {
+                Update-GraphApplicationServicePrincipalTags -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
             }
-            $permissions += New-GraphPermissionDescription @params -LookupConsentStatus
-        }
 
-        # Lookup the permission consent status for the delegated permissions (either to or from) that the registered application requires
-        foreach($oauth2PermissionGrant in $applicationRegistration.oauth2PermissionGrants)
-        {
-            $resourceApplicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $oauth2PermissionGrant.resource
-            foreach ($scope in $oauth2PermissionGrant.scope.Split(' '))
+            # Lookup the permission consent status for the *application* permissions (either to or from) which the registered application requires
+            foreach($appRoleAssignment in $applicationRegistration.appRoleAssignments)
             {
                 $params = @{
-                    ClientApplicationId                 = $oauth2PermissionGrant.client
-                    ResourceApplicationServicePrincipal = $resourceApplicationServicePrincipal
-                    PermissionType                      = 'Delegated'
-                    PermissionId                        = ($resourceApplicationServicePrincipal.oauth2Permissions | Where value -EQ $scope).id
+                    ClientApplicationId   = $appRoleAssignment.client
+                    ResourceApplicationId = $appRoleAssignment.resource
+                    PermissionType        = 'Application'
+                    PermissionId          = $appRoleAssignment.roleId
                 }
                 $permissions += New-GraphPermissionDescription @params -LookupConsentStatus
             }
+
+            # Lookup the permission consent status for the *delegated* permissions (either to or from) which the registered application requires
+            foreach($oauth2PermissionGrant in $applicationRegistration.oauth2PermissionGrants)
+            {
+                $resourceApplicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $oauth2PermissionGrant.resource
+                foreach ($scope in $oauth2PermissionGrant.scope.Split(' '))
+                {
+                    $params = @{
+                        ClientApplicationId                 = $oauth2PermissionGrant.client
+                        ResourceApplicationServicePrincipal = $resourceApplicationServicePrincipal
+                        PermissionType                      = 'Delegated'
+                        PermissionId                        = ($resourceApplicationServicePrincipal.oauth2Permissions | Where value -EQ $scope).id
+                    }
+                    $permissions += New-GraphPermissionDescription @params -LookupConsentStatus
+                }
+            }
         }
+
+        # Trace the permission status
+        Write-Verbose "Current permission status: $($permissions | ConvertTo-Json -Depth 4)" -Verbose
+
+        $permissionFile    = Join-Path -Path $PSScriptRoot -ChildPath "$DirectoryTenantName.permissions.json"
+        $permissionContent = $permissions | Select -Property * -ExcludeProperty isConsented | ConvertTo-Json -Depth 4 | Out-String
+        $permissionContent > $permissionFile
+
+        # Display application status to user
+        $permissionsByClient = $permissions | Select *,@{n='Client';e={'{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName}} | Sort clientApplicationDisplayName | Group Client
+        $readyApplications   = @()
+        $pendingApplications = @()
+        foreach ($client in $permissionsByClient)
+        {
+            if ($client.Group.isConsented -Contains $false)
+            {
+                $pendingApplications += $client
+            }
+            else
+            {
+                $readyApplications += $client
+            }
+        }
+
+        Write-Host ""
+        if ($readyApplications)
+        {
+            Write-Host "Applications installed and configured:"
+            Write-Host "`t$($readyApplications.Name -join "`r`n`t")"
+        }
+        if ($readyApplications -and $pendingApplications)
+        {
+            Write-Host ""
+        }
+        if ($pendingApplications)
+        {
+            Write-Host "Applications waiting to be configured:"
+            Write-Host "`t$($pendingApplications.Name -join "`r`n`t")"
+        }
+        Write-Host ""
+
+        # Grant any missing permissions for registered applications
+        if ($permissions | Where isConsented -EQ $false | Select -First 1)
+        {
+            Write-Host "Configuring applications... (this may take up to a few minutes to complete)"
+            Write-Host ""
+            $permissions | Where isConsented -EQ $false | Grant-GraphApplicationPermission
+        }
+
+        Write-Host "All applications installed and configured! Your directory '$DirectoryTenantName' has been successfully onboarded and can now be used with Azure Stack!"
+        Write-Host ""
+        Write-Host "A more detailed description of the applications installed and with what permissions they have been configured can be found in the file '$permissionFile'."
+        Write-Host "Run this script again at any time to check the status of the Azure Stack applications in your directory."
+        Write-Warning "If your Azure Stack Administrator installs new services or updates in the future, you may need to run this script again."
     }
 
-    # Show the user a display of the required permissions
-    $permissions | Show-GraphApplicationPermissionDescriptions
-
-    if ($permissions | Where isConsented -EQ $false | Select -First 1)
+    function Initialize-AzureRmEnvironment([string]$environmentName)
     {
-        # Grant the required permissions to the corresponding applications
-        $permissions | Where isConsented -EQ $false | Grant-GraphApplicationPermission
+        $endpoints = Invoke-RestMethod -Method Get -Uri "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+        Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+
+        # resolve the directory tenant ID from the name
+        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($endpoints.authentication.loginEndpoint.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+
+        $azureEnvironmentParams = @{
+            Name                                     = $environmentName
+            ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+            ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+            AdTenant                                 = $directoryTenantId
+            ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+            GalleryEndpoint                          = $endpoints.galleryEndpoint
+            GraphEndpoint                            = $endpoints.graphEndpoint
+            GraphAudience                            = $endpoints.graphEndpoint
+        }
+
+        $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
+        $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
+
+        return $azureEnvironment
     }
 
-    Write-Host "`r`nAll permissions required for registered Azure Stack applications or scenarios have been granted!" -ForegroundColor Green
+    function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment)
+    {
+        $azureEnvironment = Get-AzureRmEnvironment |
+            Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
+            Where Name -In @('AzureCloud','AzureChinaCloud','AzureUSGovernment','AzureGermanCloud')
+
+        # Differentiate between AzureCloud and AzureUSGovernment
+        if ($azureEnvironment.Count -ge 2)
+        {
+            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/') { 'AzureUSGovernment' } else { 'AzureCloud' }
+            $azureEnvironment = $azureEnvironment | Where Name -EQ $name
+        }
+
+        return $azureEnvironment
+    }
+
+    function Initialize-AzureRmUserAccount([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment, [string]$directoryTenantId)
+    {
+        $params = @{
+            EnvironmentName = $azureEnvironment.Name
+            TenantId        = $directoryTenantId
+        }
+
+        if ($AutomationCredential)
+        {
+            $params += @{ Credential = $AutomationCredential }
+        }
+
+        # Prompts the user for interactive login flow if automation credential is not specified
+        $azureAccount = Add-AzureRmAccount @params
+
+        # Retrieve the refresh token
+        $tokens = @()
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $refreshToken = $tokens |
+            Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
+            Where IsMultipleResourceRefreshToken -EQ $true |
+            Where DisplayableId -EQ $azureAccount.Context.Account.Id |
+            Sort ExpiresOn |
+            Select -Last 1 -ExpandProperty RefreshToken |
+            ConvertTo-SecureString -AsPlainText -Force
+
+        return $refreshToken
+    }
+
+    function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment)
+    {
+        $graphEnvironment = switch($azureEnvironment.ActiveDirectoryAuthority)
+        {
+            'https://login.microsoftonline.com/'    { 'AzureCloud'        }
+            'https://login.chinacloudapi.cn/'       { 'AzureChinaCloud'   }
+            'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/'     { 'AzureGermanCloud'  }
+
+            Default { throw "Unsupported graph resource identifier: $_" }
+        }
+
+        return $graphEnvironment
+    }
+
+    function Initialize-ResourceManagerServicePrincipal
+    {
+        $identityInfo = Invoke-RestMethod -Method Get -Uri "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/identity?api-version=2015-01-01" -Verbose
+        Write-Verbose -Message "Resource Manager identity information: $(ConvertTo-Json $identityInfo)" -Verbose
+
+        $resourceManagerServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $identityInfo.applicationId -Verbose
+
+        return $resourceManagerServicePrincipal
+    }
+
+    function Get-ArmAccessToken([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment)
+    {
+        $armAccessToken = $null
+        $attempts       = 0
+        $maxAttempts    = 12
+        $delayInSeconds = 5
+        do
+        {
+            try
+            {
+                $attempts++
+                $armAccessToken = (Get-GraphToken -Resource $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData -ErrorAction Stop).access_token
+            }
+            catch
+            {
+                if ($attempts -ge $maxAttempts)
+                {
+                    throw
+                }
+                Write-Verbose "Error attempting to acquire ARM access token: $_`r`n$($_.Exception)" -Verbose
+                Write-Verbose "Delaying for $delayInSeconds seconds before trying again... (attempt $attempts/$maxAttempts)" -Verbose
+                Start-Sleep -Seconds $delayInSeconds
+            }
+        }
+        while(-not $armAccessToken)
+
+        return $armAccessToken
+    }
+
+    $logFile = Join-Path -Path $PSScriptRoot -ChildPath "$DirectoryTenantName.$(Get-Date -Format MM-dd_HH-mm-ss_ms).log"
+    Write-Verbose "Logging additional information to log file '$logFile'" -Verbose
+
+    $logStartMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Beginning invocation of '$($MyInvocation.InvocationName)' with parameters: $(ConvertTo-Json $PSBoundParameters -Depth 4)"
+    $logStartMessage >> $logFile
+
+    try
+    {
+        # Redirect verbose output to a log file
+        Invoke-Main 4>> $logFile
+
+        $logEndMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Script completed successfully."
+        $logEndMessage >> $logFile
+    }
+    catch
+    {
+        $logErrorMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Script terminated with error: $_`r`n$($_.Exception)"
+        $logErrorMessage >> $logFile
+        Write-Warning "An error has occurred; more information may be found in the log file '$logFile'" -WarningAction Continue
+        throw
+    }
 }
 
 Export-ModuleMember -Function @(
@@ -451,5 +590,4 @@ Export-ModuleMember -Function @(
     "Register-AzsWithMyDirectoryTenant",
     "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
-
 )
