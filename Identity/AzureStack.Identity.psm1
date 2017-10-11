@@ -28,14 +28,12 @@ function Get-AzsDirectoryTenantidentifier {
 
 <#
    .Synopsis
-      This function is used to create a Service Principal on teh AD Graph
+      This function is used to create a Service Principal on the AD Graph in anAD FS topology
    .DESCRIPTION
       The command creates a certificate in the cert store of the local user and uses that certificate to create a Service Principal in the Azure Stack Stamp Active Directory.
    .EXAMPLE
-      $servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "mySPApp" -AdminCredential $(Get-Credential) -Verbose
-   .EXAMPLE
-      $servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "mySPApp" -AdminCredential $(Get-Credential) -DeleteAndCreateNew -Verbose
-   #>
+      $servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "myapp12" -AdminCredential $(Get-Credential) -Verbose
+#>
 
 function New-AzsAdGraphServicePrincipal {
     [CmdletBinding()]
@@ -47,75 +45,28 @@ function New-AzsAdGraphServicePrincipal {
             Position = 0)]
         $DisplayName,
 
-        # Adfs Machine name
-        [Parameter(Mandatory = $true, Position = 1)]
+        # PEP Machine name        
         [string]
-        $AdfsMachineName,
+        $ERCSMachineName = "Azs-ERCS01",
 
         # Domain Administrator Credential to create Service Principal
         [Parameter(Mandatory = $true,
             Position = 2)]
         [System.Management.Automation.PSCredential]
-        $AdminCredential,
-
-        # Switch to delete existing Service Principal with Provided Display Name and recreate
-        [Parameter(Mandatory = $false)]
-        [switch]
-        $DeleteAndCreateNew
+        $AdminCredential
     )
 
-    Write-Verbose "Creating a Certificate for the Service Principal.."
-    $clientCertificate = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=$DisplayName" -KeySpec KeyExchange
-    $scriptBlock = {
-        param ([string] $DisplayName, [System.Security.Cryptography.X509Certificates.X509Certificate2] $ClientCertificate, [bool] $DeleteAndCreateNew)
-        $VerbosePreference = "Continue"
-        $ErrorActionPreference = "stop"
-
-        Import-Module 'ActiveDirectory' -Verbose:$false 4> $null
-
-        # Application Group Name
-        $applicationGroupName = $DisplayName + "-AppGroup"
-        $applicationGroupDescription = "Application group for $DisplayName"
-        $shellSiteDisplayName = $DisplayName
-        $shellSiteRedirectUri = "https://localhost/".ToLowerInvariant()
-        $shellSiteApplicationId = [guid]::NewGuid().ToString()
-        $shellSiteClientDescription = "Client for $DisplayName"
-        $defaultTimeOut = New-TimeSpan -Minutes 5
-
-        if ($DeleteAndCreateNew) {
-            $applicationGroup = Get-GraphApplicationGroup -ApplicationGroupName $applicationGroupName -Timeout $defaultTimeOut
-            Write-Verbose $applicationGroup
-            if ($applicationGroup) {
-                Write-Warning -Message "Deleting existing application group with name '$applicationGroupName'."
-                Remove-GraphApplicationGroup -TargetApplicationGroup $applicationGroup -Timeout $defaultTimeOut
-            }
-        }
-
-        Write-Verbose -Message "Creating new application group with name '$applicationGroupName'."
-        $applicationParameters = @{
-            Name               = $applicationGroupName
-            Description        = $applicationGroupDescription
-            ClientType         = 'Confidential'
-            ClientId           = $shellSiteApplicationId
-            ClientDisplayName  = $shellSiteDisplayName
-            ClientRedirectUris = $shellSiteRedirectUri
-            ClientDescription  = $shellSiteClientDescription
-            ClientCertificates = $ClientCertificate
-        }
-        $defaultTimeOut = New-TimeSpan -Minutes 10
-        $applicationGroup = New-GraphApplicationGroup @applicationParameters -PassThru -Timeout $defaultTimeOut
-
-        Write-Verbose -Message "Shell Site ApplicationGroup: $($applicationGroup | ConvertTo-Json)"
-        return [pscustomobject]@{
-            ObjectId      = $applicationGroup.Identifier
-            ApplicationId = $applicationParameters.ClientId
-            Thumbprint    = $ClientCertificate.Thumbprint
-        }
-    }
-    $domainAdminSession = New-PSSession -ComputerName $AdfsMachineName -Credential $AdminCredential -Authentication Credssp -Verbose
-    $output = Invoke-Command -Session $domainAdminSession -ScriptBlock $scriptBlock -ArgumentList @($DisplayName, $ClientCertificate, $DeleteAndCreateNew.IsPresent) -Verbose -ErrorAction Stop
-    Write-Verbose "AppDetails: $(ConvertTo-Json $output -Depth 2)"   
-    return $output
+    $ApplicationGroupName = $DisplayName
+    $computerName = $ERCSMachineName
+    $cloudAdminCredential = $AdminCredential
+    $domainAdminSession = New-PSSession -ComputerName $computerName  -Credential $cloudAdminCredential -configurationname privilegedendpoint  -Verbose
+    $GraphClientCertificate = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=$ApplicationGroupName" -KeySpec KeyExchange
+    $graphRedirectUri = "https://localhost/".ToLowerInvariant()
+    $ApplicationName = $ApplicationGroupName
+    $application = Invoke-Command -Session $domainAdminSession -Verbose -ErrorAction Stop  `
+            -ScriptBlock { New-GraphApplication -Name $using:ApplicationName  -ClientRedirectUris $using:graphRedirectUri -ClientCertificates $using:GraphClientCertificate }
+    
+    return $application
 }
 
 # Exposed Functions
