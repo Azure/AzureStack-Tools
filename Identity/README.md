@@ -29,8 +29,9 @@ and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 You can create a Service Principal by executing the following command after importing the Identity module
 
 ```powershell
-$servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "<YourServicePrincipalName>" -AdminCredential $(Get-Credential) -Verbose
+$servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "myapp12" -AdminCredential $(Get-Credential) -Verbose
 ```
+Note: For a Multi node Azure Stack installation you also have to provide the ERCSMachineName parameter to send the request to the Privileged endpoint of your Azure Stack instance.
 
 After the Service Principal is created, you should open your Azure Stack Portal to provide the appropriate level of RBAC to it. You can do this from the Access Control (IAM) tab of any resource. After the RBAC is given, you can login using the service principal as follows:
 
