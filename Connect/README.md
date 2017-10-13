@@ -5,7 +5,7 @@ As a prerequisite, make sure that you installed the correct PowerShell modules a
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper'
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-Install-Module -Name AzureStack -RequiredVersion 1.2.10
+Install-Module -Name AzureStack -RequiredVersion 1.2.11
 ```
 
 This tool set allows you to connect to an Azure Stack Development Kit (ASDK) instance from an external personal laptop. You can then access the portal or log into that environment via PowerShell.

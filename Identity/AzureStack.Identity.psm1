@@ -55,7 +55,6 @@ function New-AzsAdGraphServicePrincipal {
         [System.Management.Automation.PSCredential]
         $AdminCredential
     )
-
     $ApplicationGroupName = $DisplayName
     $computerName = $ERCSMachineName
     $cloudAdminCredential = $AdminCredential
