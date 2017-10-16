@@ -636,7 +636,7 @@ function New-AzsServer2016VMImage {
         
         if ($Version -eq 'Core' -or $Version -eq 'Both') {
             
-            $sku = "2016-Datacenter-Core"
+            $sku = "2016-Datacenter-Server-Core"
 
             #Pre-validate that the VM Image is not already available
             $VMImageAlreadyAvailable = $false
