@@ -61,7 +61,7 @@ This command may show a **popup prompt that can be ignored** without issue.
 
 To ensure that the Windows Server 2016 VM Image has the latest cumulative update, provide the -IncludeLatestCU parameter.
 
-Please note that to use this image for **installing additional Azure Stack services**, you will need to make use of the -Net35 parameter to install .NET Framework 3.5 into the image.
+Please note that to use this image for some Quick Start templates, you may need to make use of the -Net35 parameter to install .NET Framework 3.5 into the image.
 
 ## Add a VM image to the Marketplace with PowerShell
 
