@@ -589,8 +589,8 @@ function New-AzsServer2016VMImage {
             else {
                 if ($IncludeLatestCU) {
                     #for latest CU, check https://support.microsoft.com/en-us/help/4000825/windows-10-and-windows-server-2016-update-history
-                    $Uri = 'http://download.windowsupdate.com/d/msdownload/update/software/updt/2017/01/windows10.0-kb4010672-x64_e12a6da8744518197757d978764b6275f9508692.msu'
-                    $OutFile = "$ModulePath\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu"
+                    $Uri = 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/10/windows10.0-kb4041691-x64_6b578432462f6bec9b4c903b3119d437ef32eb29.msu'
+                    $OutFile = "$ModulePath\update.msu"
                 }
                 else {
                     #test if manual Uri is giving 200
