@@ -736,7 +736,7 @@ if($IP)
 			#
 			$comboBox1.FormattingEnabled = $true
 			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)CloudAdmin")
-			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin")
+			if($CheckADSK -eq 1) { $comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin") }
 			$comboBox1.Items.AddRange("User Input")
 			$comboBox1.SelectedIndex = 0
 			$comboBox1.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,29)
