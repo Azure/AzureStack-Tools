@@ -126,31 +126,11 @@ function Remove-AzsRegistration{
         [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext),
-
-        [Parameter(Mandatory = $false)]
-        [String] $AzureEnvironmentName = 'AzureCloud',
-
-        [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
-        
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Capacity', 'PayAsYouUse', 'Development')]
-        [string] $BillingModel = 'PayAsYouUse',
-
-        [Parameter(Mandatory = $false)]
-        [switch] $MarketplaceSyndicationEnabled = $true,
-
-        [Parameter(Mandatory = $false)]
-        [switch] $UsageReportingEnabled = $true,
-
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNull()]
-        [string] $AgreementNumber        
+        [ValidateNotNullorEmpty()]
+        [PSObject] $AzureContext = (Get-AzureRmContext)
     )
     
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -164,46 +144,65 @@ function Remove-AzsRegistration{
 
     $registrationName =  "AzureStack-$($stampInfo.CloudID)"
 
-    # Configure Azure Bridge
-    $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
-
-    # Get registration token
-    $getTokenParams = @{
-        BillingModel                  = $BillingModel
-        MarketplaceSyndicationEnabled = $false
-        UsageReportingEnabled         = $false
-        AgreementNumber               = $AgreementNumber
-    }
-    Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
-    $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
-
-    # Register environment with Azure
-    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken
-
-    # Assign custom RBAC role
-    Log-Output "Assigning custom RBAC role to resource $RegistrationName"
-    New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipal $servicePrincipal
-
-    # Activate AzureStack syndication / usage reporting features
-    $activationKey = Get-RegistrationActivationKey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
-    Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
-    $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:activationKey }
-    Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
-
-    # Remove registration resource in Azure
-    Log-Output "Searching for registration resource in Azure"
+    # Find registration resource in Azure
+    Log-Output "Searching for registration resource in Azure..."
     $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-    $registrationResource = Get-AzureRmResource -ResourceId $resourceId -ErrorAction Ignore
+    $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
     
     if ($registrationResource)
     {
-        Log-Output "Resource found. Removing resource: $registrationResourceId"
+        Log-Output "Resource found. Deactivating Azure Stack and removing resource: $registrationResourceId"
+
+        $BillingModel = $registrationResource.Properties.BillingModel
+        $AgreementNumber = $registrationResource.Properties.AgreementNumber
+
+        # Configure Azure Bridge
+        $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
+
+        # Get registration token
+        if (($BillingModel -eq "Capacity") -or ($BillingModel -eq "Development"))
+        {
+            $getTokenParams = @{
+            BillingModel                  = $BillingModel
+            MarketplaceSyndicationEnabled = $false
+            UsageReportingEnabled         = $false
+            AgreementNumber               = $AgreementNumber
+            }
+        }
+        else
+        {
+            $getTokenParams = @{
+            BillingModel                  = $BillingModel
+            MarketplaceSyndicationEnabled = $false
+            UsageReportingEnabled         = $true
+            AgreementNumber               = $AgreementNumber
+            }
+        }
+    
+        Log-Output "Deactivating syndication features..."
+        Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
+        $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
+
+        # Register environment with Azure
+        New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken
+
+        # Assign custom RBAC role
+        Log-Output "Assigning custom RBAC role to resource $RegistrationName"
+        New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipal $servicePrincipal
+
+        # Deactivate AzureStack syndication / usage reporting features
+        $activationKey = Get-RegistrationActivationKey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
+        Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
+        $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:activationKey }
+        Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
+
+        # Remove registration resource from Azure
+        Log-Output "Removing registration resource from Azure..."
         Remove-AzureRmResource -ResourceId $resourceId -Force
     }
     else
     {
-        Log-Warning "Registration resource was not found: $registrationResourceId"
-        Log-Output "Ending registration action..."
+        Log-Throw -Message "Registration resource was not found: $registrationResourceId. Please ensure a registration resource exists in the provided subscription & resource group." -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
     }
 
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
@@ -778,7 +777,6 @@ Function Get-RegistrationActivationKey{
     {
         try 
         {
-
             Log-Output "Retrieving activation key."
             $resourceActionparams = @{
                 Action            = "GetActivationKey"
