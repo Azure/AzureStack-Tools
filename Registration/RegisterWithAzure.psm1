@@ -129,6 +129,9 @@ function Remove-AzsRegistration{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
+        [String] $ResourceGroupLocation = 'westcentralus',
+
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext)
     )
@@ -175,7 +178,6 @@ function Remove-AzsRegistration{
             BillingModel                  = $BillingModel
             MarketplaceSyndicationEnabled = $false
             UsageReportingEnabled         = $true
-            AgreementNumber               = $AgreementNumber
             }
         }
     
@@ -193,12 +195,13 @@ function Remove-AzsRegistration{
         # Deactivate AzureStack syndication / usage reporting features
         $activationKey = Get-RegistrationActivationKey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
         Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
-        $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:activationKey }
+        Activate-AzureStack -Session $session -ActivationKey $ActivationKey
+        
         Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
 
         # Remove registration resource from Azure
         Log-Output "Removing registration resource from Azure..."
-        Remove-AzureRmResource -ResourceId $resourceId -Force
+        Remove-RegistrationResource -ResourceId $registrationResourceId
     }
     else
     {
@@ -551,6 +554,18 @@ Function UnRegister-AzsEnvironment{
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
     $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
+    $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+    
+    if ($registrationResource)
+    {
+        Log-Output "Found registration resource in Azure: $registrationResourceId"
+        Log-Output "Removing registration resource from Azure..."
+        Remove-RegistrationResource -ResourceId $registrationResourceId
+    }
+    else
+    {
+        Log-Throw "Registration resource not found in Azure: $registrationResourceId `r`nPlease ensure a valid registration exists in the subscription / resource group provided." -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
+    }
 
     Log-Output "Your Azure Stack environment is now unregistered from Azure."
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
@@ -952,6 +967,46 @@ function New-RBACAssignment{
 
 .SYNOPSIS
 
+Activates features in AzureStack according to the properties in the activation key
+
+#>
+function Activate-AzureStack{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.Runspaces.PSSession] $Session,
+
+        [Parameter(Mandatory = $true)]
+        [PSObject] $ActivationKey
+    )
+
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10 
+    do
+    {
+        try
+        {
+            $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:ActivationKey }
+        }
+        catch
+        {
+            Log-Warning "Activation of Azure Stack features failed:`r`n$($_.Exception)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt)
+            {
+                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            } 
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+}
+
+<#
+
+.SYNOPSIS
+
 Determines if a new Azure connection is required.
 
 .DESCRIPTION
@@ -1093,6 +1148,43 @@ function Register-AzureStackResourceProvider{
         Catch
         {
             Log-Warning "Registering Azure Stack resource provider failed:`r`n$($_.Exception)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt)
+            {
+                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+}
+
+<#
+
+.SYNOPSIS
+
+Removes the specified registration resource from Azure
+
+#>
+function Remove-RegistrationResource{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [String] $ResourceId
+    )
+    
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10 
+    do
+    {
+        try
+        {
+            Remove-AzureRmResource -ResourceId $ResourceId -Force
+        }
+        catch
+        {
+            Log-Warning "Removal of registration resource failed:`r`n$($_.Exception)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
