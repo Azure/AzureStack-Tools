@@ -28,7 +28,7 @@ Import-Module .\AzureStack.MarketplaceSyndication.psm1
 Sync-AzSOfflineMarketplaceItems -destination c:\donwloadfolder
 ```
 
-##Optional PARAMETERS
+##Optional Parameters
 
 Parameter: Cloud
 Default: AzureCloud
