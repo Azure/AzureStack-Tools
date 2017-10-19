@@ -23,12 +23,12 @@ Import-Module .\AzureStack.MarketplaceSyndication.psm1
 ```
 
 
-##Launch the Tool
+## Launch the Tool
 ```powershell
 Sync-AzSOfflineMarketplaceItems -destination c:\donwloadfolder
 ```
 
-##Optional Parameters
+## Optional Parameters
 
 Parameter: Cloud
 Default: AzureCloud
@@ -41,10 +41,10 @@ Description: Specify the Tenant ID for the Authentication
 Once the download has been transferred to a machine that can access Azure Stack, you need to import it.
 You can use the Portal or PowerShell.
 
-##Importing the VHD
+## Importing the VHD
 
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-add-vm-image
 
-##Publishing the Gallery Item
+## Publishing the Gallery Item
 
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-create-and-publish-marketplace-item
