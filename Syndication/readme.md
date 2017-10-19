@@ -32,7 +32,7 @@ Sync-AzSOfflineMarketplaceItems -destination c:\donwloadfolder
 
 Parameter: Cloud
 Default: AzureCloud
-Description: Once Azure Stack RP is available in other Clouds like Azure Chine you can specify which one to use
+Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
 
 Parameter: TenantID
 Description: Specify the Tenant ID for the Authentication
