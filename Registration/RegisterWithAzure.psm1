@@ -1311,47 +1311,6 @@ function Confirm-StampVersion{
         Log-Throw "An error occurred checking stamp information: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
 }
-<#
-
-.SYNOPSIS
-
-Pre-Requisite check to determine if the called function will be able to complete successfully
-
-#>
-function Test-RegistrationActionSuccess{
-[CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [String] $RegistrationAction,
-
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext)
-    )
-
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-
-    switch($RegistrationAction)
-    {
-        "Set-AzsRegistration"
-        {
-            
-        }
-
-        "Remove-AzsRegistration"
-        {
-        }
-
-        "RegisterAzs-Environment"
-        {
-        }
-
-        "UnRegister-AzsEnvironment"
-        {
-        }
-    }
-        
-}
 
 <#
 
