@@ -31,13 +31,17 @@ Sync-AzSOfflineMarketplaceItems -destination c:\donwloadfolder
 ## Optional Parameters
 
 Parameter: Cloud
+
 Default: AzureCloud
+
 Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
 
 Parameter: TenantID
+
 Description: Specify the Tenant ID for the Authentication
 
 Parameter: SubscriptionID
+
 Description: Specify the Subscription ID for the Authentication when having multiple subscriptions
 
 Once the download has been transferred to a machine that can access Azure Stack, you need to import it.
