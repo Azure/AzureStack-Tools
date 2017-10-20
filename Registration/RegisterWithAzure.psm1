@@ -13,7 +13,7 @@ You must also have access to an account / directory that is an owner or contribu
 $LogFolder = "$env:SystemDrive\MASLogs"
 if (-not (Test-Path $LogFolder))
 {
-    New-Item -Path $LogFolder -ItemType Directory -Force
+    New-Item -Path $LogFolder -ItemType Directory -Force | Out-Null
 }
 if(-not $Global:AzureRegistrationLog)
 {
@@ -519,13 +519,13 @@ This function will not enable marketplace syndication or usage reporting.
 Function Register-AzsEnvironment{
 [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext),
-
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
         [String] $RegistrationToken,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [PSObject] $AzureContext = (Get-AzureRmContext),
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -1324,7 +1324,7 @@ function Log-Output{
     param (
         [Parameter(ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
         [object] $Message
-    )    
+    )
 
     "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Global:AzureRegistrationLog -Append
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
