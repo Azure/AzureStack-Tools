@@ -44,13 +44,14 @@ Parameter: SubscriptionID
 
 Description: Specify the Subscription ID for the Authentication when having multiple subscriptions
 
-Once the download has been transferred to a machine that can access Azure Stack, you need to import it.
-You can use the Portal or PowerShell.
+##Importing into Azure Stack
+Once the download has been transferred to a machine that can access Azure Stack, you need to import the VHD and publish the Gallery Item.
+
 
 ## Importing the VHD
-
+You can use the Portal or PowerShell.
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-add-vm-image
 
 ## Publishing the Gallery Item
-
+You need to use PowerShell
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-create-and-publish-marketplace-item
