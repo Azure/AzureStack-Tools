@@ -21,17 +21,27 @@ function Sync-AzSOfflineMarketplaceItems{
 
         [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItems')]
         [ValidateNotNullorEmpty()]
-        [String] $tenantid
+        [String] $tenantid,
+
+        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItems')]
+        [ValidateNotNullorEmpty()]
+        [String] $subscriptionid
         
         )
 
 
-    If ($tenantid.isPresent){
+    If ($tenantid.isPresent)
+    {
     $azureAccount = Add-AzureRmAccount -TenantId $tenantid
     }
 
-    else{
+    elseif($subscriptionid.isPresent) 
+    { 
+    Add-AzureRmAccount -subscriptionid $subsccription
+    }
 
+    else
+    {
     $azureAccount = Add-AzureRmAccount
     }
 
