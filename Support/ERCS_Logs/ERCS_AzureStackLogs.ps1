@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 	Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 .DESCRIPTION
@@ -72,9 +72,6 @@ $ScriptPath = $script:MyInvocation.MyCommand.Path
 # Check to see if we are in FullLanguage
 $LanguageMode = $ExecutionContext.SessionState.LanguageMode
 
-#set the language to en-us
-Set-WinSystemLocale en-us
-
 #load .net assembly 
 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
 
@@ -134,7 +131,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.5.2
+#    1.5.3
 #  
 #------------------------------------------------------------------------------ 
  
@@ -155,7 +152,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.5.2" | Write-Host -ForegroundColor Yellow 
+"    1.5.3" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -221,22 +218,73 @@ If(!($IP))
 #Sel AzureStackStampInformation
 if(!($IP))
 {
-	$title = "`n`t`t`t`t`t`t `t[PROMPT]"
-	$message = "`t`t`t`t`t`t`t `tDo you have the AzureStackStampInformation.json file?"
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$JSONMainForm = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$Jsonlabel = $null
+	[System.Windows.Forms.Button]$JsonYbutton = $null
+	[System.Windows.Forms.Button]$JsonNbutton = $null
+	[System.Windows.Forms.Button]$button1 = $null
+	function InitializeComponent
+	{
+	$Jsonlabel = New-Object -TypeName System.Windows.Forms.Label
+	$JsonYbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JsonNbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JSONMainForm.SuspendLayout()
+	#
+	#Jsonlabel
+	#
+	$Jsonlabel.AutoSize = $true
+	$Jsonlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(59,42)
+	$Jsonlabel.Name = 'Jsonlabel'
+	$Jsonlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(248,13)
+	$Jsonlabel.TabIndex = 0
+	$Jsonlabel.Text = 'Do you have the AzureStackStampInformation.json'
+	#
+	#JsonYbutton
+	#
+	$JsonYbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(62,78)
+	$JsonYbutton.Name = 'JsonYbutton'
+	$JsonYbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonYbutton.TabIndex = 1
+	$JsonYbutton.Text = 'Yes'
+	$JsonYbutton.UseVisualStyleBackColor = $true
+	$JsonYbutton.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+	#
+	#JsonNbutton
+	#
+	$JsonNbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(232,78)
+	$JsonNbutton.Name = 'JsonNbutton'
+	$JsonNbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonNbutton.TabIndex = 2
+	$JsonNbutton.Text = 'No'
+	$JsonNbutton.UseVisualStyleBackColor = $true
+	$JsonNbutton.DialogResult = [System.Windows.Forms.DialogResult]::No
+	#
+	#JSONMainForm
+	#
+	$JSONMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(369,133)
+	$JSONMainForm.Controls.Add($JsonNbutton)
+	$JSONMainForm.Controls.Add($JsonYbutton)
+	$JSONMainForm.Controls.Add($Jsonlabel)
+	$JSONMainForm.Name = 'JSONMainForm'
+	$JSONMainForm.ResumeLayout($false)
+	$JSONMainForm.PerformLayout()
+	Add-Member -InputObject $JSONMainForm -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name Jsonlabel -Value $Jsonlabel -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonYbutton -Value $JsonYbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonNbutton -Value $JsonNbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+	$JSONMainForm.Topmost = $True
+	$JSONMainForm.StartPosition = "CenterScreen"
 
-	$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
-	    "Loads AzureStackStampInformation.json"
-
-	$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
-	    "Does not load AzureStackStampInformation.json"
-
-	$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-
-	$result = $host.ui.PromptForChoice($title, $message, $options, 1) 
+	}
+	. InitializeComponent
+	$result = $JSONMainForm.ShowDialog()
 
 	switch ($result)
 	    {
-	        0 {    
+	        "Yes" {    
 	            Add-Type -AssemblyName System.Windows.Forms
 	            $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
 	            InitialDirectory = $env:SystemDrive
@@ -246,14 +294,16 @@ if(!($IP))
 	            $JSONFile = Get-Content -Raw -Path $FileBrowser.FileNames | ConvertFrom-Json
                 If($JSONFile)
 	                {
-					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
                     Write-Host "`n `t[INFO] Loaded $($FileBrowser.FileNames)" -ForegroundColor Green
-                    [array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
+					Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+					$JSONFile | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
+					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
+					[array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
 	                $selERCSIP = $ERCSIPS | Out-GridView -Title "Please Select Emergency Console IPAddress" -PassThru
 	                $IP = $selERCSIP
                     }
 	          }
-	        1 {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
+	        "No" {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
 	    }
 }
 
