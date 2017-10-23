@@ -139,9 +139,14 @@ function Get-AzsServiceQuota {
     param(
         [string] $ResourceName,
         [string] $ResourceType,
+        [string] ResourceGroupName,
         [string] $ApiVersion
     )
-    
-    $serviceQuota = Get-AzureRmResource -ResourceName $ResourceName  -ApiVersion $ApiVersion -ResourceType $ResourceType
+    if($ResourceGroupName){
+        $serviceQuota = Get-AzureRmResource -ResourceName $ResourceName  -ApiVersion $ApiVersion -ResourceType $ResourceType -ResourceGroupName $ResourceGroupName
+    }
+    else{
+        $serviceQuota = Get-AzureRmResource -ResourceName $ResourceName  -ApiVersion $ApiVersion -ResourceType $ResourceType
+    }
     $serviceQuota.ResourceId
 }
