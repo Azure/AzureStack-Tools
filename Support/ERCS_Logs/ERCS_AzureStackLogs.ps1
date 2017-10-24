@@ -72,9 +72,6 @@ $ScriptPath = $script:MyInvocation.MyCommand.Path
 # Check to see if we are in FullLanguage
 $LanguageMode = $ExecutionContext.SessionState.LanguageMode
 
-#set the language to en-us
-Set-WinSystemLocale en-us
-
 #load .net assembly 
 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
 
@@ -134,7 +131,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.5.2
+#    1.5.3
 #  
 #------------------------------------------------------------------------------ 
  
@@ -155,7 +152,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.5.2" | Write-Host -ForegroundColor Yellow 
+"    1.5.3" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -170,6 +167,22 @@ If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exi
 #clear var $ip
 $IP = $null
 Clear-Host
+
+#Temp Firewall rule for access to PEP
+Try
+{
+    $firewall = New-NetFirewallRule -Name "AzureStack Firewall rule" -DisplayName "AzureStack PEP Access Firewall rule" -Description "Allow Outbound Access to Remote Powershell" -Group "AzureStack" -Enabled True -Action Allow -Profile Any -Direction Outbound -Protocol TCP -RemotePort 5985
+
+    If($firewall.PrimaryStatus -eq "OK")
+        {Write-Host "`n `t[INFO] Created firewall rule to allow access to AzureStack PEP" -ForegroundColor Green}
+}
+catch 
+{
+    Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+    Write-Host "`n Press any key to continue ...`n"
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
 
 #Test for Module
 function load_module($name)
@@ -213,6 +226,7 @@ If(!($IP))
 	Write-Host "`n `t[INFO] Load AzureStackStampInformation.json" -ForegroundColor Green
 	$FoundJSONFile = Get-Content -Raw -Path "$($Env:ProgramData)\AzureStackStampInformation.json" | ConvertFrom-Json
 	[string]$FoundDomainFQDN = $FoundJSONFile.DomainFQDN
+	[array]$ERCSIPS = $FoundJSONFile.EmergencyConsoleIPAddresses
 	$FoundSelERCSIP  = $FoundJSONFile.EmergencyConsoleIPAddresses | Out-GridView -Title "Please Select Emergency Console IP Address" -PassThru
 	$IP = $FoundSelERCSIP
 	}
@@ -221,22 +235,73 @@ If(!($IP))
 #Sel AzureStackStampInformation
 if(!($IP))
 {
-	$title = "`n`t`t`t`t`t`t `t[PROMPT]"
-	$message = "`t`t`t`t`t`t`t `tDo you have the AzureStackStampInformation.json file?"
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$JSONMainForm = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$Jsonlabel = $null
+	[System.Windows.Forms.Button]$JsonYbutton = $null
+	[System.Windows.Forms.Button]$JsonNbutton = $null
+	[System.Windows.Forms.Button]$button1 = $null
+	function InitializeComponent
+	{
+	$Jsonlabel = New-Object -TypeName System.Windows.Forms.Label
+	$JsonYbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JsonNbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JSONMainForm.SuspendLayout()
+	#
+	#Jsonlabel
+	#
+	$Jsonlabel.AutoSize = $true
+	$Jsonlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(59,42)
+	$Jsonlabel.Name = 'Jsonlabel'
+	$Jsonlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(248,13)
+	$Jsonlabel.TabIndex = 0
+	$Jsonlabel.Text = 'Do you have the AzureStackStampInformation.json'
+	#
+	#JsonYbutton
+	#
+	$JsonYbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(62,78)
+	$JsonYbutton.Name = 'JsonYbutton'
+	$JsonYbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonYbutton.TabIndex = 1
+	$JsonYbutton.Text = 'Yes'
+	$JsonYbutton.UseVisualStyleBackColor = $true
+	$JsonYbutton.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+	#
+	#JsonNbutton
+	#
+	$JsonNbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(232,78)
+	$JsonNbutton.Name = 'JsonNbutton'
+	$JsonNbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonNbutton.TabIndex = 2
+	$JsonNbutton.Text = 'No'
+	$JsonNbutton.UseVisualStyleBackColor = $true
+	$JsonNbutton.DialogResult = [System.Windows.Forms.DialogResult]::No
+	#
+	#JSONMainForm
+	#
+	$JSONMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(369,133)
+	$JSONMainForm.Controls.Add($JsonNbutton)
+	$JSONMainForm.Controls.Add($JsonYbutton)
+	$JSONMainForm.Controls.Add($Jsonlabel)
+	$JSONMainForm.Name = 'JSONMainForm'
+	$JSONMainForm.ResumeLayout($false)
+	$JSONMainForm.PerformLayout()
+	Add-Member -InputObject $JSONMainForm -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name Jsonlabel -Value $Jsonlabel -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonYbutton -Value $JsonYbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonNbutton -Value $JsonNbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+	$JSONMainForm.Topmost = $True
+	$JSONMainForm.StartPosition = "CenterScreen"
 
-	$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
-	    "Loads AzureStackStampInformation.json"
-
-	$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
-	    "Does not load AzureStackStampInformation.json"
-
-	$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-
-	$result = $host.ui.PromptForChoice($title, $message, $options, 1) 
+	}
+	. InitializeComponent
+	$result = $JSONMainForm.ShowDialog()
 
 	switch ($result)
 	    {
-	        0 {    
+	        "Yes" {    
 	            Add-Type -AssemblyName System.Windows.Forms
 	            $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
 	            InitialDirectory = $env:SystemDrive
@@ -246,14 +311,16 @@ if(!($IP))
 	            $JSONFile = Get-Content -Raw -Path $FileBrowser.FileNames | ConvertFrom-Json
                 If($JSONFile)
 	                {
-					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
                     Write-Host "`n `t[INFO] Loaded $($FileBrowser.FileNames)" -ForegroundColor Green
-                    [array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
+					Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+					$JSONFile | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
+					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
+					[array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
 	                $selERCSIP = $ERCSIPS | Out-GridView -Title "Please Select Emergency Console IPAddress" -PassThru
 	                $IP = $selERCSIP
                     }
 	          }
-	        1 {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
+	        "No" {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
 	    }
 }
 
@@ -614,8 +681,15 @@ if($IP)
 	{
 		 Write-Host "`n `t[INFO] Using $($IP)" -ForegroundColor Green
 		#Add this machine to trusted Hosts 
+		if ($ERCSIPS)
+		{
+		$ERCS = $ERCSIPS -join ","
+		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($ERCS)" -Force
+		}
+		else
+		{
 		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($IP)" -Force
-
+		}
 		#gethostip
         $global:progresspreference ="SilentlyContinue"
 		Write-Host "`n `t[INFO] Testing connectivity to $($IP)" -ForegroundColor Green
@@ -736,7 +810,7 @@ if($IP)
 			#
 			$comboBox1.FormattingEnabled = $true
 			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)CloudAdmin")
-			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin")
+			if($CheckADSK -eq 1) { $comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin") }
 			$comboBox1.Items.AddRange("User Input")
 			$comboBox1.SelectedIndex = 0
 			$comboBox1.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,29)
@@ -1298,6 +1372,7 @@ if($IP)
 	finally
 	{
     Remove-SmbShare -Name $sharename -Force
+	Remove-NetFirewallRule -DisplayName "AzureStack PEP Access Firewall rule"
 	Write-Host "`n Press any key to continue ...`n"
 	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 	exit	
