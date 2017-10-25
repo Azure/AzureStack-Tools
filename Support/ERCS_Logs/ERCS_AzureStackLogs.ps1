@@ -1198,7 +1198,7 @@ if($IP)
 	            $tothedate = $($todate.Date)
 	            $tostarttime = ($tothedate).Add($EndTimePicker.Value.TimeOfDay)
 	            [DateTime]$ToDate = $tostarttime
-	            if(($FromDate -lt $ToDate) -and ($ToDate -lt (Get-Date)))
+	            if($ToDate -lt (Get-Date))
 	            {
 	            Write-Host "`tSelected   $($ToDate)"
 				$ToDate = Convert-AZSServerTime -DateTime $ToDate
