@@ -55,5 +55,11 @@ Specifies if script is running on Azure Stack machine such as Azure Stack Develo
 - Yes
 - No
 
+## StampTimeZone ##
+Specifies timezone id for Azure Stack stamp. Format must be in one of the 2 formats:
+
+- (Get-TimeZone -Name "US Eastern*").id
+- "Pacific Standard Time"
+
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time"
