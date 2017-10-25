@@ -40,8 +40,12 @@
 	Specifies if script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM.
 	Yes
 	No
+.PARAMETER StampTimeZone
+	Specifies timezone id for Azure Stack stamp. Format must be in one of the 2 formats:
+	(Get-TimeZone -Name "US Eastern*").id
+	"Pacific Standard Time"
 .EXAMPLE
- .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No
+ .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time"
 #>
 
 Param(
@@ -50,6 +54,8 @@ Param(
     [DateTime] $FromDate,
 	[Parameter(Mandatory=$false,HelpMessage="Valid formats are: in 'MM/DD/YYYY' or 'MM/DD/YYYY HH:MM'")]
     [DateTime] $ToDate,
+	[Parameter(Mandatory=$false,HelpMessage="Valid formats are: in '(Get-TimeZone -Name 'US Eastern*').id' or 'Pacific Standard Time'")]
+    [String] $StampTimeZone,
 	[Parameter(Mandatory=$false,HelpMessage="Valid choices are: Service Fabric, Storage, Networking, Identity, Patch & Update, Compute, Backup")]
     [ValidateSet("Service Fabric", "Storage", "Networking", "Identity", "Patch & Update", "Compute", "Backup")]
     [string] $Scenario,
@@ -71,9 +77,6 @@ $ScriptPath = $script:MyInvocation.MyCommand.Path
 
 # Check to see if we are in FullLanguage
 $LanguageMode = $ExecutionContext.SessionState.LanguageMode
-
-#set the language to en-us
-Set-WinSystemLocale en-us
 
 #load .net assembly 
 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
@@ -134,7 +137,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.5.2
+#    1.5.3
 #  
 #------------------------------------------------------------------------------ 
  
@@ -155,7 +158,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.5.2" | Write-Host -ForegroundColor Yellow 
+"    1.5.3" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -170,6 +173,25 @@ If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exi
 #clear var $ip
 $IP = $null
 Clear-Host
+
+#Temp Firewall rule for access to PEP
+Try
+{
+    $FWruletest = Get-NetFirewallRule -Name "AzureStack Firewall rule" -ErrorAction SilentlyContinue
+    If(!($FWruletest))
+    {
+    $firewall = New-NetFirewallRule -Name "AzureStack Firewall rule" -DisplayName "AzureStack PEP Access Firewall rule" -Description "Allow Outbound Access to Remote Powershell" -Group "AzureStack" -Enabled True -Action Allow -Profile Any -Direction Outbound -Protocol TCP -RemotePort 5985
+    }
+    If($firewall.PrimaryStatus -eq "OK")
+        {Write-Host "`n `t[INFO] Created firewall rule to allow access to AzureStack PEP" -ForegroundColor Green}
+}
+catch 
+{
+    Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+    Write-Host "`n Press any key to continue ...`n"
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
 
 #Test for Module
 function load_module($name)
@@ -213,6 +235,8 @@ If(!($IP))
 	Write-Host "`n `t[INFO] Load AzureStackStampInformation.json" -ForegroundColor Green
 	$FoundJSONFile = Get-Content -Raw -Path "$($Env:ProgramData)\AzureStackStampInformation.json" | ConvertFrom-Json
 	[string]$FoundDomainFQDN = $FoundJSONFile.DomainFQDN
+	[array]$ERCSIPS = $FoundJSONFile.EmergencyConsoleIPAddresses
+	$StampTimeZone = $FoundJSONFile.Timezone
 	$FoundSelERCSIP  = $FoundJSONFile.EmergencyConsoleIPAddresses | Out-GridView -Title "Please Select Emergency Console IP Address" -PassThru
 	$IP = $FoundSelERCSIP
 	}
@@ -221,22 +245,73 @@ If(!($IP))
 #Sel AzureStackStampInformation
 if(!($IP))
 {
-	$title = "`n`t`t`t`t`t`t `t[PROMPT]"
-	$message = "`t`t`t`t`t`t`t `tDo you have the AzureStackStampInformation.json file?"
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$JSONMainForm = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$Jsonlabel = $null
+	[System.Windows.Forms.Button]$JsonYbutton = $null
+	[System.Windows.Forms.Button]$JsonNbutton = $null
+	[System.Windows.Forms.Button]$button1 = $null
+	function InitializeComponent
+	{
+	$Jsonlabel = New-Object -TypeName System.Windows.Forms.Label
+	$JsonYbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JsonNbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JSONMainForm.SuspendLayout()
+	#
+	#Jsonlabel
+	#
+	$Jsonlabel.AutoSize = $true
+	$Jsonlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(59,42)
+	$Jsonlabel.Name = 'Jsonlabel'
+	$Jsonlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(248,13)
+	$Jsonlabel.TabIndex = 0
+	$Jsonlabel.Text = 'Do you have the AzureStackStampInformation.json'
+	#
+	#JsonYbutton
+	#
+	$JsonYbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(62,78)
+	$JsonYbutton.Name = 'JsonYbutton'
+	$JsonYbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonYbutton.TabIndex = 1
+	$JsonYbutton.Text = 'Yes'
+	$JsonYbutton.UseVisualStyleBackColor = $true
+	$JsonYbutton.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+	#
+	#JsonNbutton
+	#
+	$JsonNbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(232,78)
+	$JsonNbutton.Name = 'JsonNbutton'
+	$JsonNbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonNbutton.TabIndex = 2
+	$JsonNbutton.Text = 'No'
+	$JsonNbutton.UseVisualStyleBackColor = $true
+	$JsonNbutton.DialogResult = [System.Windows.Forms.DialogResult]::No
+	#
+	#JSONMainForm
+	#
+	$JSONMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(369,133)
+	$JSONMainForm.Controls.Add($JsonNbutton)
+	$JSONMainForm.Controls.Add($JsonYbutton)
+	$JSONMainForm.Controls.Add($Jsonlabel)
+	$JSONMainForm.Name = 'JSONMainForm'
+	$JSONMainForm.ResumeLayout($false)
+	$JSONMainForm.PerformLayout()
+	Add-Member -InputObject $JSONMainForm -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name Jsonlabel -Value $Jsonlabel -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonYbutton -Value $JsonYbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonNbutton -Value $JsonNbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+	$JSONMainForm.Topmost = $True
+	$JSONMainForm.StartPosition = "CenterScreen"
 
-	$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
-	    "Loads AzureStackStampInformation.json"
-
-	$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
-	    "Does not load AzureStackStampInformation.json"
-
-	$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-
-	$result = $host.ui.PromptForChoice($title, $message, $options, 1) 
+	}
+	. InitializeComponent
+	$result = $JSONMainForm.ShowDialog()
 
 	switch ($result)
 	    {
-	        0 {    
+	        "Yes" {    
 	            Add-Type -AssemblyName System.Windows.Forms
 	            $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
 	            InitialDirectory = $env:SystemDrive
@@ -246,14 +321,17 @@ if(!($IP))
 	            $JSONFile = Get-Content -Raw -Path $FileBrowser.FileNames | ConvertFrom-Json
                 If($JSONFile)
 	                {
-					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
                     Write-Host "`n `t[INFO] Loaded $($FileBrowser.FileNames)" -ForegroundColor Green
-                    [array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
+					Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+					$JSONFile | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
+					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
+					[array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
+					$StampTimeZone = $JSONFile.Timezone
 	                $selERCSIP = $ERCSIPS | Out-GridView -Title "Please Select Emergency Console IPAddress" -PassThru
 	                $IP = $selERCSIP
                     }
 	          }
-	        1 {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
+	        "No" {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
 	    }
 }
 
@@ -280,7 +358,7 @@ if(!($IP))
     ForEach ($GuessERCName in $GuessERCSName)
         {
 		$global:progresspreference ="SilentlyContinue"
-        $GuessName = Test-NetConnection -port 5985 -ComputerName $GuessERCName
+        $GuessName = Test-NetConnection -port 5985 -ComputerName $GuessERCName -WarningAction SilentlyContinue
         If ($GuessName.TcpTestSucceeded -eq "True")
             {
             [Array]$ListeningNames += $GuessName.RemoteAddress.IPAddressToString
@@ -292,7 +370,8 @@ if(!($IP))
 }
 
 #InStamp Check 
-if ($InStamp -ne "NO")
+if($InStamp -eq "Yes"){$CheckADSK = 1}
+if (!($InStamp))
 {
 	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
@@ -367,6 +446,19 @@ if ($InStamp -ne "NO")
 	{
 	Write-Host "`n `t[INFO] Using Azure Stack Development Kit or DVM" -ForegroundColor Green
 	$CheckADSK = 1
+	}
+}
+
+#Get Stamp Timezone
+If (!($StampTimeZone))
+{
+$SelCurrentTimeZone = [system.timezoneinfo]::GetSystemTimeZones() | Out-GridView -PassThru -Title "Select AzureStack Stamp installed timezone"
+[String]$StampTimeZone = $SelCurrentTimeZone.Id
+	If ($StampTimeZone -eq $null)
+	{
+	Write-Host "`n Press any key to continue ...`n"
+	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+	exit
 	}
 }
 
@@ -448,7 +540,7 @@ if(!($IP))
 	{
 		$moduleName = $null
 		$moduleName = "DnsServer"
-		#INFOrm the user of that we are doing
+		#inform the user of that we are doing
 		Write-Host "`n`t[INFO] Checking for DNS powershell module" -ForegroundColor White
 	    
 		if (load_module $moduleName)
@@ -610,12 +702,33 @@ if(!($IP))
 #Do Work
 if($IP)
 {
+
+	function Convert-AZSServerTime
+	(
+	[parameter( Mandatory=$true)]            
+	  [ValidateNotNullOrEmpty()]            
+	  [datetime]$DateTime
+	)  
+	{
+		$strCurrentTimeZone = $StampTimeZone
+		$ToTimeZoneObj  = [system.timezoneinfo]::GetSystemTimeZones() | Where-Object {$_.id -eq $strCurrentTimeZone}
+		$TargetZoneTime = [system.timezoneinfo]::ConvertTime($datetime, $ToTimeZoneObj) 
+		$TargetZoneTime
+	}
+
 	Try
 	{
 		 Write-Host "`n `t[INFO] Using $($IP)" -ForegroundColor Green
 		#Add this machine to trusted Hosts 
+		if ($ERCSIPS)
+		{
+		$ERCS = $ERCSIPS -join ","
+		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($ERCS)" -Force
+		}
+		else
+		{
 		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($IP)" -Force
-
+		}
 		#gethostip
         $global:progresspreference ="SilentlyContinue"
 		Write-Host "`n `t[INFO] Testing connectivity to $($IP)" -ForegroundColor Green
@@ -706,6 +819,8 @@ if($IP)
 			Add-Member -InputObject $DomainForm -Name Domaintextbox -Value $Domaintextbox -MemberType NoteProperty
 			Add-Member -InputObject $DomainForm -Name label1 -Value $label1 -MemberType NoteProperty
 			Add-Member -InputObject $DomainForm -Name button1 -Value $button1 -MemberType NoteProperty
+			$DomainForm.Topmost = $True
+			$DomainForm.StartPosition = "CenterScreen"
 			}
 			[System.Object]$userinputdomain = $null
 			. InitializeComponent
@@ -736,7 +851,7 @@ if($IP)
 			#
 			$comboBox1.FormattingEnabled = $true
 			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)CloudAdmin")
-			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin")
+			if($CheckADSK -eq 1) { $comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin") }
 			$comboBox1.Items.AddRange("User Input")
 			$comboBox1.SelectedIndex = 0
 			$comboBox1.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,29)
@@ -812,67 +927,137 @@ if($IP)
 		#form for start question
 	if (!($FromDate))
 		{
-			#form for questions 
-	        Add-Type -AssemblyName System.Windows.Forms
-	        Add-Type -AssemblyName System.Drawing
-
-	        $Startform = New-Object Windows.Forms.Form 
-	        $Startform.Text = "Start" 
-	        $Startform.Size = New-Object Drawing.Size @(200,265) 
-	        $Startform.StartPosition = "CenterScreen"
-
-	        $Startcalendar = New-Object System.Windows.Forms.MonthCalendar 
-	        $Startcalendar.ShowTodayCircle = $false
-	        $Startcalendar.MaxSelectionCount = 1
-	        $Startform.Controls.Add($Startcalendar) 
-
-
-	        # StartTimePicker Label
-	        $StartTimePickerLabel = New-Object System.Windows.Forms.Label
-	        $StartTimePickerLabel.Text = “Start”
-	        $StartTimePickerLabel.Location = “10, 165”
-	        $StartTimePickerLabel.Height = 22
-	        $StartTimePickerLabel.Width = 60
-	        $Startform.Controls.Add($StartTimePickerLabel)
-
-	        # StartTimePicker
-	        $StartTimePicker = New-Object System.Windows.Forms.DateTimePicker
-	        $StartTimePicker.Location = “70, 165”
-	        $StartTimePicker.Width = “90”
+			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+			$StartMainForm = New-Object -TypeName System.Windows.Forms.Form
+			[System.Windows.Forms.MonthCalendar]$StartmonthCalendar1 = $null
+			[System.Windows.Forms.Label]$StartTime = $null
+			[System.Windows.Forms.Button]$StartOk = $null
+			[System.Windows.Forms.Button]$StartCancel = $null
+			[System.Windows.Forms.Label]$StartLabel = $null
+			[System.Windows.Forms.DateTimePicker]$StartTimePicker = $null
+			[System.Windows.Forms.Label]$Start24hourlabel = $null
+			[System.Windows.Forms.Button]$button1 = $null
+			function InitializeComponent
+			{
+			$StartmonthCalendar1 = New-Object -TypeName System.Windows.Forms.MonthCalendar
+			$StartTime = New-Object -TypeName System.Windows.Forms.Label
+			$StartOk = New-Object -TypeName System.Windows.Forms.Button
+			$StartCancel = New-Object -TypeName System.Windows.Forms.Button
+			$StartLabel = New-Object -TypeName System.Windows.Forms.Label
+			$StartTimePicker = New-Object -TypeName System.Windows.Forms.DateTimePicker
+			$Start24hourlabel = New-Object -TypeName System.Windows.Forms.Label
+			$StartMainForm.SuspendLayout()
+			#
+			#StartmonthCalendar1
+			#
+			$StartmonthCalendar1.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(45,39)
+			$StartmonthCalendar1.Name = 'StartmonthCalendar1'
+			$StartmonthCalendar1.TabIndex = 0
+			$StartmonthCalendar1.ShowTodayCircle = $false
+            $StartmonthCalendar1.MaxSelectionCount = 1
+            $StartmonthCalendar1.MaxDate = (Get-Date)
+			#
+			#StartTime
+			#
+			$StartTime.AutoSize = $true
+			$StartTime.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(61,238)
+			$StartTime.Name = 'StartTime'
+			$StartTime.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(55,13)
+			$StartTime.TabIndex = 2
+			$StartTime.Text = 'Start Time'
+			#
+			#StartOk
+			#
+			$StartOk.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(41,269)
+			$StartOk.Name = 'StartOk'
+			$StartOk.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+			$StartOk.TabIndex = 3
+			$StartOk.Text = 'Ok'
+			$StartOk.UseVisualStyleBackColor = $true
+			$StartOK.DialogResult = [System.Windows.Forms.DialogResult]::OK
+			#
+			#StartCancel
+			#
+			$StartCancel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(146,269)
+			$StartCancel.Name = 'StartCancel'
+			$StartCancel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+			$StartCancel.TabIndex = 4
+			$StartCancel.Text = 'Cancel'
+			$StartCancel.UseVisualStyleBackColor = $true
+			$StartCancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+			#
+			#StartLabel
+			#
+			$StartLabel.AutoSize = $true
+			$StartLabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(60,17)
+			$StartLabel.Name = 'StartLabel'
+			$StartLabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(142,13)
+			$StartLabel.TabIndex = 5
+			$StartLabel.Text = 'When Should Tracing Start?'
+			#
+			#StartTimePicker
+			#
+			$StartTimePicker.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(122,235)
+			$StartTimePicker.Name = 'StartTimePicker'
+			$StartTimePicker.ShowUpDown = $true
+			$StartTimePicker.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(69,20)
+			$StartTimePicker.TabIndex = 6
 			$StartTimePicker.Value = (get-date).AddHours(-4)
-	        $StartTimePicker.Format = [windows.forms.datetimepickerFormat]::custom
-	        $StartTimePicker.CustomFormat = “HH:mm:ss”
-	        $StartTimePicker.ShowUpDown = $TRUE
-	        $Startform.Controls.Add($StartTimePicker)
-
-	        $StartOKButton = New-Object System.Windows.Forms.Button
-	        $StartOKButton.Location = New-Object System.Drawing.Point(18,195)
-	        $StartOKButton.Size = New-Object System.Drawing.Size(75,23)
-	        $StartOKButton.Text = "OK"
-	        $StartOKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-	        $Startform.AcceptButton = $StartOKButton
-	        $Startform.Controls.Add($StartOKButton)
-
-	        $StartCancelButton = New-Object System.Windows.Forms.Button
-	        $StartCancelButton.Location = New-Object System.Drawing.Point(93,195)
-	        $StartCancelButton.Size = New-Object System.Drawing.Size(75,23)
-	        $StartCancelButton.Text = "Cancel"
-	        $StartCancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-	        $Startform.CancelButton = $StartCancelButton
-	        $Startform.Controls.Add($StartCancelButton)
-	        $Startform.Topmost = $True
-
-	        Write-Host "`n`t[PROMPT] When should tracing start?" -ForegroundColor Green
-	        $fromresult = $Startform.ShowDialog() 
+			$StartTimePicker.MaxDate = (get-date).AddHours(-1)
+			$StartTimePicker.Format = [windows.forms.datetimepickerFormat]::custom
+			$StartTimePicker.CustomFormat = “ HH:mm:ss ”
+			#
+			#24hourlabel
+			#
+			$Start24hourlabel.AutoSize = $true
+			$Start24hourlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(72,213)
+			$Start24hourlabel.Name = '24hourlabel'
+			$Start24hourlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(112,13)
+			$Start24hourlabel.TabIndex = 7
+			$Start24hourlabel.Text = 'Time in 24 hour format'
+			#
+			#StartMainForm
+			#
+			$StartMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(263,308)
+			$StartMainForm.Controls.Add($Start24hourlabel)
+			$StartMainForm.Controls.Add($StartTimePicker)
+			$StartMainForm.Controls.Add($StartLabel)
+			$StartMainForm.Controls.Add($StartCancel)
+			$StartMainForm.Controls.Add($StartOk)
+			$StartMainForm.Controls.Add($StartTime)
+			$StartMainForm.Controls.Add($StartmonthCalendar1)
+			$StartMainForm.Text = 'Start Time'
+			$StartMainForm.Name = 'StartMainForm'
+			$StartMainForm.ResumeLayout($false)
+			$StartMainForm.PerformLayout()
+			Add-Member -InputObject $StartMainForm -Name base -Value $base -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name StartmonthCalendar1 -Value $StartmonthCalendar1 -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name StartTime -Value $StartTime -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name StartOk -Value $StartOk -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name StartCancel -Value $StartCancel -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name StartLabel -Value $StartLabel -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name StartTimePicker -Value $StartTimePicker -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name 24hourlabel -Value $Start24hourlabel -MemberType NoteProperty
+			Add-Member -InputObject $StartMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+			$StartMainForm.Topmost = $True
+			$StartMainForm.StartPosition = "CenterScreen"
+			}
+			. InitializeComponent
+			Write-Host "`n`t[PROMPT] When should tracing Start?" -ForegroundColor Green
+			$fromresult = $StartMainForm.ShowDialog()
+			if ($fromresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
 	        if ($fromresult -eq [System.Windows.Forms.DialogResult]::OK)
 	        {
-	            $fromdate = $Startcalendar.SelectionStart
+	            $fromdate = $StartmonthCalendar1.SelectionStart
 	            $fromthedate = $($fromdate.Date)
 	            $fromstarttime = ($fromthedate).Add($StartTimePicker.Value.TimeOfDay)
 	            [DateTime]$FromDate = $fromstarttime
 	            if($FromDate -lt (get-date))
 	            {
-	            Write-Host "`tSelected $($FromDate)"
+	            Write-Host "`tSelected   $($FromDate)"
+				$FromDate = Convert-AZSServerTime -DateTime $FromDate
+				Write-Host "`tStamp Time $($FromDate)" -ForegroundColor Gray
 	            }
 	            else
 	            {
@@ -887,68 +1072,137 @@ if($IP)
 	if (!($ToDate))
 		{
 			#form for questions 
-	        Add-Type -AssemblyName System.Windows.Forms
-	        Add-Type -AssemblyName System.Drawing
-
-	        $Endform = New-Object Windows.Forms.Form 
-	        $Endform.Text = "End" 
-	        $Endform.Size = New-Object Drawing.Size @(200,265) 
-	        $Endform.StartPosition = "CenterScreen"
-
-	        $Endcalendar = New-Object System.Windows.Forms.MonthCalendar 
-	        $Endcalendar.ShowTodayCircle = $false
-            $Endcalendar.MaxDate = (Get-Date)
-	        $Endcalendar.MaxSelectionCount = 1
-	        $Endform.Controls.Add($Endcalendar) 
-
-
-	        # StartTimePicker Label
-	        $EndTimePickerLabel = New-Object System.Windows.Forms.Label
-	        $EndTimePickerLabel.Text = “Stop”
-	        $EndTimePickerLabel.Location = “10, 165”
-	        $EndTimePickerLabel.Height = 22
-	        $EndTimePickerLabel.Width = 60
-	        $Endform.Controls.Add($EndTimePickerLabel)
-
-	        # StartTimePicker
-	        $EndTimePicker = New-Object System.Windows.Forms.DateTimePicker
-	        $EndTimePicker.Location = “70, 165”
-	        $EndTimePicker.Width = “90”
+			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+			$EndMainForm = New-Object -TypeName System.Windows.Forms.Form
+			[System.Windows.Forms.MonthCalendar]$EndmonthCalendar1 = $null
+			[System.Windows.Forms.Label]$EndTime = $null
+			[System.Windows.Forms.Button]$EndOk = $null
+			[System.Windows.Forms.Button]$EndCancel = $null
+			[System.Windows.Forms.Label]$EndLabel = $null
+			[System.Windows.Forms.DateTimePicker]$EndTimePicker = $null
+			[System.Windows.Forms.Label]$End24hourlabel = $null
+			[System.Windows.Forms.Button]$button1 = $null
+			function InitializeComponent
+			{
+			$EndmonthCalendar1 = New-Object -TypeName System.Windows.Forms.MonthCalendar
+			$EndTime = New-Object -TypeName System.Windows.Forms.Label
+			$EndOk = New-Object -TypeName System.Windows.Forms.Button
+			$EndCancel = New-Object -TypeName System.Windows.Forms.Button
+			$EndLabel = New-Object -TypeName System.Windows.Forms.Label
+			$EndTimePicker = New-Object -TypeName System.Windows.Forms.DateTimePicker
+			$End24hourlabel = New-Object -TypeName System.Windows.Forms.Label
+			$EndMainForm.SuspendLayout()
+			#
+			#EndmonthCalendar1
+			#
+			$EndmonthCalendar1.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(45,39)
+			$EndmonthCalendar1.Name = 'EndmonthCalendar1'
+			$EndmonthCalendar1.TabIndex = 0
+			$EndmonthCalendar1.ShowTodayCircle = $false
+            $EndmonthCalendar1.MaxSelectionCount = 1
+            $EndmonthCalendar1.MaxDate = (Get-Date)
+			#
+			#EndTime
+			#
+			$EndTime.AutoSize = $true
+			$EndTime.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(61,238)
+			$EndTime.Name = 'EndTime'
+			$EndTime.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(55,13)
+			$EndTime.TabIndex = 2
+			$EndTime.Text = 'Stop Time'
+			#
+			#EndOk
+			#
+			$EndOk.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(41,269)
+			$EndOk.Name = 'EndOk'
+			$EndOk.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+			$EndOk.TabIndex = 3
+			$EndOk.Text = 'Ok'
+			$EndOk.UseVisualStyleBackColor = $true
+			$EndOK.DialogResult = [System.Windows.Forms.DialogResult]::OK
+			#
+			#EndCancel
+			#
+			$EndCancel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(146,269)
+			$EndCancel.Name = 'EndCancel'
+			$EndCancel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+			$EndCancel.TabIndex = 4
+			$EndCancel.Text = 'Cancel'
+			$EndCancel.UseVisualStyleBackColor = $true
+			$EndCancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+			#
+			#EndLabel
+			#
+			$EndLabel.AutoSize = $true
+			$EndLabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(60,17)
+			$EndLabel.Name = 'EndLabel'
+			$EndLabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(142,13)
+			$EndLabel.TabIndex = 5
+			$EndLabel.Text = 'When Should Tracing Stop?'
+			#
+			#EndTimePicker
+			#
+			$EndTimePicker.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(122,235)
+			$EndTimePicker.Name = 'EndTimePicker'
+			$EndTimePicker.ShowUpDown = $true
+			$EndTimePicker.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(69,20)
+			$EndTimePicker.TabIndex = 6
 			$EndTimePicker.Value = (get-date)
-            $EndTimePicker.MaxDate = (Get-Date)
-	        $EndTimePicker.Format = [windows.forms.datetimepickerFormat]::custom
-	        $EndTimePicker.CustomFormat = “HH:mm:ss”
-	        $EndTimePicker.ShowUpDown = $TRUE
-	        $Endform.Controls.Add($EndTimePicker)
-
-	        $StartOKButton = New-Object System.Windows.Forms.Button
-	        $StartOKButton.Location = New-Object System.Drawing.Point(18,195)
-	        $StartOKButton.Size = New-Object System.Drawing.Size(75,23)
-	        $StartOKButton.Text = "OK"
-	        $StartOKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-	        $Endform.AcceptButton = $StartOKButton
-	        $Endform.Controls.Add($StartOKButton)
-
-	        $EndCancelButton = New-Object System.Windows.Forms.Button
-	        $EndCancelButton.Location = New-Object System.Drawing.Point(93,195)
-	        $EndCancelButton.Size = New-Object System.Drawing.Size(75,23)
-	        $EndCancelButton.Text = "Cancel"
-	        $EndCancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-	        $Endform.CancelButton = $EndCancelButton
-	        $Endform.Controls.Add($EndCancelButton)
-	        $Endform.Topmost = $True
-
-	        Write-Host "`n`t[PROMPT] When should tracing stop?" -ForegroundColor Green
-	        $toresult = $Endform.ShowDialog()
+			$EndTimePicker.MaxDate = (get-date)
+			$EndTimePicker.Format = [windows.forms.datetimepickerFormat]::custom
+			$EndTimePicker.CustomFormat = “ HH:mm:ss ”
+			#
+			#24hourlabel
+			#
+			$End24hourlabel.AutoSize = $true
+			$End24hourlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(72,213)
+			$End24hourlabel.Name = '24hourlabel'
+			$End24hourlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(112,13)
+			$End24hourlabel.TabIndex = 7
+			$End24hourlabel.Text = 'Time in 24 hour format'
+			#
+			#EndMainForm
+			#
+			$EndMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(263,308)
+			$EndMainForm.Controls.Add($End24hourlabel)
+			$EndMainForm.Controls.Add($EndTimePicker)
+			$EndMainForm.Controls.Add($EndLabel)
+			$EndMainForm.Controls.Add($EndCancel)
+			$EndMainForm.Controls.Add($EndOk)
+			$EndMainForm.Controls.Add($EndTime)
+			$EndMainForm.Controls.Add($EndmonthCalendar1)
+			$EndMainForm.Text = 'End Time'
+			$EndMainForm.Name = 'EndMainForm'
+			$EndMainForm.ResumeLayout($false)
+			$EndMainForm.PerformLayout()
+			Add-Member -InputObject $EndMainForm -Name base -Value $base -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name EndmonthCalendar1 -Value $EndmonthCalendar1 -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name EndTime -Value $EndTime -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name EndOk -Value $EndOk -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name EndCancel -Value $EndCancel -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name EndLabel -Value $EndLabel -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name EndTimePicker -Value $EndTimePicker -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name 24hourlabel -Value $End24hourlabel -MemberType NoteProperty
+			Add-Member -InputObject $EndMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+			$EndMainForm.Topmost = $True
+			$EndMainForm.StartPosition = "CenterScreen"
+			}
+			. InitializeComponent
+			Write-Host "`n`t[PROMPT] When should tracing Stop?" -ForegroundColor Green
+			$toresult = $EndMainForm.ShowDialog()
+			if ($toresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
 	        if ($toresult -eq [System.Windows.Forms.DialogResult]::OK)
 	        {
-	            $todate = $Endcalendar.SelectionStart
+	            $todate = $EndmonthCalendar1.SelectionStart
 	            $tothedate = $($todate.Date)
 	            $tostarttime = ($tothedate).Add($EndTimePicker.Value.TimeOfDay)
 	            [DateTime]$ToDate = $tostarttime
-	            if(($FromDate -lt $ToDate) -and ($ToDate -lt (Get-Date)))
+	            if($ToDate -lt (Get-Date))
 	            {
-	            Write-Host "`tSelected $($ToDate)"
+	            Write-Host "`tSelected   $($ToDate)"
+				$ToDate = Convert-AZSServerTime -DateTime $ToDate
+				Write-Host "`tStamp Time $($ToDate)"  -ForegroundColor Gray
 	            }
 	            else
 	            {
@@ -1129,7 +1383,7 @@ if($IP)
 
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::OK)
 			 {
-			 $FilterByRole = ((($checkedListBox1.CheckedItems -replace "[*]").Trim()) | Select-Object -Unique) -join ","
+			 [string[]]$FilterByRole = ((($checkedListBox1.CheckedItems -replace "[*]").Trim()) | Select-Object -Unique)
 			  Write-Host "`tSelected $($FilterByRole) for log collection" -ForegroundColor White
 			 }
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::Ignore)
@@ -1142,7 +1396,7 @@ if($IP)
 		If($switch)
 			{
 				$switch = "Get-AzureStackLog -OutputSharePath `$using:ShareINFO -OutputShareCredential `$using:shareCred -ErrorAction Stop "
-				$Howto = "Get-AzureStackLog -OutputSharePath `"$($ShareINFO)`" -OutputShareCredential `$cred -ErrorAction Stop "
+				$Howto = "Get-AzureStackLog -OutputSharePath `"$($ShareINFO)`" -OutputShareCredential `$using:cred "
 			}
 		If($FromDate)
 			{
@@ -1298,6 +1552,7 @@ if($IP)
 	finally
 	{
     Remove-SmbShare -Name $sharename -Force
+	Remove-NetFirewallRule -DisplayName "AzureStack PEP Access Firewall rule"
 	Write-Host "`n Press any key to continue ...`n"
 	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 	exit	
