@@ -349,10 +349,10 @@ function global:AzSLoadTools
 
 #show Info made from the script
 Write-host "`n[INFO] `$EnvInfo variable created" -ForegroundColor Yellow
-Write-host "`t `tAvailable command: '`$EnvInfo' to view stamp endpoints"
+Write-host "`tAvailable command: '`$EnvInfo' to view stamp endpoints"
 Write-host "`n[INFO] AzSLoadTools Module created (Administrator Powershell Only)" -ForegroundColor Yellow
-Write-host "`t `tAvailable command: 'AzSLoadTools' to load AzureStack tool modules"
+Write-host "`tAvailable command: 'AzSLoadTools' to load AzureStack tool modules"
 Write-host "`n[INFO] AzureStackAdmin AzureRmEnvironment created" -ForegroundColor Yellow
-Write-host "`t `tRun 'Get-AzureRmEnvironment -Name AzureStackAdmin' to see environment "
+Write-host "`tRun 'Get-AzureRmEnvironment -Name AzureStackAdmin' to see environment "
 Write-host "`n[INFO] AzureStackUser AzureRmEnvironment created" -ForegroundColor Yellow
-Write-host "`t `tRun 'Get-AzureRmEnvironment -Name AzureStackUser' to see environment "
+Write-host "`tRun 'Get-AzureRmEnvironment -Name AzureStackUser' to see environment "
