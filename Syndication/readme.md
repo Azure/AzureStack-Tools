@@ -36,13 +36,15 @@ Default: AzureCloud
 
 Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
 
-Parameter: TenantID
 
-Description: Specify the Tenant ID for the Authentication
+Parameter: AzureTenantID
+
+Description: Specify the Azure Tenant ID for Authentication
+
 
 Parameter: SubscriptionID
 
-Description: Specify the Subscription ID for the Authentication when having multiple subscriptions
+Description: Specify the Azure Subscription ID for Authentication when having multiple subscriptions
 
 ## Importing into Azure Stack
 
