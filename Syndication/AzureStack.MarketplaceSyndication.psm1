@@ -57,7 +57,7 @@ function Sync-AzSOfflineMarketplaceItems{
     $registration = $registrations[0]
 
     # Retrieve the access token
-    $tokens = [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
+    $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
     $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureAccount.Context.Account.Id |Sort ExpiresOn |Select -Last 1
 
     
@@ -132,10 +132,17 @@ $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach{
     # download azpkg
     $azpkgsource = $downloadDetails.galleryPackageBlobSasUri
     $FileExists=Test-Path "$destination\$azpkgName.azpkg"
+    $DestinationCheck=Test-Path $destination
+    If ($DestinationCheck -eq $false)
+    {
+    new-item -ItemType Directory -force $destination} else{}
+
     If ($FileExists -eq $true) {Remove-Item "$destination\$azpkgName.azpkg" -force} else {
     New-Item "$destination\$azpkgName.azpkg"}
     $azpkgdestination = "$destination\$azpkgName.azpkg"
     Start-BitsTransfer -source $azpkgsource -destination $azpkgdestination -Priority High
+    
+
 
     # download vhd
     $vhdName = $productDetails.properties.galleryItemIdentity
