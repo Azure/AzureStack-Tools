@@ -13,7 +13,7 @@
     "C:\Users\AzureStackAdmin\Desktop\master\AzureStack-Tools-master"
 
 .EXAMPLE
-.\AzS_PS_Environment.ps1 -AzSPathToStampJSON "C:\Users\AzureStackAdmin\Desktop\AzureStackStampInformation.json" -AzSToolsPath "C:\Users\AzureStackAdmin\Desktop\master\AzureStack-Tools-master"
+.\AzS-PS-Environment.ps1 -AzSPathToStampJSON "C:\Users\AzureStackAdmin\Desktop\AzureStackStampInformation.json" -AzSToolsPath "C:\Users\AzureStackAdmin\Desktop\master\AzureStack-Tools-master"
 #>
 
 Param(
