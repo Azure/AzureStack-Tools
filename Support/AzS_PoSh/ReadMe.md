@@ -5,7 +5,7 @@
 
 Script to setup AzureStack PowerShell Enviroment
 
-The script will insure Azure Stack PowerShell modules are running at the proper version. Build AzureStack endpoint environment variables from supplied JSON file. Download and extract AzureStack-Tools-master Toolkit. Builds a function called AzSLoadTools that imports modules in proper order. 
+Via UI or CLI the script will insure Azure Stack PowerShell modules are running at the proper version. Build AzureStack endpoint environment variables from supplied JSON file. Download and extract AzureStack-Tools-master Toolkit. Builds a function called AzSLoadTools that imports modules in proper order. 
 
 ## AzSPathToStampJSON ##
 Path to AzureStackStampInformation.json file
