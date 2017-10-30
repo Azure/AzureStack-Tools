@@ -139,7 +139,7 @@ function Get-AzsServiceQuota {
     param(
         [string] $ResourceName,
         [string] $ResourceType,
-        [string] ResourceGroupName,
+        [string] $ResourceGroupName,
         [string] $ApiVersion
     )
     if($ResourceGroupName){
