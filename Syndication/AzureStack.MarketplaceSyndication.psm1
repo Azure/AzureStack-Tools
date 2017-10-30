@@ -7,23 +7,23 @@
     Requires an Azure Stack System to be registered for the subscription used to login
 #>
 
-function Sync-AzSOfflineMarketplaceItems{
-[CmdletBinding(DefaultParameterSetName='SyncOfflineAzsMarketplaceItems')]
+function Sync-AzSOfflineMarketplaceItem{
+[CmdletBinding(DefaultParameterSetName='SyncOfflineAzsMarketplaceItem')]
 
   Param(    
-        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItems')]
+        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $Cloud = "AzureCloud",
 
-        [Parameter(Mandatory=$true, ParameterSetName='SyncOfflineAzsMarketplaceItems')]
+        [Parameter(Mandatory=$true, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $Destination,
 
-        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItems')]
+        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $tenantid,
 
-        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItems')]
+        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $subscriptionid
         
@@ -176,4 +176,4 @@ function Set-String {
     } else {return "<1 MB"} 
 }
 
-Export-ModuleMember -Function Sync-AzSOfflineMarketplaceItems
+Export-ModuleMember -Function Sync-AzSOfflineMarketplaceItem
