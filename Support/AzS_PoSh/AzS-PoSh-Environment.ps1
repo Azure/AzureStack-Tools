@@ -39,7 +39,7 @@ Param(
 # PowerShell Source Code  
 #  
 # NAME:  
-#    AzS_PoSh_Environment
+#    AzS-PoSh-Environment
 #  
 # VERSION:  
 #    1.0.3
@@ -60,7 +60,7 @@ Param(
 " PowerShell Source Code " | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 " NAME: " | Write-Host -ForegroundColor Yellow 
-"    AzS_PoSh_Environment.ps1 " | Write-Host -ForegroundColor Yellow 
+"    AzS-PoSh-Environment.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
 "    1.0.3" | Write-Host -ForegroundColor Yellow 
