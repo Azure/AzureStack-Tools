@@ -18,4 +18,4 @@ Path to AzureStack-Tools-master folder
 - "C:\Users\AzureStackAdmin\Desktop\master\AzureStack-Tools-master"
 
 ## Example Use ##
-	.\AzS_PS_Environment.ps1 -AzSPathToStampJSON "C:\Users\AzureStackAdmin\Desktop\AzureStackStampInformation.json" -AzSToolsPath "C:\Users\AzureStackAdmin\Desktop\master\AzureStack-Tools-master"
+	.\AzS-PS-Environment.ps1 -AzSPathToStampJSON "C:\Users\AzureStackAdmin\Desktop\AzureStackStampInformation.json" -AzSToolsPath "C:\Users\AzureStackAdmin\Desktop\master\AzureStack-Tools-master"
