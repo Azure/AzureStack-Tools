@@ -16,6 +16,7 @@ Param(
 if(Test-Path $zipArchive) { Remove-Item $zipArchive}
 $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode]"OpenOrCreate", [System.IO.FileAccess]"ReadWrite")
 
+try {
 #region Manifest
    $partName=New-Object System.Uri("/Manifest.json", [System.UriKind]"Relative")
    $part=$ZipPackage.CreatePart($partName, "application/json")
@@ -101,10 +102,10 @@ $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode
 #endregion resources
 
 #region CreateUIDefinition
-   $partName=New-Object System.Uri("/DeploymentTemplates/CreateUiDefinition.json", [System.UriKind]"Relative")
+   $partName=New-Object System.Uri("/Artifacts/CreateUiDefinition.json", [System.UriKind]"Relative")
    $part=$ZipPackage.CreatePart($partName, "text/json")
    $relationship=$ZipPackage.CreateRelationShip($partName, [System.IO.Packaging.TargetMode]::Internal, "http://schemas.microsoft.com/azpkg/2013/12/artifact")
-   $bytes=[System.IO.File]::ReadAllBytes("$source\DeploymentTemplates\CreateUiDefinition.json")
+   $bytes=[System.IO.File]::ReadAllBytes("$source\Artifacts\CreateUiDefinition.json")
    $stream=$part.GetStream()
    $stream.Write($bytes, 0, $bytes.Length)
    $stream.Close()
@@ -119,7 +120,7 @@ $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode
 <Artifact xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Name>createuidefinition</Name>
   <Type>Custom</Type>
-  <Path>DeploymentTemplates\CreateUiDefinition.json</Path>
+  <Path>Artifacts\CreateUiDefinition.json</Path>
   <IsDefault>false</IsDefault>
 </Artifact>
 "@
@@ -131,10 +132,10 @@ $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode
 #endregion CreateUIDefinition
 
 #region ARM Template
-   $partName=New-Object System.Uri("/DeploymentTemplates/mainTemplate.json", [System.UriKind]"Relative")
+   $partName=New-Object System.Uri("/Artifacts/mainTemplate.json", [System.UriKind]"Relative")
    $part=$ZipPackage.CreatePart($partName, "text/json")
    $relationship=$ZipPackage.CreateRelationShip($partName, [System.IO.Packaging.TargetMode]::Internal, "http://schemas.microsoft.com/azpkg/2013/12/artifact")
-   $bytes=[System.IO.File]::ReadAllBytes("$source\DeploymentTemplates\mainTemplate.json")
+   $bytes=[System.IO.File]::ReadAllBytes("$source\Artifacts\mainTemplate.json")
    $stream=$part.GetStream()
    $stream.Write($bytes, 0, $bytes.Length)
    $stream.Close()
@@ -150,7 +151,7 @@ $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode
 <Artifact xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Name>DefaultTemplate</Name>
   <Type>Template</Type>
-  <Path>DeploymentTemplates\mainTemplate.json</Path>
+  <Path>Artifacts\mainTemplate.json</Path>
   <IsDefault>true</IsDefault>
 </Artifact>
 "@
@@ -160,6 +161,11 @@ $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode
    $stream=$part.GetStream()
    $stream.Write($bytes, 0, $bytes.Length)
    $stream.Close()
+
+   Write-Host "Azpkg is saved into '$zipArchive'" -ForegroundColor Green
 #endregion ARM Template
+} catch {
+   Write-Host "Azpkg wasn't created. $_" -ForegroundColor Magenta
+}
 
 $ZipPackage.Close()
