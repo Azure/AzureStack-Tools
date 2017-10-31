@@ -104,7 +104,7 @@ param (
     [parameter(HelpMessage="List of usecases to be excluded from execution")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
-    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "DeleteSubscriptionResourceGroup"),
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "DeleteSubscriptionResourceGroup", "QueryImagesFromPIR", "DeployARMTemplate", "RetrieveResourceDeploymentTimes", "QueryTheVMsDeployed", "CheckVMCommunicationPreVMReboot", "TransmitMTUSizedPacketsBetweenTenantVMs", "AddDatadiskToVMWithPrivateIP", "ApplyDataDiskCheckCustomScriptExtensionToVMWithPrivateIP", "RestartVMWithPublicIP", "StopDeallocateVMWithPrivateIP", "StartVMWithPrivateIP", "CheckVMCommunicationPostVMReboot", "CheckExistenceOfScreenShotForVMWithPrivateIP", "DeleteVMWithPrivateIP"),
     [parameter(HelpMessage="Lists the available usecases in Canary")]
     [Parameter(ParameterSetName="listavl", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]  
@@ -319,7 +319,7 @@ while ($runCount -le $NumberOfIterations)
                         $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
                         Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
                         Remove-Item $CanaryCustomImageFolder -Force -Recurse
-                        $linuxUpload = $true
+                        Set-Variable -Name linuxUpload -Value $true -Scope 1
                     }    
                 }
                 catch
@@ -408,7 +408,7 @@ while ($runCount -le $NumberOfIterations)
             if ($asTenantSubscription)
             {
                 Get-AzureRmSubscription -SubscriptionName $asTenantSubscription.DisplayName | Select-AzureRmSubscription -ErrorAction Stop
-            }           
+            }          
         } 
 
         Invoke-Usecase -Name 'RoleAssignmentAndCustomRoleDefinition' -Description "Assign a reader role and create a custom role definition" -UsecaseBlock `
@@ -765,8 +765,8 @@ while ($runCount -le $NumberOfIterations)
         }
         $osVersion, $linuxImgExists
     }
-    [string]$osVersion = $pirQueryRes[2]
-    [boolean]$linuxImgExists = $pirQueryRes[3]
+    #[string]$osVersion = $pirQueryRes[2]
+    #[boolean]$linuxImgExists = $pirQueryRes[3]
 
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {        
@@ -1166,13 +1166,13 @@ while ($runCount -le $NumberOfIterations)
 
                     Invoke-Usecase -Name 'RemoveLinuxImageFromPIR' -Description "Remove the Linux image uploaded during setup from the Platform Image Respository" -UsecaseBlock `
                     {
-                        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
+                        if ((Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue) -and ($linuxUpload))
                         {
                             Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation -Force
                         }
                     }
                     Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
-                    {
+                    {   
                         if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
                         {
                             $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop

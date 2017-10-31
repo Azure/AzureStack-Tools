@@ -278,7 +278,7 @@ The command does the following:
  Does add an IP Pool
 
 ```powershell
-Add-AzsIpPool -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.0./24"
+Add-AzsIpPool -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.55.0/24"
 ```
 
 The command does the following:
@@ -316,6 +316,72 @@ Get-AzsLocationCapacity
 
 The command does the following:
 - Retrieves Region Capacity information
+
+### Show Resource Provider Healths
+
+ Does show resource provider healths
+
+```powershell
+Get-AzsResourceProviderHealths
+```
+
+The command does the following:
+- List Resource Provider and their Healths status
+
+### Show Infrastrcuture Role Healths
+
+ Does show infrastructure role healths
+
+```powershell
+Get-AzsInfrastructureRoleHealths
+```
+
+The command does the following:
+- List Infrastructure Roles and their Healths status
+
+### Show Backup Location
+
+ Does show Backup location
+
+```powershell
+Get-AzsBackupLocation
+```
+
+The command does the following:
+- List information about the backup location like share path
+
+### Show Backup
+
+ Does show backups
+
+```powershell
+Get-AzsBackup
+```
+
+The command does the following:
+- List backups
+
+### Start Backup
+
+ Does start a backup job
+
+```powershell
+Start-AzsBackup
+```
+
+The command does the following:
+- starts a backup job and does store it at configured share path
+
+### Restore Backup
+
+ Does restore a backup job
+
+```powershell
+Restore-AzsBackup -name ID
+```
+
+The command does the following:
+- Restore a specified Backup job
 
 ## Scenario Command Usage
 
