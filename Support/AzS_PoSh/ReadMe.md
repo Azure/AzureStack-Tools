@@ -1,6 +1,6 @@
 # AzS-PoSh-Environment.ps1 #
 
-![](https://github.com/effingerw/AzureStack-Tools/blob/vnext/Support/AzS_PoSh/Media/AzSPoSh.gif?raw=true)
+![](https://github.com/effingerw/AzureStack-Tools/blob/vnext/Support/AzS_PoSh/Media/AzsPoSh.gif?raw=true)
 
 
 Script to setup AzureStack PowerShell Enviroment
