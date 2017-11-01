@@ -72,6 +72,13 @@ Param(
     [String] $InStamp
 )
 
+#warn if running in the ISE do to .net ui rendering 
+ if ($psise -ne $null)
+ {
+	Write-Host "`n `t[WARN] Script should not be run from PowerShell ISE" -ForegroundColor Yellow
+	Read-Host -Prompt "`tPress Enter to continue"
+ }
+
 #Run as Admin
 $ScriptPath = $script:MyInvocation.MyCommand.Path
 
@@ -137,7 +144,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.5.3
+#    1.5.4
 #  
 #------------------------------------------------------------------------------ 
  
@@ -158,7 +165,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.5.3" | Write-Host -ForegroundColor Yellow 
+"    1.5.4" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -174,16 +181,17 @@ If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exi
 $IP = $null
 Clear-Host
 
-#Temp Firewall rule for access to PEP
+#Temp Firewall rule for access to PEP and SMB to allow file transfer from PEP
 Try
 {
-    $FWruletest = Get-NetFirewallRule -Name "AzureStack Firewall rule" -ErrorAction SilentlyContinue
+    $FWruletest = Get-NetFirewallRule -Group "AzureStack_ERCS" -ErrorAction SilentlyContinue
     If(!($FWruletest))
     {
-    $firewall = New-NetFirewallRule -Name "AzureStack Firewall rule" -DisplayName "AzureStack PEP Access Firewall rule" -Description "Allow Outbound Access to Remote Powershell" -Group "AzureStack" -Enabled True -Action Allow -Profile Any -Direction Outbound -Protocol TCP -RemotePort 5985
+    $firewall = New-NetFirewallRule -Name "AzureStack Firewall PEP rule" -DisplayName "AzureStack PEP Access Firewall rule" -Description "Allow Outbound Access to Remote Powershell" -Group "AzureStack_ERCS" -Enabled True -Action Allow -Profile Any -Direction Outbound -Protocol TCP -RemotePort 5985
+	$SMB = New-NetFirewallRule -Name "AzureStack Firewall SMB rule" -DisplayName "AzureStack SMB Access Firewall rule" -Description "Allow inbound Access to SMB Powershell" -Group "AzureStack_ERCS" -Enabled True -Action Allow -Profile Any -Direction Inbound -Protocol TCP -LocalPort 445
     }
     If($firewall.PrimaryStatus -eq "OK")
-        {Write-Host "`n `t[INFO] Created firewall rule to allow access to AzureStack PEP" -ForegroundColor Green}
+        {Write-Host "`n `t[INFO] Created firewall rules to allow access to AzureStack" -ForegroundColor Green}
 }
 catch 
 {
@@ -245,6 +253,7 @@ If(!($IP))
 #Sel AzureStackStampInformation
 if(!($IP))
 {
+	#region .NET
 	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 	$JSONMainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -252,8 +261,7 @@ if(!($IP))
 	[System.Windows.Forms.Button]$JsonYbutton = $null
 	[System.Windows.Forms.Button]$JsonNbutton = $null
 	[System.Windows.Forms.Button]$button1 = $null
-	function InitializeComponent
-	{
+	
 	$Jsonlabel = New-Object -TypeName System.Windows.Forms.Label
 	$JsonYbutton = New-Object -TypeName System.Windows.Forms.Button
 	$JsonNbutton = New-Object -TypeName System.Windows.Forms.Button
@@ -304,11 +312,10 @@ if(!($IP))
 	Add-Member -InputObject $JSONMainForm -Name button1 -Value $button1 -MemberType NoteProperty
 	$JSONMainForm.Topmost = $True
 	$JSONMainForm.StartPosition = "CenterScreen"
-
-	}
-	. InitializeComponent
+    $JSONMainForm.MaximizeBox = $false
+    $JSONMainForm.FormBorderStyle = 'Fixed3D'
 	$result = $JSONMainForm.ShowDialog()
-
+	#endregion .NET
 	switch ($result)
 	    {
 	        "Yes" {    
@@ -373,6 +380,7 @@ if(!($IP))
 if($InStamp -eq "Yes"){$CheckADSK = 1}
 if (!($InStamp))
 {
+	#region .NET
 	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 	$OnStampForm = New-Object -TypeName System.Windows.Forms.Form
@@ -380,8 +388,7 @@ if (!($InStamp))
 	[System.Windows.Forms.Button]$OnStampYes = $null
 	[System.Windows.Forms.Button]$OnStampNo = $null
 	[System.Windows.Forms.Button]$button1 = $null
-	function InitializeComponent
-	{
+
 	$OnStampLabel = New-Object -TypeName System.Windows.Forms.Label
 	$OnStampYes = New-Object -TypeName System.Windows.Forms.Button
 	$OnStampNo = New-Object -TypeName System.Windows.Forms.Button
@@ -437,11 +444,10 @@ if (!($InStamp))
 	Add-Member -InputObject $OnStampForm -Name button1 -Value $button1 -MemberType NoteProperty
 	$OnStampForm.Topmost = $True
 	$OnStampForm.StartPosition = "CenterScreen"
-	}
-	. InitializeComponent
-
+    $OnStampForm.MaximizeBox = $false
+    $OnStampForm.FormBorderStyle = 'Fixed3D'
 	$ASDKQuestion = $OnStampForm.ShowDialog()
-
+	#endregion .NET
 	if ($ASDKQuestion -eq [System.Windows.Forms.DialogResult]::yes)
 	{
 	Write-Host "`n `t[INFO] Using Azure Stack Development Kit or DVM" -ForegroundColor Green
@@ -761,6 +767,7 @@ if($IP)
 		{
 			if(!($FoundDomainFQDN))
 			{
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$DomainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -768,8 +775,7 @@ if($IP)
 			[System.Windows.Forms.TextBox]$Domaintextbox = $null
 			[System.Windows.Forms.Label]$label1 = $null
 			[System.Windows.Forms.Button]$button1 = $null
-			function InitializeComponent
-			{
+			
 			$Domaintextbox = New-Object -TypeName System.Windows.Forms.TextBox
 			$DomainOK = New-Object -TypeName System.Windows.Forms.Button
 			$label1 = New-Object -TypeName System.Windows.Forms.Label
@@ -821,10 +827,11 @@ if($IP)
 			Add-Member -InputObject $DomainForm -Name button1 -Value $button1 -MemberType NoteProperty
 			$DomainForm.Topmost = $True
 			$DomainForm.StartPosition = "CenterScreen"
-			}
+			$DomainForm.MaximizeBox = $false
+			$DomainForm.FormBorderStyle = 'Fixed3D'
 			[System.Object]$userinputdomain = $null
-			. InitializeComponent
 			$userinputdomain = $DomainForm.ShowDialog()
+			#endregion .NET
 			if ($userinputdomain -eq [System.Windows.Forms.DialogResult]::OK)
 				{
 					$FoundDomainFQDN = $Domaintextbox.Text
@@ -835,14 +842,14 @@ if($IP)
 			$UserFoundDomainFQDN = ($FoundDomainFQDN + "\")
 			}
 			Write-Host "`n`t[PROMPT] Select a username for connecting to AzureStack PEP" -ForegroundColor Green
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$UserForm = New-Object -TypeName System.Windows.Forms.Form
 			[System.Windows.Forms.ComboBox]$comboBox1 = $null
 			[System.Windows.Forms.Button]$ok = $null
 			[System.Windows.Forms.Button]$button1 = $null
-			function InitializeComponent
-			{
+
 			$comboBox1 = New-Object -TypeName System.Windows.Forms.ComboBox
 			$ok = New-Object -TypeName System.Windows.Forms.Button
 			$UserForm.SuspendLayout()
@@ -884,10 +891,10 @@ if($IP)
 			Add-Member -InputObject $UserForm -Name button1 -Value $button1 -MemberType NoteProperty
 			$UserForm.Topmost = $True
 			$UserForm.StartPosition = "CenterScreen"
-			}
-			. InitializeComponent
+			$UserForm.MaximizeBox = $false
+			$UserForm.FormBorderStyle = 'Fixed3D'
 			$AzsUser = $UserForm.ShowDialog()
-
+			#endregion .NET
 			if ($AzsUser -eq [System.Windows.Forms.DialogResult]::OK)
 			{
 			Write-Host "`tSelected $($comboBox1.SelectedItem)" -ForegroundColor White
@@ -927,6 +934,7 @@ if($IP)
 		#form for start question
 	if (!($FromDate))
 		{
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$StartMainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -938,8 +946,7 @@ if($IP)
 			[System.Windows.Forms.DateTimePicker]$StartTimePicker = $null
 			[System.Windows.Forms.Label]$Start24hourlabel = $null
 			[System.Windows.Forms.Button]$button1 = $null
-			function InitializeComponent
-			{
+
 			$StartmonthCalendar1 = New-Object -TypeName System.Windows.Forms.MonthCalendar
 			$StartTime = New-Object -TypeName System.Windows.Forms.Label
 			$StartOk = New-Object -TypeName System.Windows.Forms.Button
@@ -1042,10 +1049,11 @@ if($IP)
 			Add-Member -InputObject $StartMainForm -Name button1 -Value $button1 -MemberType NoteProperty
 			$StartMainForm.Topmost = $True
 			$StartMainForm.StartPosition = "CenterScreen"
-			}
-			. InitializeComponent
+            $StartMainForm.MaximizeBox = $false
+            $StartMainForm.FormBorderStyle = 'Fixed3D'
 			Write-Host "`n`t[PROMPT] When should tracing Start?" -ForegroundColor Green
 			$fromresult = $StartMainForm.ShowDialog()
+			#endregion .NET
 			if ($fromresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
 	        if ($fromresult -eq [System.Windows.Forms.DialogResult]::OK)
 	        {
@@ -1071,7 +1079,7 @@ if($IP)
 		#form for end question	
 	if (!($ToDate))
 		{
-			#form for questions 
+			#region .NET 
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$EndMainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -1083,8 +1091,7 @@ if($IP)
 			[System.Windows.Forms.DateTimePicker]$EndTimePicker = $null
 			[System.Windows.Forms.Label]$End24hourlabel = $null
 			[System.Windows.Forms.Button]$button1 = $null
-			function InitializeComponent
-			{
+
 			$EndmonthCalendar1 = New-Object -TypeName System.Windows.Forms.MonthCalendar
 			$EndTime = New-Object -TypeName System.Windows.Forms.Label
 			$EndOk = New-Object -TypeName System.Windows.Forms.Button
@@ -1187,10 +1194,11 @@ if($IP)
 			Add-Member -InputObject $EndMainForm -Name button1 -Value $button1 -MemberType NoteProperty
 			$EndMainForm.Topmost = $True
 			$EndMainForm.StartPosition = "CenterScreen"
-			}
-			. InitializeComponent
+            $EndMainForm.MaximizeBox = $false
+            $EndMainForm.FormBorderStyle = 'Fixed3D'
 			Write-Host "`n`t[PROMPT] When should tracing Stop?" -ForegroundColor Green
 			$toresult = $EndMainForm.ShowDialog()
+			#endregion .NET
 			if ($toresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
 	        if ($toresult -eq [System.Windows.Forms.DialogResult]::OK)
 	        {
@@ -1217,6 +1225,7 @@ if($IP)
 		If(!($FilterByRole))
 		{
 			Write-Host "`n`t[PROMPT] What should be collected?" -ForegroundColor Green
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$MainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -1227,8 +1236,7 @@ if($IP)
 			[System.Windows.Forms.Label]$label1 = $null
 			[System.Windows.Forms.Label]$label2 = $null
 			[System.Object]$selLogCollection = $null
-			function InitializeComponent
-			{
+
 			$checkedListBox1 = New-Object -TypeName System.Windows.Forms.CheckedListBox
 			$buttonselect = New-Object -TypeName System.Windows.Forms.Button
 			$buttondefault = New-Object -TypeName System.Windows.Forms.Button
@@ -1377,10 +1385,10 @@ if($IP)
 			Add-Member -InputObject $MainForm -Name selLogCollection -Value $selLogCollection -MemberType NoteProperty
 			$MainForm.Topmost = $True
 			$MainForm.StartPosition = "CenterScreen"
-			}
-			. InitializeComponent
+			$MainForm.MaximizeBox = $false
+            $MainForm.FormBorderStyle = 'Fixed3D'
 			$LogCollection = $MainForm.ShowDialog()
-
+			#region .NET
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::OK)
 			 {
 			 [string[]]$FilterByRole = ((($checkedListBox1.CheckedItems -replace "[*]").Trim()) | Select-Object -Unique)
@@ -1458,6 +1466,7 @@ if($IP)
 			if($StampInformation)
 			{
 				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+				#overwriting AzureStackStampInformation keep the latest info JSON (StampVersion)
 				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
 				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:SystemDrive)\$($sharename)" -ForegroundColor Green
 				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:SystemDrive)\$($sharename)\AzureStackStampInformation.json" -Force
@@ -1552,7 +1561,7 @@ if($IP)
 	finally
 	{
     Remove-SmbShare -Name $sharename -Force
-	Remove-NetFirewallRule -DisplayName "AzureStack PEP Access Firewall rule"
+	Remove-NetFirewallRule -Group "AzureStack_ERCS"
 	Write-Host "`n Press any key to continue ...`n"
 	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 	exit	
