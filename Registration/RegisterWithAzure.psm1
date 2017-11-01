@@ -443,7 +443,7 @@ Function Get-AzsRegistrationToken{
         }
         catch
         {
-            Log-Throw -Message "Unable to create file at location $TokenOutputFilePath. Please provide a valid input for -TokenOutputFilePath. `r`n$($_.Exception)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
+            Log-Throw -Message "Unable to create file at location $TokenOutputFilePath. Please provide a valid input for -TokenOutputFilePath. `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
         }
     }
 
@@ -743,13 +743,13 @@ Function Get-RegistrationToken{
             }
             catch
             {
-                Log-Warning "Creation of registration token failed:`r`n$($_.Exception)"
+                Log-Warning "Creation of registration token failed:`r`n$($_)"
                 Log-Output "Waiting $sleepSeconds seconds and trying again..."
                 $currentAttempt++
                 Start-Sleep -Seconds $sleepSeconds
                 if ($currentAttempt -ge $maxAttempt)
                 {
-                    Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                    Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
             }
         }
@@ -822,13 +822,13 @@ function New-RegistrationResource{
         }
         catch
         {
-            Log-Warning "Creation of Azure resource group failed:`r`n$($_.Exception)"
+            Log-Warning "Creation of Azure resource group failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -844,13 +844,13 @@ function New-RegistrationResource{
         }
         catch
         {
-            Log-Warning "Creation of Azure resource failed:`r`n$($_.Exception)"
+            Log-Warning "Creation of Azure resource failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -897,13 +897,13 @@ Function Get-RegistrationActivationKey{
         }
         catch
         {
-            Log-Warning "Retrieval of activation key failed:`r`n$($_.Exception)"
+            Log-Warning "Retrieval of activation key failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -945,13 +945,13 @@ Function New-ServicePrincipal{
         }
         catch
         {
-            Log-Warning "Creation of service principal failed:`r`n$($_.Exception)"
+            Log-Warning "Creation of service principal failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -1015,7 +1015,7 @@ function New-RBACAssignment{
                     }
                     catch
                     {
-                        Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)" -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
+                        Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_)" -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
                     }
                 }
             }
@@ -1040,13 +1040,13 @@ function New-RBACAssignment{
         }
         catch
         {
-            Log-Warning "Assignment of custom RBAC Role $customRoleName failed:`r`n$($_.Exception)"
+            Log-Warning "Assignment of custom RBAC Role $customRoleName failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -1081,13 +1081,13 @@ function Activate-AzureStack{
         }
         catch
         {
-            Log-Warning "Activation of Azure Stack features failed:`r`n$($_.Exception)"
+            Log-Warning "Activation of Azure Stack features failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             } 
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -1133,7 +1133,7 @@ function Get-AzureAccountInfo{
 
     if (-not $tokens -or ($tokens.Count -le 0))
     {
-        Log-Throw -Message "Token cache is empty `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Throw -Message "Token cache is empty `r`n$($_)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
 
     $token = $tokens |
@@ -1185,13 +1185,13 @@ function Initialize-PrivilegedEndpointSession{
         }
         catch
         {
-            Log-Warning "Creation of session with $PrivilegedEndpoint failed:`r`n$($_.Exception)"
+            Log-Warning "Creation of session with $PrivilegedEndpoint failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -1231,13 +1231,13 @@ function Register-AzureStackResourceProvider{
         }
         Catch
         {
-            Log-Warning "Registering Azure Stack resource provider failed:`r`n$($_.Exception)"
+            Log-Warning "Registering Azure Stack resource provider failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -1269,13 +1269,13 @@ function Remove-RegistrationResource{
         }
         catch
         {
-            Log-Warning "Removal of registration resource failed:`r`n$($_.Exception)"
+            Log-Warning "Removal of registration resource failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
             if ($currentAttempt -ge $maxAttempt)
             {
-                Log-Throw -Message $_.Exception -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
@@ -1308,7 +1308,7 @@ function Confirm-StampVersion{
     }
     Catch
     {
-        Log-Throw "An error occurred checking stamp information: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Throw "An error occurred checking stamp information: `r`n$($_)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
 }
 
@@ -1345,7 +1345,7 @@ function Log-Warning{
     )    
 
     # Write Error: line seperately otherwise out message will not contain stack trace
-    Log-Output "`r`n *** WARNING ***"
+    Log-Output "*** WARNING ***"
     "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Global:AzureRegistrationLog -Append
     Write-Warning "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
     Log-Output "*** End WARNING ***"
@@ -1381,7 +1381,7 @@ function Log-Throw{
     "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $Global:AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" | Out-File $Global:AzureRegistrationLog -Append
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $Global:AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" 
 
-    throw "$Message"
+    throw $Message
 }
 
 #endregion
