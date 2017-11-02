@@ -14,9 +14,9 @@ Param(
 #####
 
 if(Test-Path $zipArchive) { Remove-Item $zipArchive}
+try {
 $ZipPackage=[System.IO.Packaging.Package]::Open($zipArchive, [System.IO.FileMode]"OpenOrCreate", [System.IO.FileAccess]"ReadWrite")
 
-try {
 #region Manifest
    $partName=New-Object System.Uri("/Manifest.json", [System.UriKind]"Relative")
    $part=$ZipPackage.CreatePart($partName, "application/json")
@@ -167,5 +167,6 @@ try {
 } catch {
    Write-Host "Azpkg wasn't created. $_" -ForegroundColor Magenta
 }
-
-$ZipPackage.Close()
+finally {
+    $ZipPackage.Close()
+}
