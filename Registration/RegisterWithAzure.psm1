@@ -1264,7 +1264,7 @@ function Remove-RegistrationResource{
     {
         try
         {
-            Remove-AzureRmResource -ResourceId $ResourceId -Force
+            Remove-AzureRmResource -ResourceId $ResourceId -Force -Verbose
             break
         }
         catch
@@ -1375,6 +1375,7 @@ function Log-Throw{
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine"
 
     Log-Output $Message
+    Log-Output $Message.ScriptStacktrace
 
     Log-OutPut "*********************** Ending registration action during $CallingFunction ***********************`r`n"
 
