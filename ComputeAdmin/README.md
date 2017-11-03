@@ -9,7 +9,7 @@ Make sure you have the following module prerequisites installed:
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper'
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-Install-Module -Name AzureStack -RequiredVersion 1.2.10
+Install-Module -Name AzureStack -RequiredVersion 1.2.11
 ```
 
 Then make sure the following modules are imported:
@@ -61,7 +61,7 @@ This command may show a **popup prompt that can be ignored** without issue.
 
 To ensure that the Windows Server 2016 VM Image has the latest cumulative update, provide the -IncludeLatestCU parameter.
 
-Please note that to use this image for **installing additional Azure Stack services**, you will need to make use of the -Net35 parameter to install .NET Framework 3.5 into the image.
+Please note that to use this image for some Quick Start templates, you may need to make use of the -Net35 parameter to install .NET Framework 3.5 into the image.
 
 ## Add a VM image to the Marketplace with PowerShell
 

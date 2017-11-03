@@ -650,7 +650,7 @@ $X_Input_Tbx_Name.Tag = @{'regex'='[ a-zA-Z0-9]{1,80}';'errormessage'='Maximum 8
 $X_Input_Tbx_Publisher.Tag = @{'regex'='[ a-zA-Z0-9]{1,20}';'errormessage'='Maximum 30 characters. Can only contain A-Z, a-z, 0-9 and spaces.'}
 $X_Input_Tbx_Summary.Tag = @{'regex'='[ a-zA-Z0-9]{1,100}';'errormessage'='Maximum 100 characters. Can only contain A-Z, a-z, 0-9 and spaces.'}
 $X_Input_Tbx_Description.Tag = @{'regex'='.{1,5000}';'errormessage'='Maximum 5000 characters.'}
-$X_Input_Tbx_Category.Tag = @{'regex'='[- a-zA-Z0-9]{1,64}';'errormessage'='Maximum 64 characters. Can only contain A-Z, a-z, 0-9, - and spaces.'}
+$X_Input_Tbx_Category.Tag = @{'regex'='[- a-zA-Z0-9;]{1,64}';'errormessage'='Maximum 64 characters. Can only contain A-Z, a-z, 0-9, -, ; and spaces.'}
 $X_Input_Tbx_Icon40.Tag = @{'errormessage'='The image size must be 40x40.'}
 $X_Input_Tbx_Icon90.Tag = @{'errormessage'='The image size must be 90x90.'}
 $X_Input_Tbx_Icon115.Tag = @{'errormessage'='The image size must be 115x115.'}
@@ -749,12 +749,12 @@ if ($image){
     }
 if ($vmextension){
     if ($Script:PackageType -eq 'Extension'){
-        $ContentJSON = Get-Content ($field_value)
+        $ContentJSON = Get-Content ($field_value) -Raw
         $params = ($ContentJSON | ConvertFrom-Json).parameters 
         $params = $params.psobject.members | where {$_.membertype -eq 'NoteProperty'}
         if (($params | where {(($_.name -eq 'vmName') -and ($_.value.type -eq 'string')) -or (($_.name -eq 'location') -and ($_.value.type -eq 'string'))}).count -lt 2){ 
         $Script:validation_error = $true 
-        $message = 'Required string parameters "vmName" and "location" not found in template'
+        $message = 'Required string parameters "vmName" or/and  "location" not found in template'
         }
 }
 }
@@ -823,7 +823,7 @@ if ($applicationName) { $X_Input_Tbx_Name.Text = $applicationName }
 if ($publisher) { $X_Input_Tbx_Publisher.Text = $publisher }
 if ($summary) { $X_Input_Tbx_SUmmary.Text = $summary }
 if ($description) { $X_Input_Tbx_description.Text = $description }
-if (($category) -and ($Script:packageType -ne 'Extension')) { $X_Input_Tbx_category.Text = $category }
+if ($category) { $X_Input_Tbx_category.Text = $category }
 if ($icon40x40) { $X_Input_Tbx_Icon40.Text = $icon40x40 }
 if ($icon90x90) { $X_Input_Tbx_Icon90.Text = $icon90x90 }
 if ($icon115x115) { $X_Input_Tbx_Icon115.Text = $icon115x115 }
@@ -1083,7 +1083,7 @@ param (
 #region manifest.json
 $manifest_name = $X_Input_Tbx_Name.text.replace(' ','')
 $manifest_publisher = $X_Input_Tbx_Publisher.text.replace(' ','')
-$manifest_category = $X_Input_Tbx_category.text
+$manifest_category = $X_Input_Tbx_category.text.split(';')
 $manifest_version = "1.0.0"
 
 $manifest = [pscustomobject]@{
@@ -1145,9 +1145,7 @@ $manifest = [pscustomobject]@{
             )
         }
     )
-    "categories"= @(
-        $manifest_category
-    )
+    "categories"= $manifest_category
     "uiDefinition" = [PSCustomObject]@{
         "path"= "UIdefinition.json"
         }
@@ -1585,7 +1583,7 @@ $X_Dashboard_Btn_Extension.Add_Click({
 $X_DashBoard.Visibility = 'Collapsed'
 $X_Blade_Wizard.Visibility = 'Visible'
 $X_Blade_Input.Visibility = 'Visible'
-$X_Input_Stp_Category.Visibility = 'Collapsed'
+$X_Input_Stp_Category.Visibility = 'Visible'
 $X_Params_Bdr_Create.Visibility = 'Collapsed'
 $X_Params_Bdr_Continue.Visibility = 'Collapsed'
 $X_Params_Stp_DeploymentWizard.Visibility = 'Collapsed'
@@ -1593,7 +1591,6 @@ $X_ParamType_Stp_AssignStep.Visibility = 'Collapsed'
 F_Clear
 F_Regex
 $Script:PackageType = 'Extension'
-$X_Input_Tbx_Category.text = 'compute-vmextension-windows'
 })
 
 $X_Dashboard_Btn_Publish.Add_Click({

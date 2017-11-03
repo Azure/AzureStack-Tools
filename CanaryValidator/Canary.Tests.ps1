@@ -16,12 +16,12 @@ param (
     [ValidateNotNullOrEmpty()]
     [pscredential]$ServiceAdminCredentials,
     [parameter(HelpMessage="Tenant ARM endpoint")]
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
     [string]$TenantArmEndpoint,    
     [parameter(HelpMessage="Tenant administrator account credentials from the Azure Stack active directory")] 
-    [Parameter(ParameterSetName="default", Mandatory=$false)]
+    [Parameter(ParameterSetName="default", Mandatory=$true)]
     [Parameter(ParameterSetName="tenant", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]    
     [pscredential]$TenantAdminCredentials,
@@ -104,7 +104,7 @@ param (
     [parameter(HelpMessage="List of usecases to be excluded from execution")]
     [Parameter(ParameterSetName="default", Mandatory=$false)]
     [Parameter(ParameterSetName="tenant", Mandatory=$false)]  
-    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance"),
+    [string[]]$ExclusionList = ("GetAzureStackInfraRoleInstance", "DeleteSubscriptionResourceGroup", "QueryImagesFromPIR", "DeployARMTemplate", "RetrieveResourceDeploymentTimes", "QueryTheVMsDeployed", "CheckVMCommunicationPreVMReboot", "TransmitMTUSizedPacketsBetweenTenantVMs", "AddDatadiskToVMWithPrivateIP", "ApplyDataDiskCheckCustomScriptExtensionToVMWithPrivateIP", "RestartVMWithPublicIP", "StopDeallocateVMWithPrivateIP", "StartVMWithPrivateIP", "CheckVMCommunicationPostVMReboot", "CheckExistenceOfScreenShotForVMWithPrivateIP", "DeleteVMWithPrivateIP"),
     [parameter(HelpMessage="Lists the available usecases in Canary")]
     [Parameter(ParameterSetName="listavl", Mandatory=$true)]
     [ValidateNotNullOrEmpty()]  
@@ -200,6 +200,8 @@ while ($runCount -le $NumberOfIterations)
         }
     } 
     
+    if ($resLocation = (Get-AzsLocation -ErrorAction SilentlyContinue).Name) {if ($resLocation -ne $ResourceLocation) {$ResourceLocation = $resLocation}}
+
     Invoke-Usecase -Name 'ListFabricResourceProviderInfo' -Description "List FabricResourceProvider(FRP) information like storage shares, capacity, logical networks etc." -UsecaseBlock `
     {
         Invoke-Usecase -Name 'GetAzureStackInfraRole' -Description "List all infrastructure roles" -UsecaseBlock `
@@ -317,7 +319,7 @@ while ($runCount -le $NumberOfIterations)
                         $CustomVHDPath = CopyImage -ImagePath $LinuxImagePath -OutputFolder $CanaryCustomImageFolder
                         Add-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -osDiskLocalPath $CustomVHDPath -osType Linux -Location $ResourceLocation -CreateGalleryItem $false
                         Remove-Item $CanaryCustomImageFolder -Force -Recurse
-                        $linuxUpload = $true
+                        Set-Variable -Name linuxUpload -Value $true -Scope 1
                     }    
                 }
                 catch
@@ -405,8 +407,8 @@ while ($runCount -le $NumberOfIterations)
             $asTenantSubscription = New-AzureRmTenantSubscription -OfferId $asCanaryOffer.Id -DisplayName $tenantSubscriptionName -ErrorAction Stop
             if ($asTenantSubscription)
             {
-                $asTenantSubscription | Select-AzureRmSubscription -ErrorAction Stop
-            }           
+                Get-AzureRmSubscription -SubscriptionName $asTenantSubscription.DisplayName | Select-AzureRmSubscription -ErrorAction Stop
+            }          
         } 
 
         Invoke-Usecase -Name 'RoleAssignmentAndCustomRoleDefinition' -Description "Assign a reader role and create a custom role definition" -UsecaseBlock `
@@ -500,11 +502,13 @@ while ($runCount -le $NumberOfIterations)
 
             Invoke-Usecase -Name 'RemoveReaderRoleAssignment' -Description "Remove Reader role assignment from Service Principle - $($servicePrincipal.DisplayName)" -UsecaseBlock `
             {
+                $parameters = @{}
+                if ((Get-Module AzureRM -ListAvailable).Version -le "1.2.10") {$parameters = @{"Force" = $True}}
                 $readerRole = Get-AzureRmRoleDefinition -Name Reader 
                 $subscriptionID = (Get-AzureRmSubscription -SubscriptionName $tenantSubscriptionName).SubscriptionId
                 if ($subscriptionID -and $readerRole -and (Get-AzureRmRoleAssignment -RoleDefinitionName $readerRole.Name -Scope "/Subscriptions/$subscriptionID" -ErrorAction Stop))
                 {                
-	                Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -Force -ErrorAction Stop
+	                Remove-AzureRmRoleAssignment -Scope "/Subscriptions/$subscriptionID" -RoleDefinitionName $readerRole.Name -ObjectId $servicePrincipal.Id -ErrorAction Stop @parameters
                 }
             }           
             
@@ -567,7 +571,9 @@ while ($runCount -le $NumberOfIterations)
 
         Invoke-Usecase -Name 'RegisterResourceProviders' -Description "Register resource providers" -UsecaseBlock `
         {
-            Get-AzureRmResourceProvider -ListAvailable | Register-AzureRmResourceProvider -Force        
+            $parameters = @{}
+            if ((Get-Module AzureRM -ListAvailable).Version -le "1.2.10") {$parameters = @{"Force" = $True}}
+            ("Microsoft.Storage", "Microsoft.Compute", "Microsoft.Network", "Microsoft.KeyVault") | ForEach-Object {Get-AzureRmResourceProvider -ProviderNamespace $_} | Register-AzureRmResourceProvider @parameters
             $sleepTime = 0        
             while($true)
             {
@@ -759,8 +765,8 @@ while ($runCount -le $NumberOfIterations)
         }
         $osVersion, $linuxImgExists
     }
-    [string]$osVersion = $pirQueryRes[2]
-    [boolean]$linuxImgExists = $pirQueryRes[3]
+    #[string]$osVersion = $pirQueryRes[2]
+    #[boolean]$linuxImgExists = $pirQueryRes[3]
 
     Invoke-Usecase -Name 'DeployARMTemplate' -Description "Deploy ARM template to setup the virtual machines" -UsecaseBlock `
     {        
@@ -803,7 +809,7 @@ while ($runCount -le $NumberOfIterations)
     Invoke-Usecase -Name 'RetrieveResourceDeploymentTimes' -Description "Retrieves the resources deployment times from the ARM template deployment" -UsecaseBlock `
     {
         $templateDeploymentName = "CanaryVMDeployment"
-        (Get-AzureRmResourceGroupDeploymentOperation -Deploymentname $templateDeploymentName -ResourceGroupName $CanaryVMRG).Properties | Select-Object ProvisioningOperation,Duration,ProvisioningState,StatusCode,TargetResource | Format-Table -AutoSize
+        (Get-AzureRmResourceGroupDeploymentOperation -Deploymentname $templateDeploymentName -ResourceGroupName $CanaryVMRG).Properties | Select-Object @{Name="ResourceName";Expression={$_.TargetResource.ResourceName}},Duration,ProvisioningState,@{Name="ResourceType";Expression={$_.TargetResource.ResourceType}},ProvisioningOperation,StatusCode | Format-Table -AutoSize
     }
 
     $canaryWindowsVMList = @()
@@ -887,6 +893,41 @@ while ($runCount -le $NumberOfIterations)
                 else 
                 {
                     throw [System.Exception]"The expected certificate from KV was not found on the tenant VM with private IP: $privateVMIP"
+                }
+            }    
+        }
+    }
+
+    Invoke-Usecase -Name 'TransmitMTUSizedPacketsBetweenTenantVMs' -Description "Check if the tenant VMs can transmit MTU sized packets between themselves" -UsecaseBlock `
+    {
+        $vmUser = ".\$VMAdminUserName"
+        $vmCreds = New-Object System.Management.Automation.PSCredential $vmUser, (ConvertTo-SecureString $VMAdminUserPass -AsPlainText -Force)
+        if (($pubVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $publicVMName -ErrorAction Stop) -and ($pvtVMObject = Get-AzureRmVM -ResourceGroupName $CanaryVMRG -Name $privateVMName -ErrorAction Stop))
+        {
+            Set-item wsman:\localhost\Client\TrustedHosts -Value $publicVMIP -Force -Confirm:$false
+            $sw = [system.diagnostics.stopwatch]::startNew()
+            while (-not($publicVMSession = New-PSSession -ComputerName $publicVMIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($publicVMSession))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using public IP: $publicVMIP"}; Start-Sleep -Seconds 15}
+            if ($publicVMSession)
+            {
+                $remoteExecError = $null
+                Invoke-Command -Session $publicVMSession -Script{param ($privateIP) Set-item wsman:\localhost\Client\TrustedHosts -Value $privateIP -Force -Confirm:$false} -ArgumentList $privateVMIP | Out-Null
+                Invoke-Command -Session $publicVMSession -Script{Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False} | Out-Null
+                $publicVMHost = Invoke-Command -Session $publicVMSession -Script{(Get-ItemProperty "HKLM:\Software\Microsoft\Virtual Machine\Guest\Parameters" ).PhysicalHostName}
+                $privateVMHost = Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False | Out-Null; (Get-ItemProperty "HKLM:\Software\Microsoft\Virtual Machine\Guest\Parameters" ).PhysicalHostName} } -ArgumentList $privateVMIP, $vmCreds -ErrorVariable remoteExecError 2>$null
+                Invoke-Command -Session $publicVMSession -Script{param ($privateIP, $vmCreds) $sw = [system.diagnostics.stopwatch]::startNew(); while (-not($privateSess = New-PSSession -ComputerName $privateIP -Credential $vmCreds -ErrorAction SilentlyContinue)){if (($sw.ElapsedMilliseconds -gt 240000) -and (-not($privateSess))){$sw.Stop(); throw [System.Exception]"Unable to establish a remote session to the tenant VM using private IP: $privateIP"}; Start-Sleep -Seconds 15}; Invoke-Command -Session $privateSess -Script{Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False | Out-Null} } -ArgumentList $privateVMIP, $vmCreds -ErrorVariable remoteExecError 2>$null
+                $privateVMResponseFromRemoteSession = Invoke-Command -Session $publicVMSession -Script{param($targetIP) $targetName = $targetIP; $pingOptions = New-Object Net.NetworkInformation.PingOptions(64, $true); [int]$PingDataSize = 1472; [int]$TimeoutMilliseconds = 1000; $pingData = New-Object byte[]($PingDataSize); $ping = New-Object Net.NetworkInformation.Ping; $task = $ping.SendPingAsync($targetName, $TimeoutMilliseconds, $pingData, $pingOptions); [Threading.Tasks.Task]::WaitAll($task); if ($task.Result.Status -ne "Success") {throw "Ping request returned error $($task.Result.Status)"} else {return "Success"} } -ArgumentList $privateVMIP -ErrorVariable remoteExecError 2>$null               
+                $publicVMSession | Remove-PSSession -Confirm:$false
+                if ($remoteExecError)
+                {
+                    throw [System.Exception]"$remoteExecError"
+                }
+                if ($privateVMResponseFromRemoteSession)
+                {
+                    "MTU sized packet transfer between tenant VM1 on host $publicVMHost and tenant VM2 on host $privateVMHost succeeded"
+                }
+                else 
+                {
+                    throw [System.Exception]"Failed to transmit MTU sized packets between the tenant VMs"
                 }
             }    
         }
@@ -1101,14 +1142,21 @@ while ($runCount -le $NumberOfIterations)
                 {
                     Invoke-Usecase -Name 'DeleteTenantSubscriptions' -Description "Remove all the tenant related subscriptions" -UsecaseBlock `
                     {
-                        if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
+                        if ($subs = Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName)
                         {
-                            Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                            Remove-AzsSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
                         } 
-                        if ($subs = Get-AzureRmTenantSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
+                        if ($subs = Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription)
                         {
-                            Remove-AzureRmTenantSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
+                            Remove-AzsSubscription -TargetSubscriptionId $subs.SubscriptionId -ErrorAction Stop
                         } 
+                        $sw = [system.diagnostics.stopwatch]::startNew()
+                        while ((Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $tenantSubscriptionName) -or (Get-AzsSubscription -ErrorAction Stop | Where-Object DisplayName -eq $canaryDefaultTenantSubscription))
+                        {
+                            if ($sw.Elapsed.Seconds -gt 600) {break}
+                            Start-Sleep -Seconds 30
+                        }
+                        $sw.Stop()
                     }
 
                     Invoke-Usecase -Name 'LoginToAzureStackEnvAsSvcAdminForCleanup' -Description "Login to $SvcAdminEnvironmentName as service administrator to remove the subscription resource group" -UsecaseBlock `
@@ -1118,13 +1166,13 @@ while ($runCount -le $NumberOfIterations)
 
                     Invoke-Usecase -Name 'RemoveLinuxImageFromPIR' -Description "Remove the Linux image uploaded during setup from the Platform Image Respository" -UsecaseBlock `
                     {
-                        if (Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue)
+                        if ((Get-AzureRmVMImage -Location $ResourceLocation -PublisherName $linuxImagePublisher -Offer $linuxImageOffer -Sku $LinuxOSSku -ErrorAction SilentlyContinue) -and ($linuxUpload))
                         {
                             Remove-AzsVMImage -publisher $linuxImagePublisher -offer $linuxImageOffer -sku $LinuxOSSku -version $linuxImageVersion -Location $ResourceLocation -Force
                         }
                     }
                     Invoke-Usecase -Name 'DeleteSubscriptionResourceGroup' -Description "Delete the resource group that contains subscription resources" -UsecaseBlock `
-                    {
+                    {   
                         if ($removeRG = Get-AzureRmResourceGroup -Name $subscriptionRGName -ErrorAction Stop)
                         {
                             $removeRG | Remove-AzureRmResourceGroup -Force -ErrorAction Stop
