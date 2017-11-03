@@ -62,7 +62,7 @@ If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
 
-Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
+Privileged Endpoint VM that performs environment administration actions. Also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
 
 .PARAMETER ResourceGroupName
 
@@ -119,7 +119,7 @@ Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscripti
 
 .NOTES
 
-If you would like to un-Register with you Azure by turning off marketplace syndication, disabling usage reporting, and removing the registration resource from Azure you can run Remove-AzsRegistration.
+If you would like to un-Register with Azure by turning off marketplace syndication, disabling usage reporting, and removing the registration resource from Azure you can run Remove-AzsRegistration.
 
 If you would like to use a different subscription for registration you must first run Remove-AzsRegistration followed by Set-AzsRegistration after logging into the appropriate Azure Powershell context.
 
@@ -230,7 +230,7 @@ If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
 
-Just-Enough-Access Computer Name, also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
+Privileged Endpoint VM that performs environment administration actions. Also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
 
 .PARAMETER ResourceGroupName
 
