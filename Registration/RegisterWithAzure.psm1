@@ -17,7 +17,7 @@ if (-not (Test-Path $LogFolder))
 }
 if(-not $Global:AzureRegistrationLog)
 {
-    $Global:AzureRegistrationLog = "$LogFolder\AzureStack.AzureRegistration.$(Get-Date -Format yyyy-MM-dd.hh-mm-ss).log"
+    $Global:AzureRegistrationLog = "$LogFolder\AzureStack.AzureRegistration.$(Get-Date -Format yyyy-MM-dd.HH-mm-ss).log"
     $null = New-Item -Path $Global:AzureRegistrationLog -ItemType File -Force
 }
 
@@ -319,22 +319,9 @@ function Remove-AzsRegistration{
             UsageReportingEnabled         = $true
             }
         }
-    
-        Log-Output "Deactivating syndication features..."
-        Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
-        $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
-
-        # Register environment with Azure
-        New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken
-
-        # Assign custom RBAC role
-        Log-Output "Assigning custom RBAC role to resource $RegistrationName"
-        New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipal $servicePrincipal
-
-        # Deactivate AzureStack syndication / usage reporting features
-        $activationKey = Get-RegistrationActivationKey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
+        
         Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
-        Activate-AzureStack -Session $session -ActivationKey $ActivationKey
+        DeActivate-AzureStack -Session $session
         
         Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
 
@@ -1082,6 +1069,44 @@ function Activate-AzureStack{
         catch
         {
             Log-Warning "Activation of Azure Stack features failed:`r`n$($_)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt)
+            {
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            } 
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+}
+
+<#
+
+.SYNOPSIS
+
+DeActivates features in AzureStack
+
+#>
+function DeActivate-AzureStack{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.Runspaces.PSSession] $Session
+    )
+
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10 
+    do
+    {
+        try
+        {
+            $activation = Invoke-Command -Session $session -ScriptBlock { Remove-AzureStackActivation }
+            break
+        }
+        catch
+        {
+            Log-Warning "DeActivation of Azure Stack features failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
