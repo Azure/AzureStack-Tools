@@ -899,6 +899,19 @@ function Set-AzSBackupShare {
 
 Export-ModuleMember -Function Set-AzSBackupShare
 
+<#
+    .SYNOPSIS
+    Generate encryption key for infrastructure backups
+#>
+function New-EncryptionKeyBase64 {
+    $tempEncryptionKeyString = ""
+    foreach($i in 1..64) { $tempEncryptionKeyString += -join ((65..90) + (97..122) | Get-Random | % {[char]$_}) }
+    $tempEncryptionKeyBytes = [System.Text.Encoding]::UTF8.GetBytes($tempEncryptionKeyString)
+    $BackupEncryptionKeyBase64 = [System.Convert]::ToBase64String($tempEncryptionKeyBytes)
+    $BackupEncryptionKeyBase64
+}
+
+Export-ModuleMember -Function New-EncryptionKeyBase64
 
 function Invoke-AzsInfrastructureAction {
     param(
