@@ -820,6 +820,8 @@ function New-RegistrationResource{
         }
     } while ($currentAttempt -lt $maxAttempt)
 
+    $resourceCreationParams['Location'] = 'Global'
+
     do
     {
         try
