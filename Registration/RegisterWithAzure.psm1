@@ -295,31 +295,6 @@ function Remove-AzsRegistration{
     {
         Log-Output "Resource found. Deactivating Azure Stack and removing resource: $registrationResourceId"
 
-        $BillingModel = $registrationResource.Properties.BillingModel
-        $AgreementNumber = $registrationResource.Properties.AgreementNumber
-
-        # Configure Azure Bridge
-        $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
-
-        # Get registration token
-        if (($BillingModel -eq "Capacity") -or ($BillingModel -eq "Development"))
-        {
-            $getTokenParams = @{
-            BillingModel                  = $BillingModel
-            MarketplaceSyndicationEnabled = $false
-            UsageReportingEnabled         = $false
-            AgreementNumber               = $AgreementNumber
-            }
-        }
-        else
-        {
-            $getTokenParams = @{
-            BillingModel                  = $BillingModel
-            MarketplaceSyndicationEnabled = $false
-            UsageReportingEnabled         = $true
-            }
-        }
-        
         Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
         DeActivate-AzureStack -Session $session
         
