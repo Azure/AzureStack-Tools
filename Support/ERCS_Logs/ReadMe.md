@@ -1,6 +1,6 @@
 # ​ERCS_AzureStackLogs​.ps1  #
 
-![](https://github.com/Azure/AzureStack-Tools/blob/master/Support/ERCS_Logs/Media/runningERCS.gif?raw=true)
+![](https://github.com/effingerw/AzureStack-Tools/blob/vnext/Support/ERCS_Logs/Media/ERCS.gif?raw=true)
 
  Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 
