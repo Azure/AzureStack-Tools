@@ -805,7 +805,7 @@ function New-RegistrationResource{
 
     $resourceCreationParams = @{
         ResourceGroupName = $ResourceGroupName
-        Location          = $ResourceGroupLocation
+        Location          = 'Global'
         ResourceName      = $RegistrationName
         ResourceType      = "Microsoft.AzureStack/registrations"
         ApiVersion        = "2017-06-01" 
@@ -832,8 +832,6 @@ function New-RegistrationResource{
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
-
-    $resourceCreationParams['Location'] = 'Global'
 
     do
     {
