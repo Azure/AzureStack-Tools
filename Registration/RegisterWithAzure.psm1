@@ -805,7 +805,7 @@ function New-RegistrationResource{
 
     $resourceCreationParams = @{
         ResourceGroupName = $ResourceGroupName
-        Location          = 'Global'
+        Location          = 'WestCentralUs'
         ResourceName      = $RegistrationName
         ResourceType      = "Microsoft.AzureStack/registrations"
         ApiVersion        = "2017-06-01" 
