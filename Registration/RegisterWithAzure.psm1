@@ -460,44 +460,6 @@ function Set-AzsRegistrationSubscription{
 
     Log-Output "Logging in to Azure."
     $connection = Connect-AzureAccount -SubscriptionId $CurrentAzureSubscriptionId -AzureEnvironment $AzureEnvironmentName -AzureDirectoryTenantName $AzureDirectoryTenantName -Verbose
-
-    $role = Get-AzureRmRoleDefinition -Name 'Registration Reader' -Scope "/subscriptions/$CurrentAzureSubscriptionId"
-    if (-not $role)
-    {
-        $role = Get-AzureRmRoleDefinition -Name "Registration Reader-$($CurrentAzureSubscriptionId)" -Scope "/subscriptions/$CurrentAzureSubscriptionId"
-    }
-
-    if($role)
-    {
-        if(-not($role.AssignableScopes -icontains "/subscriptions/$NewAzureSubscriptionId"))
-        {
-            try
-            {
-                Log-Output "Adding alternate subscription Id to scope of custom RBAC role"
-                $role.AssignableScopes.Add("/subscriptions/$NewAzureSubscriptionId")
-                Set-AzureRmRoleDefinition -Role $role
-            }
-            catch
-            {
-                if($_.Exception -ilike "*AuthorizationFailed:*")
-                {
-                    Log-Warning "Unable to add the new subscription: $NewAzureSubscriptionId  to the scope of existing RBAC role definition. Continuing with transfer of registration `r`n$($_.Exception)"
-                }
-                else
-                {
-                    Log-Throw "Unable to swap to the provided NewAzureSubscriptionId $NewAzureSubscriptionId `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-                }
-            }
-        }
-        else
-        {
-            Log-Output "The provided subscription is already in the assignable scopes of RBAC role 'Registration Reader'. Continuing with transfer of registration."
-        }
-    }
-    else
-    {
-        Log-Throw -Message "The 'Registration Reader' custom RBAC role has not been defined. Please run Add-AzsRegistration to ensure it is created." -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-    }
     
     $params = @{}
     $PSCmdlet.MyInvocation.BoundParameters.Keys.ForEach({if(($value=Get-Variable -Name $_ -ValueOnly -ErrorAction Ignore)){$params[$_]=$value}})    
@@ -733,53 +695,24 @@ function New-RBACAssignment{
     )
 
     Log-Output "Setting Registration Reader role on '$($RegistrationResource.ResourceId)' for service principal $ServicePrincipalObjectId."
-    $customRoleAssigned = $false
-    $customRoleName = "Registration Reader"
+    $roleAssigned = $false
+    $roleName = "Azure Stack Registration Owner"
 
-    # Determine if the custom RBAC role has been defined
-    $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
-    if (-not $customRoleDefined)
-    {
-        $customRoleName = "Registration Reader-$($RegistrationResource.SubscriptionId)"
-        $customRoleDefined = Get-AzureRmRoleDefinition -Name $customRoleName
-        if (-not $customRoleDefined)
-        {
-            # Create new RBAC role definition
-            $role = Get-AzureRmRoleDefinition -Name 'Reader'
-            $role.Name = $customRoleName
-            $role.id = [guid]::newguid()
-            $role.IsCustom = $true
-            $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
-            $role.Actions.Add('Microsoft.AzureStack/registrations/products/read')
-            $role.AssignableScopes.Clear()
-            $role.AssignableScopes.Add("/subscriptions/$($RegistrationResource.SubscriptionId)")
-            $role.Description = "Custom RBAC role for registration actions such as downloading products from Azure marketplace"
-            try
-            {
-                New-AzureRmRoleDefinition -Role $role
-            }
-            catch
-            {
-                Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_.Exception)" -CallingFunction $PSCmdlet.MyInvocation.InvocationName
-            }
-        }        
-    }
-
-    # Determine if custom RBAC role has been assigned
+    # Determine if Azure Stack Registration Owner RBAC role has been assigned
     $roleAssignmentScope = "/subscriptions/$($RegistrationResource.SubscriptionId)/resourceGroups/$($RegistrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.ResourceName)"
     $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipalObjectId -ErrorAction SilentlyContinue
 
     foreach ($role in $roleAssignments)
     {
-        if ($role.RoleDefinitionName -eq $customRoleName)
+        if ($role.RoleDefinitionName -eq $roleName)
         {
-            $customRoleAssigned = $true
+            $roleAssigned = $true
         }
     }
 
-    if (-not $customRoleAssigned)
+    if (-not $roleAssigned)
     {        
-        New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $customRoleName -ObjectId $ServicePrincipalObjectId        
+        New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $roleName -ObjectId $ServicePrincipalObjectId        
     }
 }
 
