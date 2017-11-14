@@ -929,92 +929,66 @@ Adds the provided subscription id to the custom RBAC role 'Registration Reader'
 
 #>
 function New-RBACAssignment{
-[CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [String] $RegistrationName,
-
-        [Parameter(Mandatory = $true)]
-        [String] $ResourceGroupName,
-
-        [Parameter(Mandatory = $true)]
-        [String] $SubscriptionId,
-
-        [Parameter(Mandatory = $true)]
-        [Object] $ServicePrincipal
-    )
-
-    $currentAttempt = 0
-    $maxAttempt = 3
-    $sleepSeconds = 10 
-    do
-    {
-        try
+    [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [String] $RegistrationName,
+    
+            [Parameter(Mandatory = $true)]
+            [String] $ResourceGroupName,
+    
+            [Parameter(Mandatory = $true)]
+            [String] $SubscriptionId,
+    
+            [Parameter(Mandatory = $true)]
+            [Object] $ServicePrincipal
+        )
+    
+        $currentAttempt = 0
+        $maxAttempt = 3
+        $sleepSeconds = 10 
+        do
         {
-            $registrationResource = Get-AzureRmResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
-
-            $customRoleAssigned = $false
-            $customRoleName = "Registration Reader"
-
-            Log-Output "Setting $customRoleName role on '$($RegistrationResource.ResourceId)'"
-
-            # Determine if the custom RBAC role has been defined
-            if (-not (Get-AzureRmRoleDefinition -Name $customRoleName))
+            try
             {
-                $customRoleName = "Registration Reader-$($RegistrationResource.SubscriptionId)"
-                if (-not (Get-AzureRmRoleDefinition -Name $customRoleName))
+                $registrationResource = Get-AzureRmResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
+    
+                $RoleAssigned = $false
+                $RoleName = "Azure Stack Registration Owner"
+    
+                Log-Output "Setting $RoleName role on '$($RegistrationResource.ResourceId)'"
+    
+                # Determine if RBAC role has been assigned
+                $roleAssignmentScope = "/subscriptions/$($RegistrationResource.SubscriptionId)/resourceGroups/$($RegistrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.ResourceName)"
+                $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
+    
+                foreach ($role in $roleAssignments)
                 {
-                    # Create new RBAC role definition
-                    $role = Get-AzureRmRoleDefinition -Name 'Reader'
-                    $role.Name = $customRoleName
-                    $role.id = [guid]::newguid()
-                    $role.IsCustom = $true
-                    $role.Actions.Add('Microsoft.AzureStack/registrations/products/listDetails/action')
-                    $role.AssignableScopes.Clear()
-                    $role.AssignableScopes.Add("/subscriptions/$($RegistrationResource.SubscriptionId)")
-                    $role.Description = "Custom RBAC role for registration actions such as downloading products from Azure marketplace"
-                    try
+                    if ($role.RoleDefinitionName -eq $RoleName)
                     {
-                        New-AzureRmRoleDefinition -Role $role
-                    }
-                    catch
-                    {
-                        Log-Throw -Message "Defining custom RBAC role $customRoleName failed: `r`n$($_)" -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
+                        $RoleAssigned = $true
                     }
                 }
+    
+                if (-not $RoleAssigned)
+                {        
+                    New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $RoleName -ObjectId $ServicePrincipal.ObjectId
+                }
+                break
             }
-
-            # Determine if custom RBAC role has been assigned
-            $roleAssignmentScope = "/subscriptions/$($RegistrationResource.SubscriptionId)/resourceGroups/$($RegistrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.ResourceName)"
-            $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
-
-            foreach ($role in $roleAssignments)
+            catch
             {
-                if ($role.RoleDefinitionName -eq $customRoleName)
+                Log-Warning "Assignment of custom RBAC Role $RoleName failed:`r`n$($_)"
+                Log-Output "Waiting $sleepSeconds seconds and trying again..."
+                $currentAttempt++
+                Start-Sleep -Seconds $sleepSeconds
+                if ($currentAttempt -ge $maxAttempt)
                 {
-                    $customRoleAssigned = $true
+                    Log-Throw -Message $_ -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
                 }
             }
-
-            if (-not $customRoleAssigned)
-            {        
-                New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $customRoleName -ObjectId $ServicePrincipal.ObjectId
-            }
-            break
-        }
-        catch
-        {
-            Log-Warning "Assignment of custom RBAC Role $customRoleName failed:`r`n$($_)"
-            Log-Output "Waiting $sleepSeconds seconds and trying again..."
-            $currentAttempt++
-            Start-Sleep -Seconds $sleepSeconds
-            if ($currentAttempt -ge $maxAttempt)
-            {
-                Log-Throw -Message $_ -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
-            }
-        }
-    } while ($currentAttempt -lt $maxAttempt)
-}
+        } while ($currentAttempt -lt $maxAttempt)
+    }
 
 <#
 
