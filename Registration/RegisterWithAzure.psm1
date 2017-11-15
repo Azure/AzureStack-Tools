@@ -622,6 +622,31 @@ Function UnRegister-AzsEnvironment{
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
+<#
+.SYNOPSIS
+    Gets the registration name from the environment
+#>
+Function Get-AzsRegistrationName{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCredential] $CloudAdminCredential,
+
+        [Parameter(Mandatory = $true)]
+        [String] $PrivilegedEndpoint
+    )
+    #requires -Version 4.0
+    #requires -RunAsAdministrator
+
+    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+    $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+
+    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+    $registrationName = Get-RegistrationName -Session $session
+    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+}
+
 #endregion
 
 #endregion
@@ -632,6 +657,40 @@ Function UnRegister-AzsEnvironment{
 
 #region HelperFunctions
 
+<#
+#>
+Function Get-RegistrationName{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [System.Management.Automation.Runspaces.PSSession] $Session
+    )
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10 
+    do
+    {
+        try
+        {
+            Log-Output "Retrieving AzureStack stamp information..."
+            $azureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInfo }
+            $RegistrationName = "AzureStack-$($azureStackStampInfo.Cloud)"
+            Write-Verbose "Registration name: $RegistrationName"
+            return $RegistrationName
+        }
+        catch
+        {
+            Log-Warning "Retrieving AzureStack stamp information failed:`r`n$($_)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt)
+            {
+                Log-Throw -Message $_ -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+}
 <#
 .SYNOPSIS
 
@@ -1367,6 +1426,7 @@ function Log-Throw{
 Export-ModuleMember Get-AzsRegistrationToken
 Export-ModuleMember Register-AzsEnvironment
 Export-ModuleMember Unregister-AzsEnvironment
+Export-ModuleMember Get-AzsRegistrationName
 
 # Connected functions
 Export-ModuleMember Set-AzsRegistration
