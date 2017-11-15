@@ -673,8 +673,8 @@ Function Get-RegistrationName{
         try
         {
             Log-Output "Retrieving AzureStack stamp information..."
-            $azureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInfo }
-            $RegistrationName = "AzureStack-$($azureStackStampInfo.Cloud)"
+            $azureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
+            $RegistrationName = "AzureStack-$($azureStackStampInfo.CloudId)"
             Write-Verbose "Registration name: $RegistrationName"
             return $RegistrationName
         }
