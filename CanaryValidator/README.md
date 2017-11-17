@@ -43,7 +43,7 @@ TenantID is the AADTenantID value returned from the PEP Get-AzureStackStampInfor
 ## NOTE: 
 When running Canary against ADFS environment (disconnected), please make sure to pass in the tenantAdminObjectId parameter
 ## NOTE: 
-If there is no tenant user available, you can create one and use it as shown below.
+If there is no tenant user is available, you can create one and use it as shown below.
 ```powershell
 $tenantAdminUserName = "CanaryTenantAdmin"
 $tenantAdminPassword = "PasswordOfYourChoice"
