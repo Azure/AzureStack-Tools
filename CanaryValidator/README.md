@@ -35,8 +35,8 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "serv
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
 ```
 
-# NOTE: To retrieve the TenantID if not available already, you can use the PEP Get-AzureStackStampInformation available on the emergency console. Instructions on connecting to the PEP are available @ https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-privileged-endpoint
-# TenantID is the AADTenantID value returned from the PEP Get-AzureStackStampInformation
+## NOTE: To retrieve the TenantID if not available already, you can use the PEP Get-AzureStackStampInformation available on the emergency console. Instructions on connecting to the PEP are available @ https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-privileged-endpoint
+## TenantID is the AADTenantID value returned from the PEP Get-AzureStackStampInformation
 
 ## NOTE: When running Canary against ADFS environment (disconnected), please make sure to pass in the tenantAdminObjectId parameter
 ## NOTE: If there is no tenant user available, you can create one and use it as shown below.
