@@ -238,11 +238,8 @@ If($envInfo)
     Try
     {
         $TenantId = $envInfo.TenantId
-        Write-Host "`n[INFO] - Login to Azure RM" -ForegroundColor Yellow
-        Login-AzureRmAccount `
-            -EnvironmentName "AzureStackAdmin" `
-            -TenantId $TenantId `
-            -Credential (get-Credential -UserName "AzureStackAdmin@$($FoundJSONFile.AADTenantName)" -Message "AzureStackAdmin@$($FoundJSONFile.AADTenantName) AAD credentials")
+        Write-Host "`n[INFO] - Login to Azure RM with AzureStack Stamp Service Admin Account" -ForegroundColor Yellow
+        Login-AzureRmAccount -Environment "AzureStackAdmin" -TenantId $TenantId
 
         $location = Get-AzsLocation
         $location = $location.Name 
