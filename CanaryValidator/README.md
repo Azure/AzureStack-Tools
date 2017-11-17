@@ -18,8 +18,8 @@ Set-Location -Path ".\AzureStack-Tools-master\CanaryValidator" -PassThru
 # Install-Module -Name 'AzureRm.Bootstrapper'
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force
 # Install-Module -Name AzureStack -RequiredVersion 1.2.11
-$TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
-$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
+$TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "tenantadminuser@contoso.com", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
+$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "serviceadmin@contoso.com", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds
 ```
 
@@ -30,11 +30,31 @@ $ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Ser
 # Install-Module -Name 'AzureRm.Bootstrapper'
 # Install-AzureRmProfile -profile '2017-03-09-profile' -Force
 # Install-Module -Name AzureStack -RequiredVersion 1.2.11
-$TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "<Tenant Admin username>", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
-$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "<Service Admin username>", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
+$TenantAdminCreds =  New-Object System.Management.Automation.PSCredential "tenantadminuser@contoso.com", (ConvertTo-SecureString "<Tenant Admin password>" -AsPlainText -Force)
+$ServiceAdminCreds =  New-Object System.Management.Automation.PSCredential "serviceadmin@contoso.com", (ConvertTo-SecureString "<Service Admin password>" -AsPlainText -Force)
 .\Canary.Tests.ps1  -TenantID "<TenantID from Azure Active Directory>" -AdminArmEndpoint "<Administrative ARM endpoint>" -ServiceAdminCredentials $ServiceAdminCreds -TenantArmEndpoint "<Tenant ARM endpoint>" -TenantAdminCredentials $TenantAdminCreds -WindowsISOPath "<path where the WS2016 ISO is present>"
 ```
-## NOTE: When running Canary against ADFS environment, please make sure to pass in the TenantAdminObjectId parameter
+
+# NOTE: 
+# To retrieve the TenantID if not available already, you can use the PEP Get-AzureStackStampInformation available on the emergency console. Instructions on connecting to the PEP are available @ https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-privileged-endpoint
+# TenantID is the AADTenantID value returned from the PEP Get-AzureStackStampInformation
+
+## NOTE: When running Canary against ADFS environment (disconnected), please make sure to pass in the tenantAdminObjectId parameter
+## NOTE: 
+# If there is no tenant user available, you can create one and use it as shown below.
+```powershell
+$tenantAdminUserName = "CanaryTenantAdmin"
+$tenantAdminPassword = "PasswordOfYourChoice"
+$tenantAdminAccount  = New-ADUser -Name $tenantAdminUserName -UserPrincipalName "$tenantAdminUserName@$env:USERDNSDOMAIN" -AccountPassword $tenantAdminPassword -ChangePasswordAtLogin $false -Enabled $true -PasswordNeverExpires $true -PassThru
+$tenantAdminUpn      = $tenantAdminAccount.UserPrincipalName
+$tenantAdminObjectId = $tenantAdminAccount.SID.Value
+$TenantAdminCreds    = New-Object System.Management.Automation.PSCredential $tenantAdminUpn, (ConvertTo-SecureString $tenantAdminPassword -AsPlainText -Force)
+```
+## NOTE: 
+# To install Azure PowerShell in a disconnected or a partially connected senario, follow the instructions @ https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install?view=azurestackps-1.2.9&toc=%2fpowershell%2fmodule%2ftoc.json%3fview%3dazurestackps-1.2.9&view=azurestackps-1.2.9#install-powershell-in-a-disconnected-or-in-a-partially-connected-scenario
+
+## NOTE: 
+# While running Canary make sure to pass the usernames in the format: user@domain.com
 
 ## To list the usecases in Canary
 
