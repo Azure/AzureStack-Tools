@@ -836,7 +836,7 @@ function Get-AzsInfrastructureResource {
         [string] $Location,
 
         [Parameter(Mandatory = $false)]
-        [string] $ApiVersion = "2016-05-01",
+        [string] $ApiVersion = "2017-05-10",
 
         [string] $ResourceType
     )
@@ -889,7 +889,7 @@ function Set-AzSBackupShare {
         ResourceName      = $Location
         ResourceType      = "Microsoft.Backup.Admin/backupLocations"
         ResourceGroupName = "system.{0}" -f $Location
-        ApiVersion        = "2016-05-01"
+        ApiVersion        = "2017-05-10"
         Properties        = @{externalStoreDefault=@{path = $Path;userName = $UserName;password = $Password;EncryptionKeyBase64=$EncryptionKey }} 
         location          = $location
     }
