@@ -62,7 +62,7 @@ Specifies timezone id for Azure Stack stamp. Format must be in one of the 2 form
 - "Pacific Standard Time"
 
 ## IncompleteDeployment ##
-Specifies if Azure Stack Deployment is incomplete (Only for use in ASDK or DVM)
+Specifies if Azure Stack Deployment is incomplete. Only for use in Azure Stack Development Kit deployment or DVM
 
 - Yes
 - No
