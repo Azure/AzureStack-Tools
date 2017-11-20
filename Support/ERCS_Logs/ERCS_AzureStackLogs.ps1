@@ -1425,7 +1425,6 @@ if($IP)
 				If (!(Test-Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)")) {$incompletedeploymentfolder = New-Item -Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)" -ItemType directory} 
 				Get-AzureStackLogs -OutputPath $incompletedeploymentfolder.FullName -FilterByRole $FilterByRole -FromDate $FromDate -ToDate $ToDate
 				#remotepowershell
-				Clear-Host
 				$s = New-PSSession -ComputerName $IP -ConfigurationName PrivilegedEndpoint -Credential $mySecureCredentials
 				Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
 				Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation -WarningAction SilentlyContinue} -OutVariable StampInformation -WarningAction SilentlyContinue | Out-Null
