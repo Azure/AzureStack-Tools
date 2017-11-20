@@ -1,8 +1,8 @@
 # ​ERCS_AzureStackLogs​.ps1  #
 
-![](https://github.com/effingerw/AzureStack-Tools/blob/vnext/Support/ERCS_Logs/Media/ERCS.gif?raw=true)
+![](https://github.com/Azure/AzureStack-Tools/blob/vnext/Support/ERCS_Logs/Media/ERCS.gif?raw=true)
 
- Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
+ Built to be run on the HLH, DVM, or Jumpbox from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 
 
  The script will use one of the below seven methods; Gather requested logs, Transcript, and AzureStackStampInformation.json. The script will also save AzureStackStampInformation.json in %ProgramData% and in created log folder. AzureStackStampInformation.json in %ProgramData% allows future runs to have ERCS IP information populated at beginning of script.
