@@ -61,5 +61,11 @@ Specifies timezone id for Azure Stack stamp. Format must be in one of the 2 form
 - (Get-TimeZone -Name "US Eastern*").id
 - "Pacific Standard Time"
 
+## IncompleteDeployment ##
+Specifies if Azure Stack Deployment is incomplete (Only for use in ASDK or DVM)
+
+- Yes
+- No
+
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time"
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No
