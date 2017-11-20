@@ -40,8 +40,16 @@
 	Specifies if script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM.
 	Yes
 	No
+.PARAMETER StampTimeZone
+	Specifies timezone id for Azure Stack stamp. Format must be in one of the 2 formats:
+	(Get-TimeZone -Name "US Eastern*").id
+	"Pacific Standard Time"
+.PARAMETER IncompleteDeployment
+	Specifies if Azure Stack Deployment is incomplete (Only for use in ASDK or DVM)
+	Yes
+	No
 .EXAMPLE
- .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No
+ .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No
 #>
 
 Param(
@@ -50,6 +58,8 @@ Param(
     [DateTime] $FromDate,
 	[Parameter(Mandatory=$false,HelpMessage="Valid formats are: in 'MM/DD/YYYY' or 'MM/DD/YYYY HH:MM'")]
     [DateTime] $ToDate,
+	[Parameter(Mandatory=$false,HelpMessage="Valid formats are: in '(Get-TimeZone -Name 'US Eastern*').id' or 'Pacific Standard Time'")]
+    [String] $StampTimeZone,
 	[Parameter(Mandatory=$false,HelpMessage="Valid choices are: Service Fabric, Storage, Networking, Identity, Patch & Update, Compute, Backup")]
     [ValidateSet("Service Fabric", "Storage", "Networking", "Identity", "Patch & Update", "Compute", "Backup")]
     [string] $Scenario,
@@ -63,17 +73,24 @@ Param(
     [PSCredential]$ShareCred,
 	[Parameter(Mandatory=$false,HelpMessage="Script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM? Valid formats are: Yes or No")]
     [ValidateSet("Yes", "No")]
-    [String] $InStamp
+    [String] $InStamp,
+	[Parameter(Mandatory=$false,HelpMessage="Has Deployment Completed? Valid formats are: Yes or No")]
+    [ValidateSet("Yes", "No")]
+    [String] $IncompleteDeployment
 )
+
+#warn if running in the ISE do to .net ui rendering 
+ if ($psise -ne $null)
+ {
+	Write-Host "`n `t[WARN] Script should not be run from PowerShell ISE" -ForegroundColor Yellow
+	Read-Host -Prompt "`tPress Enter to continue"
+ }
 
 #Run as Admin
 $ScriptPath = $script:MyInvocation.MyCommand.Path
 
 # Check to see if we are in FullLanguage
 $LanguageMode = $ExecutionContext.SessionState.LanguageMode
-
-#set the language to en-us
-Set-WinSystemLocale en-us
 
 #load .net assembly 
 Add-Type -AssemblyName System.DirectoryServices.AccountManagement
@@ -134,8 +151,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.5.2
-#  
+#    1.6.0  
 #------------------------------------------------------------------------------ 
  
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
@@ -155,7 +171,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.5.2" | Write-Host -ForegroundColor Yellow 
+"    1.6.0" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -167,9 +183,51 @@ $ErrorActionPreference = "SilentlyContinue"
 $ContinueAnswer = Read-Host "`n Do you wish to proceed at your own risk? (Y/N)" 
 If ($ContinueAnswer -ne "Y") { Write-Host "`n Exiting." -ForegroundColor Red;Exit } 
 
+#Start Up WinRm we need it later 
+$winrm = Get-Service -Name winrm
+If ($winrm)
+{
+    If($winrm.StartType -ne "Automatic")
+    {
+    #Start Up WinRm we need it later 
+    Write-Host "`n[INFO] Configuring Windows PowerShell for remoting" -ForegroundColor Green
+    $PSRemoting = Invoke-Command -ComputerName localhost -ScriptBlock {Enable-PSRemoting -Force} -AsJob
+        while((get-job -Id $PSRemoting.id).State -eq "Running")
+        {
+	        $PSRper = (Get-Random -Minimum 5 -Maximum 80); Start-Sleep -Milliseconds 1500
+	        Write-Progress -Activity "Please wait while Powershell Remoting is setup on $($env:COMPUTERNAME)" -PercentComplete $PSRper
+        }
+
+        if((get-job -Id $PSRemoting.id).State -eq "Completed")
+        {
+	        Write-Progress -Activity "Please wait while Powershell Remoting is setup on $($env:COMPUTERNAME)" -Status "Ready" -Completed
+        }
+    }
+}
+
 #clear var $ip
 $IP = $null
 Clear-Host
+
+#Temp Firewall rule for access to PEP and SMB to allow file transfer from PEP
+Try
+{
+    $FWruletest = Get-NetFirewallRule -Group "AzureStack_ERCS" -ErrorAction SilentlyContinue
+    If(!($FWruletest))
+    {
+    $firewall = New-NetFirewallRule -Name "AzureStack Firewall PEP rule" -DisplayName "AzureStack PEP Access Firewall rule" -Description "Allow Outbound Access to Remote Powershell" -Group "AzureStack_ERCS" -Enabled True -Action Allow -Profile Any -Direction Outbound -Protocol TCP -RemotePort 5985
+	$SMB = New-NetFirewallRule -Name "AzureStack Firewall SMB rule" -DisplayName "AzureStack SMB Access Firewall rule" -Description "Allow inbound Access to SMB Powershell" -Group "AzureStack_ERCS" -Enabled True -Action Allow -Profile Any -Direction Inbound -Protocol TCP -LocalPort 445
+    }
+    If($firewall.PrimaryStatus -eq "OK")
+        {Write-Host "`n `t[INFO] Created firewall rules to allow access to AzureStack" -ForegroundColor Green}
+}
+catch 
+{
+    Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+    Write-Host "`n Press any key to continue ...`n"
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
 
 #Test for Module
 function load_module($name)
@@ -213,6 +271,8 @@ If(!($IP))
 	Write-Host "`n `t[INFO] Load AzureStackStampInformation.json" -ForegroundColor Green
 	$FoundJSONFile = Get-Content -Raw -Path "$($Env:ProgramData)\AzureStackStampInformation.json" | ConvertFrom-Json
 	[string]$FoundDomainFQDN = $FoundJSONFile.DomainFQDN
+	[array]$ERCSIPS = $FoundJSONFile.EmergencyConsoleIPAddresses
+	$StampTimeZone = $FoundJSONFile.Timezone
 	$FoundSelERCSIP  = $FoundJSONFile.EmergencyConsoleIPAddresses | Out-GridView -Title "Please Select Emergency Console IP Address" -PassThru
 	$IP = $FoundSelERCSIP
 	}
@@ -221,22 +281,72 @@ If(!($IP))
 #Sel AzureStackStampInformation
 if(!($IP))
 {
-	$title = "`n`t`t`t`t`t`t `t[PROMPT]"
-	$message = "`t`t`t`t`t`t`t `tDo you have the AzureStackStampInformation.json file?"
-
-	$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", `
-	    "Loads AzureStackStampInformation.json"
-
-	$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", `
-	    "Does not load AzureStackStampInformation.json"
-
-	$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-
-	$result = $host.ui.PromptForChoice($title, $message, $options, 1) 
-
+	#region .NET
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$JSONMainForm = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$Jsonlabel = $null
+	[System.Windows.Forms.Button]$JsonYbutton = $null
+	[System.Windows.Forms.Button]$JsonNbutton = $null
+	[System.Windows.Forms.Button]$button1 = $null
+	
+	$Jsonlabel = New-Object -TypeName System.Windows.Forms.Label
+	$JsonYbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JsonNbutton = New-Object -TypeName System.Windows.Forms.Button
+	$JSONMainForm.SuspendLayout()
+	#
+	#Jsonlabel
+	#
+	$Jsonlabel.AutoSize = $true
+	$Jsonlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(59,42)
+	$Jsonlabel.Name = 'Jsonlabel'
+	$Jsonlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(248,13)
+	$Jsonlabel.TabIndex = 0
+	$Jsonlabel.Text = 'Do you have the AzureStackStampInformation.json'
+	#
+	#JsonYbutton
+	#
+	$JsonYbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(62,78)
+	$JsonYbutton.Name = 'JsonYbutton'
+	$JsonYbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonYbutton.TabIndex = 1
+	$JsonYbutton.Text = 'Yes'
+	$JsonYbutton.UseVisualStyleBackColor = $true
+	$JsonYbutton.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+	#
+	#JsonNbutton
+	#
+	$JsonNbutton.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(232,78)
+	$JsonNbutton.Name = 'JsonNbutton'
+	$JsonNbutton.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$JsonNbutton.TabIndex = 2
+	$JsonNbutton.Text = 'No'
+	$JsonNbutton.UseVisualStyleBackColor = $true
+	$JsonNbutton.DialogResult = [System.Windows.Forms.DialogResult]::No
+	#
+	#JSONMainForm
+	#
+	$JSONMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(369,133)
+	$JSONMainForm.Controls.Add($JsonNbutton)
+	$JSONMainForm.Controls.Add($JsonYbutton)
+	$JSONMainForm.Controls.Add($Jsonlabel)
+	$JSONMainForm.Name = 'JSONMainForm'
+	$JSONMainForm.ResumeLayout($false)
+	$JSONMainForm.PerformLayout()
+	Add-Member -InputObject $JSONMainForm -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name Jsonlabel -Value $Jsonlabel -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonYbutton -Value $JsonYbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name JsonNbutton -Value $JsonNbutton -MemberType NoteProperty
+	Add-Member -InputObject $JSONMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+	$JSONMainForm.Topmost = $True
+	$JSONMainForm.StartPosition = "CenterScreen"
+    $JSONMainForm.MaximizeBox = $false
+    $JSONMainForm.FormBorderStyle = 'Fixed3D'
+	$result = $JSONMainForm.ShowDialog()
+	#endregion .NET
 	switch ($result)
 	    {
-	        0 {    
+	        "Yes" {    
 	            Add-Type -AssemblyName System.Windows.Forms
 	            $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
 	            InitialDirectory = $env:SystemDrive
@@ -246,14 +356,17 @@ if(!($IP))
 	            $JSONFile = Get-Content -Raw -Path $FileBrowser.FileNames | ConvertFrom-Json
                 If($JSONFile)
 	                {
-					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
                     Write-Host "`n `t[INFO] Loaded $($FileBrowser.FileNames)" -ForegroundColor Green
-                    [array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
+					Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+					$JSONFile | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
+					[string]$FoundDomainFQDN = $JSONFile.DomainFQDN
+					[array]$ERCSIPS = $JSONFile.EmergencyConsoleIPAddresses
+					$StampTimeZone = $JSONFile.Timezone
 	                $selERCSIP = $ERCSIPS | Out-GridView -Title "Please Select Emergency Console IPAddress" -PassThru
 	                $IP = $selERCSIP
                     }
 	          }
-	        1 {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
+	        "No" {Write-Host "`n `t[INFO] No AzureStackStampInformation.json file loaded" -ForegroundColor White}
 	    }
 }
 
@@ -280,7 +393,7 @@ if(!($IP))
     ForEach ($GuessERCName in $GuessERCSName)
         {
 		$global:progresspreference ="SilentlyContinue"
-        $GuessName = Test-NetConnection -port 5985 -ComputerName $GuessERCName
+        $GuessName = Test-NetConnection -port 5985 -ComputerName $GuessERCName -WarningAction SilentlyContinue
         If ($GuessName.TcpTestSucceeded -eq "True")
             {
             [Array]$ListeningNames += $GuessName.RemoteAddress.IPAddressToString
@@ -292,8 +405,10 @@ if(!($IP))
 }
 
 #InStamp Check 
-if ($InStamp -ne "NO")
+if($InStamp -eq "Yes"){$CheckADSK = 1}
+if (!($InStamp))
 {
+	#region .NET
 	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 	$OnStampForm = New-Object -TypeName System.Windows.Forms.Form
@@ -301,8 +416,7 @@ if ($InStamp -ne "NO")
 	[System.Windows.Forms.Button]$OnStampYes = $null
 	[System.Windows.Forms.Button]$OnStampNo = $null
 	[System.Windows.Forms.Button]$button1 = $null
-	function InitializeComponent
-	{
+
 	$OnStampLabel = New-Object -TypeName System.Windows.Forms.Label
 	$OnStampYes = New-Object -TypeName System.Windows.Forms.Button
 	$OnStampNo = New-Object -TypeName System.Windows.Forms.Button
@@ -358,15 +472,27 @@ if ($InStamp -ne "NO")
 	Add-Member -InputObject $OnStampForm -Name button1 -Value $button1 -MemberType NoteProperty
 	$OnStampForm.Topmost = $True
 	$OnStampForm.StartPosition = "CenterScreen"
-	}
-	. InitializeComponent
-
+    $OnStampForm.MaximizeBox = $false
+    $OnStampForm.FormBorderStyle = 'Fixed3D'
 	$ASDKQuestion = $OnStampForm.ShowDialog()
-
+	#endregion .NET
 	if ($ASDKQuestion -eq [System.Windows.Forms.DialogResult]::yes)
 	{
 	Write-Host "`n `t[INFO] Using Azure Stack Development Kit or DVM" -ForegroundColor Green
 	$CheckADSK = 1
+	}
+}
+
+#Get Stamp Timezone
+If (!($StampTimeZone))
+{
+$SelCurrentTimeZone = [system.timezoneinfo]::GetSystemTimeZones() | Out-GridView -PassThru -Title "Select AzureStack Stamp installed timezone"
+[String]$StampTimeZone = $SelCurrentTimeZone.Id
+	If ($StampTimeZone -eq $null)
+	{
+	Write-Host "`n Press any key to continue ...`n"
+	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+	exit
 	}
 }
 
@@ -448,7 +574,7 @@ if(!($IP))
 	{
 		$moduleName = $null
 		$moduleName = "DnsServer"
-		#INFOrm the user of that we are doing
+		#inform the user of that we are doing
 		Write-Host "`n`t[INFO] Checking for DNS powershell module" -ForegroundColor White
 	    
 		if (load_module $moduleName)
@@ -610,12 +736,33 @@ if(!($IP))
 #Do Work
 if($IP)
 {
+
+	function Convert-AZSServerTime
+	(
+	[parameter( Mandatory=$true)]            
+	  [ValidateNotNullOrEmpty()]            
+	  [datetime]$DateTime
+	)  
+	{
+		$strCurrentTimeZone = $StampTimeZone
+		$ToTimeZoneObj  = [system.timezoneinfo]::GetSystemTimeZones() | Where-Object {$_.id -eq $strCurrentTimeZone}
+		$TargetZoneTime = [system.timezoneinfo]::ConvertTime($datetime, $ToTimeZoneObj) 
+		$TargetZoneTime
+	}
+
 	Try
 	{
 		 Write-Host "`n `t[INFO] Using $($IP)" -ForegroundColor Green
 		#Add this machine to trusted Hosts 
+		if ($ERCSIPS)
+		{
+		$ERCS = $ERCSIPS -join ","
+		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($ERCS)" -Force
+		}
+		else
+		{
 		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($IP)" -Force
-
+		}
 		#gethostip
         $global:progresspreference ="SilentlyContinue"
 		Write-Host "`n `t[INFO] Testing connectivity to $($IP)" -ForegroundColor Green
@@ -623,15 +770,18 @@ if($IP)
 		If ($testconnect.TcpTestSucceeded -eq "True")
 		    {
 				Write-Host "`tSuccess"
+				If ($IncompleteDeployment -ne "Yes")
+				{
 				$remoteip = $testconnect.RemoteAddress.IPAddressToString
 				$share = $testconnect.SourceAddress.IPAddress
 				$myname = whoami
-                $date = Get-Date -format MM-dd
+                $date = Get-Date -format MM-dd-hhmm
                 $foldername = "-AzureStackLogs"
                 $sharename = $date + $foldername
                 If (!(Test-Path "$($Env:SystemDrive)\$($sharename)")) {$folder = New-Item -Path "$($Env:SystemDrive)\$($sharename)" -ItemType directory} 
                 $foldershare= New-SMBShare –Name $sharename –Path "$($Env:SystemDrive)\$($sharename)" -FullAccess $myname
                 If($foldershare){[string]$ShareINFO = "\\$($share)\$sharename"}
+				}
 			}
 		Else
 			{
@@ -648,6 +798,7 @@ if($IP)
 		{
 			if(!($FoundDomainFQDN))
 			{
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$DomainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -655,8 +806,7 @@ if($IP)
 			[System.Windows.Forms.TextBox]$Domaintextbox = $null
 			[System.Windows.Forms.Label]$label1 = $null
 			[System.Windows.Forms.Button]$button1 = $null
-			function InitializeComponent
-			{
+			
 			$Domaintextbox = New-Object -TypeName System.Windows.Forms.TextBox
 			$DomainOK = New-Object -TypeName System.Windows.Forms.Button
 			$label1 = New-Object -TypeName System.Windows.Forms.Label
@@ -706,10 +856,13 @@ if($IP)
 			Add-Member -InputObject $DomainForm -Name Domaintextbox -Value $Domaintextbox -MemberType NoteProperty
 			Add-Member -InputObject $DomainForm -Name label1 -Value $label1 -MemberType NoteProperty
 			Add-Member -InputObject $DomainForm -Name button1 -Value $button1 -MemberType NoteProperty
-			}
+			$DomainForm.Topmost = $True
+			$DomainForm.StartPosition = "CenterScreen"
+			$DomainForm.MaximizeBox = $false
+			$DomainForm.FormBorderStyle = 'Fixed3D'
 			[System.Object]$userinputdomain = $null
-			. InitializeComponent
 			$userinputdomain = $DomainForm.ShowDialog()
+			#endregion .NET
 			if ($userinputdomain -eq [System.Windows.Forms.DialogResult]::OK)
 				{
 					$FoundDomainFQDN = $Domaintextbox.Text
@@ -720,14 +873,14 @@ if($IP)
 			$UserFoundDomainFQDN = ($FoundDomainFQDN + "\")
 			}
 			Write-Host "`n`t[PROMPT] Select a username for connecting to AzureStack PEP" -ForegroundColor Green
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$UserForm = New-Object -TypeName System.Windows.Forms.Form
 			[System.Windows.Forms.ComboBox]$comboBox1 = $null
 			[System.Windows.Forms.Button]$ok = $null
 			[System.Windows.Forms.Button]$button1 = $null
-			function InitializeComponent
-			{
+
 			$comboBox1 = New-Object -TypeName System.Windows.Forms.ComboBox
 			$ok = New-Object -TypeName System.Windows.Forms.Button
 			$UserForm.SuspendLayout()
@@ -736,7 +889,7 @@ if($IP)
 			#
 			$comboBox1.FormattingEnabled = $true
 			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)CloudAdmin")
-			$comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin")
+			if($CheckADSK -eq 1) { $comboBox1.Items.AddRange("$($UserFoundDomainFQDN)AzureStackAdmin") }
 			$comboBox1.Items.AddRange("User Input")
 			$comboBox1.SelectedIndex = 0
 			$comboBox1.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,29)
@@ -769,10 +922,10 @@ if($IP)
 			Add-Member -InputObject $UserForm -Name button1 -Value $button1 -MemberType NoteProperty
 			$UserForm.Topmost = $True
 			$UserForm.StartPosition = "CenterScreen"
-			}
-			. InitializeComponent
+			$UserForm.MaximizeBox = $false
+			$UserForm.FormBorderStyle = 'Fixed3D'
 			$AzsUser = $UserForm.ShowDialog()
-
+			#endregion .NET
 			if ($AzsUser -eq [System.Windows.Forms.DialogResult]::OK)
 			{
 			Write-Host "`tSelected $($comboBox1.SelectedItem)" -ForegroundColor White
@@ -810,159 +963,269 @@ if($IP)
 			} 
 		}
 		#form for start question
-	if (!($FromDate))
-		{
-			#form for questions 
-	        Add-Type -AssemblyName System.Windows.Forms
-	        Add-Type -AssemblyName System.Drawing
-
-	        $Startform = New-Object Windows.Forms.Form 
-	        $Startform.Text = "Start" 
-	        $Startform.Size = New-Object Drawing.Size @(200,265) 
-	        $Startform.StartPosition = "CenterScreen"
-
-	        $Startcalendar = New-Object System.Windows.Forms.MonthCalendar 
-	        $Startcalendar.ShowTodayCircle = $false
-	        $Startcalendar.MaxSelectionCount = 1
-	        $Startform.Controls.Add($Startcalendar) 
-
-
-	        # StartTimePicker Label
-	        $StartTimePickerLabel = New-Object System.Windows.Forms.Label
-	        $StartTimePickerLabel.Text = “Start”
-	        $StartTimePickerLabel.Location = “10, 165”
-	        $StartTimePickerLabel.Height = 22
-	        $StartTimePickerLabel.Width = 60
-	        $Startform.Controls.Add($StartTimePickerLabel)
-
-	        # StartTimePicker
-	        $StartTimePicker = New-Object System.Windows.Forms.DateTimePicker
-	        $StartTimePicker.Location = “70, 165”
-	        $StartTimePicker.Width = “90”
+		if (!($FromDate))
+		{   
+			#region .NET
+			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+			$TimeForm = New-Object -TypeName System.Windows.Forms.Form
+			[System.Windows.Forms.DateTimePicker]$StartTimePicker = $null
+			[System.Windows.Forms.Label]$Start = $null
+			[System.Windows.Forms.Label]$24Hour = $null
+			[System.Windows.Forms.Label]$Occur = $null
+			[System.Windows.Forms.Button]$TimeOk = $null
+			[System.Windows.Forms.Button]$timecancel = $null
+			[System.Windows.Forms.Button]$button1 = $null
+			$StartTimePicker = New-Object -TypeName System.Windows.Forms.DateTimePicker
+			$Start = New-Object -TypeName System.Windows.Forms.Label
+			$24Hour = New-Object -TypeName System.Windows.Forms.Label
+			$Occur = New-Object -TypeName System.Windows.Forms.Label
+			$TimeOk = New-Object -TypeName System.Windows.Forms.Button
+			$timecancel = New-Object -TypeName System.Windows.Forms.Button
+			$TimeForm.SuspendLayout()
+			#
+			#StartTimePicker
+			#
+			$StartTimePicker.CustomFormat = 'MMMMdd, yyyy  |  HH:mm'
+			$StartTimePicker.Format = [System.Windows.Forms.DateTimePickerFormat]::Custom
+			$StartTimePicker.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(76,58)
+			$StartTimePicker.Name = 'StartTimePicker'
+			$StartTimePicker.ShowUpDown = $true
+			$StartTimePicker.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(165,20)
+			$StartTimePicker.TabIndex = 0
 			$StartTimePicker.Value = (get-date).AddHours(-4)
-	        $StartTimePicker.Format = [windows.forms.datetimepickerFormat]::custom
-	        $StartTimePicker.CustomFormat = “HH:mm:ss”
-	        $StartTimePicker.ShowUpDown = $TRUE
-	        $Startform.Controls.Add($StartTimePicker)
-
-	        $StartOKButton = New-Object System.Windows.Forms.Button
-	        $StartOKButton.Location = New-Object System.Drawing.Point(18,195)
-	        $StartOKButton.Size = New-Object System.Drawing.Size(75,23)
-	        $StartOKButton.Text = "OK"
-	        $StartOKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-	        $Startform.AcceptButton = $StartOKButton
-	        $Startform.Controls.Add($StartOKButton)
-
-	        $StartCancelButton = New-Object System.Windows.Forms.Button
-	        $StartCancelButton.Location = New-Object System.Drawing.Point(93,195)
-	        $StartCancelButton.Size = New-Object System.Drawing.Size(75,23)
-	        $StartCancelButton.Text = "Cancel"
-	        $StartCancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-	        $Startform.CancelButton = $StartCancelButton
-	        $Startform.Controls.Add($StartCancelButton)
-	        $Startform.Topmost = $True
-
-	        Write-Host "`n`t[PROMPT] When should tracing start?" -ForegroundColor Green
-	        $fromresult = $Startform.ShowDialog() 
-	        if ($fromresult -eq [System.Windows.Forms.DialogResult]::OK)
-	        {
-	            $fromdate = $Startcalendar.SelectionStart
-	            $fromthedate = $($fromdate.Date)
-	            $fromstarttime = ($fromthedate).Add($StartTimePicker.Value.TimeOfDay)
-	            [DateTime]$FromDate = $fromstarttime
-	            if($FromDate -lt (get-date))
-	            {
-	            Write-Host "`tSelected $($FromDate)"
-	            }
-	            else
-	            {
-	            Write-Host "`n`t[ERROR] Date entry incorrect" -ForegroundColor Red
-	            Write-Host "`n Press any key to continue ...`n"
-		        $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		        exit	
-	            }
-	        }
-		}
-		#form for end question	
-	if (!($ToDate))
-		{
-			#form for questions 
-	        Add-Type -AssemblyName System.Windows.Forms
-	        Add-Type -AssemblyName System.Drawing
-
-	        $Endform = New-Object Windows.Forms.Form 
-	        $Endform.Text = "End" 
-	        $Endform.Size = New-Object Drawing.Size @(200,265) 
-	        $Endform.StartPosition = "CenterScreen"
-
-	        $Endcalendar = New-Object System.Windows.Forms.MonthCalendar 
-	        $Endcalendar.ShowTodayCircle = $false
-            $Endcalendar.MaxDate = (Get-Date)
-	        $Endcalendar.MaxSelectionCount = 1
-	        $Endform.Controls.Add($Endcalendar) 
-
-
-	        # StartTimePicker Label
-	        $EndTimePickerLabel = New-Object System.Windows.Forms.Label
-	        $EndTimePickerLabel.Text = “Stop”
-	        $EndTimePickerLabel.Location = “10, 165”
-	        $EndTimePickerLabel.Height = 22
-	        $EndTimePickerLabel.Width = 60
-	        $Endform.Controls.Add($EndTimePickerLabel)
-
-	        # StartTimePicker
-	        $EndTimePicker = New-Object System.Windows.Forms.DateTimePicker
-	        $EndTimePicker.Location = “70, 165”
-	        $EndTimePicker.Width = “90”
-			$EndTimePicker.Value = (get-date)
-            $EndTimePicker.MaxDate = (Get-Date)
-	        $EndTimePicker.Format = [windows.forms.datetimepickerFormat]::custom
-	        $EndTimePicker.CustomFormat = “HH:mm:ss”
-	        $EndTimePicker.ShowUpDown = $TRUE
-	        $Endform.Controls.Add($EndTimePicker)
-
-	        $StartOKButton = New-Object System.Windows.Forms.Button
-	        $StartOKButton.Location = New-Object System.Drawing.Point(18,195)
-	        $StartOKButton.Size = New-Object System.Drawing.Size(75,23)
-	        $StartOKButton.Text = "OK"
-	        $StartOKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-	        $Endform.AcceptButton = $StartOKButton
-	        $Endform.Controls.Add($StartOKButton)
-
-	        $EndCancelButton = New-Object System.Windows.Forms.Button
-	        $EndCancelButton.Location = New-Object System.Drawing.Point(93,195)
-	        $EndCancelButton.Size = New-Object System.Drawing.Size(75,23)
-	        $EndCancelButton.Text = "Cancel"
-	        $EndCancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-	        $Endform.CancelButton = $EndCancelButton
-	        $Endform.Controls.Add($EndCancelButton)
-	        $Endform.Topmost = $True
-
-	        Write-Host "`n`t[PROMPT] When should tracing stop?" -ForegroundColor Green
-	        $toresult = $Endform.ShowDialog()
-	        if ($toresult -eq [System.Windows.Forms.DialogResult]::OK)
-	        {
-	            $todate = $Endcalendar.SelectionStart
-	            $tothedate = $($todate.Date)
-	            $tostarttime = ($tothedate).Add($EndTimePicker.Value.TimeOfDay)
-	            [DateTime]$ToDate = $tostarttime
-	            if(($FromDate -lt $ToDate) -and ($ToDate -lt (Get-Date)))
-	            {
-	            Write-Host "`tSelected $($ToDate)"
-	            }
-	            else
-	            {
-	            Write-Host "`n`t[ERROR] Date entry incorrect" -ForegroundColor Red
-	            Write-Host "`n Press any key to continue ...`n"
-		        $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		        exit	
-	            }
+			$StartTimePicker.MaxDate = (get-date).AddHours(-1)
+			#
+			#Start
+			#
+			$Start.AutoSize = $true
+			$Start.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,62)
+			$Start.Name = 'Start'
+			$Start.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(58,13)
+			$Start.TabIndex = 2
+			$Start.Text = 'Start Time:'
+			#
+			#24Hour
+			#
+			$24Hour.AutoSize = $true
+			$24Hour.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(103,95)
+			$24Hour.Name = '24Hour'
+			$24Hour.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(138,13)
+			$24Hour.TabIndex = 4
+			$24Hour.Text = '** All times in 24 hour format'
+			#
+			#Occur
+			#
+			$Occur.AutoSize = $true
+			$Occur.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,25)
+			$Occur.Name = 'Occur'
+			$Occur.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(127,13)
+			$Occur.TabIndex = 5
+			$Occur.Text = 'When did the issue start?'
+			#
+			#TimeOk
+			#
+			$TimeOk.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(162,131)
+			$TimeOk.Name = 'TimeOk'
+			$TimeOk.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(96,28)
+			$TimeOk.TabIndex = 6
+			$TimeOk.Text = 'Ok'
+			$TimeOk.UseVisualStyleBackColor = $true
+			$TimeOk.DialogResult = [System.Windows.Forms.DialogResult]::OK
+			#
+			#timecancel
+			#
+			$timecancel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(15,131)
+			$timecancel.Name = 'timecancel'
+			$timecancel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(99,28)
+			$timecancel.TabIndex = 7
+			$timecancel.Text = 'Cancel'
+			$timecancel.UseVisualStyleBackColor = $true
+			$timecancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+			#
+			#TimeForm
+			#
+			$TimeForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(270,180)
+			$TimeForm.Controls.Add($timecancel)
+			$TimeForm.Controls.Add($TimeOk)
+			$TimeForm.Controls.Add($Occur)
+			$TimeForm.Controls.Add($24Hour)
+			$TimeForm.Controls.Add($Start)
+			$TimeForm.Controls.Add($StartTimePicker)
+			$TimeForm.Name = 'TimeForm'
+			$TimeForm.Text = 'Issue occurrence'
+			$TimeForm.ResumeLayout($false)
+			$TimeForm.PerformLayout()
+			Add-Member -InputObject $TimeForm -Name base -Value $base -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name StartTimePicker -Value $StartTimePicker -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name Start -Value $Start -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name 24Hour -Value $24Hour -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name Occur -Value $Occur -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name TimeOk -Value $TimeOk -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name timecancel -Value $timecancel -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name button1 -Value $button1 -MemberType NoteProperty
+			$TimeForm.Topmost = $True
+			$TimeForm.StartPosition = "CenterScreen"
+			$TimeForm.MaximizeBox = $false
+			$TimeForm.FormBorderStyle = 'Fixed3D'
+			$timeresult = $TimeForm.ShowDialog()
+			#endregion .NET
+			if ($timeresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
+			if ($timeresult -eq [System.Windows.Forms.DialogResult]::OK)
+			{
+				[DateTime]$FromDate = $StartTimePicker.Value
+				if($FromDate -lt (get-date))
+				{
+				Write-Host "`n`t[INFO] When should tracing Start?" -ForegroundColor Green
+				Write-Host "`tSelected   $($FromDate)"
+				$AzSFromDate = Convert-AZSServerTime -DateTime $FromDate
+				Write-Host "`tStamp Time $($AzSFromDate)" -ForegroundColor Gray
+				}
+				else
+				{
+				Write-Host "`n`t[ERROR] Date entry incorrect" -ForegroundColor Red
+				Write-Host "`n Press any key to continue ...`n"
+				$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+				exit	
+				}
 			}
 		}
+		if (!($ToDate))
+		{
+			#region .NET
+			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+			$TimeForm = New-Object -TypeName System.Windows.Forms.Form
+			[System.Windows.Forms.Label]$24Hour = $null
+			[System.Windows.Forms.Label]$Occur = $null
+			[System.Windows.Forms.Button]$TimeOk = $null
+			[System.Windows.Forms.Button]$timecancel = $null
+			[System.Windows.Forms.DateTimePicker]$EndTimePicker = $null
+			[System.Windows.Forms.Label]$End = $null
+			[System.Windows.Forms.Button]$button1 = $null
+			$24Hour = New-Object -TypeName System.Windows.Forms.Label
+			$Occur = New-Object -TypeName System.Windows.Forms.Label
+			$TimeOk = New-Object -TypeName System.Windows.Forms.Button
+			$timecancel = New-Object -TypeName System.Windows.Forms.Button
+			$EndTimePicker = New-Object -TypeName System.Windows.Forms.DateTimePicker
+			$End = New-Object -TypeName System.Windows.Forms.Label
+			$TimeForm.SuspendLayout()
+			#
+			#24Hour
+			#
+			$24Hour.AutoSize = $true
+			$24Hour.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(103,102)
+			$24Hour.Name = '24Hour'
+			$24Hour.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(138,13)
+			$24Hour.TabIndex = 4
+			$24Hour.Text = '** All times in 24 hour format'
+			#
+			#Occur
+			#
+			$Occur.AutoSize = $true
+			$Occur.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,25)
+			$Occur.Name = 'Occur'
+			$Occur.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(125,13)
+			$Occur.TabIndex = 5
+			$Occur.Text = 'When did the issue end?'
+			#
+			#TimeOk
+			#
+			$TimeOk.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(162,138)
+			$TimeOk.Name = 'TimeOk'
+			$TimeOk.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(96,23)
+			$TimeOk.TabIndex = 6
+			$TimeOk.Text = 'Ok'
+			$TimeOk.UseVisualStyleBackColor = $true
+			$TimeOk.DialogResult = [System.Windows.Forms.DialogResult]::OK
+			#
+			#timecancel
+			#
+			$timecancel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(15,138)
+			$timecancel.Name = 'timecancel'
+			$timecancel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(99,23)
+			$timecancel.TabIndex = 7
+			$timecancel.Text = 'Cancel'
+			$timecancel.UseVisualStyleBackColor = $true
+			$timecancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+			#
+			#EndTimePicker
+			#
+			$EndTimePicker.CustomFormat = 'MMMMdd, yyyy  |  HH:mm'
+			$EndTimePicker.Format = [System.Windows.Forms.DateTimePickerFormat]::Custom
+			$EndTimePicker.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(82,59)
+			$EndTimePicker.Name = 'EndTimePicker'
+			$EndTimePicker.ShowUpDown = $true
+			$EndTimePicker.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(165,20)
+			$EndTimePicker.TabIndex = 1
+			$EndTimePicker.Value = (get-date)
+			$EndTimePicker.MaxDate = (get-date)
+			$EndTimePicker.MinDate = $StartTimePicker.Value.AddHours(1)
+			#
+			#End
+			#
+			$End.AutoSize = $true
+			$End.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(18,63)
+			$End.Name = 'End'
+			$End.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(55,13)
+			$End.TabIndex = 3
+			$End.Text = 'End Time:'
+			#
+			#TimeForm
+			#
+			$TimeForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(270,181)
+			$TimeForm.Controls.Add($timecancel)
+			$TimeForm.Controls.Add($TimeOk)
+			$TimeForm.Controls.Add($Occur)
+			$TimeForm.Controls.Add($24Hour)
+			$TimeForm.Controls.Add($End)
+			$TimeForm.Controls.Add($EndTimePicker)
+			$TimeForm.Name = 'TimeForm'
+			$TimeForm.Text = 'Issue occurrence'
+			$TimeForm.ResumeLayout($false)
+			$TimeForm.PerformLayout()
+			Add-Member -InputObject $TimeForm -Name base -Value $base -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name 24Hour -Value $24Hour -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name Occur -Value $Occur -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name TimeOk -Value $TimeOk -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name timecancel -Value $timecancel -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name EndTimePicker -Value $EndTimePicker -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name End -Value $End -MemberType NoteProperty
+			Add-Member -InputObject $TimeForm -Name button1 -Value $button1 -MemberType NoteProperty
+			$TimeForm.Topmost = $True
+			$TimeForm.StartPosition = "CenterScreen"
+			$TimeForm.MaximizeBox = $false
+			$TimeForm.FormBorderStyle = 'Fixed3D'
+			$timeresult = $TimeForm.ShowDialog()
+			#endregion .NET
+        	if ($timeresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
+			if ($timeresult -eq [System.Windows.Forms.DialogResult]::OK)
+			{
+				[DateTime]$ToDate = $EndTimePicker.Value
+				if($ToDate -gt ($FromDate))
+				{
+				Write-Host "`n`t[INFO] When should tracing Stop?" -ForegroundColor Green
+				Write-Host "`tSelected   $($ToDate)"
+				$AzSToDate = Convert-AZSServerTime -DateTime $ToDate
+				Write-Host "`tStamp Time $($AzSToDate)"  -ForegroundColor Gray
+				}
+				else
+				{
+				Write-Host "`n`t[ERROR] Date entry incorrect" -ForegroundColor Red
+				Write-Host "`n Press any key to continue ...`n"
+				$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+				exit	
+				}
+			}
+		}
+        #Set the time out here to account for timezones changes Convert-AZSServerTime will make
+        if($AzSFromDate){$FromDate = $AzSFromDate}
+        if($AzSToDate){$ToDate = $AzSToDate}
 		# filter by role form
 		If(!($FilterByRole))
 		{
 			Write-Host "`n`t[PROMPT] What should be collected?" -ForegroundColor Green
+			#region .NET
 			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
 			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
 			$MainForm = New-Object -TypeName System.Windows.Forms.Form
@@ -973,8 +1236,7 @@ if($IP)
 			[System.Windows.Forms.Label]$label1 = $null
 			[System.Windows.Forms.Label]$label2 = $null
 			[System.Object]$selLogCollection = $null
-			function InitializeComponent
-			{
+
 			$checkedListBox1 = New-Object -TypeName System.Windows.Forms.CheckedListBox
 			$buttonselect = New-Object -TypeName System.Windows.Forms.Button
 			$buttondefault = New-Object -TypeName System.Windows.Forms.Button
@@ -1123,26 +1385,80 @@ if($IP)
 			Add-Member -InputObject $MainForm -Name selLogCollection -Value $selLogCollection -MemberType NoteProperty
 			$MainForm.Topmost = $True
 			$MainForm.StartPosition = "CenterScreen"
-			}
-			. InitializeComponent
+			$MainForm.MaximizeBox = $false
+            $MainForm.FormBorderStyle = 'Fixed3D'
 			$LogCollection = $MainForm.ShowDialog()
-
+			#region .NET
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::OK)
 			 {
-			 $FilterByRole = ((($checkedListBox1.CheckedItems -replace "[*]").Trim()) | Select-Object -Unique) -join ","
+			 [string[]]$FilterByRole = ((($checkedListBox1.CheckedItems -replace "[*]").Trim()) | Select-Object -Unique)
 			  Write-Host "`tSelected $($FilterByRole) for log collection" -ForegroundColor White
 			 }
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::Ignore)
 			 {
 			 Write-Host "`tSelected default role log collection" -ForegroundColor White
+			 $defaultLogCollection = $true
 			 }
+			$maxtimespan = new-timespan -Days 0 -Hours 7 -Minutes 59 -Seconds 0
+			if (($defaultLogCollection -eq $true) -and (($ToDate - $FromDate) -ge $maxtimespan))
+			{
+				If ($IncompleteDeployment -ne "Yes"){Write-Host "`t[WARNING] Log truncation probable" -ForegroundColor Yellow}
+			}
+		}
+		If($IncompleteDeployment -eq "Yes")
+		{ 
+			cd "$($env:SystemDrive)\CloudDeployment\AzureStackDiagnostics"
+
+			$Folders=@()
+			$Folders += Get-ChildItem | Where {$_.attributes -eq 'directory'}
+
+				foreach ($Folder in $Folders)
+				{
+						if (Get-ChildItem -Name $Folder -include *.psm1)
+					{
+						Import-Module $Folder\$(Get-ChildItem -Name $Folder -include *.psm1) -WarningAction SilentlyContinue -ErrorAction SilentlyContinue 
+					}
+				}
+				$incompletedeploymentdate = Get-Date -format MM-dd-hhmm
+				$incompletedeploymentfoldername = "-IncompleteDeployment_AzureStackLogs"
+				$incompletedeploymentsharename = $incompletedeploymentdate + $incompletedeploymentfoldername
+				If (!(Test-Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)")) {$incompletedeploymentfolder = New-Item -Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)" -ItemType directory} 
+				Get-AzureStackLogs -OutputPath $incompletedeploymentfolder.FullName -FilterByRole $FilterByRole -FromDate $FromDate -ToDate $ToDate
+				#remotepowershell
+				$s = New-PSSession -ComputerName $IP -ConfigurationName PrivilegedEndpoint -Credential $mySecureCredentials
+				Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
+				Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation -WarningAction SilentlyContinue} -OutVariable StampInformation -WarningAction SilentlyContinue | Out-Null
+                Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster} -OutVariable ClusterDiskInformation -WarningAction SilentlyContinue | Out-Null
+				Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster | Get-StorageJob } -OutVariable ActiveStorageRepairs -WarningAction SilentlyContinue | Out-Null
+				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+				#overwriting AzureStackStampInformation keep the latest info JSON (StampVersion)
+				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
+				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:SystemDrive)\$($incompletedeploymentsharename)" -ForegroundColor Green
+				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:SystemDrive)\$($incompletedeploymentsharename)\AzureStackStampInformation.json" -Force
+                $ClusterDiskInformation | Out-File -FilePath "$($Env:SystemDrive)\$($incompletedeploymentsharename)\ClusterVirtualDiskInfo.txt" -Force
+				try
+					{
+					Write-Host "`n`t[INFO] Compressing gathered files"  -ForegroundColor Green
+					$zipdate = $incompletedeploymentdate
+					Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\$incompletedeploymentsharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
+					Write-Host "`tFile created: $Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_AzureStackLogs_archive.zip" -ForegroundColor White
+					Invoke-Item $incompletedeploymentfolder.FullName
+					Write-Host "`n `t[INFO] Opening $($incompletedeploymentfolder.FullName)" -ForegroundColor Green
+					}
+					catch
+					{
+					Write-Host "`n`t`t[WARN] Did not create a archive" -ForegroundColor Yellow
+					}
+			Write-Host "`n `tPress any key to continue ...`n"
+			$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+			exit
 		}
 		#setting remotepowershell options
 		$switch = $true
 		If($switch)
 			{
 				$switch = "Get-AzureStackLog -OutputSharePath `$using:ShareINFO -OutputShareCredential `$using:shareCred -ErrorAction Stop "
-				$Howto = "Get-AzureStackLog -OutputSharePath `"$($ShareINFO)`" -OutputShareCredential `$cred -ErrorAction Stop "
+				$Howto = "Get-AzureStackLog -OutputSharePath `"$($ShareINFO)`" -OutputShareCredential `$using:cred "
 			}
 		If($FromDate)
 			{
@@ -1171,8 +1487,13 @@ if($IP)
 				$Howto += "-FilterByRole `"$($FilterByRole)`" "
 			}
 
-	    Write-Host "`n `t[INFO] Running Enter-PSSession -ComputerName $($IP) -ConfigurationName PrivilegedEndpoint -Credential `$cred" -ForegroundColor Green
-	    Write-Host "`n `t[INFO] Running $($Howto)" -ForegroundColor Green
+        Write-Host "`n"
+	    Write-Host -NoNewline " `t[INFO] Running:" -ForegroundColor White
+        Write-Host -NoNewline " Enter-PSSession -ComputerName $($IP) -ConfigurationName PrivilegedEndpoint -Credential `$cred" -ForegroundColor Green
+	    Write-Host "`n"
+        Write-Host -NoNewline " `t[INFO] Running:" -ForegroundColor White
+        Write-Host -NoNewline " $($Howto)" -ForegroundColor Green
+		Write-Host "`n"
 	    
 		#remotepowershell
 		$s = New-PSSession -ComputerName $IP -ConfigurationName PrivilegedEndpoint -Credential $mySecureCredentials  
@@ -1191,22 +1512,26 @@ if($IP)
 				Write-Progress -Activity "Please wait while Get-AzureStackLog is running on $($IP)" -Status "Ready" -Completed
 				Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
 				Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation -WarningAction SilentlyContinue} -OutVariable StampInformation -WarningAction SilentlyContinue | Out-Null
-
+                Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster} -OutVariable ClusterDiskInformation -WarningAction SilentlyContinue | Out-Null
+				Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster | Get-StorageJob } -OutVariable ActiveStorageRepairs -WarningAction SilentlyContinue | Out-Null
 			}
 			if((get-job -Id $job.id).State -eq "Completed")
 			{
 				Write-Progress -Activity "Please wait while Get-AzureStackLog is running on $($IP)" -Status "Ready" -Completed
 				Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
 				Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation -WarningAction SilentlyContinue} -OutVariable StampInformation -WarningAction SilentlyContinue | Out-Null
-
+                Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster} -OutVariable ClusterDiskInformation -WarningAction SilentlyContinue | Out-Null
+				Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster | Get-StorageJob } -OutVariable ActiveStorageRepairs -WarningAction SilentlyContinue | Out-Null
 			}
-			#output Get-AzureStackStampInformation
+			#output of files from the PEP
 			if($StampInformation)
 			{
 				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:ProgramData)" -ForegroundColor Green
+				#overwriting AzureStackStampInformation keep the latest info JSON (StampVersion)
 				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:ProgramData)\AzureStackStampInformation.json" -Force
 				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:SystemDrive)\$($sharename)" -ForegroundColor Green
 				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:SystemDrive)\$($sharename)\AzureStackStampInformation.json" -Force
+                $ClusterDiskInformation | Out-File -FilePath "$($Env:SystemDrive)\$($sharename)\ClusterVirtualDiskInfo.txt" -Force
 			}
 			if($CheckADSK -ne 1)
 			{
@@ -1247,9 +1572,7 @@ if($IP)
 		}
 		#get files for user
 		$Files = Get-ChildItem -Path "$($Env:SystemDrive)\$($sharename)" | Where {(($_.attributes -eq 'directory') -and ($_.Name -like "AzureStackLogs-*"))} | sort -Descending -Property CreationTime | select -first 1
-		Invoke-Item "$($Files.FullName)"
-        Write-Host "`n `t[INFO] Opening $($Files.FullName)" -ForegroundColor Green
-        
+       
 		#look at output AzureStackLog_Output for issues
 		$stacklog = Get-ChildItem -Path "$($Files.FullName)" | Where {($_.Name -like "Get-AzureStackLog_Output*")} | sort -Descending -Property CreationTime | select -first 1
 		$stacklogerr = Select-String -Path $stacklog.FullName -Pattern "TerminatingError"
@@ -1279,6 +1602,55 @@ if($IP)
 		{
 			Write-Host "`t`t`t0x85200001"
 		}
+
+        #look at cluster disk state
+        $ErrorClustervdisk = 0
+        Write-Host "`n`t[INFO] Checking Vitual Disk state"  -ForegroundColor Green
+         foreach ($clusterdisk in $ClusterDiskInformation)
+         {
+             if ($clusterdisk.HealthStatus -ne 0)
+             {
+             Write-Host "`t[ERROR] $($clusterdisk.FriendlyName) is not healthy" -ForegroundColor Red
+             $ErrorClustervdisk += 1
+             }
+         }
+        switch ($ErrorClustervdisk)
+        {
+            '0' {Write-Host "`tNo issues found" -ForegroundColor White}
+            '1' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '2' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '3' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '4' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '5' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '6' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '7' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '8' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '9' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '10' {Write-Host "`n`t[INFO] In the PEP run 'Get-VirtualDisk -CimSession S-Cluster | Repair-VirtualDisk'" -ForegroundColor Yellow}
+            '11' {Write-Host "`n`t[INFO] Likely Node missing from cluster" -ForegroundColor Yellow}
+            Default {Write-Host "`t[ERROR] Unexpected disk number"}
+        }
+		If ($ActiveStorageRepairs)
+			{
+			 Write-Host "`n`t[WARNING] VirtualDisk repairs in progress" -ForegroundColor Yellow
+			 Write-Host "$($ActiveStorageRepairs)"
+			}
+		if($Files)
+		{
+			try
+			{
+            Write-Host "`n`t[INFO] Compressing gathered files"  -ForegroundColor Green
+            $zipdate = $date
+			Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\$sharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
+			Write-Host "`tFile created: $Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -ForegroundColor White
+			Invoke-Item $Files.Parent.FullName
+			Write-Host "`n `t[INFO] Opening $($Files.Parent.FullName)" -ForegroundColor Green
+			}
+			catch
+			{
+			Write-Host "`n`t`t[WARN] Did not create a archive" -ForegroundColor Yellow
+			}
+		}
 	}
 	catch [System.Management.Automation.ValidationMetadataException]
 	{
@@ -1298,7 +1670,8 @@ if($IP)
 	finally
 	{
     Remove-SmbShare -Name $sharename -Force
-	Write-Host "`n Press any key to continue ...`n"
+	Remove-NetFirewallRule -Group "AzureStack_ERCS"
+	Write-Host "`n `tPress any key to continue ...`n"
 	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 	exit	
 	}

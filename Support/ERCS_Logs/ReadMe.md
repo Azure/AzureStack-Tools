@@ -1,6 +1,6 @@
 # ​ERCS_AzureStackLogs​.ps1  #
 
-![](https://github.com/Azure/AzureStack-Tools/blob/master/Support/ERCS_Logs/Media/runningERCS.gif?raw=true)
+![](https://github.com/Azure/AzureStack-Tools/blob/vnext/Support/ERCS_Logs/Media/ERCS.gif?raw=true)
 
  Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 
@@ -55,5 +55,17 @@ Specifies if script is running on Azure Stack machine such as Azure Stack Develo
 - Yes
 - No
 
+## StampTimeZone ##
+Specifies timezone id for Azure Stack stamp. Format must be in one of the 2 formats:
+
+- (Get-TimeZone -Name "US Eastern*").id
+- "Pacific Standard Time"
+
+## IncompleteDeployment ##
+Specifies if Azure Stack Deployment is incomplete. Only for use in Azure Stack Development Kit deployment or DVM
+
+- Yes
+- No
+
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No
