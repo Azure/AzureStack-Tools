@@ -147,12 +147,15 @@ $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach{
     # download vhd
     $vhdName = $productDetails.properties.galleryItemIdentity
     $vhdSource = $downloadDetails.properties.osDiskImage.sourceBlobSasUri
+    If ([string]::IsNullOrEmpty($vhdsource)) {exit} else {
     $FileExists=Test-Path "$destination\$productid.vhd" 
     If ($FileExists -eq $true) {Remove-Item "$destination\$productid.vhd" -force} else {
     New-Item "$destination\$productid.vhd" }
     $vhdDestination = "$destination\$productid.vhd"
+    
     Start-BitsTransfer -source $vhdSource -destination $vhdDestination -Priority High
 } 
+}
 
 else {
   $a.popup("Legal Terms not accpeted, canceling")
