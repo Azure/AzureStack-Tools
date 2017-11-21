@@ -19,37 +19,21 @@ function Sync-AzSOfflineMarketplaceItem{
         [ValidateNotNullorEmpty()]
         [String] $Destination,
 
-        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory=$true, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $AzureTenantID,
 
-        [Parameter(Mandatory=$false, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory=$true, ParameterSetName='SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $AzureSubscriptionID
         
         )
 
 
-    If ($tenantid.isPresent)
-    {
-    $azureAccount = Add-AzureRmAccount -TenantId $AzureTenantID
-    }
-
-    elseif($AzureSubscriptionID.isPresent) 
-    { 
-    Add-AzureRmAccount -subscriptionid $AzureSubscriptionID
-    }
-
-    else
-    {
-    $azureAccount = Add-AzureRmAccount
-    }
-
+   
+    $azureAccount = Add-AzureRmAccount -subscriptionid $AzureSubscriptionID -TenantId $AzureTenantID
 
     $azureEnvironment = Get-AzureRmEnvironment -Name $Cloud
-
-    $subscription=Get-AzureRmSubscription
-    $subscriptionId=$subscription[0].SubscriptionId
 
     $resources=Get-AzureRmResource
     $resource=$resources.resourcename
@@ -61,7 +45,7 @@ function Sync-AzSOfflineMarketplaceItem{
     $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureAccount.Context.Account.Id |Sort ExpiresOn |Select -Last 1
 
     
-    $uri1 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($subscriptionId.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
+    $uri1 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
     $Headers = @{ 'authorization'="Bearer $($Token.AccessToken)"} 
     $products = (Invoke-RestMethod -Method GET -Uri $uri1 -Headers $Headers).value
     
@@ -110,7 +94,7 @@ $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach{
    $productid=$_.id
 
    # get name of azpkg
-    $uri2 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($SubscriptionId.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
+    $uri2 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
     Write-Debug $URI2
     $Headers = @{ 'authorization'="Bearer $($Token.AccessToken)"} 
     $productDetails = Invoke-RestMethod -Method GET -Uri $uri2 -Headers $Headers
@@ -118,7 +102,7 @@ $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach{
     
 
     # get download location for apzkg
-    $uri3 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($SubscriptionId.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
+    $uri3 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
     $uri3
     $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri3 -Headers $Headers
 
