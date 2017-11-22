@@ -25,7 +25,7 @@ Import-Module .\AzureStack.MarketplaceSyndication.psm1
 
 ## Launch the Tool
 ```powershell
-Sync-AzSOfflineMarketplaceItems -destination c:\donwloadfolder
+Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder
 ```
 
 ## Optional Parameters
