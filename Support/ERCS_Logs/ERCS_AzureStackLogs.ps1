@@ -1668,7 +1668,7 @@ if($IP)
 			{
             Write-Host "`n`t[INFO] Compressing gathered files"  -ForegroundColor Green
             $zipdate = $date
-			Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\$sharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
+			Compress-Archive -Path (Get-ChildItem -Exclude Transcripts_* -Path $Env:SystemDrive\$sharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
 			Write-Host "`tFile created: $Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -ForegroundColor White
 			Invoke-Item $Files.Parent.FullName
 			Write-Host "`n `t[INFO] Opening $($Files.Parent.FullName)" -ForegroundColor Green
