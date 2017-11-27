@@ -112,9 +112,17 @@ $global:Toolspath ="C:\AzureStackTools\AzureStack-Tools-master"
     #Check for the JSON
     If ((Test-Path -Path "$($Env:ProgramData)\AzureStackStampInformation.json") -eq $true)
     {
-        Write-Host "`n[INFO] Load AzureStackStampInformation.json" -ForegroundColor yellow
+        Write-Host "`n[INFO] Loaded AzureStackStampInformation.json from ProgramData" -ForegroundColor Yellow
         $FoundJSONFile = Get-Content -Raw -Path "$($Env:ProgramData)\AzureStackStampInformation.json" | ConvertFrom-Json
     }
+	If ((Test-Path -Path "$($Env:ProgramData)\AzureStackStampInformation.json") -eq $false)
+	{
+        if ((Test-Path -Path "$($env:SystemDrive)\CloudDeployment\Logs\AzureStackStampInformation.json") -eq $true)
+        {
+        Write-Host "`n[INFO] Loaded AzureStackStampInformation.json from CloudDeployment" -ForegroundColor Yellow
+	    $FoundJSONFile = Get-Content -Raw -Path "$($env:SystemDrive)\CloudDeployment\Logs\AzureStackStampInformation.json" | ConvertFrom-Json
+        }
+	}
 
 #Go Get the JSON file
 if(!($FoundJSONFile))
@@ -238,32 +246,54 @@ If($envInfo)
     Try
     {
         $TenantId = $envInfo.TenantId
-        Write-Host "`n[INFO] - Login to Azure RM with AzureStack Stamp Service Admin Account" -ForegroundColor Yellow
-        Login-AzureRmAccount -Environment "AzureStackAdmin" -TenantId $TenantId
+        Write-Host "`n[INFO] - Login to Azure RM" -ForegroundColor Yellow
 
-        $location = Get-AzsLocation
-        $location = $location.Name 
+            function Read-InputBoxDialog([string]$Message, [string]$WindowTitle, [string]$DefaultText)
+    {
+        Add-Type -AssemblyName Microsoft.VisualBasic
+        return [Microsoft.VisualBasic.Interaction]::InputBox($Message, $WindowTitle, $DefaultText)
+    }
 
-        Write-Host "`n[INFO] - Obtaining subscriptions" -ForegroundColor Yellow
-        [array] $AllSubs = get-AzureRmSubscription
+    Write-Host "`n[Prompt] for AzureStack Administrator name" -ForegroundColor Yellow
+
+        [String]$AzSUser = Read-InputBoxDialog -Message "Please enter AzureStack the Admin you use to log into the Administrative portal: `n`n`tUSER@$($envInfo.IdTenantName)" -WindowTitle "Azure Stack Administrative portal user" -DefaultText "​SOMEUSER@$($envInfo.IdTenantName)"
+        $cred = Get-Credential -UserName $AzSUser -Message "$($AzSUser) Password"
+        $AzSLogin = Login-AzureRmAccount -Credential $cred -TenantId $TenantId -Environment "AzureStackAdmin"
+        $azsadmin = $AzSLogin.Context.Account.Id
+        if($azsadmin)
+            {
+			Write-Host "`t$($azsadmin)"
+            $location = Get-AzsLocation
+            $location = $location.Name
+        
+            Write-Host "`n[INFO] - Obtaining subscriptions" -ForegroundColor Yellow
+            [array] $AllSubs = get-AzureRmSubscription 
+            }
+        Else
+        {
+        Write-Host "`n`t`t[Error] Did not login $_" -ForegroundColor Red
+		Write-Host "`n Press any key to continue ...`n"
+		$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+		exit
+        }
     }
     catch [System.Exception]
     {
-    	Write-Host "`n`t`t[Error] Wrong Password: $_" -ForegroundColor Red
+    	Write-Host "`n`t`t[Error] Wrong Username or Password: $_" -ForegroundColor Red
 		Write-Host "`n Press any key to continue ...`n"
 		$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		exit
     }
-    If ($AllSubs.count -eq 1)
+    If (($AllSubs.count -eq 1) -and ($azsadmin))
     {
         Select-AzureRmSubscription -Subscriptionid $AllSubs.id | Out-Null
-        Write-Host "`tSuccess" -ForegroundColor Green
+        Write-Host "`tSuccess" -ForegroundColor White
     }
     Else
     {
-        If ($AllSubs)
+        If (($AllSubs) -and ($azsadmin))
         {
-                Write-Host "`tSuccess" -ForegroundColor Green
+                Write-Host "`tSuccess" -ForegroundColor White
 
                 }
         Else
@@ -283,7 +313,7 @@ If($envInfo)
 		
                 $SelSub = $SelSubName.SubscriptionId
                 Select-AzureRmSubscription -Subscriptionid $SelSub | Out-Null
-		        Write-Host "`tSuccess" -ForegroundColor Green
+		        Write-Host "`tSuccess" -ForegroundColor White
         }
         Else
         {
@@ -303,7 +333,7 @@ If ((Test-Path -Path "$($AzSToolsPath)\Support\ERCS_Logs\ERCS_AzureStackLogs.ps1
         Write-host "`n[INFO] Copying files to $($LocalPath)" -ForegroundColor Yellow
         New-Item $LocalPath -Type directory -Force | out-null
         Copy-Item -Path $AzSToolsPath -Destination $LocalPath -Recurse | out-null
-        Write-Host "`tSuccess" -ForegroundColor Green
+        Write-Host "`tTools are installed" -ForegroundColor Green
     }
     catch [System.Exception]
     {
@@ -475,9 +505,8 @@ If ((Test-Path -Path "$($Toolspath)\Support\ERCS_Logs\ERCS_AzureStackLogs.ps1") 
         return Get-Module
     }
 
-
-
-
+if($azsadmin)
+{
 #show Info made from the script
 Write-host "`n[INFO] `$EnvInfo variable created" -ForegroundColor Yellow
 Write-host "`tAvailable command: '`$EnvInfo' to view stamp endpoints`n"
@@ -488,3 +517,4 @@ Write-host "`n[INFO] AzureStackAdmin AzureRmEnvironment created" -ForegroundColo
 Write-host "`tRun 'Get-AzureRmEnvironment -Name AzureStackAdmin' to see environment "
 Write-host "`n[INFO] AzureStackUser AzureRmEnvironment created" -ForegroundColor Yellow
 Write-host "`tRun 'Get-AzureRmEnvironment -Name AzureStackUser' to see environment "
+}
