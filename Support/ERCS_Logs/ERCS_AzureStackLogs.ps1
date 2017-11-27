@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-	Built to be run on the HLH or DVM from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
+	Built to be run on the HLH, DVM, or Jumpbox from an administrative powershell session the script uses seven methods to find the privileged endpoint virtual machines. The script connects to selected privileged endpoint and runs Get-AzureStackLog with supplied parameters. If no parameters are supplied the script will default to prompting user via GUI for needed parameters.
 .DESCRIPTION
 	The script will use one of the below seven methods; Gather requested logs, Transcript, and AzureStackStampInformation.json. The script will also save AzureStackStampInformation.json in %ProgramData% and in created log folder. AzureStackStampInformation.json in %ProgramData% allows future runs to have ERCS IP information populated at beginning of script.
 	
@@ -45,7 +45,7 @@
 	(Get-TimeZone -Name "US Eastern*").id
 	"Pacific Standard Time"
 .PARAMETER IncompleteDeployment
-	Specifies if Azure Stack Deployment is incomplete (Only for use in ASDK or DVM)
+	Specifies if Azure Stack Deployment is incomplete. Only for use in Azure Stack Development Kit deployment or DVM
 	Yes
 	No
 .EXAMPLE
@@ -151,7 +151,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.6.0  
+#    1.6.1  
 #------------------------------------------------------------------------------ 
  
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
@@ -171,7 +171,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.6.0" | Write-Host -ForegroundColor Yellow 
+"    1.6.1" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -268,7 +268,7 @@ If(!($IP))
 {
 	If ((Test-Path -Path "$($Env:ProgramData)\AzureStackStampInformation.json") -eq $true)
 	{
-	Write-Host "`n `t[INFO] Load AzureStackStampInformation.json" -ForegroundColor Green
+	Write-Host "`n `t[INFO] Loaded AzureStackStampInformation.json from ProgramData" -ForegroundColor Green
 	$FoundJSONFile = Get-Content -Raw -Path "$($Env:ProgramData)\AzureStackStampInformation.json" | ConvertFrom-Json
 	[string]$FoundDomainFQDN = $FoundJSONFile.DomainFQDN
 	[array]$ERCSIPS = $FoundJSONFile.EmergencyConsoleIPAddresses
@@ -276,6 +276,19 @@ If(!($IP))
 	$FoundSelERCSIP  = $FoundJSONFile.EmergencyConsoleIPAddresses | Out-GridView -Title "Please Select Emergency Console IP Address" -PassThru
 	$IP = $FoundSelERCSIP
 	}
+	If ((Test-Path -Path "$($Env:ProgramData)\AzureStackStampInformation.json") -eq $false)
+	{
+        if ((Test-Path -Path "$($env:SystemDrive)\CloudDeployment\Logs\AzureStackStampInformation.json") -eq $true)
+        {
+        Write-Host "`n `t[INFO] Loaded AzureStackStampInformation.json from CloudDeployment" -ForegroundColor Green
+	    $FoundJSONFile = Get-Content -Raw -Path "$($env:SystemDrive)\CloudDeployment\Logs\AzureStackStampInformation.json" | ConvertFrom-Json
+	    [string]$FoundDomainFQDN = $FoundJSONFile.DomainFQDN
+	    [array]$ERCSIPS = $FoundJSONFile.EmergencyConsoleIPAddresses
+	    $StampTimeZone = $FoundJSONFile.Timezone
+	    $FoundSelERCSIP  = $FoundJSONFile.EmergencyConsoleIPAddresses | Out-GridView -Title "Please Select Emergency Console IP Address" -PassThru
+	    $IP = $FoundSelERCSIP
+        }
+    }
 }
 
 #Sel AzureStackStampInformation
@@ -1324,7 +1337,7 @@ if($IP)
 			#
 			#buttonselect
 			#
-			$buttonselect.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,258)
+			$buttonselect.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,262)
 			$buttonselect.Name = 'buttonselect'
 			$buttonselect.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(121,23)
 			$buttonselect.TabIndex = 1
@@ -1334,7 +1347,7 @@ if($IP)
 			#
 			#buttondefault
 			#
-			$buttondefault.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(139,258)
+			$buttondefault.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(139,262)
 			$buttondefault.Name = 'buttondefault'
 			$buttondefault.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(133,23)
 			$buttondefault.TabIndex = 2
@@ -1407,26 +1420,30 @@ if($IP)
 		}
 		If($IncompleteDeployment -eq "Yes")
 		{ 
-			cd "$($env:SystemDrive)\CloudDeployment\AzureStackDiagnostics"
-
-			$Folders=@()
-			$Folders += Get-ChildItem | Where {$_.attributes -eq 'directory'}
-
-				foreach ($Folder in $Folders)
+			$checkdiag = test-path -Path "$($env:SystemDrive)\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection\Microsoft.AzureStack.Diagnostics.DataCollection.psm1"
+			if($checkdiag -eq $true)
+			{
+				Import-Module "$($env:SystemDrive)\CloudDeployment\AzureStackDiagnostics\Microsoft.AzureStack.Diagnostics.DataCollection\Microsoft.AzureStack.Diagnostics.DataCollection.psm1" -WarningAction SilentlyContinue -ErrorAction SilentlyContinue 
+				$AzSDig = Get-Module -Name Microsoft.AzureStack.Diagnostics.DataCollection
+			}
+				if ($AzSDig.Name -eq "Microsoft.AzureStack.Diagnostics.DataCollection")
 				{
-						if (Get-ChildItem -Name $Folder -include *.psm1)
-					{
-						Import-Module $Folder\$(Get-ChildItem -Name $Folder -include *.psm1) -WarningAction SilentlyContinue -ErrorAction SilentlyContinue 
-					}
+					$incompletedeploymentdate = Get-Date -format MM-dd-hhmm
+					$incompletedeploymentfoldername = "-IncompleteDeployment_AzureStackLogs"
+					$incompletedeploymentsharename = $incompletedeploymentdate + $incompletedeploymentfoldername
+					If (!(Test-Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)")) {$incompletedeploymentfolder = New-Item -Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)" -ItemType directory} 
+					Get-AzureStackLogs -OutputPath $incompletedeploymentfolder.FullName -FilterByRole $FilterByRole -FromDate $FromDate -ToDate $ToDate
 				}
-				$incompletedeploymentdate = Get-Date -format MM-dd-hhmm
-				$incompletedeploymentfoldername = "-IncompleteDeployment_AzureStackLogs"
-				$incompletedeploymentsharename = $incompletedeploymentdate + $incompletedeploymentfoldername
-				If (!(Test-Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)")) {$incompletedeploymentfolder = New-Item -Path "$($Env:SystemDrive)\$($incompletedeploymentsharename)" -ItemType directory} 
-				Get-AzureStackLogs -OutputPath $incompletedeploymentfolder.FullName -FilterByRole $FilterByRole -FromDate $FromDate -ToDate $ToDate
+				Else
+				{
+					Write-Host "`n[Error] unable to load Microsoft.AzureStack.Diagnostics.DataCollection: $_" -ForegroundColor Red
+					$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+					exit
+				}
 				#remotepowershell
-				Clear-Host
 				$s = New-PSSession -ComputerName $IP -ConfigurationName PrivilegedEndpoint -Credential $mySecureCredentials
+				Try
+				{
 				Write-Host "`n `t[INFO] Getting Azure Stack stamp information" -ForegroundColor Green
 				Invoke-Command -Session $s -ScriptBlock {Get-AzureStackStampInformation -WarningAction SilentlyContinue} -OutVariable StampInformation -WarningAction SilentlyContinue | Out-Null
                 Invoke-Command -Session $s -ScriptBlock {Get-VirtualDisk -CimSession S-Cluster} -OutVariable ClusterDiskInformation -WarningAction SilentlyContinue | Out-Null
@@ -1437,21 +1454,30 @@ if($IP)
 				Write-Host "`n `t[INFO] Saving AzureStackStampInformation to $($Env:SystemDrive)\$($incompletedeploymentsharename)" -ForegroundColor Green
 				$StampInformation | ConvertTo-Json | Out-File -FilePath "$($Env:SystemDrive)\$($incompletedeploymentsharename)\AzureStackStampInformation.json" -Force
                 $ClusterDiskInformation | Out-File -FilePath "$($Env:SystemDrive)\$($incompletedeploymentsharename)\ClusterVirtualDiskInfo.txt" -Force
+				}
+				catch
+				{
+					Write-Host "`n[Error] unable to connect to PEP: $_" -ForegroundColor Red
+				}
+				#zip files
 				try
-					{
-					Write-Host "`n`t[INFO] Compressing gathered files"  -ForegroundColor Green
-					$zipdate = $incompletedeploymentdate
-					Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\$incompletedeploymentsharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
-					Write-Host "`tFile created: $Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_AzureStackLogs_archive.zip" -ForegroundColor White
-					Invoke-Item $incompletedeploymentfolder.FullName
-					Write-Host "`n `t[INFO] Opening $($incompletedeploymentfolder.FullName)" -ForegroundColor Green
-					}
-					catch
-					{
-					Write-Host "`n`t`t[WARN] Did not create a archive" -ForegroundColor Yellow
-					}
-			Write-Host "`n `tPress any key to continue ...`n"
-			$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+				{
+				Write-Host "`n`t[INFO] Compressing gathered files"  -ForegroundColor Green
+				$zipdate = $incompletedeploymentdate
+				if((Test-Path -Path $Env:SystemDrive\CloudDeployment\Logs) -eq $true)
+				{Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\CloudDeployment\Logs).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_CloudDeploymentLogs_archive.zip" -Force}
+				if((Test-Path -Path $Env:SystemDrive\MASLogs) -eq $true)
+				{Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\MASLogs).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_MASLogs_archive.zip" -Force}
+				Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\$incompletedeploymentsharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
+				Write-Host "`tFile created: $Env:SystemDrive\$incompletedeploymentsharename\$($zipdate)_AzureStackLogs_archive.zip" -ForegroundColor White
+				Invoke-Item $incompletedeploymentfolder.FullName
+				Write-Host "`n `t[INFO] Opening $($incompletedeploymentfolder.FullName)" -ForegroundColor Green
+				}
+				catch
+				{
+				Write-Host "`n`t`t[WARN] Did not create a archive" -ForegroundColor Yellow
+				}
+			#cleanup
 			exit
 		}
 		#setting remotepowershell options
@@ -1642,7 +1668,7 @@ if($IP)
 			{
             Write-Host "`n`t[INFO] Compressing gathered files"  -ForegroundColor Green
             $zipdate = $date
-			Compress-Archive -Path (Get-ChildItem -Path $Env:SystemDrive\$sharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
+			Compress-Archive -Path (Get-ChildItem -Exclude Transcripts_* -Path $Env:SystemDrive\$sharename).FullName -CompressionLevel Optimal -DestinationPath "$Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -Force
 			Write-Host "`tFile created: $Env:SystemDrive\$sharename\$($zipdate)_AzureStackLogs_archive.zip" -ForegroundColor White
 			Invoke-Item $Files.Parent.FullName
 			Write-Host "`n `t[INFO] Opening $($Files.Parent.FullName)" -ForegroundColor Green
