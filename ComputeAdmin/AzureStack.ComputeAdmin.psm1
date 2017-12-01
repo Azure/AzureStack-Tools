@@ -470,7 +470,9 @@ function New-AzsServer2016VMImage {
         [bool] $CreateGalleryItem = $true,
 
         [Parameter()]
-        [bool] $Net35 = $true
+        [bool] $Net35 = $true,
+         [Parameter()]
+        [version]$sku_version = (date -Format yyyy.MM.dd).ToString()
     )
     begin {
         function CreateWindowsVHD {
@@ -629,7 +631,7 @@ function New-AzsServer2016VMImage {
         $PublishArguments = @{
             publisher = 'MicrosoftWindowsServer'
             offer     = 'WindowsServer'
-            version   = '1.0.0'
+            version   = $sku_version.ToString()
             osType    = 'Windows'
             location  = $location
         }
