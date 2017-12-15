@@ -50,14 +50,13 @@ This script will create the following resources by default:
 - A service principal to perform resource actions
 - A resource group in Azure (if needed)
 - A registration resource in the created resource group in Azure
-- A custom RBAC role for the resource in Azure
 - An activation resource group and resource in Azure Stack
 
 See documentation for more detail: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register
 
 .PARAMETER CloudAdminCredential
 
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
@@ -91,7 +90,7 @@ This is a switch that determines if usage records are reported to Azure. Default
 
 .PARAMETER AgreementNumber
 
-Used when the billing model is set to capacity. If this is the case you will need to provide a specific agreement number associated with your billing agreement.
+Used when the billing model is set to capacity. You will need to provide a specific agreement number associated with your billing agreement.
 
 .EXAMPLE
 
@@ -103,7 +102,7 @@ Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpo
 
 This example registers your AzureStack environment with Azure, enables syndication, and disables usage reporting to Azure.
 
-Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingMode 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
+Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
 .EXAMPLE
 
@@ -115,16 +114,17 @@ Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpo
 
 This example disables syndication and disables usage reporting to Azure. Note that usage will still be collected, just not sent to Azure.
 
-Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -AzureSubscriptionId $SubscriptionId -AzureDirectoryTenantName "contoso.onmicrosoft.com"  -PrivilegedEndpoint "Azs-ERCS01" -BillingModel Development -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false
+Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel Capacity -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
 .NOTES
 
 If you would like to un-Register with Azure by turning off marketplace syndication, disabling usage reporting, and removing the registration resource from Azure you can run Remove-AzsRegistration.
+Note that this will remove any downloaded marketplace products.
 
 If you would like to use a different subscription for registration you must first run Remove-AzsRegistration followed by Set-AzsRegistration after logging into the appropriate Azure Powershell context.
+This will remove any downloaded marketplace products and they will need to be re-downloaded.
 
 You MUST be logged in to Azure before attempting to use Set-AzsRegistration.
-
 It is very important to ensure you are logged in to the correct Azure Account in Powershell before running this function.
 
 #>
@@ -475,7 +475,7 @@ Function Get-AzsRegistrationToken{
 <#
 .SYNOPSIS
 
-Register-AzsEnvironment will register your environment with Azure but will not enable syndication or usage reporting.
+Register-AzsEnvironment will register your environment with Azure but will not enable syndication or usage reporting. This can be run on any computer with a connection to the internet.
 
 .DESCRIPTION
 
@@ -484,8 +484,7 @@ A registration token is required to register with Azure.
 
 .PARAMETER RegistrationToken
 
-The registration token created after running Get-AzsRegistrationToken. This contains BillingModel, marketplace syndication, and usage reporting parameter information
-that will later be used in Enable-AzsFeature to activate Azure Stack.
+The registration token created after running Get-AzsRegistrationToken. This contains BillingModel, marketplace syndication, and other important information.
 
 .PARAMETER AzureEnvironmentName
 
@@ -565,7 +564,7 @@ The registration token created after running Get-AzsRegistrationToken. This cont
 
 .PARAMETER RegistrationName
 
-The name of the registration resource that was created during Register-AzsEnvironment. 
+The name of the registration resource that was created during Register-AzsEnvironment.
 
 .PARAMETER AzureEnvironmentName
 
@@ -662,7 +661,28 @@ Function UnRegister-AzsEnvironment{
 
 <#
 .SYNOPSIS
-    Gets the registration name from the environment
+
+Gets the registration name used for registration
+
+.DESCRIPTION
+
+The registration name in Azure is derived from the CloudId of the environment: "AzureStack-<CloudId>". 
+This function gets the CloudId by calling a PEP script and returns the name used during registration
+
+.PARAMETER CloudAdminCredential
+
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+If not supplied script will request manual input of username and password
+
+.PARAMETER PrivilegedEndpoint
+
+Privileged Endpoint VM that performs environment administration actions. Also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
+
+.EXAMPLE
+
+This example returns the name that was used for registration
+Get-AzsRegistrationName -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint Azs-ERCS01
+
 #>
 Function Get-AzsRegistrationName{
 [CmdletBinding()]
@@ -696,6 +716,10 @@ Function Get-AzsRegistrationName{
 #region HelperFunctions
 
 <#
+.SYNOPSIS
+
+Calls the Get-AzureStackStampInformation PEP script and returns the name used for the registration resource
+
 #>
 Function Get-RegistrationName{
 [CmdletBinding()]
