@@ -93,7 +93,7 @@ function Add-AzsVMImage {
     
         [Parameter(Mandatory = $true, ParameterSetName = 'VMImageFromLocal')]
         [Parameter(Mandatory = $true, ParameterSetName = 'VMImageFromAzure')]
-        [ValidatePattern("\d+\.\d+\.\d")]
+        [ValidatePattern("\d+\.\d+\.\d+")]
         [String] $Version,
 
         [Parameter(Mandatory = $true, ParameterSetName = 'VMImageFromLocal')]
