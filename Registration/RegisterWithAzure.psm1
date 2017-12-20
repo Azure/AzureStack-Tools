@@ -201,7 +201,7 @@ function Set-AzsRegistration{
     New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipal $servicePrincipal
 
     # Activate AzureStack syndication / usage reporting features
-    $activationKey = Get-RegistrationActivationKey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
+    $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
     Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
     Activate-AzureStack -Session $session -ActivationKey $ActivationKey
 
@@ -667,6 +667,96 @@ Function Get-AzsRegistrationName{
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
+<#
+.SYNOPSIS
+
+Retrieves the ActivationKey from the registration resource created during Register-AzsEnvironment
+
+.DESCRIPTION
+
+This gets an activation key with details on the parameters and environment information from the registration resource. 
+The activation key is used to create an activation record in AzureStack.
+
+.PARAMETER RegistrationName
+
+The neame of the registration resource created in Azure.
+
+.PARAMETER ResourceGroupName
+
+The name of the resource group where the registration resource was created.
+
+#>
+Function Get-AzsActivationKey{
+    [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [ValidateNotNullOrEmpty()]
+            [String] $RegistrationName,
+
+            [Parameter(Mandatory = $false)]
+            [ValidateNotNullorEmpty()]
+            [PSObject] $AzureContext = (Get-AzureRmContext),
+
+            [Parameter(Mandatory = $false)]
+            [String] $ResourceGroupName = 'azurestack',
+
+            [Parameter(Mandatory = $false)]
+            [String] $KeyOutputFilePath
+        )
+
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+
+        Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+
+        $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+
+        $currentAttempt = 0
+        $maxAttempt = 3
+        $sleepSeconds = 10 
+    
+        do 
+        {
+            try 
+            {
+                Log-Output "Retrieving activation key."
+                $resourceActionparams = @{
+                    Action            = "GetActivationKey"
+                    ResourceName      = $RegistrationName
+                    ResourceType      = "Microsoft.AzureStack/registrations"
+                    ResourceGroupName = $ResourceGroupName
+                    ApiVersion        = "2017-06-01"
+                }
+    
+                Log-Output "Getting activation key from $RegistrationName..."
+                $actionResponse = Invoke-AzureRmResourceAction @resourceActionparams -Force
+                Log-Output "Activation key successfully retrieved."
+
+                if ($KeyOutputFilePath)
+                {
+                    Log-Output "Activation key will be written to: $KeyOutputFilePath"
+                    $actionResponse.ActivationKey | Out-File $KeyOutputFilePath -Force
+                }
+
+                Log-Output "Your activation key has been collected."
+                Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+
+                return $actionResponse.ActivationKey
+            }
+            catch
+            {
+                Log-Warning "Retrieval of activation key failed:`r`n$($_)"
+                Log-Output "Waiting $sleepSeconds seconds and trying again..."
+                $currentAttempt++
+                Start-Sleep -Seconds $sleepSeconds
+                if ($currentAttempt -ge $maxAttempt)
+                {
+                    Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                }
+            }
+        } while ($currentAttempt -lt $maxAttempt)
+    }
+
 #endregion
 
 #endregion
@@ -892,59 +982,6 @@ function New-RegistrationResource{
         catch
         {
             Log-Warning "Creation of Azure resource failed:`r`n$($_)"
-            Log-Output "Waiting $sleepSeconds seconds and trying again..."
-            $currentAttempt++
-            Start-Sleep -Seconds $sleepSeconds
-            if ($currentAttempt -ge $maxAttempt)
-            {
-                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-            }
-        }
-    } while ($currentAttempt -lt $maxAttempt)
-}
-
-<#
-.SYNOPSIS
-
-Retrieves the ActivationKey from the registration resource created during Register-AzsEnvironment
-
-#>
-Function Get-RegistrationActivationKey{
-[CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupName = 'azurestack',
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName
-    )
-
-    
-    $currentAttempt = 0
-    $maxAttempt = 3
-    $sleepSeconds = 10 
-
-    do 
-    {
-        try 
-        {
-            Log-Output "Retrieving activation key."
-            $resourceActionparams = @{
-                Action            = "GetActivationKey"
-                ResourceName      = $RegistrationName
-                ResourceType      = "Microsoft.AzureStack/registrations"
-                ResourceGroupName = $ResourceGroupName
-                ApiVersion        = "2017-06-01"
-            }
-
-            Log-Output "Getting activation key from $RegistrationName..."
-            $actionResponse = Invoke-AzureRmResourceAction @resourceActionparams -Force
-            Log-Output "Activation key successfully retrieved."
-            return $actionResponse.ActivationKey
-        }
-        catch
-        {
-            Log-Warning "Retrieval of activation key failed:`r`n$($_)"
             Log-Output "Waiting $sleepSeconds seconds and trying again..."
             $currentAttempt++
             Start-Sleep -Seconds $sleepSeconds
@@ -1448,6 +1485,7 @@ function Log-Throw{
 
 # Disconnected functions
 Export-ModuleMember Get-AzsRegistrationToken
+Export-ModuleMember Get-AzsActivationKey
 Export-ModuleMember Register-AzsEnvironment
 Export-ModuleMember Unregister-AzsEnvironment
 Export-ModuleMember Get-AzsRegistrationName
