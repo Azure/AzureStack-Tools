@@ -687,75 +687,171 @@ The name of the resource group where the registration resource was created.
 
 #>
 Function Get-AzsActivationKey{
-    [CmdletBinding()]
-        param(
-            [Parameter(Mandatory = $true)]
-            [ValidateNotNullOrEmpty()]
-            [String] $RegistrationName,
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [String] $RegistrationName,
 
-            [Parameter(Mandatory = $false)]
-            [ValidateNotNullorEmpty()]
-            [PSObject] $AzureContext = (Get-AzureRmContext),
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [PSObject] $AzureContext = (Get-AzureRmContext),
 
-            [Parameter(Mandatory = $false)]
-            [String] $ResourceGroupName = 'azurestack',
+        [Parameter(Mandatory = $false)]
+        [String] $ResourceGroupName = 'azurestack',
 
-            [Parameter(Mandatory = $false)]
-            [String] $KeyOutputFilePath
-        )
+        [Parameter(Mandatory = $false)]
+        [String] $KeyOutputFilePath
+    )
 
-        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
-        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+    $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
-        Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-        $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
 
-        $currentAttempt = 0
-        $maxAttempt = 3
-        $sleepSeconds = 10 
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10 
     
-        do 
+    do 
+    {
+        try 
         {
-            try 
-            {
-                Log-Output "Retrieving activation key."
-                $resourceActionparams = @{
-                    Action            = "GetActivationKey"
-                    ResourceName      = $RegistrationName
-                    ResourceType      = "Microsoft.AzureStack/registrations"
-                    ResourceGroupName = $ResourceGroupName
-                    ApiVersion        = "2017-06-01"
-                }
+            Log-Output "Retrieving activation key."
+            $resourceActionparams = @{
+                Action            = "GetActivationKey"
+                ResourceName      = $RegistrationName
+                ResourceType      = "Microsoft.AzureStack/registrations"
+                ResourceGroupName = $ResourceGroupName
+                ApiVersion        = "2017-06-01"
+            }
     
-                Log-Output "Getting activation key from $RegistrationName..."
-                $actionResponse = Invoke-AzureRmResourceAction @resourceActionparams -Force
-                Log-Output "Activation key successfully retrieved."
+            Log-Output "Getting activation key from $RegistrationName..."
+            $actionResponse = Invoke-AzureRmResourceAction @resourceActionparams -Force
+            Log-Output "Activation key successfully retrieved."
 
-                if ($KeyOutputFilePath)
-                {
-                    Log-Output "Activation key will be written to: $KeyOutputFilePath"
-                    $actionResponse.ActivationKey | Out-File $KeyOutputFilePath -Force
-                }
-
-                Log-Output "Your activation key has been collected."
-                Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
-
-                return $actionResponse.ActivationKey
-            }
-            catch
+            if ($KeyOutputFilePath)
             {
-                Log-Warning "Retrieval of activation key failed:`r`n$($_)"
-                Log-Output "Waiting $sleepSeconds seconds and trying again..."
-                $currentAttempt++
-                Start-Sleep -Seconds $sleepSeconds
-                if ($currentAttempt -ge $maxAttempt)
-                {
-                    Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-                }
+                Log-Output "Activation key will be written to: $KeyOutputFilePath"
+                $actionResponse.ActivationKey | Out-File $KeyOutputFilePath -Force
             }
-        } while ($currentAttempt -lt $maxAttempt)
+
+            Log-Output "Your activation key has been collected."
+            Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+
+            return $actionResponse.ActivationKey
+        }
+        catch
+        {
+            Log-Warning "Retrieval of activation key failed:`r`n$($_)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt)
+            {
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+}
+
+<#
+.SYNOPSIS
+
+Creates the activation resource in Azure Stack
+
+.DESCRIPTION
+
+Creates an activation resource in Azure Stack in the resource group 'azurestack'. Also configures usage and syndication options. 
+
+.PARAMETER CloudAdminCredential
+
+Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the privileged endpoint to call approved cmdlets and scripts.
+This parameter is mandatory and if not supplied then this function will request manual input of username and password
+
+.PARAMETER PrivilegedEndpoint
+
+The name of the VM that has permissions to perform approved powershell cmdlets and scripts. Usually has a name in the format of <ComputerName>-ERCSxx where <ComputerName>
+is the name of the machine and ERCS is followed by a number between 01 and 03. Example: Azs-ERCS01 (from the ASDK)
+
+.PARAMETER ActivationKey
+
+The text output of Get-AzsActivationKey. Contains information required to configure Azure Stack registration appropriately. 
+
+#>
+Function New-AzsActivationResource{
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true)]
+    [PSCredential] $CloudAdminCredential,
+
+    [Parameter(Mandatory = $true)]
+    [String] $PrivilegedEndpoint,
+
+    [Parameter(Mandatory = $true)]
+    [String] $ActivationKey
+)
+
+    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+    $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+
+    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+        
+    Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
+    Activate-AzureStack -Session $session -ActivationKey $ActivationKey
+
+    Log-OutPut "Your environment has finished the registration and activation process."
+
+    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+}
+
+<#
+.SYNOPSIS
+
+Removes the activation resource created during New-AzsActivationResource
+
+.DESCRIPTION
+
+Prompts the user to log in to the Azure Stack Administrator account, finds and removes the activation resource created
+during New-AzsActivationResource. This will remove any downloaded marketplace products. 
+
+.PARAMETER AzureStackAdminSubscriptionId
+
+The subscription id of the Azure Stack administrator. This user must have access to the 'marketplace management' blade.
+
+#>
+Function Remove-AzsActivationResource{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [String] $AzureStackAdminSubscriptionId
+    )
+
+    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+    $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+
+    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+
+    Login-AzureRmAccount -SubscriptionId $AzureStackAdminSubscriptionId
+
+    try 
+    {
+        $activationResource = Get-AzureRmResource -ResourceId "/subscriptions/$AzureStackAdminSubscriptionId/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
     }
+    catch
+    {
+        Log-Throw -Message "Activation resource could not be found under subscription id: $AzureStackAdminSubscriptionId. Please ensure you are logged in to the appropriate Azure Stack account. `r`n$_" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
+
+    Remove-AzureRmResource -ResourceId $activationResource.ResourceId
+
+    Log-Output "Activation resource has been removed from Azure Stack."
+    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+}
 
 #endregion
 
