@@ -1581,9 +1581,11 @@ function Log-Throw{
 
 # Disconnected functions
 Export-ModuleMember Get-AzsRegistrationToken
-Export-ModuleMember Get-AzsActivationKey
 Export-ModuleMember Register-AzsEnvironment
 Export-ModuleMember Unregister-AzsEnvironment
+Export-ModuleMember Get-AzsActivationKey
+Export-ModuleMember New-AzsActivationResource
+Export-ModuleMember Remove-AzsActivationResource
 Export-ModuleMember Get-AzsRegistrationName
 
 # Connected functions
