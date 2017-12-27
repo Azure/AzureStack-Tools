@@ -665,6 +665,7 @@ Function Get-AzsRegistrationName{
     $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
     $registrationName = Get-RegistrationName -Session $session
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+    return $registrationName
 }
 
 <#
@@ -1585,7 +1586,7 @@ Export-ModuleMember Register-AzsEnvironment
 Export-ModuleMember Unregister-AzsEnvironment
 Export-ModuleMember Get-AzsActivationKey
 Export-ModuleMember New-AzsActivationResource
-Export-ModuleMember Remove-AzsActivationResource
+#Export-ModuleMember Remove-AzsActivationResource
 Export-ModuleMember Get-AzsRegistrationName
 
 # Connected functions
