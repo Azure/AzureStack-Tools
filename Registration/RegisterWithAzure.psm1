@@ -829,6 +829,12 @@ Function Remove-AzsActivationResource{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
+        [PSCredential] $CloudAdminCredential,
+
+        [Parameter(Mandatory = $true)]
+        [String] $PrivilegedEndpoint,
+
+        [Parameter(Mandatory = $false)]
         [String] $AzureStackAdminSubscriptionId
     )
 
@@ -837,18 +843,33 @@ Function Remove-AzsActivationResource{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-    Login-AzureRmAccount -SubscriptionId $AzureStackAdminSubscriptionId
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
 
     try 
     {
+        $AzureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
+        Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment 'AzureStack'
+        $azurePowerShellContext = Get-AzureRmContext
+        Log-Output "Successfully logged into Azure Stack administrator account: $(ConvertTo-Json $azurePowerShellContext)"
+        if (-not $AzureStackAdminSubscriptionId)
+        {
+            $AzureStackAdminSubscriptionId = $azurePowerShellContext.Subscription.Id
+        }
         $activationResource = Get-AzureRmResource -ResourceId "/subscriptions/$AzureStackAdminSubscriptionId/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
+        Log-Output "Activation resource found: $(ConvertTo-Json $activationResource)"
+        Remove-AzureRmResource -ResourceId $activationResource.ResourceId
     }
     catch
     {
-        Log-Throw -Message "Activation resource could not be found under subscription id: $AzureStackAdminSubscriptionId. Please ensure you are logged in to the appropriate Azure Stack account. `r`n$_" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Throw -Message "An error occurred during removal of the activation resource in Azure Stack: `r`n$_" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
-
-    Remove-AzureRmResource -ResourceId $activationResource.ResourceId
+    finally
+    {
+        if ($session)
+        {
+            $session | Remove-PSSession
+        }
+    }
 
     Log-Output "Activation resource has been removed from Azure Stack."
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
@@ -1586,7 +1607,7 @@ Export-ModuleMember Register-AzsEnvironment
 Export-ModuleMember Unregister-AzsEnvironment
 Export-ModuleMember Get-AzsActivationKey
 Export-ModuleMember New-AzsActivationResource
-#Export-ModuleMember Remove-AzsActivationResource
+Export-ModuleMember Remove-AzsActivationResource
 Export-ModuleMember Get-AzsRegistrationName
 
 # Connected functions
