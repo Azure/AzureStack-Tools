@@ -865,7 +865,7 @@ Function Remove-AzsActivationResource{
         }
         $activationResource = Get-AzureRmResource -ResourceId "/subscriptions/$AzureStackAdminSubscriptionId/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
         Log-Output "Activation resource found: $(ConvertTo-Json $activationResource)"
-        Remove-AzureRmResource -ResourceId $activationResource.ResourceId
+        Remove-AzureRmResource -ResourceId $activationResource.ResourceId -Force
     }
     catch
     {
