@@ -54,7 +54,7 @@ This script will create the following resources by default:
 
 See documentation for more detail: https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register
 
-.PARAMETER CloudAdminCredential
+.PARAMETER PrivilegedEndpointCredential
 
 Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
@@ -96,25 +96,25 @@ Used when the billing model is set to capacity. You will need to provide a speci
 
 This example registers your AzureStack environment with Azure, enables syndication, and enables usage reporting to Azure.
 
-Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS01"
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01"
 
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication, and disables usage reporting to Azure.
 
-Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel 'Capacity' -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication and usage and gives a specific name to the resource group
 
-Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS02" -ResourceGroupName "ContosoStackRegistrations"
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS02" -ResourceGroupName "ContosoStackRegistrations"
 
 .EXAMPLE
 
 This example disables syndication and disables usage reporting to Azure. Note that usage will still be collected, just not sent to Azure.
 
-Set-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel Capacity -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel Capacity -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
 .NOTES
 
@@ -132,7 +132,7 @@ function Set-AzsRegistration{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [PSCredential] $CloudAdminCredential,
+        [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
@@ -175,7 +175,7 @@ function Set-AzsRegistration{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
     $stampInfo = Confirm-StampVersion -PSSession $session
 
     $registrationName =  "AzureStack-$($stampInfo.CloudID)"
@@ -223,7 +223,7 @@ Remove-AzsRegistration uses the current Azure Powershell context and runs script
 You MUST be logged in to the Azure Powershell context that you want to disassociate your environment from.
 You must have already run Set-AzsRegistration before running this function.
 
-.PARAMETER CloudAdminCredential
+.PARAMETER PrivilegedEndpointCredential
 
 Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
@@ -244,7 +244,7 @@ The location where the resource group has been created. Defaults to "westcentral
 
 This example unregisters your AzureStack environment with Azure.
 
-Remove-AzsRegistration -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint
+Remove-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint $PrivilegedEndpoint
 
 .NOTES
 
@@ -255,7 +255,7 @@ function Remove-AzsRegistration{
 [CmdletBinding()]
     param(
     [Parameter(Mandatory = $true)]
-        [PSCredential] $CloudAdminCredential,
+        [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
@@ -281,7 +281,7 @@ function Remove-AzsRegistration{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
     $stampInfo = Confirm-StampVersion -PSSession $session
 
     $registrationName =  "AzureStack-$($stampInfo.CloudID)"
@@ -327,7 +327,7 @@ Get-AzsRegistrationToken will use the BillingModel, MarketplaceSyndicationEnable
 This token is used to enable / disable Azure Stack features such as Azure marketplace product syndication and Azure Stack usage reporting. 
 A registration token is required to call Register-AzsEnvironment. 
 
-.PARAMETER CloudAdminCredential
+.PARAMETER PrivilegedEndpointCredential
 
 Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the privileged endpoint to call approved cmdlets and scripts.
 This parameter is mandatory and if not supplied then this function will request manual input of username and password
@@ -353,21 +353,21 @@ A valid agreement number must be provided if the 'capacity' BillingModel paramet
 .EXAMPLE
 
 This example generates a registration token for use in Register-AzsEnvironment and writes it to a txt file.
-$registrationToken = Get-AzsRegistrationToken -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development -TokenOutputFilePath "C:\Temp\RegistrationToken.txt"
+$registrationToken = Get-AzsRegistrationToken -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development -TokenOutputFilePath "C:\Temp\RegistrationToken.txt"
 
 .NOTES
 
 This function is designed to only be used in conjunction with Register-AzsEnvironment. This will not enable any Azure Stack marketplace syndication or usage reporting features. Example:
 
-$registrationToken = Get-AzsRegistrationToken -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development -TokenOutputFilePath "C:\Temp\RegistrationToken.txt"
-Register-AzsEnvironment -CloudAdminCredential $cloudAdminCredential -PrivilegedEndpoint $PrivilegedEndpoint -RegistrationToken $registrationToken
+$registrationToken = Get-AzsRegistrationToken -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint $PrivilegedEndpoint -BillingModel Development -TokenOutputFilePath "C:\Temp\RegistrationToken.txt"
+Register-AzsEnvironment -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint $PrivilegedEndpoint -RegistrationToken $registrationToken
 
 #>
 Function Get-AzsRegistrationToken{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [PSCredential] $CloudAdminCredential,
+        [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
@@ -412,7 +412,7 @@ Function Get-AzsRegistrationToken{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $params = @{
-        CloudAdminCredential          = $CloudAdminCredential
+        PrivilegedEndpointCredential          = $PrivilegedEndpointCredential
         PrivilegedEndpoint            = $PrivilegedEndpoint
         BillingModel                  = $BillingModel
         MarketplaceSyndicationEnabled = $false
@@ -631,7 +631,7 @@ Gets the registration name used for registration
 The registration name in Azure is derived from the CloudId of the environment: "AzureStack-<CloudId>". 
 This function gets the CloudId by calling a PEP script and returns the name used during registration
 
-.PARAMETER CloudAdminCredential
+.PARAMETER PrivilegedEndpointCredential
 
 Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
@@ -643,14 +643,14 @@ Privileged Endpoint VM that performs environment administration actions. Also kn
 .EXAMPLE
 
 This example returns the name that was used for registration
-Get-AzsRegistrationName -CloudAdminCredential $CloudAdminCredential -PrivilegedEndpoint Azs-ERCS01
+Get-AzsRegistrationName -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint Azs-ERCS01
 
 #>
 Function Get-AzsRegistrationName{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [PSCredential] $CloudAdminCredential,
+        [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint
@@ -662,7 +662,7 @@ Function Get-AzsRegistrationName{
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
-    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
     $registrationName = Get-RegistrationName -Session $session
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
     return $registrationName
@@ -767,7 +767,7 @@ Creates the activation resource in Azure Stack
 
 Creates an activation resource in Azure Stack in the resource group 'azurestack'. Also configures usage and syndication options. 
 
-.PARAMETER CloudAdminCredential
+.PARAMETER PrivilegedEndpointCredential
 
 Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the privileged endpoint to call approved cmdlets and scripts.
 This parameter is mandatory and if not supplied then this function will request manual input of username and password
@@ -786,7 +786,7 @@ Function New-AzsActivationResource{
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [PSCredential] $CloudAdminCredential,
+    [PSCredential] $PrivilegedEndpointCredential,
 
     [Parameter(Mandatory = $true)]
     [String] $PrivilegedEndpoint,
@@ -800,7 +800,7 @@ param(
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
         
     Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
     Activate-AzureStack -Session $session -ActivationKey $ActivationKey
@@ -829,7 +829,7 @@ Function Remove-AzsActivationResource{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [PSCredential] $CloudAdminCredential,
+        [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
@@ -843,7 +843,7 @@ Function Remove-AzsActivationResource{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
 
     try 
     {
@@ -941,7 +941,7 @@ Function Get-RegistrationToken{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [PSCredential] $CloudAdminCredential,
+        [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $false)]
         [String] $PrivilegedEndpoint,
@@ -977,7 +977,7 @@ Function Get-RegistrationToken{
         if (-not $session)
         {
             $sessionProvided = $false
-            $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
+            $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
         }
 
         if (-not $StampInfo)
@@ -1390,7 +1390,7 @@ function Initialize-PrivilegedEndpointSession{
         [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory=$true)]
-        [PSCredential] $CloudAdminCredential
+        [PSCredential] $PrivilegedEndpointCredential
     )
 
     $currentAttempt = 0
@@ -1401,7 +1401,7 @@ function Initialize-PrivilegedEndpointSession{
         try
         {
             Log-Output "Initializing session with privileged endpoint: $PrivilegedEndpoint. Attempt $currentAttempt of $maxAttempt"
-            $session = New-PSSession -ComputerName $PrivilegedEndpoint -ConfigurationName PrivilegedEndpoint -Credential $CloudAdminCredential
+            $session = New-PSSession -ComputerName $PrivilegedEndpoint -ConfigurationName PrivilegedEndpoint -Credential $PrivilegedEndpointCredential
             Log-Output "Connection to $PrivilegedEndpoint successful"
             return $session
         }
