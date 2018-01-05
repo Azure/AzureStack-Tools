@@ -849,11 +849,19 @@ Function Remove-AzsActivationResource{
     {
         $AzureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
         Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment 'AzureStack'
-        $azurePowerShellContext = Get-AzureRmContext
-        Log-Output "Successfully logged into Azure Stack administrator account: $(ConvertTo-Json $azurePowerShellContext)"
+        $azureStackContext = Get-AzureRmContext
+
+        $azureStackContextDetails = @{
+            Account          = $azureStackContext.Account
+            Environment      = $azureStackContext.Environment
+            Subscription     = $azureStackContext.Subscription
+            Tenant           = $azureStackContext.Tenant
+        }
+
+        Log-Output "Successfully logged into Azure Stack account: $(ConvertTo-Json $azureStackContextDetails)"
         if (-not $AzureStackAdminSubscriptionId)
         {
-            $AzureStackAdminSubscriptionId = $azurePowerShellContext.Subscription.Id
+            $AzureStackAdminSubscriptionId = $azureStackContext.Subscription.Id
         }
         $activationResource = Get-AzureRmResource -ResourceId "/subscriptions/$AzureStackAdminSubscriptionId/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
         Log-Output "Activation resource found: $(ConvertTo-Json $activationResource)"
