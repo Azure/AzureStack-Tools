@@ -28,7 +28,7 @@ function Get-AzsDirectoryTenantidentifier {
 
 <#
    .Synopsis
-      This function is used to create a Service Principal on the AD Graph in anAD FS topology
+      This function is used to create a Service Principal on the AD Graph in an AD FS topology
    .DESCRIPTION
       The command creates a certificate in the cert store of the local user and uses that certificate to create a Service Principal in the Azure Stack Stamp Active Directory.
    .EXAMPLE

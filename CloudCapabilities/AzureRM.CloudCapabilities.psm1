@@ -34,7 +34,7 @@ function Get-AzureRMCloudCapability() {
     foreach ($providerNamespace in $providerNamespaces) {
         Write-Verbose "Working on $providerNamespace provider namespace"
         try {
-            $resourceTypes = (Get-AzureRmResourceProvider -ProviderNamespace $providerNamespace -ErrorAction Stop | Where-Object {$_.Locations -contains $location -or $_.Locations -contains "global"}).ResourceTypes
+            $resourceTypes = (Get-AzureRmResourceProvider -ProviderNamespace $providerNamespace -ErrorAction Stop).ResourceTypes
             foreach ($resourceType in $resourceTypes) {
                 $result = "" | Select-Object ProviderNamespace, ResourceTypeName, Locations, ApiVersions
                 $result.ProviderNamespace = $providerNamespace

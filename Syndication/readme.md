@@ -12,8 +12,10 @@ The downloaded needs to transferred to machine with has connectivity to the Azur
 ## Requirements
 
 - Azure Stack RP registered within your Azure Subscription
-- Azure Stack System must be registered
-- AzureRM PowerShell needs to be installed
+
+- Azure Subscription used to register Azure Stack System (Multi Node or ASDK)
+- AzureRM 1.2.11 PowerShell needs to be installed
+
 (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-quickstart)
 
 
@@ -25,7 +27,8 @@ Import-Module .\AzureStack.MarketplaceSyndication.psm1
 
 ## Launch the Tool
 ```powershell
-Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder
+Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder -AzureTenantID "Value" -AzureSubscriptionID "SubsciptionID"
+
 ```
 
 ## Optional Parameters

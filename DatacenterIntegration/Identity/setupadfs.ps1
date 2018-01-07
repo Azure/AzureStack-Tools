@@ -56,6 +56,9 @@ Set-AdfsProperties -WIASupportedUserAgents @("MSAuthHost/1.0/In-Domain","MSIPC",
 
 #Enable Supprt for Edge Browser
 Set-AdfsProperties -IgnoreTokenBinding $true
+
+#Enable Refresh Token
+Set-ADFSRelyingPartyTrust -TargetName AzureStack -TokenLifeTime 1440
 }
 }
 }

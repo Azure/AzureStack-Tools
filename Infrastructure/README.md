@@ -278,7 +278,7 @@ The command does the following:
  Does add an IP Pool
 
 ```powershell
-Add-AzsIpPool -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.0./24"
+Add-AzsIpPool -Name "PoolName" -StartIPAddress "192.168.55.1" -EndIPAddress "192.168.55.254" -AddressPrefix "192.168.55.0/24"
 ```
 
 The command does the following:
