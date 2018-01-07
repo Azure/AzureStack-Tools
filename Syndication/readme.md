@@ -12,8 +12,10 @@ The downloaded needs to transferred to machine with has connectivity to the Azur
 ## Requirements
 
 - Azure Stack RP registered within your Azure Subscription
+
 - Azure Subscription used to register Azure Stack System (Multi Node or ASDK)
 - AzureRM 1.2.11 PowerShell needs to be installed
+
 (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-quickstart)
 
 
@@ -26,6 +28,7 @@ Import-Module .\AzureStack.MarketplaceSyndication.psm1
 ## Launch the Tool
 ```powershell
 Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder -AzureTenantID "Value" -AzureSubscriptionID "SubsciptionID"
+
 ```
 
 ## Optional Parameters
@@ -34,8 +37,17 @@ Parameter: Cloud
 
 Default: AzureCloud
 
-Description: Once Azure Stack RP is available in other Clouds you can specify which one to use
+Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
 
+
+Parameter: AzureTenantID
+
+Description: Specify the Azure Tenant ID for Authentication
+
+
+Parameter: SubscriptionID
+
+Description: Specify the Azure Subscription ID for Authentication when having multiple subscriptions
 
 ## Importing into Azure Stack
 
