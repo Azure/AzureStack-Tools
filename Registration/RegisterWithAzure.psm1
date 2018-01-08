@@ -56,7 +56,7 @@ See documentation for more detail: https://docs.microsoft.com/en-us/azure/azure-
 
 .PARAMETER PrivilegedEndpointCredential
 
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password.The Azure Stack administrator has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
@@ -225,7 +225,7 @@ You must have already run Set-AzsRegistration before running this function.
 
 .PARAMETER PrivilegedEndpointCredential
 
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password. The Azure Stack administrator has access to the JEA Computer (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
@@ -329,7 +329,7 @@ A registration token is required to call Register-AzsEnvironment.
 
 .PARAMETER PrivilegedEndpointCredential
 
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the privileged endpoint to call approved cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password.The Azure Stack administrator has access to the privileged endpoint to call approved cmdlets and scripts.
 This parameter is mandatory and if not supplied then this function will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
@@ -633,7 +633,7 @@ This function gets the CloudId by calling a PEP script and returns the name used
 
 .PARAMETER PrivilegedEndpointCredential
 
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password.The Azure Stack administrator has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
@@ -769,7 +769,7 @@ Creates an activation resource in Azure Stack in the resource group 'azurestack'
 
 .PARAMETER PrivilegedEndpointCredential
 
-Powershell object that contains credential information i.e. user name and password.The CloudAdmin has access to the privileged endpoint to call approved cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password.The Azure Stack administrator has access to the privileged endpoint to call approved cmdlets and scripts.
 This parameter is mandatory and if not supplied then this function will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
