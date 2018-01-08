@@ -15,10 +15,10 @@ if (-not (Test-Path $LogFolder))
 {
     New-Item -Path $LogFolder -ItemType Directory -Force | Out-Null
 }
-if(-not $Global:AzureRegistrationLog)
+if(-not $AzureRegistrationLog)
 {
-    $Global:AzureRegistrationLog = "$LogFolder\AzureStack.AzureRegistration.$(Get-Date -Format yyyy-MM-dd.HH-mm-ss).log"
-    $null = New-Item -Path $Global:AzureRegistrationLog -ItemType File -Force
+    $AzureRegistrationLog = "$LogFolder\AzureStack.AzureRegistration.$(Get-Date -Format yyyy-MM-dd.HH-mm-ss).log"
+    $null = New-Item -Path $AzureRegistrationLog -ItemType File -Force
 }
 
 ################################################################
@@ -1548,7 +1548,7 @@ function Log-Output{
         [object] $Message
     )
 
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Global:AzureRegistrationLog -Append
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $AzureRegistrationLog -Append
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
 }
 
@@ -1568,7 +1568,7 @@ function Log-Warning{
 
     # Write Error: line seperately otherwise out message will not contain stack trace
     Log-Output "*** WARNING ***"
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Global:AzureRegistrationLog -Append
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $AzureRegistrationLog -Append
     Write-Warning "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
     Log-Output "*** End WARNING ***"
 }
@@ -1593,7 +1593,7 @@ function Log-Throw{
     $errorLine = "************************ Error ************************"
 
     # Write Error line seperately otherwise out message will not contain stack trace
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine" | Out-File $Global:AzureRegistrationLog -Append
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine" | Out-File $AzureRegistrationLog -Append
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine"
 
     Log-Output $Message
@@ -1601,8 +1601,8 @@ function Log-Throw{
 
     Log-OutPut "*********************** Ending registration action during $CallingFunction ***********************`r`n"
 
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $Global:AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" | Out-File $Global:AzureRegistrationLog -Append
-    Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $Global:AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" 
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" | Out-File $AzureRegistrationLog -Append
+    Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" 
 
     throw $Message
 }
