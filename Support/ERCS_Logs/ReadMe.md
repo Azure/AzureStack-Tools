@@ -67,5 +67,16 @@ Specifies if Azure Stack Deployment is incomplete. Only for use in Azure Stack D
 - Yes
 - No
 
+## TranscriptPath ## 
+Network share for saving transcripts. Must be in format \\IpAddress\Folder
+
+- "\\1.2.3.4\folder"
+
+## TranscriptShareCred ##
+Specifies credentials the script will use to build a local share Format must be in one of the 2 formats:
+
+- (Get-Credential -Message "Transcript Share Credentials")
+- (Get-Credential)
+
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No -TranscriptPath "\\1.2.3.4\folder" -TranscriptShareCred (Get-Credential -Message "Transcript Share Credentials")
