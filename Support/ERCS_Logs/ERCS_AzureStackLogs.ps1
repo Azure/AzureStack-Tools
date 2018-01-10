@@ -32,7 +32,7 @@
 	Specifies credentials the script will use to connect to Azure Stack privileged endpoint. Format must be in one of the 2 formats:
 	(Get-Credential -Message "Azure Stack credentials")
 	(Get-Credential)
-.PARAMETER ShareCred
+.PARAMETER LocalShareCred
 	Specifies credentials the script will use to build a local share Format must be in one of the 2 formats:
 	(Get-Credential -Message "Local share credentials" -UserName $env:USERNAME)
 	(Get-Credential)
@@ -48,8 +48,15 @@
 	Specifies if Azure Stack Deployment is incomplete. Only for use in Azure Stack Development Kit deployment or DVM
 	Yes
 	No
+.PARAMETER TranscriptPath
+	Network share for saving transcripts. Must be in format \\IpAddress\Folder
+	"\\1.2.3.4\folder"
+.PARAMETER TranscriptShareCred
+	Specifies credentials the script will use to build a local share Format must be in one of the 2 formats:
+	(Get-Credential -Message "Transcript Share Credentials")
+	(Get-Credential)
 .EXAMPLE
- .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -ShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No
+ .\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack credentials") -LocalShareCred (get-credential -Message "Local share credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No -TranscriptPath "\\1.2.3.4\folder" -TranscriptShareCred (Get-Credential -Message "Transcript Share Credentials")
 #>
 
 Param(
@@ -70,13 +77,17 @@ Param(
 	[Parameter(Mandatory=$false,HelpMessage="Credentials the script will use to connect to Azure Stack privileged endpoint")]
     [PSCredential]$AzSCredentials,
 	[Parameter(Mandatory=$false,HelpMessage="Credentials the script will use to build a local share")]
-    [PSCredential]$ShareCred,
+    [PSCredential]$LocalShareCred,
 	[Parameter(Mandatory=$false,HelpMessage="Script is running on Azure Stack machine such as Azure Stack Development Kit deployment or DVM? Valid formats are: Yes or No")]
     [ValidateSet("Yes", "No")]
     [String] $InStamp,
 	[Parameter(Mandatory=$false,HelpMessage="Has Deployment Completed? Valid formats are: Yes or No")]
     [ValidateSet("Yes", "No")]
-    [String] $IncompleteDeployment
+    [String] $IncompleteDeployment,
+	[Parameter(Mandatory=$false,HelpMessage="Path to external transcript share. Example: \\1.2.3.4\folder")]
+	[String] $TranscriptPath,
+	[Parameter(Mandatory=$false,HelpMessage="Credentials the script will use to connect to the transcript share")]
+    [PSCredential]$TranscriptShareCred
 )
 
 #warn if running in the ISE do to .net ui rendering 
@@ -151,7 +162,7 @@ else
 #    ERCS_AzureStackLogs
 #  
 # VERSION:  
-#    1.6.1  
+#    1.7.0  
 #------------------------------------------------------------------------------ 
  
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
@@ -171,7 +182,7 @@ else
 "    ERCS_AzureStackLogs.ps1 " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
 " VERSION: " | Write-Host -ForegroundColor Yellow 
-"    1.6.1" | Write-Host -ForegroundColor Yellow 
+"    1.7.0" | Write-Host -ForegroundColor Yellow 
 ""  | Write-Host -ForegroundColor Yellow 
 "------------------------------------------------------------------------------ " | Write-Host -ForegroundColor Yellow 
 "" | Write-Host -ForegroundColor Yellow 
@@ -355,6 +366,7 @@ if(!($IP))
 	$JSONMainForm.StartPosition = "CenterScreen"
     $JSONMainForm.MaximizeBox = $false
     $JSONMainForm.FormBorderStyle = 'Fixed3D'
+	$JSONMainForm.ShowIcon = $false
 	$result = $JSONMainForm.ShowDialog()
 	#endregion .NET
 	switch ($result)
@@ -487,6 +499,7 @@ if (!($InStamp))
 	$OnStampForm.StartPosition = "CenterScreen"
     $OnStampForm.MaximizeBox = $false
     $OnStampForm.FormBorderStyle = 'Fixed3D'
+	$OnStampForm.ShowIcon = $false
 	$ASDKQuestion = $OnStampForm.ShowDialog()
 	#endregion .NET
 	if ($ASDKQuestion -eq [System.Windows.Forms.DialogResult]::yes)
@@ -494,6 +507,112 @@ if (!($InStamp))
 	Write-Host "`n `t[INFO] Using Azure Stack Development Kit or DVM" -ForegroundColor Green
 	$CheckADSK = 1
 	}
+}
+
+#Manual Entry
+if(!($IP))
+{
+	$GuessERCSIP = $null
+	$ERCSIPAddress = (Test-Connection $env:computername -count 1).IPv4Address.IPAddressToString
+	$ERCSIPSplit = $ERCSIPAddress.split(".")
+	$GuessERCSIP += $ERCSIPSplit[0] + "." + $ERCSIPSplit[1] + "." + $ERCSIPSplit[2] + "." + "x"
+
+	#region .NET
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$ERCSIPMain = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$ERCSIPLabel = $null
+	[System.Windows.Forms.TextBox]$ERCSIPTextBox = $null
+	[System.Windows.Forms.Button]$ERCSIPCancel = $null
+	[System.Windows.Forms.Button]$ERCSIPOK = $null
+	[System.Windows.Forms.Button]$button1 = $null
+	$ERCSIPLabel = New-Object -TypeName System.Windows.Forms.Label
+	$ERCSIPTextBox = New-Object -TypeName System.Windows.Forms.TextBox
+	$ERCSIPCancel = New-Object -TypeName System.Windows.Forms.Button
+	$ERCSIPOK = New-Object -TypeName System.Windows.Forms.Button
+	$ERCSIPMain.SuspendLayout()
+	#
+	#ERCSIPLabel
+	#
+	$ERCSIPLabel.AutoSize = $true
+	$ERCSIPLabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(17,22)
+	$ERCSIPLabel.Name = 'ERCSIPLabel'
+	$ERCSIPLabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(250,13)
+	$ERCSIPLabel.TabIndex = 0
+	$ERCSIPLabel.Text = 'Enter IP address of a Privileged End Point machine:'
+	#
+	#ERCSIPTextBox
+	#
+	$ERCSIPTextBox.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(20,52)
+	$ERCSIPTextBox.Name = 'textBox1'
+	$ERCSIPTextBox.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(249,20)
+	$ERCSIPTextBox.TabIndex = 1
+	$ERCSIPTextBox.Text = $GuessERCSIP
+	#
+	#ERCSIPCancel
+	#
+	$ERCSIPCancel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(58,96)
+	$ERCSIPCancel.Name = 'ERCSIPCancel'
+	$ERCSIPCancel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$ERCSIPCancel.TabIndex = 2
+	$ERCSIPCancel.Text = 'Cancel'
+	$ERCSIPCancel.UseVisualStyleBackColor = $true
+	$ERCSIPCancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+	#
+	#ERCSIPOK
+	#
+	$ERCSIPOK.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(153,96)
+	$ERCSIPOK.Name = 'ERCSIPOK'
+	$ERCSIPOK.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$ERCSIPOK.TabIndex = 3
+	$ERCSIPOK.Text = 'OK'
+	$ERCSIPOK.UseVisualStyleBackColor = $true
+	$ERCSIPOK.DialogResult = [System.Windows.Forms.DialogResult]::OK
+	#
+	#ERCSIPMain
+	#
+	$ERCSIPMain.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(291,131)
+	$ERCSIPMain.Controls.Add($ERCSIPOK)
+	$ERCSIPMain.Controls.Add($ERCSIPCancel)
+	$ERCSIPMain.Controls.Add($ERCSIPTextBox)
+	$ERCSIPMain.Controls.Add($ERCSIPLabel)
+	$ERCSIPMain.Name = 'ERCSIPMain'
+	$ERCSIPMain.ResumeLayout($false)
+	$ERCSIPMain.PerformLayout()
+	Add-Member -InputObject $ERCSIPMain -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $ERCSIPMain -Name ERCSIPLabel -Value $ERCSIPLabel -MemberType NoteProperty
+	Add-Member -InputObject $ERCSIPMain -Name ERCSIPTextBox -Value $ERCSIPTextBox -MemberType NoteProperty
+	Add-Member -InputObject $ERCSIPMain -Name ERCSIPCancel -Value $ERCSIPCancel -MemberType NoteProperty
+	Add-Member -InputObject $ERCSIPMain -Name ERCSIPOK -Value $ERCSIPOK -MemberType NoteProperty
+	Add-Member -InputObject $ERCSIPMain -Name button1 -Value $button1 -MemberType NoteProperty
+	$ERCSIPMain.AcceptButton = $ERCSIPOK
+	$ERCSIPMain.Topmost = $True
+	$ERCSIPMain.StartPosition = "CenterScreen"
+	$ERCSIPMain.MaximizeBox = $false
+	$ERCSIPMain.FormBorderStyle = 'Fixed3D'
+	$ERCSIPMain.ShowIcon = $false
+	$ERCSIPMan = $ERCSIPMain.ShowDialog()
+	#endregion .NET
+
+		if ($ERCSIPMan -eq [System.Windows.Forms.DialogResult]::OK)
+		{
+			$global:progresspreference ="SilentlyContinue"
+			if(!($ERCSIPTextBox.Text -match "x"))
+			{
+				Write-Host "`n `t[INFO] Testing connectivity to $($ERCSIPTextBox.Text)" -ForegroundColor Green
+				$ERCSIPUserEntry = Test-NetConnection -port 5985 -ComputerName $ERCSIPTextBox.Text -InformationLevel Quiet
+					if($ERCSIPUserEntry -eq $true)
+					{
+						Write-Host "`tSuccess"
+						$IP = $ERCSIPTextBox.Text
+					}
+			}
+			else
+			{
+				Write-Host "`n `t[INFO] Unable to find ip address of Emergency Recovery Console Session via manual entry" -ForegroundColor  DarkYellow
+			}
+			$global:progresspreference ="Continue"
+		}
 }
 
 #Get Stamp Timezone
@@ -509,241 +628,305 @@ $SelCurrentTimeZone = [system.timezoneinfo]::GetSystemTimeZones() | Out-GridView
 	}
 }
 
-#AD Query
+#Search for ERCS
 if(!($IP))
 {
-    #AD Query
-    if(!($IP))
-    {
-	$moduleName = $null
-	$moduleName = "ActiveDirectory"
-	#inform the user of that we are doing
-	Write-Host "`n`t[INFO] Checking for AD powershell module" -ForegroundColor Green
+	#region .NET Search
+	[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+	[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+	$SearchMainForm = New-Object -TypeName System.Windows.Forms.Form
+	[System.Windows.Forms.Label]$SearchLabel = $null
+	[System.Windows.Forms.Button]$SearchNo = $null
+	[System.Windows.Forms.Button]$SearchYes = $null
+	[System.Windows.Forms.Button]$button1 = $null
 
-	try 
+	$SearchLabel = New-Object -TypeName System.Windows.Forms.Label
+	$SearchNo = New-Object -TypeName System.Windows.Forms.Button
+	$SearchYes = New-Object -TypeName System.Windows.Forms.Button
+	$SearchMainForm.SuspendLayout()
+	#
+	#SearchLabel
+	#
+	$SearchLabel.AutoSize = $true
+	$SearchLabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(12,38)
+	$SearchLabel.Name = 'SearchLabel'
+	$SearchLabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(295,13)
+	$SearchLabel.TabIndex = 0
+	$SearchLabel.Text = 'Install powershell modules to search for Privileged End Point?'
+	#
+	#SearchYes
+	#
+	$SearchYes.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(70,87)
+	$SearchYes.Name = 'SearchYes'
+	$SearchYes.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$SearchYes.TabIndex = 1
+	$SearchYes.Text = 'Yes'
+	$SearchYes.UseVisualStyleBackColor = $true
+	$SearchYes.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+	#
+	#SearchNo
+	#
+	$SearchNo.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(174,87)
+	$SearchNo.Name = 'SearchNo'
+	$SearchNo.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+	$SearchNo.TabIndex = 2
+	$SearchNo.Text = 'No'
+	$SearchNo.UseVisualStyleBackColor = $true
+	$SearchNo.DialogResult = [System.Windows.Forms.DialogResult]::No
+	#
+	#SearchMainForm
+	#
+	$SearchMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(330,138)
+	$SearchMainForm.Controls.Add($SearchYes)
+	$SearchMainForm.Controls.Add($SearchNo)
+	$SearchMainForm.Controls.Add($SearchLabel)
+	$SearchMainForm.Name = 'SearchMainForm'
+	$SearchMainForm.ResumeLayout($false)
+	$SearchMainForm.AcceptButton = $SearchYes
+	$SearchMainForm.PerformLayout()
+	Add-Member -InputObject $SearchMainForm -Name base -Value $base -MemberType NoteProperty
+	Add-Member -InputObject $SearchMainForm -Name SearchLabel -Value $SearchLabel -MemberType NoteProperty
+	Add-Member -InputObject $SearchMainForm -Name SearchNo -Value $SearchNo -MemberType NoteProperty
+	Add-Member -InputObject $SearchMainForm -Name SearchYes -Value $SearchYes -MemberType NoteProperty
+	Add-Member -InputObject $SearchMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+	$SearchMainForm.Topmost = $True
+	$SearchMainForm.StartPosition = "CenterScreen"
+	$SearchMainForm.MaximizeBox = $false
+	$SearchMainForm.FormBorderStyle = 'Fixed3D'
+	$SearchMainForm.ShowIcon = $false
+	$SearchQuestion = $SearchMainForm.ShowDialog()
+
+
+	if ($SearchQuestion -eq [System.Windows.Forms.DialogResult]::No)
+	{$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
+	if ($SearchQuestion -eq [System.Windows.Forms.DialogResult]::Yes)
 	{
-	    if (load_module $moduleName)
-	    {
-	        Write-Host "`n`t[Info] Loaded $($moduleName)" -ForegroundColor Green
-	    }
-	    else
-	    {
-	        Write-Host "`n`t`t[Warning] Failed to load $($moduleName)" -ForegroundColor Yellow
-			Write-Host "`n`t[Info] Installing module $($moduleName)" -ForegroundColor Gray
-			Install-WindowsFeature -Name RSAT-AD-PowerShell
-			Try
+
+			#AD Query
+		if(!($IP))
+		{
+			#AD Query
+			if(!($IP))
+			{
+			$moduleName = $null
+			$moduleName = "ActiveDirectory"
+			#inform the user of that we are doing
+			Write-Host "`n`t[INFO] Checking for AD powershell module" -ForegroundColor Green
+
+			try 
 			{
 				if (load_module $moduleName)
-			    {
-			        Write-Host "`n`t`t[Info] Loaded $($moduleName)" -ForegroundColor White
-			    }
-			}
-			catch 
-			{
-		    Write-Host "`n`t[Error] Exception caught: $_" -ForegroundColor Red
-			Write-Host "`n Press any key to continue ...`n"
-			$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-			exit
-			}
-		}
-	}
-	catch 
-	{
-	    Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
-		Write-Host "`n Press any key to continue ...`n"
-		$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		exit
-	}
-
-	#go get the computers and find ECR machines
-	$ERCSNames = $null
-	$ERCIPInfo = $null
-	$selERC = $null
-	Write-Host "`n`t[Info] Querying for Emergency Recovery Console Session with AD" -ForegroundColor Green
-	[Array] $ERCSNames = Get-ADComputer -Filter 'ObjectClass -eq "Computer"' | where {$_.name -like "*-Ercs*"} | Select -Expand Name
-	foreach ($name in $ERCSNames)
-		{
-			$ERCName = Resolve-DnsName -name $name | select Name, Ipaddress
-			[array]$ERCIPInfo += $ERCName
-		}
-		
-	#pick Emergency Recovery Console Session	
-	$selERC = $ERCIPInfo | Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
-	$IP = $selERC.ipaddress
-    }
-    else
-        {
-    Write-Host "`n`t[INFO] Unable to find ip address of Emergency Recovery Console Session via AD" -ForegroundColor  DarkYellow
-    }
-}
-
-#DNS QUERY
-if(!($IP))
-{
-    #DNS QUERY A records
-    if(!($IP))
-                                                                                                                                                                                                                                                        {
-	try 
-	{
-		$moduleName = $null
-		$moduleName = "DnsServer"
-		#inform the user of that we are doing
-		Write-Host "`n`t[INFO] Checking for DNS powershell module" -ForegroundColor White
-	    
-		if (load_module $moduleName)
-	    {
-	        Write-Host "`n`t[INFO] Loaded $($moduleName)" -ForegroundColor Green
-	    }
-	    else
-	    {
-	        Write-Host "`n`t`t[Warning] Failed to load $($moduleName)" -ForegroundColor Yellow
-			Write-Host "`n`t[INFO] Installing module $($moduleName)" -ForegroundColor Gray
-			Install-WindowsFeature -Name RSAT-DNS-Server
-			Try
-			{
-				if (load_module $moduleName)
-			    {
-			        Write-Host "`n`t`t[INFO] Loaded $($moduleName)" -ForegroundColor White
-			    }
-			}
-			catch 
-			{
-		    Write-Host "`n`t[Error] Exception caught: $_" -ForegroundColor Red
-			Write-Host "`n Press any key to continue ...`n"
-			$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-			exit
-			}
-		}
-	}
-	catch 
-	{
-	    Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
-		Write-Host "`n Press any key to continue ...`n"
-		$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		exit
-	}
-	Write-Host "`n`t[INFO] Looking for Emergency Recovery Console Session via DNS"
-	$DnsServers = $null
-	$server = $null
-	$Zones = $null
-	$Zone = $null
-	$ErcServers = $null
-	$ERCSSERVER = $null
-	Write-Host "`n`t[INFO] Querying for Emergency Recovery Console Session A records" -ForegroundColor White
-	[array]$DnsServers = Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object –ExpandProperty ServerAddresses
-	$DnsServers = $DnsServers | select -uniq
-	ForEach ($server in $DnsServers)
-		{
-			$Zones = @(Get-DnsServerZone -ComputerName $server)
-			ForEach ($Zone in $Zones)
-			{
-			[array]$ERCSSERVER= Get-DnsServerResourceRecord -ZoneName $Zone.ZoneName -ComputerName $server -RRType "A" | select HostName,RecordType,Timestamp,TimeToLive,@{Name='RecordData';Expression={$_.RecordData.IPv4Address.ToString()}} | where {$_.Hostname -like "*-ERCS*"} 
-			[array]$ErcServers += $ERCSSERVER
-			}
-		}
-	$nodupERCs = $ErcServers | Sort-Object -Property RecordData -Unique
-	$SelErcServers = $nodupERCs | Select-Object HostName, RecordData | Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
-	$IP = $SelErcServers.RecordData
-    }
-	# look for forwarders then change out the IP addresses to likly ERCS ip addresses then test connection 
-	if (!($IP))
-		{
-			Write-host "`n`t[INFO] Unable to locate via DNS A record search." -ForegroundColor White
-			Write-host "`n`t[INFO] Searching for AzureStack.local zones" -ForegroundColor White
-
-			[array]$DNSServers=Get-DNSClientServerAddress -AddressFamily IPv4 | ?{$_.ServerAddresses -ne $null} | Select ServerAddresses -Unique
-				foreach ($DNSServer in $DNSServers)
 				{
-					[array]$AzSDNSSvrs+= get-dnsserverzone -computername $($DNSServer.ServerAddresses) | ?{$_.ZoneName -like "*azurestack.local"} 
+					Write-Host "`n`t[Info] Loaded $($moduleName)" -ForegroundColor Green
 				}
-                If ($AzSDNSSvrs.ZoneType -contains "Forwarder")
-                {
-				    foreach($AzSDNSSvr in $AzSDNSSvrs.MasterServers)
-				    {
-					    [array]$IPArrays+=(($AzSDNSSvr.IPAddressToString -split "\.")[0..2]) -join "."
-				    }
-			    $IPArrays = $IPArrays| select -Unique
-                foreach($iparray in $IPArrays)
-                {
-			        [Array]$GuessERCS += $IPArray + "." + "225"
-			        [Array]$GuessERCS += $IPArray + "." + "226"
-			        [Array]$GuessERCS += $IPArray + "." + "227"
-                }
-				        ForEach ($ERCTest in $GuessERCS)
-				        {
-					        $global:progresspreference ="SilentlyContinue"
-					        $DNSGuessName = Test-NetConnection -port 5985 -ComputerName $ERCTest
-						        If ($GuessName.TcpTestSucceeded -eq "True")
-						        {
-							        [Array]$DNSListeningNames += $DNSGuessName.RemoteAddress.IPAddressToString
-						        }
-           
-				        }
-			        $global:progresspreference ="Continue"
-			        $DNSselName = $DNSListeningNames |Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
-			        $IP = $DNSselName
-                }
+				else
+				{
+					Write-Host "`n`t`t[Warning] Failed to load $($moduleName)" -ForegroundColor Yellow
+					Write-Host "`n`t[Info] Installing module $($moduleName)" -ForegroundColor Gray
+					Install-WindowsFeature -Name RSAT-AD-PowerShell
+					$ADModule = 1
+					Try
+					{
+						if (load_module $moduleName)
+						{
+							Write-Host "`n`t`t[Info] Loaded $($moduleName)" -ForegroundColor White
+						}
+					}
+					catch 
+					{
+					Write-Host "`n`t[Error] Exception caught: $_" -ForegroundColor Red
+					Write-Host "`n Press any key to continue ...`n"
+					$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+					exit
+					}
+				}
+			}
+			catch 
+			{
+				Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+				Write-Host "`n Press any key to continue ...`n"
+				$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+				exit
+			}
+
+			#go get the computers and find ECR machines
+			$ERCSNames = $null
+			$ERCIPInfo = $null
+			$selERC = $null
+			Write-Host "`n`t[Info] Querying for Emergency Recovery Console Session with AD" -ForegroundColor Green
+			[Array] $ERCSNames = Get-ADComputer -Filter 'ObjectClass -eq "Computer"' | where {$_.name -like "*-Ercs*"} | Select -Expand Name
+			foreach ($name in $ERCSNames)
+				{
+					$ERCName = Resolve-DnsName -name $name | select Name, Ipaddress
+					[array]$ERCIPInfo += $ERCName
+				}
+		
+			#pick Emergency Recovery Console Session	
+			$selERC = $ERCIPInfo | Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
+			$IP = $selERC.ipaddress
+			}
 			else
 				{
-					Write-Host "`n`t[INFO] Unable to find ip address of Emergency Recovery Console Session via DNS" -ForegroundColor  White
+			Write-Host "`n`t[INFO] Unable to find ip address of Emergency Recovery Console Session via AD" -ForegroundColor  DarkYellow
+			}
+		}
+
+		#DNS QUERY
+		if(!($IP))
+		{
+			#DNS QUERY A records
+			if(!($IP))
+																																																																{
+			try 
+			{
+				$moduleName = $null
+				$moduleName = "DnsServer"
+				#inform the user of that we are doing
+				Write-Host "`n`t[INFO] Checking for DNS powershell module" -ForegroundColor White
+	    
+				if (load_module $moduleName)
+				{
+					Write-Host "`n`t[INFO] Loaded $($moduleName)" -ForegroundColor Green
 				}
-		}		
+				else
+				{
+					Write-Host "`n`t`t[Warning] Failed to load $($moduleName)" -ForegroundColor Yellow
+					Write-Host "`n`t[INFO] Installing module $($moduleName)" -ForegroundColor Gray
+					Install-WindowsFeature -Name RSAT-DNS-Server
+					$DNSModule = 1
+					Try
+					{
+						if (load_module $moduleName)
+						{
+							Write-Host "`n`t`t[INFO] Loaded $($moduleName)" -ForegroundColor White
+						}
+					}
+					catch 
+					{
+					Write-Host "`n`t[Error] Exception caught: $_" -ForegroundColor Red
+					Write-Host "`n Press any key to continue ...`n"
+					$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+					exit
+					}
+				}
+			}
+			catch 
+			{
+				Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+				Write-Host "`n Press any key to continue ...`n"
+				$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+				exit
+			}
+			Write-Host "`n`t[INFO] Looking for Emergency Recovery Console Session via DNS"
+			$DnsServers = $null
+			$server = $null
+			$Zones = $null
+			$Zone = $null
+			$ErcServers = $null
+			$ERCSSERVER = $null
+			Write-Host "`n`t[INFO] Querying for Emergency Recovery Console Session A records" -ForegroundColor White
+			[array]$DnsServers = Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object –ExpandProperty ServerAddresses
+			$DnsServers = $DnsServers | select -uniq
+			ForEach ($server in $DnsServers)
+				{
+					$Zones = @(Get-DnsServerZone -ComputerName $server)
+					ForEach ($Zone in $Zones)
+					{
+					[array]$ERCSSERVER= Get-DnsServerResourceRecord -ZoneName $Zone.ZoneName -ComputerName $server -RRType "A" | select HostName,RecordType,Timestamp,TimeToLive,@{Name='RecordData';Expression={$_.RecordData.IPv4Address.ToString()}} | where {$_.Hostname -like "*-ERCS*"} 
+					[array]$ErcServers += $ERCSSERVER
+					}
+				}
+			$nodupERCs = $ErcServers | Sort-Object -Property RecordData -Unique
+			$SelErcServers = $nodupERCs | Select-Object HostName, RecordData | Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
+			$IP = $SelErcServers.RecordData
+			}
+			# look for forwarders then change out the IP addresses to likly ERCS ip addresses then test connection 
+			if (!($IP))
+				{
+					Write-host "`n`t[INFO] Unable to locate via DNS A record search." -ForegroundColor White
+					Write-host "`n`t[INFO] Searching for AzureStack.local zones" -ForegroundColor White
 
-}
+					[array]$DNSServers=Get-DNSClientServerAddress -AddressFamily IPv4 | ?{$_.ServerAddresses -ne $null} | Select ServerAddresses -Unique
+						foreach ($DNSServer in $DNSServers)
+						{
+							[array]$AzSDNSSvrs+= get-dnsserverzone -computername $($DNSServer.ServerAddresses) | ?{$_.ZoneName -like "*azurestack.local"} 
+						}
+						If ($AzSDNSSvrs.ZoneType -contains "Forwarder")
+						{
+							foreach($AzSDNSSvr in $AzSDNSSvrs.MasterServers)
+							{
+								[array]$IPArrays+=(($AzSDNSSvr.IPAddressToString -split "\.")[0..2]) -join "."
+							}
+						$IPArrays = $IPArrays| select -Unique
+						foreach($iparray in $IPArrays)
+						{
+							[Array]$GuessERCS += $IPArray + "." + "225"
+							[Array]$GuessERCS += $IPArray + "." + "226"
+							[Array]$GuessERCS += $IPArray + "." + "227"
+						}
+								ForEach ($ERCTest in $GuessERCS)
+								{
+									$global:progresspreference ="SilentlyContinue"
+									$DNSGuessName = Test-NetConnection -port 5985 -ComputerName $ERCTest
+										If ($GuessName.TcpTestSucceeded -eq "True")
+										{
+											[Array]$DNSListeningNames += $DNSGuessName.RemoteAddress.IPAddressToString
+										}
+           
+								}
+							$global:progresspreference ="Continue"
+							$DNSselName = $DNSListeningNames |Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
+							$IP = $DNSselName
+						}
+					else
+						{
+							Write-Host "`n`t[INFO] Unable to find ip address of Emergency Recovery Console Session via DNS" -ForegroundColor  White
+						}
+				}		
 
-#BestguessIP
-if(!($IP))
-{
-    function Read-InputBoxDialog([string]$Message, [string]$WindowTitle, [string]$DefaultText)
-    {
-        Add-Type -AssemblyName Microsoft.VisualBasic
-        return [Microsoft.VisualBasic.Interaction]::InputBox($Message, $WindowTitle, $DefaultText)
-    }
+		}
 
-    Write-Host "`n`t[Prompt] for Azure Stack Portal"
-    $AzSPortal = Read-InputBoxDialog -Message "Please enter Azure Stack Portal:" -WindowTitle "Azure Stack Portal" -DefaultText "http://portal.local.azurestack.external"
+		#BestguessIP
+		if(!($IP))
+		{
+			function Read-InputBoxDialog([string]$Message, [string]$WindowTitle, [string]$DefaultText)
+			{
+				Add-Type -AssemblyName Microsoft.VisualBasic
+				return [Microsoft.VisualBasic.Interaction]::InputBox($Message, $WindowTitle, $DefaultText)
+			}
 
-    $Tenant = ($AzSPortal -split "//")[-1] 
+			Write-Host "`n`t[Prompt] for Azure Stack Portal"
+			$AzSPortal = Read-InputBoxDialog -Message "Please enter Azure Stack Portal:" -WindowTitle "Azure Stack Portal" -DefaultText "http://portal.local.azurestack.external"
 
-    $portal= Test-NetConnection -Port 443 -ComputerName $Tenant
+			$Tenant = ($AzSPortal -split "//")[-1] 
 
-    If ($portal.TcpTestSucceeded -eq "True")
-    {
-        $octet = $portal.Remoteaddress.IPAddressToString
-        $occarr = $octet.split(".")
-        [Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + $occarr[2] + "." + "225"
-        [Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + $occarr[2] + "." + "226"
-        [Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + $occarr[2] + "." + "227"
-		[Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + "200" + "." + "225" #for devkit
-    }
+			$portal= Test-NetConnection -Port 443 -ComputerName $Tenant
 
-    ForEach ($GuessERC in $GuessERCS)
-        {
-		 $global:progresspreference ="SilentlyContinue"
-        $GuessIP = Test-NetConnection -port 5985 -ComputerName $GuessERC
-        If ($GuessIP.TcpTestSucceeded -eq "True")
-            {
-            [Array]$Listeningips += $GuessIP.RemoteAddress.IPAddressToString
-            }
-        }
-	$global:progresspreference ="Continue"
-	$selIP = $Listeningips |Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
-	$IP = $selIP
-}
+			If ($portal.TcpTestSucceeded -eq "True")
+			{
+				$octet = $portal.Remoteaddress.IPAddressToString
+				$occarr = $octet.split(".")
+				[Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + $occarr[2] + "." + "225"
+				[Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + $occarr[2] + "." + "226"
+				[Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + $occarr[2] + "." + "227"
+				[Array]$GuessERCS += $occarr[0] + "." + $occarr[1] + "." + "200" + "." + "225" #for devkit
+			}
 
-#Manual Entry
-if(!($IP))
-{
-    #Manual Entry
-    if(!($IP))
-    {
-	    Write-Host "`n`t[PROMPT] Enter IP Address of Emergency Recovery Console Session" -ForegroundColor White
-	    [string]$IP = Read-Host "`n`tInput ERCS ip Address"
-    }
-    else
-    {
-        Write-Host "`n`t[INFO] Unable to find ip address of Emergency Recovery Console Session via manual entry" -ForegroundColor  DarkYellow
-    }
+			ForEach ($GuessERC in $GuessERCS)
+				{
+				 $global:progresspreference ="SilentlyContinue"
+				$GuessIP = Test-NetConnection -port 5985 -ComputerName $GuessERC
+				If ($GuessIP.TcpTestSucceeded -eq "True")
+					{
+					[Array]$Listeningips += $GuessIP.RemoteAddress.IPAddressToString
+					}
+				}
+			$global:progresspreference ="Continue"
+			$selIP = $Listeningips |Out-GridView -PassThru -Title "Select Emergency Recovery Console Session"
+			$IP = $selIP
+		}
+	}
+	#endregion .NET Search
 }
 
 #Do Work
@@ -767,14 +950,22 @@ if($IP)
 	{
 		 Write-Host "`n `t[INFO] Using $($IP)" -ForegroundColor Green
 		#Add this machine to trusted Hosts 
-		if ($ERCSIPS)
-		{
-		$ERCS = $ERCSIPS -join ","
-		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($ERCS)" -Force
+		$CurrentTrustedHost=(get-item WSMan:\localhost\Client\TrustedHosts).Value
+		if($CurrentTrustedHost.Contains("*")){
+			Write-Host "`n `t[WARNING] TrustedHosts contains a wildcard character" -ForegroundColor Yellow
 		}
-		else
+		elseif($CurrentTrustedHost -notcontains $IP)
 		{
-		Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($IP)" -Force
+			if($CurrentTrustedHost -notlike $null)
+			{
+				$IPDiff= Compare-Object -ReferenceObject "$($IP)" -DifferenceObject ($CurrentTrustedHost -split ",") -IncludeEqual -PassThru
+				$IPs=($IPDiff -join ",")
+			}
+			else
+			{
+				$IPs = $IP
+			}
+			Set-Item WSMan:\localhost\Client\TrustedHosts -Value "$($IPs)" -Force
 		}
 		#gethostip
         $global:progresspreference ="SilentlyContinue"
@@ -873,6 +1064,7 @@ if($IP)
 			$DomainForm.StartPosition = "CenterScreen"
 			$DomainForm.MaximizeBox = $false
 			$DomainForm.FormBorderStyle = 'Fixed3D'
+			$DomainForm.ShowIcon = $false
 			[System.Object]$userinputdomain = $null
 			$userinputdomain = $DomainForm.ShowDialog()
 			#endregion .NET
@@ -937,6 +1129,7 @@ if($IP)
 			$UserForm.StartPosition = "CenterScreen"
 			$UserForm.MaximizeBox = $false
 			$UserForm.FormBorderStyle = 'Fixed3D'
+			$UserForm.ShowIcon = $false
 			$AzsUser = $UserForm.ShowDialog()
 			#endregion .NET
 			if ($AzsUser -eq [System.Windows.Forms.DialogResult]::OK)
@@ -949,14 +1142,14 @@ if($IP)
 			Write-Host "`n`t[PROMPT] Enter credential to connect to AzureStack PEP" -ForegroundColor Green
 			$mySecureCredentials = Get-Credential -Message "Azure Stack credentials" -UserName $selAzSUser 
 		}
-		#ShareUserINFO
-		if(!($shareCred))
+		#localShareUserINFO
+		if(!($LocalShareCred))
 		{
 			$name = whoami
 			$localComputer = (gwmi Win32_ComputerSystem).Name
-			$shareCred = Get-Credential -UserName $name -Message "Local share credentials"
-			$localusername = $shareCred.username 
-			$localpassword = $shareCred.GetNetworkCredential().password 
+			$LocalShareCred = Get-Credential -UserName $name -Message "Local share credentials"
+			$localusername = $LocalShareCred.username 
+			$localpassword = $LocalShareCred.GetNetworkCredential().password 
 			$LocalUsers = ("$localComputer"+"$localusername")
 			$localCurrentDomain = "LDAP://" + ([ADSI]"").distinguishedName 
 			$localdomain = New-Object System.DirectoryServices.DirectoryEntry($localCurrentDomain,$localusername,$localpassword) 
@@ -1081,6 +1274,7 @@ if($IP)
 			$TimeForm.StartPosition = "CenterScreen"
 			$TimeForm.MaximizeBox = $false
 			$TimeForm.FormBorderStyle = 'Fixed3D'
+			$TimeForm.ShowIcon = $false
 			$timeresult = $TimeForm.ShowDialog()
 			#endregion .NET
 			if ($timeresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
@@ -1209,6 +1403,7 @@ if($IP)
 			$TimeForm.StartPosition = "CenterScreen"
 			$TimeForm.MaximizeBox = $false
 			$TimeForm.FormBorderStyle = 'Fixed3D'
+			$TimeForm.ShowIcon = $false
 			$timeresult = $TimeForm.ShowDialog()
 			#endregion .NET
         	if ($timeresult -eq [System.Windows.Forms.DialogResult]::Cancel){$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");exit}
@@ -1351,7 +1546,7 @@ if($IP)
 			$buttondefault.Name = 'buttondefault'
 			$buttondefault.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(133,23)
 			$buttondefault.TabIndex = 2
-			$buttondefault.Text = 'Default Logs'
+			$buttondefault.Text = 'All Logs'
 			$buttondefault.UseVisualStyleBackColor = $true
 			$buttondefault.DialogResult = [System.Windows.Forms.DialogResult]::Ignore
 			#
@@ -1400,12 +1595,19 @@ if($IP)
 			$MainForm.StartPosition = "CenterScreen"
 			$MainForm.MaximizeBox = $false
             $MainForm.FormBorderStyle = 'Fixed3D'
+			$MainForm.ShowIcon = $false
 			$LogCollection = $MainForm.ShowDialog()
 			#region .NET
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::OK)
 			 {
 			 [string[]]$FilterByRole = ((($checkedListBox1.CheckedItems -replace "[*]").Trim()) | Select-Object -Unique)
 			  Write-Host "`tSelected $($FilterByRole) for log collection" -ForegroundColor White
+			  $UserFilterByRole = $FilterByRole
+			  #makeing sure we get Test-AzureStack output
+				if($FilterByRole -notcontains "SeedRing")
+				{
+					$FilterByRole += "SeedRing"
+				}
 			 }
 			 if ($LogCollection -eq [System.Windows.Forms.DialogResult]::Ignore)
 			 {
@@ -1484,7 +1686,7 @@ if($IP)
 		$switch = $true
 		If($switch)
 			{
-				$switch = "Get-AzureStackLog -OutputSharePath `$using:ShareINFO -OutputShareCredential `$using:shareCred -ErrorAction Stop "
+				$switch = "Get-AzureStackLog -OutputSharePath `$using:ShareINFO -OutputShareCredential `$using:LocalShareCred -ErrorAction Stop "
 				$Howto = "Get-AzureStackLog -OutputSharePath `"$($ShareINFO)`" -OutputShareCredential `$using:cred "
 			}
 		If($FromDate)
@@ -1511,19 +1713,42 @@ if($IP)
 		If($FilterByRole)
 			{
 				$switch += "-FilterByRole `$using:FilterByRole "
-				$Howto += "-FilterByRole `"$($FilterByRole)`" "
+				$Howto += "-FilterByRole `"$($UserFilterByRole)`" "
 			}
-
-        Write-Host "`n"
+		
+		Write-Host "`n"
 	    Write-Host -NoNewline " `t[INFO] Running:" -ForegroundColor White
         Write-Host -NoNewline " Enter-PSSession -ComputerName $($IP) -ConfigurationName PrivilegedEndpoint -Credential `$cred" -ForegroundColor Green
+
+		#remotepowershell
+		$s = New-PSSession -ComputerName $IP -ConfigurationName PrivilegedEndpoint -Credential $mySecureCredentials
+		#run Test-AzureStack
+		Try
+		{
+			Invoke-Command -Session $s -ScriptBlock {get-command -Name Test-AzureStack} -OutVariable TestAzS -InformationAction SilentlyContinue -ErrorAction SilentlyContinue -WarningAction SilentlyContinue | out-null
+			If($TestAzS.ModuleName -eq "Microsoft.AzureStack.Diagnostics.Validator")
+			{
+				$testJob = Invoke-Command -Session $s -ScriptBlock {Test-AzureStack -DoNotDeployTenantVm} -AsJob -InformationAction SilentlyContinue
+				Write-Host "`n"
+				Write-Host -NoNewline " `t[INFO] Running:" -ForegroundColor White
+				Write-Host -NoNewline " Test-AzureStack" -ForegroundColor Green
+       				while((get-job -Id $testJob.id).State -eq "Running")
+				{
+					$per = (Get-Random -Minimum 5 -Maximum 80); Start-Sleep -Milliseconds 1500
+					Write-Progress -Activity "Please wait while script runs functionality testing on the stamp" -PercentComplete $per
+				}
+			}
+		}
+		catch
+		{
+			Write-Host "`n[Error] unable to run Test-AzureStack on PEP: $_" -ForegroundColor Red
+		}
+
 	    Write-Host "`n"
         Write-Host -NoNewline " `t[INFO] Running:" -ForegroundColor White
         Write-Host -NoNewline " $($Howto)" -ForegroundColor Green
 		Write-Host "`n"
-	    
-		#remotepowershell
-		$s = New-PSSession -ComputerName $IP -ConfigurationName PrivilegedEndpoint -Credential $mySecureCredentials  
+
 		Try
 		{
 			#do stuff on the remote machine
@@ -1566,7 +1791,7 @@ if($IP)
 				try
 				{
 				Write-Host "`n `t[INFO] Getting Azure Stack transcript" -ForegroundColor Green
-				Invoke-Command -Session $s -ScriptBlock {Close-PrivilegedEndpoint -TranscriptsPathDestination $using:ShareINFO -Credential $using:shareCred -ErrorAction SilentlyContinue -WarningAction SilentlyContinue} -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+				Invoke-Command -Session $s -ScriptBlock {Close-PrivilegedEndpoint -TranscriptsPathDestination $using:ShareINFO -Credential $using:LocalShareCred -ErrorAction SilentlyContinue -WarningAction SilentlyContinue} -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 				}
 				catch [System.Management.Automation.RemoteException]
 				{
@@ -1600,6 +1825,25 @@ if($IP)
 		#get files for user
 		$Files = Get-ChildItem -Path "$($Env:SystemDrive)\$($sharename)" | Where {(($_.attributes -eq 'directory') -and ($_.Name -like "AzureStackLogs-*"))} | sort -Descending -Property CreationTime | select -first 1
        
+		#get the validation report
+		if($testJob)
+		{
+			try
+			{
+				Add-Type -Assembly System.IO.Compression.FileSystem
+				$seedringzip = Get-ChildItem -Path "$($Files.FullName)" | Where {($_.Name -like "SeedRing-*.zip")} | sort -Descending -Property CreationTime | select -first 1
+				$zip = [IO.Compression.ZipFile]::OpenRead($seedringzip.FullName)
+				$Valreportdir  = "$($Env:SystemDrive)\$($sharename)\"
+				$ValidationReport = $zip.Entries | where {$_.Name -like 'AzureStack_Validation_Summary_*.HTML'} | sort -Descending -Property LastWriteTime | select -first 1
+				$ValidationReport | foreach {[IO.Compression.ZipFileExtensions]::ExtractToFile( $_, $Valreportdir + $_.Name) }
+				$zip.Dispose()
+			}
+			catch [System.Exception]
+			{
+				Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+			}
+		}
+
 		#look at output AzureStackLog_Output for issues
 		$stacklog = Get-ChildItem -Path "$($Files.FullName)" | Where {($_.Name -like "Get-AzureStackLog_Output*")} | sort -Descending -Property CreationTime | select -first 1
 		$stacklogerr = Select-String -Path $stacklog.FullName -Pattern "TerminatingError"
@@ -1662,6 +1906,116 @@ if($IP)
 			 Write-Host "`n`t[WARNING] VirtualDisk repairs in progress" -ForegroundColor Yellow
 			 Write-Host "$($ActiveStorageRepairs)"
 			}
+		if(!($TranscriptPath))
+		{
+			#region .NET
+			[void][System.Reflection.Assembly]::Load('System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a')
+			[void][System.Reflection.Assembly]::Load('System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089')
+			$TranscriptMainForm = New-Object -TypeName System.Windows.Forms.Form
+			[System.Windows.Forms.Label]$transcriptlabel = $null
+			[System.Windows.Forms.Button]$transcriptbuttonY = $null
+			[System.Windows.Forms.Button]$transcriptbuttonN = $null
+			[System.Windows.Forms.Button]$button1 = $null
+			$transcriptlabel = New-Object -TypeName System.Windows.Forms.Label
+			$transcriptbuttonY = New-Object -TypeName System.Windows.Forms.Button
+			$transcriptbuttonN = New-Object -TypeName System.Windows.Forms.Button
+			$TranscriptMainForm.SuspendLayout()
+			#
+			#transcriptlabel
+			#
+			$transcriptlabel.AutoSize = $true
+			$transcriptlabel.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(10,36)
+			$transcriptlabel.Name = 'transcriptlabel'
+			$transcriptlabel.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(252,13)
+			$transcriptlabel.TabIndex = 0
+			$transcriptlabel.Text = 'Upload AzureStack transcripts to an external share?'
+			$transcriptlabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+			#
+			#transcriptbuttonY
+			#
+			$transcriptbuttonY.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(60,78)
+			$transcriptbuttonY.Name = 'transcriptbuttonY'
+			$transcriptbuttonY.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+			$transcriptbuttonY.TabIndex = 1
+			$transcriptbuttonY.Text = 'Yes'
+			$transcriptbuttonY.UseVisualStyleBackColor = $true
+			$transcriptbuttonY.DialogResult = [System.Windows.Forms.DialogResult]::Yes
+			#
+			#transcriptbuttonN
+			#
+			$transcriptbuttonN.Location = New-Object -TypeName System.Drawing.Point -ArgumentList @(141,78)
+			$transcriptbuttonN.Name = 'transcriptbuttonN'
+			$transcriptbuttonN.Size = New-Object -TypeName System.Drawing.Size -ArgumentList @(75,23)
+			$transcriptbuttonN.TabIndex = 2
+			$transcriptbuttonN.Text = 'No'
+			$transcriptbuttonN.UseVisualStyleBackColor = $true
+			$transcriptbuttonN.DialogResult = [System.Windows.Forms.DialogResult]::No
+			#
+			#TranscriptMainForm
+			#
+			$TranscriptMainForm.ClientSize = New-Object -TypeName System.Drawing.Size -ArgumentList @(274,126)
+			$TranscriptMainForm.Controls.Add($transcriptbuttonN)
+			$TranscriptMainForm.Controls.Add($transcriptbuttonY)
+			$TranscriptMainForm.Controls.Add($transcriptlabel)
+			$TranscriptMainForm.Name = 'TranscriptMainForm'
+			$TranscriptMainForm.ResumeLayout($false)
+			$TranscriptMainForm.PerformLayout()
+			Add-Member -InputObject $TranscriptMainForm -Name base -Value $base -MemberType NoteProperty
+			Add-Member -InputObject $TranscriptMainForm -Name transcriptlabel -Value $transcriptlabel -MemberType NoteProperty
+			Add-Member -InputObject $TranscriptMainForm -Name transcriptbuttonY -Value $transcriptbuttonY -MemberType NoteProperty
+			Add-Member -InputObject $TranscriptMainForm -Name transcriptbuttonN -Value $transcriptbuttonN -MemberType NoteProperty
+			Add-Member -InputObject $TranscriptMainForm -Name button1 -Value $button1 -MemberType NoteProperty
+			$TranscriptMainForm.Topmost = $True
+			$TranscriptMainForm.StartPosition = "CenterScreen"
+			$TranscriptMainForm.MaximizeBox = $false
+			$TranscriptMainForm.FormBorderStyle = 'Fixed3D'
+			$TranscriptMainForm.ShowIcon = $false
+			$Transcriptresult = $TranscriptMainForm.ShowDialog()
+			#endregion .NET
+
+			Write-Host "`n `t[INFO] Upload AzureStack transcripts to an external share" -ForegroundColor Green
+			switch ($Transcriptresult)
+			{
+				"Yes" {Write-Host "`tSelected Yes"; $MoveTranscript = 1}
+				"No"  {Write-Host "`tSelected No"}
+			}
+
+			if ($MoveTranscript -eq 1)
+			{
+				function Read-InputBoxDialog([string]$Message, [string]$WindowTitle, [string]$DefaultText)
+				{
+					Add-Type -AssemblyName Microsoft.VisualBasic
+					return [Microsoft.VisualBasic.Interaction]::InputBox($Message, $WindowTitle, $DefaultText)
+				}
+					[String]$TranscriptPath = Read-InputBoxDialog -Message "Please enter path to Transcript Share. `n`nExample: \\SomeIPAddress\folder" -WindowTitle "Transcript Share" -DefaultText "\\1.2.3.4\folder"
+			}
+		}
+		if (($TranscriptPath) -and ($TranscriptPath -ne "\\1.2.3.4\folder"))
+		{
+			try
+			{
+				If(($TranscriptPath) -and (!($TranscriptShareCred))) {$TranscriptShareCred = Get-Credential -Message "TranscriptShareUser" -UserName $name}
+				$ERCSSHAREDRIVE = new-psdrive -PSProvider FileSystem -Name ERCSSHARE -Root $TranscriptPath -Credential $TranscriptShareCred
+				$Transcriptfilepath = (Get-ChildItem -OutVariable Transcriptname -Include Transcripts_* -Path $Env:SystemDrive\$sharename -Recurse).FullName
+				Copy-Item -Path $Transcriptfilepath -Destination "$($ERCSSHAREDRIVE.Name):" -Force
+				if((Test-Path -Path "$($ERCSSHAREDRIVE.Name):\$($Transcriptname.name)") -eq $true)
+				{
+					Write-Host "`n `t[INFO] $($Transcriptname.name) copied to $($TranscriptPath)" -ForegroundColor Green
+				}
+				else
+				{
+				Write-Host "`n `t[WARNING] Unable to reach $($TranscriptPath)\$($Transcriptname.name) files may not have been copied" -ForegroundColor Yellow
+				}
+			}
+			catch [System.Exception]
+			{
+				Write-Host "`n`t`t[Error] Exception caught: $_" -ForegroundColor Red
+			}
+			finally
+			{
+				Remove-PSDrive -Name ERCSSHARE -Force
+			}
+		}
 		if($Files)
 		{
 			try
@@ -1697,7 +2051,10 @@ if($IP)
 	finally
 	{
     Remove-SmbShare -Name $sharename -Force
+	Write-Host "`n`t[INFO] Removing script created firewall rules"
 	Remove-NetFirewallRule -Group "AzureStack_ERCS"
+	if($DNSModule -eq 1) {Write-Host "`n`t[INFO] Removing script installed Powershell DNS Module" -ForegroundColor Green; Uninstall-WindowsFeature -Name RSAT-DNS-Server -Remove -WarningAction SilentlyContinue | out-null}
+	if($ADModule -eq 1) {Write-Host "`n`t[INFO] Removing script installed Powershell AD Module" -ForegroundColor Green; Uninstall-WindowsFeature -Name RSAT-AD-PowerShell -Remove -WarningAction SilentlyContinue | out-null}
 	Write-Host "`n `tPress any key to continue ...`n"
 	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 	exit	
