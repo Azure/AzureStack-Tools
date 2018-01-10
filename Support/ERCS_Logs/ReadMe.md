@@ -43,7 +43,7 @@ Specifies credentials the script will use to connect to Azure Stack privileged e
 - (Get-Credential -Message "Azure Stack Credentials")
 - (Get-Credential)
 
-## ShareCred ##
+## LocalShareCred ##
 Specifies credentials the script will use to build a local share Format must be in one of the 2 formats:
 
 - (Get-Credential -Message "Local Share Credentials" -UserName $env:USERNAME)
@@ -79,4 +79,4 @@ Specifies credentials the script will use to build a local share Format must be 
 - (Get-Credential)
 
 ## Example Use ##
-	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -ShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No -TranscriptPath "\\1.2.3.4\folder" -TranscriptShareCred (Get-Credential -Message "Transcript Share Credentials")
+	.\ERCS_AzureStackLogs.ps1 -FromDate (get-date).AddHours(-4) -ToDate (get-date) -FilterByRole VirtualMachines,BareMetal -ErcsName AzS-ERCS01 -AzSCredentials (Get-Credential -Message "Azure Stack Credentials") -LocalShareCred (get-credential -Message "Local Share Credentials" -UserName $env:USERNAME) -InStamp No -StampTimeZone "Pacific Standard Time" -IncompleteDeployment No -TranscriptPath "\\1.2.3.4\folder" -TranscriptShareCred (Get-Credential -Message "Transcript Share Credentials")
