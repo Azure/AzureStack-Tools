@@ -178,7 +178,7 @@ function Set-AzsRegistration{
     $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -CloudAdminCredential $CloudAdminCredential -Verbose
     $stampInfo = Confirm-StampVersion -PSSession $session
 
-    $registrationName =  "AzureStack-$($stampInfo.CloudID)"
+    $global:registrationName =  "AzureStack-$($stampInfo.CloudID)"
 
     # Configure Azure Bridge
     $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
@@ -876,11 +876,11 @@ function New-RegistrationResource{
         $bytes = [System.Convert]::FromBase64String($RegistrationToken)
         $tokenObject = [System.Text.Encoding]::UTF8.GetString($bytes) | ConvertFrom-Json
         $registrationName = "AzureStack-$($tokenObject.CloudId)"
-        Log-Output "Registration resource name: $registrationName"
+	Log-Output "Registration resource name: $registrationName"
     }
-    Catch
-    {
-        $registrationName = "AzureStack-CloudIdError-$([Guid]::NewGuid())"
+Catch
+{
+	$registrationName = "AzureStack-CloudIdError-$([Guid]::NewGuid())"
         Log-Warning "Unable to extract cloud-Id from registration token. Setting registration name to: $registrationName"
     }
 
