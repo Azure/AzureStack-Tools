@@ -214,6 +214,46 @@ function Register-AzsGuestDirectoryTenant {
     Invoke-Main
 }
 
+# Exposed Functions
+
+<#
+    .Synopsis
+    Removes a Guest Directory Tenant from Azure Stack.
+    .DESCRIPTION
+    Running this cmdlet will removes the specified directory tenant from the Azure Stack.
+    .EXAMPLE
+    $guestDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com"
+    $ResourceGroupName = "system.local"
+
+    Unregister-AzsGuestDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantName -ResourceGroupName $ResourceGroupName
+#>
+
+function Unregister-AzsGuestDirectoryTenant {
+    [CmdletBinding()]
+    param
+    (
+        # The names of the guest Directory Tenants which are to be onboarded.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $GuestDirectoryTenantName,
+
+        # The name of the resource group in which the directory tenant registration resource should be created (resource group must already exist).
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceGroupName
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $VerbosePreference = 'Continue'
+
+    # Install-Module AzureRm -RequiredVersion '1.2.11'
+    Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
+
+    $directoryTenantId = (Get-AzureRmResource -ResourceName $GuestDirectoryTenantName -ResourceGroupName $ResourceGroupName -ResourceType Microsoft.Subscriptions.Admin/directoryTenants).ResourceId
+    Remove-AzureRmResource -ResourceId $directoryTenantId -Force -Verbose -ErrorAction Stop
+
+}
+
 <#
 .Synopsis
 Consents to the given Azure Stack instance within the callers's Azure Directory Tenant.
@@ -538,6 +578,7 @@ function Register-AzsWithMyDirectoryTenant {
 Export-ModuleMember -Function @(
     "Register-AzsGuestDirectoryTenant",
     "Register-AzsWithMyDirectoryTenant",
+    "Unregister-AzsGuestDirectoryTenant",
     "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
 )
