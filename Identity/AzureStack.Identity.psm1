@@ -153,6 +153,13 @@ function Register-AzsGuestDirectoryTenant {
                 Location          = $Location
                 Properties        = @{ tenantId = $directoryTenantId }
             }
+            
+            # Check if resource group exists, create it if it doesn't
+            $rg = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue
+            if ($rg -eq $null) {
+                New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue | Out-Null
+            }
+            
             $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
             Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
         }
@@ -171,7 +178,7 @@ function Register-AzsGuestDirectoryTenant {
             ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
             ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
             AdTenant                                 = $directoryTenantId
-            ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+            ResourceManagerEndpoint                  = $AdminResourceManagerEndpoint
             GalleryEndpoint                          = $endpoints.galleryEndpoint
             GraphEndpoint                            = $endpoints.graphEndpoint
             GraphAudience                            = $endpoints.graphEndpoint
@@ -400,7 +407,7 @@ function Register-AzsWithMyDirectoryTenant {
             ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
             ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
             AdTenant                                 = $directoryTenantId
-            ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+            ResourceManagerEndpoint                  = $TenantResourceManagerEndpoint
             GalleryEndpoint                          = $endpoints.galleryEndpoint
             GraphEndpoint                            = $endpoints.graphEndpoint
             GraphAudience                            = $endpoints.graphEndpoint
