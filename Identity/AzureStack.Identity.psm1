@@ -71,16 +71,16 @@ function New-AzsAdGraphServicePrincipal {
 # Exposed Functions
 
 <#
-    .Synopsis
-    Adds a Guest Directory Tenant to Azure Stack.
-    .DESCRIPTION
-    Running this cmdlet will add the specified directory tenant to the Azure Stack whitelist.    
-    .EXAMPLE
-    $adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
-    $azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
-    $guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
+.Synopsis
+Adds a Guest Directory Tenant to Azure Stack.
+.DESCRIPTION
+Running this cmdlet will add the specified directory tenant to the Azure Stack whitelist.    
+.EXAMPLE
+$adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
+$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
+$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
 
-    Register-AzsGuestDirectoryTenant -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
+Register-AzsGuestDirectoryTenant -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
 #>
 
 function Register-AzsGuestDirectoryTenant {
@@ -131,7 +131,7 @@ function Register-AzsGuestDirectoryTenant {
     $VerbosePreference = 'Continue'
 
     # Install-Module AzureRm -RequiredVersion '1.2.11'
-    Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
+    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
 
     function Invoke-Main
     {
@@ -251,9 +251,9 @@ function Register-AzsWithMyDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm -RequiredVersion '1.2.11'
-    Import-Module 'AzureRm.Profile' -Force -Verbose:$false 4> $null
-    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Force -Verbose:$false 4> $null
+    # Install-Module AzureRm
+    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
 
     function Invoke-Main
     {
@@ -535,9 +535,386 @@ function Register-AzsWithMyDirectoryTenant {
     }
 }
 
+<#
+.Synopsis
+Removes a Guest Directory Tenant from Azure Stack.
+.DESCRIPTION
+Running this cmdlet will remove the specified directory tenant from the Azure Stack whitelist.
+Ensure an Admin of the directory tenant has already run "Unregister-AzsWithMyDirectoryTenant" or they will be unable to
+complete that cleanup of their directory tenant (this cmdlet will remove the permissions they need to query Azure Stack to determine what to delete).
+.EXAMPLE
+$adminARMEndpoint = "https://adminmanagement.local.azurestack.external"
+$azureStackDirectoryTenant = "<homeDirectoryTenant>.onmicrosoft.com"
+$guestDirectoryTenantToBeOnboarded = "<guestDirectoryTenant>.onmicrosoft.com"
+
+Unregister-AzsGuestDirectoryTenant -AdminResourceManagerEndpoint $adminARMEndpoint -DirectoryTenantName $azureStackDirectoryTenant -GuestDirectoryTenantName $guestDirectoryTenantToBeOnboarded
+#>
+
+function Unregister-AzsGuestDirectoryTenant {
+    [CmdletBinding()]
+    param
+    (
+        # The endpoint of the Azure Stack Resource Manager service.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [ValidateScript({$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [uri] $AdminResourceManagerEndpoint,
+
+        # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantName,
+
+        # The name of the guest Directory Tenant which is to be decommissioned.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $GuestDirectoryTenantName,
+
+        # The identifier of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
+        [Parameter()]
+        [ValidateNotNull()]
+        [string] $SubscriptionId = $null,
+
+        # The display name of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
+        [Parameter()]
+        [ValidateNotNull()]
+        [string] $SubscriptionName = $null,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $ResourceGroupName = 'system',
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [Parameter()]
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $VerbosePreference = 'Continue'
+
+    $ResourceManagerEndpoint = $AdminResourceManagerEndpoint
+
+    # Install-Module AzureRm
+    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+
+    function Invoke-Main
+    {
+        Write-DecommissionImplicationsWarning
+
+        # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
+        $azureEnvironment = Initialize-AzureRmEnvironment 'AzureStackAdmin'
+        $azureAccount     = Initialize-AzureRmUserAccount $azureEnvironment
+
+        # Remove the new directory tenant to the Azure Stack deployment
+        $params = @{
+            ResourceId = "/subscriptions/$($azureAccount.Context.Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.Subscriptions.Admin/directoryTenants/$GuestDirectoryTenantName"
+            ApiVersion = '2015-11-01'
+        }
+        $output = Remove-AzureRmResource @params -Force -Verbose -ErrorAction Stop
+        Write-Verbose -Message "Directory Tenant decommissioned: $($params.ResourceId)" -Verbose
+    }
+
+    function Initialize-AzureRmEnvironment([string]$environmentName)
+    {
+        $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+        Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+
+        # resolve the directory tenant ID from the name
+        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($endpoints.authentication.loginEndpoint.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+
+        $azureEnvironmentParams = @{
+            Name                                     = $environmentName
+            ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+            ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+            AdTenant                                 = $directoryTenantId
+            ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+            GalleryEndpoint                          = $endpoints.galleryEndpoint
+            GraphEndpoint                            = $endpoints.graphEndpoint
+            GraphAudience                            = $endpoints.graphEndpoint
+        }
+
+        $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
+        $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
+
+        return $azureEnvironment
+    }
+
+    function Initialize-AzureRmUserAccount([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment)
+    {
+        $params = @{
+            EnvironmentName = $azureEnvironment.Name
+            TenantId        = $azureEnvironment.AdTenant
+        }
+
+        if ($AutomationCredential)
+        {
+            $params += @{ Credential = $AutomationCredential }
+        }
+
+        # Prompts the user for interactive login flow if automation credential is not specified
+        $azureAccount = Add-AzureRmAccount @params
+
+        if ($SubscriptionName)
+        {
+            Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
+        }
+        elseif ($SubscriptionId)
+        {
+            Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
+        }
+
+        return $azureAccount
+    }
+
+    function Write-DecommissionImplicationsWarning
+    {
+        $params = @{
+            Message       = ''
+            WarningAction = 'Inquire'
+        }
+        $params.Message += 'You are removing a directory tenant from your Azure Stack deployment.'
+        $params.Message += ' Users in this directory will be unable to access or manage any existing subscriptions (access to any existing resources may be impaired if they require identity integration).'
+        $params.Message += " Additionally, you should first ensure that an Administrator of the directory '$directoryTenantName' has completed their decommissioning process before removing this access"
+        $params.Message += ' (they will need to query your Azure Stack deployment to see which identities need to be removed from their directory).'
+
+        if ($AutomationCredential)
+        {
+            $params.WarningAction = 'Continue'
+        }
+        else
+        {
+            $params.Message += " Would you like to proceed?"
+        }
+
+        Write-Warning @params
+    }
+
+    Invoke-Main
+}
+
+<#
+.Synopsis
+Removes the installed Azure Stack identity applications and their permissions within the callers's Azure Directory Tenant.
+.DESCRIPTION
+Removes the installed Azure Stack identity applications and their permissions within the callers's Azure Directory Tenant.
+.EXAMPLE
+$tenantARMEndpoint = "https://management.local.azurestack.external"
+$myDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com"
+
+Unregister-AzsWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
+    -DirectoryTenantName $myDirectoryTenantName -Verbose -Debug
+#>
+
+function Unregister-AzsWithMyDirectoryTenant {
+    [CmdletBinding()]
+    param
+    (
+        # The endpoint of the Azure Stack Resource Manager service.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [uri] $TenantResourceManagerEndpoint,
+
+        # The name of the directory tenant being onboarded.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantName,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [Parameter()]
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $VerbosePreference = 'Continue'
+
+    $ResourceManagerEndpoint = $TenantResourceManagerEndpoint
+    
+    # Install-Module AzureRm
+    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
+    
+    function Invoke-Main
+    {
+        Write-DecommissionImplicationsWarning
+    
+        # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
+        Write-Host "Authenticating user..."
+        $azureStackEnvironment = Initialize-AzureRmEnvironment 'AzureStack'
+        $azureEnvironment      = Resolve-AzureEnvironment $azureStackEnvironment
+        $refreshToken          = Initialize-AzureRmUserAccount $azureEnvironment $azureStackEnvironment.AdTenant
+    
+        # Initialize the Graph PowerShell module to communicate with the correct graph service
+        $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
+        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
+    
+        # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be removed from the directory tenant
+        Write-Host "Acquiring an access token to communicate with Resource Manager... (if you already decommissioned this directory you may get an error here which you can ignore)"
+        $armAccessToken = (Get-GraphToken -Resource $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData -ErrorAction Stop).access_token
+    
+        Write-Host "Looking-up the registered identity applications which need to be uninstalled from your directory..."
+        $applicationRegistrationParams = @{
+            Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
+            Headers = @{ Authorization = "Bearer $armAccessToken" }
+            Uri     = "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
+        }
+        $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select -ExpandProperty value
+    
+        # Delete the service principals for the registered applications
+        foreach ($applicationRegistration in $applicationRegistrations)
+        {
+            if (($applicationServicePrincipal = Get-GraphApplicationServicePrincipal -ApplicationId $applicationRegistration.appId -ErrorAction Continue))
+            {
+                Write-Verbose "Uninstalling service principal: $(ConvertTo-Json $applicationServicePrincipal)" -Verbose
+                Remove-GraphObject -objectId $applicationServicePrincipal.objectId
+                Write-Host "Application '$($applicationServicePrincipal.appId)' ($($applicationServicePrincipal.appDisplayName)) was successfully uninstalled from your directory."
+            }
+            else
+            {
+                Write-Host "Application '$($applicationRegistration.appId)' is not installed or was already successfully uninstalled from your directory."
+            }
+        }
+    
+        Write-Host "All Azure Stack applications have been uninstalled! Your directory '$DirectoryTenantName' has been successfully decommissioned and can no-longer be used with Azure Stack."
+    }
+    
+    function Initialize-AzureRmEnvironment([string]$environmentName)
+    {
+        $endpoints = Invoke-RestMethod -Method Get -Uri "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+        Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+    
+        # resolve the directory tenant ID from the name
+        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($endpoints.authentication.loginEndpoint.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+    
+        $azureEnvironmentParams = @{
+            Name                                     = $environmentName
+            ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+            ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+            AdTenant                                 = $directoryTenantId
+            ResourceManagerEndpoint                  = $ResourceManagerEndpoint
+            GalleryEndpoint                          = $endpoints.galleryEndpoint
+            GraphEndpoint                            = $endpoints.graphEndpoint
+            GraphAudience                            = $endpoints.graphEndpoint
+        }
+    
+        $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
+        $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
+    
+        return $azureEnvironment
+    }
+    
+    function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment)
+    {
+        $azureEnvironment = Get-AzureRmEnvironment |
+            Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
+            Where Name -In @('AzureCloud','AzureChinaCloud','AzureUSGovernment','AzureGermanCloud')
+    
+        # Differentiate between AzureCloud and AzureUSGovernment
+        if ($azureEnvironment.Count -ge 2)
+        {
+            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/') { 'AzureUSGovernment' } else { 'AzureCloud' }
+            $azureEnvironment = $azureEnvironment | Where Name -EQ $name
+        }
+    
+        return $azureEnvironment
+    }
+    
+    function Initialize-AzureRmUserAccount([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment, [string]$directoryTenantId)
+    {
+        $params = @{
+            EnvironmentName = $azureEnvironment.Name
+            TenantId        = $directoryTenantId
+        }
+    
+        if ($AutomationCredential)
+        {
+            $params += @{ Credential = $AutomationCredential }
+        }
+    
+        # Prompts the user for interactive login flow if automation credential is not specified
+        $azureAccount = Add-AzureRmAccount @params
+    
+        # Retrieve the refresh token
+        $tokens = @()
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $refreshToken = $tokens |
+            Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
+            Where IsMultipleResourceRefreshToken -EQ $true |
+            Where DisplayableId -EQ $azureAccount.Context.Account.Id |
+            Sort ExpiresOn |
+            Select -Last 1 -ExpandProperty RefreshToken |
+            ConvertTo-SecureString -AsPlainText -Force
+    
+        return $refreshToken
+    }
+    
+    function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment)
+    {
+        $graphEnvironment = switch($azureEnvironment.ActiveDirectoryAuthority)
+        {
+            'https://login.microsoftonline.com/'    { 'AzureCloud'        }
+            'https://login.chinacloudapi.cn/'       { 'AzureChinaCloud'   }
+            'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/'     { 'AzureGermanCloud'  }
+    
+            Default { throw "Unsupported graph resource identifier: $_" }
+        }
+    
+        return $graphEnvironment
+    }
+    
+    function Write-DecommissionImplicationsWarning
+    {
+        $params = @{
+            Message       = ''
+            WarningAction = 'Inquire'
+        }
+        $params.Message += 'You are removing access from an Azure Stack deployment to your directory tenant.'
+        $params.Message += ' Users in your directory will be unable to access or manage any existing subscriptions in the Azure Stack deployment (access to any existing resources may be impaired if they require identity integration).'
+    
+        if ($AutomationCredential)
+        {
+            $params.WarningAction = 'Continue'
+        }
+        else
+        {
+            $params.Message += " Would you like to proceed?"
+        }
+    
+        Write-Warning @params
+    }
+    
+    $logFile = Join-Path -Path $PSScriptRoot -ChildPath "$DirectoryTenantName.$(Get-Date -Format MM-dd_HH-mm-ss_ms).log"
+    Write-Verbose "Logging additional information to log file '$logFile'" -Verbose
+    
+    $logStartMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Beginning invocation of '$($MyInvocation.InvocationName)' with parameters: $(ConvertTo-Json $PSBoundParameters -Depth 4)"
+    $logStartMessage >> $logFile
+    
+    try
+    {
+        # Redirect verbose output to a log file
+        Invoke-Main 4>> $logFile
+    
+        $logEndMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Script completed successfully."
+        $logEndMessage >> $logFile
+    }
+    catch
+    {
+        $logErrorMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Script terminated with error: $_`r`n$($_.Exception)"
+        $logErrorMessage >> $logFile
+        Write-Warning "An error has occurred; more information may be found in the log file '$logFile'" -WarningAction Continue
+        throw
+    }
+}
+
 Export-ModuleMember -Function @(
     "Register-AzsGuestDirectoryTenant",
     "Register-AzsWithMyDirectoryTenant",
+    "Unregister-AzsGuestDirectoryTenant",
+    "Unregister-AzsWithMyDirectoryTenant",
     "Get-AzsDirectoryTenantidentifier",
     "New-AzsADGraphServicePrincipal"
 )
