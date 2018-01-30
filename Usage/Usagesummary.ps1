@@ -97,8 +97,7 @@ function Export-AzsUsage {
     $result  | ForEach-Object {
         $record = New-Object -TypeName System.Object
         $resourceInfo = ($_.Properties.InstanceData | ConvertFrom-Json).'Microsoft.Resources'
-        $resourceText = $resourceInfo.resourceUri.Replace('\', '/')
-        $subscription = $resourceText.Split('/')[2]
+        $resourceText = $resourceInfo.resourceUri.Replace('\', '/')        
         $resourceType = $resourceText.Split('/')[7]
         $resourceName = $resourceText.Split('/')[8]
         #$record | Add-Member -Name Name -MemberType NoteProperty -Value $_.Name
@@ -113,7 +112,7 @@ function Export-AzsUsage {
         $record | Add-Member -Name additionalInfo -MemberType NoteProperty -Value $resourceInfo.additionalInfo
         $record | Add-Member -Name location -MemberType NoteProperty -Value $resourceInfo.location
         $record | Add-Member -Name tags -MemberType NoteProperty -Value $resourceInfo.tags
-        $record | Add-Member -Name subscription -MemberType NoteProperty -Value $subscription
+        $record | Add-Member -Name subscription -MemberType NoteProperty -Value $_.Properties.subscriptionId
         $record | Add-Member -Name resourceType -MemberType NoteProperty -Value $resourceType
         $record | Add-Member -Name resourceName -MemberType NoteProperty -Value $resourceName
         $record | Add-Member -Name resourceUri -MemberType NoteProperty -Value $resourceText
@@ -131,4 +130,4 @@ function Export-AzsUsage {
 
 #Main
 
-Export-AzsUsage -StartTime 6/10/2017 -EndTime 6/11/2017 -Granularity Hourly -Force
+Export-AzsUsage -StartTime 01/08/2018 -EndTime 01/09/2018 -Granularity Hourly -Force
