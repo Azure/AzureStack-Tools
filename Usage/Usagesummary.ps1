@@ -94,8 +94,7 @@ function Export-AzsUsage {
     $usageSummary = @()
     $count = $result.Count
     $Total += $count
-    $result  | ForEach-Object 
-    {
+    $result  | ForEach-Object {
         $record = New-Object -TypeName System.Object
         $resourceInfo = ($_.Properties.InstanceData | ConvertFrom-Json).'Microsoft.Resources'
         $resourceText = $resourceInfo.resourceUri.Replace('\', '/')
