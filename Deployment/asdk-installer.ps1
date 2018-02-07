@@ -1651,7 +1651,7 @@ Function F_Summary {
                 $InstallScript += " -InfraAzureDirectoryTenantName "
                 $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
                 If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure China Cloud') {
-                    ' -AzureEnvironment AzureChinaCloud' |  Add-Content $filepath -NoNewline
+                    $InstallScript += " -AzureEnvironment AzureChinaCloud"
                 }
         }
         else {
