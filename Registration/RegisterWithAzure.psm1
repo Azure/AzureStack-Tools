@@ -1527,31 +1527,26 @@ function Confirm-StampVersion{
         {
             switch ($versionNumber.Build)
             {
-                #1709
                 "170928"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
                     Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
-                #1710
                 "171020"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
                     Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
-                #1711
                 "171201"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
                     Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
-                #1712
                 "180106"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
                     Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
-                #1802
                 "1802"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
