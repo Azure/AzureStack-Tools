@@ -151,6 +151,13 @@ function Register-AzsGuestDirectoryTenant {
                 Location          = $Location
                 Properties        = @{ tenantId = $directoryTenantId }
             }
+            
+            # Check if resource group exists, create it if it doesn't
+            $rg = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue
+            if ($rg -eq $null) {
+                New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue | Out-Null
+            }
+            
             $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
             Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
         }
