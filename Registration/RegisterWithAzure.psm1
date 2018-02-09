@@ -1530,27 +1530,27 @@ function Confirm-StampVersion{
                 "170928"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                    Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                    Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1709/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
                 "171020"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                    Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                    Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1710/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
                 "171201"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                    Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                    Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1711/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
                 "180106"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                    Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                    Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1712/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
                 "1802"
                 {
                     Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                    Log-Throw -Message "Please download the correct version of the registration functions and retry: `r`n <www.registration.url>" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                    Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1802/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
                 }
             }
         }
