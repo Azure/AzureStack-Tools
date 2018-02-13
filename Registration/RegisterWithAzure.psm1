@@ -1553,7 +1553,7 @@ function Confirm-StampVersion{
             "171201"
             {
                 Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1711/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1710/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
             }
             "180106"
             {
