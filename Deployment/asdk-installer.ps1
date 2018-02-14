@@ -850,6 +850,9 @@ $AuthEndpoints = @{
     'Azure Cloud'= @{
         'Endpoint'='https://login.windows.net'
         }
+    'Azure China Cloud'= @{
+        'Endpoint'='https://login.chinacloudapi.cn'
+        }   
     'ADFS'= @{
         'Endpoint'='https://adfs.local.azurestack.external'
         }
@@ -1643,12 +1646,17 @@ Function F_Summary {
         $InstallScript += "`r`n"
         $InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
 
+        # Azure Cloud, or Azure China Cloud, or ADFS
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
                 $InstallScript += " -InfraAzureDirectoryTenantName "
-                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
+                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text                
         }
-
-        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
+        ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure China Cloud') {
+                $InstallScript += " -InfraAzureDirectoryTenantName "
+                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
+                $InstallScript += " -InfraAzureEnvironment AzureChinaCloud"
+        }
+        ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
                 $InstallScript += " -UseADFS"
         }
 
@@ -1679,7 +1687,8 @@ Function F_Summary {
 
         $syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
 
-        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
+        # Azure Cloud or Azure China Cloud
+        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS') {
             $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
             $syncHash.Control_Summary_Tbl_Content1.Width = "510"
             $SyncHash.Control_Summary_Tbl_Content1.Text = $Text_Install.Summary_Warning
@@ -1722,11 +1731,15 @@ Function F_Install {
     ".\InstallAzureStackPOC.ps1" |  Add-Content $filepath -NoNewline
     ' -AdminPassword $adminpass' |  Add-Content $filepath -NoNewline
 
+    # Azure Cloud, or Azure China Cloud, or ADFS
     If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
     }
-
-    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
+    ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure China Cloud') {
+        ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -InfraAzureEnvironment AzureChinaCloud' |  Add-Content $filepath -NoNewline
+    }
+    ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
         ' -UseADFS' |  Add-Content $filepath -NoNewline
     }
 
