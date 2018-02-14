@@ -1562,6 +1562,11 @@ function Confirm-StampVersion{
             }
         }
     }
+    elseif (($versionNumber.Build -gt "180106") -and $versionNumber.Build -lt $registrationVersion)
+    {
+        Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
+        Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1802/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
 
     Log-Output -Message "Running registration actions on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
     return $stampInfo
