@@ -9,7 +9,7 @@ This module contains utility functions for working with registration resources
 function Get-AzureRegistrationResource{
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [String] $AzureStackStampCloudId,
 
     [Parameter(Mandatory = $false)]
@@ -24,32 +24,154 @@ $ErrorActionPreference = "Stop"
 
 Write-Verbose "Searching for registration resource using the provided parameters"
 $registrationResources = Find-AzureRmResource -ResourceNameContains $ResourceName -ResourceType 'Microsoft.AzureStack/registrations' -ResourceGroupNameEquals $ResourceGroupName
+$registrations = @()
 foreach ($resource in $registrationResources)
 {
     $resource = Get-AzureRmResource -ResourceId $resource.ResourceId
-    if ($resource.Properties.CloudId -eq $AzureStackStampCloudId)
+    if($AzureStackStampCloudId)
     {
-        Write-Verbose "Registration resource found:`r`n$(ConvertTo-Json $resource)"
-        return $resource
+        if ($resource.Properties.CloudId -eq $AzureStackStampCloudId)
+        {
+            Write-Verbose "Registration resource found:`r`n$(ConvertTo-Json $resource)"
+            return $resource
+        }
+    }
+    else
+    {
+        $registrations += $resource
     }
 }
 
-Write-Verbose "Resource could not be located with the provided parameters."
+if ($registrations.Count -gt 0)
+{
+    Write-Verbose "Registrations: $registrations"
+}
+else
+{
+    Write-Verbose "Registration resource(s) could not be located with the provided parameters."
+}
+
 
 }
 
 function Get-AzureStackActivationRecord{
+
+$currentContext = Get-AzureRmContext
+$contextDetails = @{
+    Account          = $currentContext.Account
+    Environment      = $currentContext.Environment
+    Subscription     = $currentContext.Subscription
+    Tenant           = $currentContext.Tenant
+}
+
+if (-not($currentContext.Subscription))
+{
+    Write-Verbose "Current Azure context:`r`n$(ConvertTo-Json $azureContextDetails)"
+    Throw "Current Azure context is not currently set. Please call Login-AzureRmAccount to set the Powershell context to Azure Stack service administrator."
+}
+
+$subscriptions = Get-AzureRmSubscription
+if ($subscriptions.Count -eq 1)
+{
+    if ($subscriptions.Name -eq 'Default Provider Subscription')
+    {
+        try
+        {
+            $activation = Get-AzureRmResource -ResourceId "/subscriptions/$($subscriptions.Id)/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
+            return $activation
+        }
+        catch
+        {
+            Write-Warning "Activation record not found. Please register your Azure Stack with Azure: `r`nhttps://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register`r`n$_"
+        }
+    }
+    else
+    {
+        Write-Warning "Unable to retrieve activation record using the current Azure Powershell context."
+    }
+}
+else
+{
+    foreach ($sub in $subscriptions)
+    {
+        try
+        {
+            Get-AzureRmResource -ResourceId "/subscriptions/$($sub.Id)/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
+        }
+        catch
+        {
+            Write-Warning "Activation record not found. $_"
+        }
+    }
+}
+
+
+}
+
+function Set-AzureStackPowershellContext{
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [String] $AzureStackStampCloudId,
+    [String] $ServiceAdminUsername,
 
-    [Parameter(Mandatory = $false)]
-    [String] $ResourceGroupName = "AzureStack",
+    [Parameter(Mandatory = $true)]
+    [String] $ServiceAdminPassword,
 
-    [Parameter(Mandatory = $false)]
-    [String] $ResourceName = "AzureStack"
+    [Parameter(Mandatory = $true)]
+    [String] $ExternalDomain,
+
+    [Parameter(Mandatory = $true)]
+    [String] $AadTenantId,
+
+    [Parameter(Mandatory = $true)]
+    [String] $ArmEndpoint
 )
+
+    
+
+    $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $ArmEndpoint
+
+    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
+    $aadResource = $endpoints.authentication.audiences[0]
+    $galleryEndpoint =$endpoints.galleryEndpoint
+    $graphEndpoint = $endpoints.graphEndpoint
+
+    $azureEnvironmentParams = @{
+        Name                                     = "AzureStack"
+        ActiveDirectoryEndpoint                  = $($aadAuthorityEndpoint.TrimEnd("/") + "/")
+        ActiveDirectoryServiceEndpointResourceId = $aadResource
+        ResourceManagerEndpoint                  = $ArmEndpoint
+        GalleryEndpoint                          = $galleryEndpoint
+        GraphEndpoint                            = $graphEndpoint
+        GraphAudience                            = $graphEndpoint
+        AzureKeyVaultDnsSuffix                   = "adminvault.$ExternalDomain".ToLowerInvariant()
+        EnableAdfsAuthentication                 = $aadAuthorityEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
+    }
+
+    $environment = Add-AzureRmEnvironment @azureEnvironmentParams
+    $environment = Get-AzureRmEnvironment -Name "AzureStack"
+
+    $Credential = New-Object System.Management.Automation.PSCredential ($ServiceAdminUsername,(ConvertTo-SecureString -String $ServiceAdminPassword -AsPlainText -Force))
+
+    Add-AzureRmAccount -Environment $environment -Credential $Credential -TenantId $AadTenantId
+
+    $adminSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
+    Set-AzureRmContext -SubscriptionId $adminSubscription.SubscriptionId
+}
+
+function Get-ResourceManagerMetaDataEndpoints{
+param
+(
+    [Parameter(Mandatory=$true)]
+    [String] $ArmEndpoint
+)
+
+$endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+
+Write-Output $endpoints
 }
 
 Export-ModuleMember Get-AzureRegistrationResource
 Export-ModuleMember Get-AzureStackActivationRecord
+Export-ModuleMember Set-AzureStackPowershellContext
