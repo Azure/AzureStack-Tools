@@ -142,9 +142,6 @@ function Set-AzsRegistration{
         [PSObject] $AzureContext = (Get-AzureRmContext),
 
         [Parameter(Mandatory = $false)]
-        [String] $AzureEnvironmentName = 'AzureCloud',
-
-        [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
@@ -194,7 +191,19 @@ function Set-AzsRegistration{
     $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
     
     # Register environment with Azure
-    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken
+    if (($AzureContext.Environment.Name -eq 'AzureChinaCloud') -and ($ResourceGroupLocation -ne 'westcentralus'))
+    {
+        $CustomResourceGroupLocation = $ResourceGroupLocation
+    }
+    elseif ($AzureContext.Environment.Name -eq 'AzureChinaCloud')
+    {
+        $CustomResourceGroupLocation = 'ChinaEast'
+    }
+    else
+    {
+        $CustomResourceGroupLocation = $ResourceGroupLocation
+    }
+    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $CustomResourceGroupLocation -RegistrationToken $RegistrationToken
 
     # Assign custom RBAC role
     Log-Output "Assigning custom RBAC role to resource $RegistrationName"
@@ -543,7 +552,19 @@ Function Register-AzsEnvironment{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken
+    if (($AzureContext.Environment.Name -eq 'AzureChinaCloud') -and ($ResourceGroupLocation -ne 'westcentralus'))
+    {
+        $CustomResourceGroupLocation = $ResourceGroupLocation
+    }
+    elseif ($AzureContext.Environment.Name -eq 'AzureChinaCloud')
+    {
+        $CustomResourceGroupLocation = 'ChinaEast'
+    }
+    else
+    {
+        $CustomResourceGroupLocation = $ResourceGroupLocation
+    }
+    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $CustomResourceGroupLocation -RegistrationToken $RegistrationToken
 
     Log-Output "Your Azure Stack environment is now registered with Azure."
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
