@@ -191,18 +191,9 @@ function Set-AzsRegistration{
     $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
     
     # Register environment with Azure
-    if (($AzureContext.Environment.Name -eq 'AzureChinaCloud') -and ($ResourceGroupLocation -ne 'westcentralus'))
-    {
-        $CustomResourceGroupLocation = $ResourceGroupLocation
-    }
-    elseif ($AzureContext.Environment.Name -eq 'AzureChinaCloud')
-    {
-        $CustomResourceGroupLocation = 'ChinaEast'
-    }
-    else
-    {
-        $CustomResourceGroupLocation = $ResourceGroupLocation
-    }
+
+    # Set resource group location based on environment
+    $CustomResourceGroupLocation = Set-ResourceGroupLocation -AzureEnvironment $AzureContext.Environment.Name -ResourceGroupLocation $ResourceGroupLocation    
     New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $CustomResourceGroupLocation -RegistrationToken $RegistrationToken
 
     # Assign custom RBAC role
@@ -514,18 +505,7 @@ Function Register-AzsEnvironment{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-    if (($AzureContext.Environment.Name -eq 'AzureChinaCloud') -and ($ResourceGroupLocation -ne 'westcentralus'))
-    {
-        $CustomResourceGroupLocation = $ResourceGroupLocation
-    }
-    elseif ($AzureContext.Environment.Name -eq 'AzureChinaCloud')
-    {
-        $CustomResourceGroupLocation = 'ChinaEast'
-    }
-    else
-    {
-        $CustomResourceGroupLocation = $ResourceGroupLocation
-    }
+    $CustomResourceGroupLocation = Set-ResourceGroupLocation -AzureEnvironment $AzureContext.Environment.name -ResourceGroupLocation $ResourceGroupLocation
     New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $CustomResourceGroupLocation -RegistrationToken $RegistrationToken
 
     Log-Output "Your Azure Stack environment is now registered with Azure."
@@ -1591,6 +1571,71 @@ function Confirm-StampVersion{
 
     Log-Output -Message "Running registration actions on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
     return $stampInfo
+}
+
+<#
+
+.SYNOPSIS
+
+Sets the resource group location based on the current AzureContext Environment name
+
+#>
+function Set-ResourceGroupLocation{
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $AzureEnvironment,
+
+        [Parameter(Mandatory=$false)]
+        [string] $ResourceGroupLocation
+    )
+
+    if ($AzureEnvironment -eq 'AzureCloud')
+    {
+        if ($ResourceGroupLocation -ne 'westcentralus')
+        {
+            $CustomResourceGroupLocation = $ResourceGroupLocation
+        }
+        else
+        {
+            $CustomResourceGroupLocation = 'westcentralus'
+        }
+    }
+    elseif ($AzureEnvironment -eq 'AzureChinaCloud')
+    {
+        if ($ResourceGroupLocation -ne 'westcentralus')
+        {
+            $CustomResourceGroupLocation = $ResourceGroupLocation
+        }
+        else
+        {
+            $CustomResourceGroupLocation = 'ChinaEast'
+        }
+    }
+    elseif ($AzureEnvironment -eq 'AzureUSGovernment')
+    {
+        if ($ResourceGroupLocation -ne 'westcentralus')
+        {
+            $CustomResourceGroupLocation = $ResourceGroupLocation
+        }
+        else
+        {
+            $CustomResourceGroupLocation = 'usdodeast'
+        }
+    }
+    else
+    {
+        if ($ResourceGroupLocation -ne 'westcentralus')
+        {
+            $CustomResourceGroupLocation = $ResourceGroupLocation
+        }
+        else
+        {
+            $CustomResourceGroupLocation = 'usdodeast'
+        }
+    }
+
+    return $CustomResourceGroupLocation
 }
 
 <#
