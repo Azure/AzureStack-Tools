@@ -38,7 +38,13 @@ function Sync-AzSOfflineMarketplaceItem{
     $resources=Get-AzureRmResource
     $resource=$resources.resourcename
     $registrations=$resource|where-object {$_ -like "AzureStack*"}
-    $registration = $registrations[0]
+    if ($registrations.count -gt 1) {
+        $Registration = $registrations[0]
+        }
+        else {
+        $Registration = $registrations
+        }
+        
 
     # Retrieve the access token
     $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
