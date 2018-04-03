@@ -1340,7 +1340,7 @@ function Get-AzureAccountInfo{
         Tenant           = $AzureContext.Tenant
     }
 
-    if (($AzureContext.Environment.name -ne 'AzureChinaCloud') -or ($AzureContext.Environment.name -ne 'AzureUsGovernment'))
+    if (($AzureContext.Environment.name -ne 'AzureChinaCloud') -and ($AzureContext.Environment.name -ne 'AzureUsGovernment'))
     {
         if ($AzureContext.Environment.name -ne 'AzureCloud')
         {
