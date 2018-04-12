@@ -1,6 +1,7 @@
+
 # Azure Stack Development Kit Version
 
-These tools are meant for use with **Azure Stack Development Kit**. Azure Stack Technical Preview 3 Refresh users can still use the tools in the [TP3-Refresh](https://github.com/Azure/AzureStack-Tools/tree/TP3-Refresh).
+These tools are meant for use with **Azure Stack Development Kit**.
 
 ## Tools for using Azure and Azure Stack
 
@@ -24,6 +25,7 @@ cd AzureStack-Tools
 Otherwise download the tools as follows:
 
 ```powershell
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
 expand-archive master.zip -DestinationPath . -Force
 cd AzureStack-Tools-master
