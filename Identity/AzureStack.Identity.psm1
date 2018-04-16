@@ -268,7 +268,7 @@ function Register-AzsWithMyDirectoryTenant {
         $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
         # Check for PowerShell Desktop vs Core to Initialize Graph module with or without refresh token
         # Refresh token is not being passed via $azureAccount = Add-AzureRmAccount @params so for netcore we need to use -UserCredential instead
-        If ($PSVersionTable.PSEdition -eq "Core") {Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName  -UserCredential (get-credential)}
+        If ($PSVersionTable.PSEdition -eq "Core") {Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName  -UserCredential (get-credential -Title GlobalAdmin -Message "Enter Your Azure Active Directory Global Admin Credentials")}
         Else {Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken}
 
         # Initialize the service principal for the Azure Stack Resource Manager application
@@ -720,7 +720,7 @@ function Unregister-AzsWithMyDirectoryTenant {
         $graphEnvironment = Resolve-GraphEnvironment $azureEnvironment
         # Check for PowerShell Desktop vs Core to Initialize Graph module with or without refresh token
         # Refresh token is not being passed via $azureAccount = Add-AzureRmAccount @params so for netcore we need to use -UserCredential instead
-        If ($PSVersionTable.PSEdition -eq "Core") {Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName  -UserCredential (get-credential)}
+        If ($PSVersionTable.PSEdition -eq "Core") {Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName  -UserCredential (get-credential -Title GlobalAdmin -Message "Enter Your Azure Active Directory Global Admin Credentials")}
         Else {Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken}
     
         # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be removed from the directory tenant
