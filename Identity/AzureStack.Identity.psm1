@@ -131,7 +131,8 @@ function Register-AzsGuestDirectoryTenant {
     $VerbosePreference = 'Continue'
 
     # Install-Module AzureRm -RequiredVersion '1.2.11'
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    If ($PSVersionTable.PSEdition -eq "Core") {Import-Module AzureRM.Profile.Netcore -Verbose:$false 4> $null}
+    Else {Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null}
 
     function Invoke-Main {
         # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
@@ -252,7 +253,8 @@ function Register-AzsWithMyDirectoryTenant {
     $VerbosePreference = 'Continue'
 
     # Install-Module AzureRm
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    If ($PSVersionTable.PSEdition -eq "Core") {Import-Module AzureRM.Profile.Netcore -Verbose:$false 4> $null}
+    Else {Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null}
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
 
     function Invoke-Main {
@@ -569,7 +571,8 @@ function Unregister-AzsGuestDirectoryTenant {
     $ResourceManagerEndpoint = $AdminResourceManagerEndpoint
 
     # Install-Module AzureRm
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    If ($PSVersionTable.PSEdition -eq "Core") {Import-Module AzureRM.Profile.Netcore -Verbose:$false 4> $null}
+    Else {Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null}
 
     function Invoke-Main {
         Write-DecommissionImplicationsWarning
@@ -697,7 +700,8 @@ function Unregister-AzsWithMyDirectoryTenant {
     $ResourceManagerEndpoint = $TenantResourceManagerEndpoint
     
     # Install-Module AzureRm
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    If ($PSVersionTable.PSEdition -eq "Core") {Import-Module AzureRM.Profile.Netcore -Verbose:$false 4> $null}
+    Else {Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null}
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
     
     function Invoke-Main {
