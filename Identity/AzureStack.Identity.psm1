@@ -334,7 +334,7 @@ function Register-AzsWithMyDirectoryTenant {
         $permissionContent > $permissionFile
 
         # Display application status to user
-        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = {'{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName}} | Sort clientApplicationDisplayName | Group Client
+        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = {'{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName}} | Sort-Object clientApplicationDisplayName | Group Client
         $readyApplications = @()
         $pendingApplications = @()
         foreach ($client in $permissionsByClient) {
@@ -433,7 +433,7 @@ function Register-AzsWithMyDirectoryTenant {
             Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
             Where IsMultipleResourceRefreshToken -EQ $true |
             Where DisplayableId -EQ $azureAccount.Context.Account.Id |
-            Sort ExpiresOn |
+            Sort-Object ExpiresOn |
             Select -Last 1 -ExpandProperty RefreshToken |
             ConvertTo-SecureString -AsPlainText -Force
 
@@ -799,7 +799,7 @@ function Unregister-AzsWithMyDirectoryTenant {
             Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
             Where IsMultipleResourceRefreshToken -EQ $true |
             Where DisplayableId -EQ $azureAccount.Context.Account.Id |
-            Sort ExpiresOn |
+            Sort-Object ExpiresOn |
             Select -Last 1 -ExpandProperty RefreshToken |
             ConvertTo-SecureString -AsPlainText -Force
     
