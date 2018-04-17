@@ -870,15 +870,22 @@ function Unregister-AzsWithMyDirectoryTenant {
 
 <#
 .Synopsis
-Consents to the given Azure Stack instance within the callers's Azure Directory Tenant.
+Obtains AccessToken so it can be passed to Connect/Login/Add-AzureRmAccount 
 .DESCRIPTION
-Consents to the given Azure Stack instance within the callers's Azure Directory Tenant. This is needed to propagate Azure Stack applications into the user's directory tenant. 
+Obtains AccessToken so it can be passed to Connect/Login/Add-AzureRmAccount. This is needed to allow non-interactive login to AzureStack. 
 .EXAMPLE
 $tenantARMEndpoint = "https://management.local.azurestack.external"
 $myDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com"
 
-Register-AzsWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
+Get-AzureStackAccessToken -TenantResourceManagerEndpoint $tenantARMEndpoint `
     -DirectoryTenantName $myDirectoryTenantName -Verbose -Debug
+.EXAMPLE
+$tenantARMEndpoint = "https://management.local.azurestack.external"
+$myDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com"
+
+Get-AzureStackAccessToken -TenantResourceManagerEndpoint $tenantARMEndpoint `
+    -DirectoryTenantName $myDirectoryTenantName 
+    -AutomationCrdential (Get-Credential) -Verbose -Debug
 #>
 
 function Get-AzureStackAccessToken {
