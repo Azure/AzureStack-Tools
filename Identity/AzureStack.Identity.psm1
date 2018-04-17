@@ -903,7 +903,7 @@ function Get-AzureStackAccessToken {
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantName,
 
-        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        # Mandatory: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
         [pscredential] $AutomationCredential = $null
