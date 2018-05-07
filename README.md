@@ -3,6 +3,16 @@
 
 These tools are meant for use with **Azure Stack Development Kit**.
 
+## Important Notification 5/8/2018
+
+The following Tools will be deprecated and removed from the repository by 5/31/2018.  The new Azure Stack Admin PowerShell Module 1.2.12 will replace those.
+- ComputeAdmin
+- Identity\New-AzsAdGraphServicePrincipal
+- Infrastructure
+- ServiceAdmin
+- CanaryValidator
+
+
 ## Tools for using Azure and Azure Stack
 
 To use these tools, obtain Azure Stack compatible Azure PowerShell module. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows. Note that both of these could still be used to operate against Azure as well as Azure Stack, but may lack some of the latest Azure features.
@@ -55,47 +65,6 @@ Connect to an Azure Stack instance from your personal computer/laptop.
 ## [Setting up Identity for Azure Stack](Identity)
 
 Create and manage identity related objects and configurations for Azure Stack
-
-- Create Service Principals in a disconnected topology
-
-## [Azure Stack Service Administration](ServiceAdmin)
-
-Manage plans and subscriptions in Azure Stack.
-
-- Add default (unlimited) plans and quotas so that tenants can create new subscriptions
-
-## [Azure Stack Compute Administration](ComputeAdmin)
-
-Manage compute (VM) service in Azure Stack.
-
-- Add VM Image to the Azure Stack Marketplace
-
-## [Azure Stack Infrastructure Administration](Infrastructure)
-
-Manage Azure Stack Infrastructure
-
-- Get Infrastructure Roles
-- Get Infrastructure Role Instances
-- Start Infrastructure Role Instance
-- Stop Infrastructure Role Instance
-- Restart Infrastructure Role Instance
-- Get Storage Capacity
-- Get Storage Shares
-- Get Scale Unit
-- Get Scale Unit Node
-- Get Gateway Pool
-- Get Gateway
-- Get SLB MUX
-- Get IP Pool
-- Add IP Pool
-- Get MAC Address Pool
-- Get Logical network
-- Get Alert
-- Close Alert
-- Get Update Region Summary
-- Get Update
-- Apply Update
-- Get Update run
 
 ## [AzureRM Template Validator](TemplateValidator)
 
