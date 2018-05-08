@@ -19,6 +19,7 @@ To use these tools, obtain Azure Stack compatible Azure PowerShell module. Unles
 
 For PowerShell, install the following:
 
+
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper'
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force
@@ -65,6 +66,42 @@ Connect to an Azure Stack instance from your personal computer/laptop.
 ## [Setting up Identity for Azure Stack](Identity)
 
 Create and manage identity related objects and configurations for Azure Stack
+
+## [Azure Stack Service Administration](ServiceAdmin) 
+
+- Manage plans and subscriptions in Azure Stack. 
+- Add default (unlimited) plans and quotas so that tenants can create new subscriptions 
+
+## [Azure Stack Compute Administration](ComputeAdmin) 
+
+- Manage compute (VM) service in Azure Stack. 
+- Add VM Image to the Azure Stack Marketplace 
+
+## [Azure Stack Infrastructure Administration](Infrastructure) 
+
+- Manage Azure Stack Infrastructure 
+- Get Infrastructure Roles 
+- Get Infrastructure Role Instances 
+- Start Infrastructure Role Instance 
+- Stop Infrastructure Role Instance 
+- Restart Infrastructure Role Instance 
+- Get Storage Capacity 
+- Get Storage Shares 
+- Get Scale Unit 
+- Get Scale Unit Node 
+- Get Gateway Pool 
+- Get Gateway 
+- Get SLB MUX 
+- Get IP Pool 
+- Add IP Pool 
+- Get MAC Address Pool 
+- Get Logical network 
+- Get Alert 
+- Close Alert 
+- Get Update Region Summary 
+- Get Update 
+- Apply Update 
+- Get Update run 
 
 ## [AzureRM Template Validator](TemplateValidator)
 
