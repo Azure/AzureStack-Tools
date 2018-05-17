@@ -1206,7 +1206,7 @@ function New-RBACAssignment{
                 Log-Output "Setting $RoleName role on '$($RegistrationResource.ResourceId)'"
     
                 # Determine if RBAC role has been assigned
-                $roleAssignmentScope = "/subscriptions/$SubscriptionId/resourceGroups/$($RegistrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.ResourceName)"
+                $roleAssignmentScope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.Name)"
                 $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
     
                 foreach ($role in $roleAssignments)
