@@ -5,7 +5,7 @@ These tools are meant for use with **Azure Stack Development Kit**.
 
 ## Important Notification 5/8/2018
 
-The following Tools will be deprecated and removed from the repository by 5/31/2018.  The new Azure Stack Admin PowerShell Module 1.2.12 will replace those.
+The following Tools will be deprecated and removed from the repository by 5/31/2018.  The new Azure Stack Admin PowerShell Module 1.3.0 will replace those.
 - ComputeAdmin
 - Identity\New-AzsAdGraphServicePrincipal
 - Infrastructure
@@ -23,7 +23,7 @@ For PowerShell, install the following:
 ```powershell
 Install-Module -Name 'AzureRm.Bootstrapper'
 Install-AzureRmProfile -profile '2017-03-09-profile' -Force
-Install-Module -Name AzureStack -RequiredVersion 1.2.11
+Install-Module -Name AzureStack -RequiredVersion 1.3.0
 ```
 
 Obtain the tools by cloning the git repository.
