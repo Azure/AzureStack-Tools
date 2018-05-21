@@ -186,7 +186,7 @@ function Add-AzsVMImage {
         if ($PSBoundParameters.ContainsKey('dataDisksLocalPaths')) {
             foreach ($dataDiskLocalPath in $dataDisksLocalPaths) {
                 $dataDiskName = Split-Path $dataDiskLocalPath -Leaf
-                $dataDiskBlobURI = "https://$storageAccountName.blob.$Domain/$containerName/$dataDiskName"
+                $dataDiskBlobURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName, $dataDiskName
                 $dataDiskBlobURIsFromLocal.Add($dataDiskBlobURI) 
                 Add-AzureRmVhd  -Destination $dataDiskBlobURI -ResourceGroupName $resourceGroupName -LocalFilePath $dataDiskLocalPath -OverWrite
             }
