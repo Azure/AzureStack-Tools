@@ -315,7 +315,7 @@ $Xaml = @'
                 <Setter.Value>
                     <ControlTemplate>
                         <Border>
-                            <Rectangle Margin="2" StrokeThickness="1" Stroke="#60000000" StrokeDashArray="1 2"/>
+                            <Rectangle Margin="2" StrokeThickness="1" Stroke="#FFFFFFFF" StrokeDashArray="1 2"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -547,27 +547,27 @@ $Xaml = @'
                 <StackPanel Orientation="Horizontal" Margin="0,25,0,0">
                     <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Microsoft Azure Stack" />
                     <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="210,3,0,0" Text="Installer UI version: " />
-                    <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#FF4590CE" Margin="0,3,0,0" />
+                    <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#FF74ACDB" Margin="0,3,0,0" />
                 </StackPanel>
                 <TextBlock FontSize="44" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Development Kit" />
-                <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Foreground="#EBEBEB" Margin="0,50,0,30" Text="Title" />
+                <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Foreground="#EBEBEB" Margin="0,50,0,30" Text="Title" Focusable="True" />
                 <!--#region Mode-->
                 <StackPanel x:Name="Control_Mode_Stp" Visibility="Visible">
                     <StackPanel Orientation="Horizontal">
-                        <Button x:Name="Control_Mode_Btn_Left" Width="250" Height="250" Margin="0,0,50,0">
+                        <Button x:Name="Control_Mode_Btn_Left" Width="250" Height="250" Margin="0,0,50,0" AutomationProperties.LabeledBy="{Binding ElementName=Control_Mode_Tbl_LeftTitle}">
                             <StackPanel VerticalAlignment="Top">
                                 <TextBlock x:Name="Control_Mode_Tbl_LeftTitle" TextWrapping="Wrap" Padding="15" FontSize="18" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="LeftTitle" />
                                 <TextBlock x:Name="Control_Mode_Tbl_LeftContent" TextWrapping="Wrap" Padding="15,0,15,15" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="LeftContent"/>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Control_Mode_Btn_Right" Width="250" Height="250" >
+                        <Button x:Name="Control_Mode_Btn_Right" Width="250" Height="250" AutomationProperties.LabeledBy="{Binding ElementName=Control_Mode_Tbl_RightTitle}" >
                             <StackPanel VerticalAlignment="Top">
                                 <TextBlock x:Name="Control_Mode_Tbl_RightTitle" TextWrapping="Wrap" Padding="15" FontSize="18" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="RightTitle" />
                                 <TextBlock x:Name="Control_Mode_Tbl_RightContent" TextWrapping="Wrap" Padding="15,0,15,15" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="RightContent"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Padding="0,40,0,0" TextWrapping="Wrap" ><Run Text="The installer UI for the Azure Stack Development Kit is an open sourced script based on WPF and PowerShell. Additions to the toolkit can be submitted as Pull Request to the "/><Run Foreground="#FF4590CE" Text="AzureStack-Tools repository"/><Run Text="."/></TextBlock>
+                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Padding="0,40,0,0" TextWrapping="Wrap" ><Run Text="The installer UI for the Azure Stack Development Kit is an open sourced script based on WPF and PowerShell. Additions to the toolkit can be submitted as Pull Request to the "/><Run Foreground="#FF74ACDB" Text="AzureStack-Tools repository"/><Run Text="."/></TextBlock>
                 </StackPanel>
                 <!--#endregion Mode-->
                 <!--#region Prepare-->
@@ -634,22 +634,22 @@ $Xaml = @'
 
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Type:" Width="120" HorizontalAlignment="Left"/>
-                            <ComboBox Width="430" x:Name="Control_Creds_Cbx_Idp" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" >
+                            <TextBlock x:Name="Control_Creds_Tbl_Idp" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Type:" Width="120" HorizontalAlignment="Left"/>
+                            <ComboBox Width="430" x:Name="Control_Creds_Cbx_Idp" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_Idp}" >
                             </ComboBox>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_AAD" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="#ABADB3" Width="430"  IsEnabled="False" />
+                                <TextBlock x:Name="Control_Creds_Tbl_AADTenant" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="#ABADB3" Width="430"  IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_AADTenant}" />
                             </StackPanel>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_LocalPassword" Visibility="Visible">
-                            <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Local Administrator Password" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="Control_Creds_Tbl_LocalAdminPassword"  FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Local Administrator Password" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="120" HorizontalAlignment="Left"/>
                                 <Grid>
-                                    <PasswordBox x:Name="Control_Creds_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="430"/>
+                                    <PasswordBox x:Name="Control_Creds_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_LocalAdminPassword}"/>
                                     <Path x:Name="Control_Creds_Pth_LocalPassword" SnapsToDevicePixels="False" StrokeThickness="3" Data="M2,10 L8,16 L15,5" Stroke="#92D050" Margin="300,0,0,0" Visibility="Hidden"/>
                                 </Grid>
                             </StackPanel>
@@ -693,7 +693,7 @@ $Xaml = @'
                                         <Ellipse.Stroke>
                                             <LinearGradientBrush EndPoint="0.445,0.997" StartPoint="0.555,0.103">
                                                 <GradientStop Color="#343447" Offset="0"/>
-                                                <GradientStop Color="#4590CE" Offset="1"/>
+                                                <GradientStop Color="#3369B6" Offset="1"/>
                                             </LinearGradientBrush>
                                         </Ellipse.Stroke>
                                     </Ellipse>
@@ -714,37 +714,37 @@ $Xaml = @'
                 <!--#region NetConfig-->
                 <StackPanel x:Name="Control_NetConfig_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <RadioButton x:Name="Control_NetConfig_Rbt_DHCP" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,5" IsChecked="True">
+                        <RadioButton x:Name="Control_NetConfig_Rbt_DHCP" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,5" IsChecked="True" FocusVisualStyle="{StaticResource ButtonFocusVisual}" >
                             <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DHCP" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
                         </RadioButton>
-                        <RadioButton x:Name="Control_NetConfig_Rbt_Static" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,10" >
+                        <RadioButton x:Name="Control_NetConfig_Rbt_Static" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,10" FocusVisualStyle="{StaticResource ButtonFocusVisual}" >
                             <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Static" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
                         </RadioButton>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
+                            <TextBlock x:Name="Control_NetConfig_Tbl_IpAddress" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="#ABADB3" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_IpAddress}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
+                            <TextBlock x:Name="Control_NetConfig_Tbl_Gateway" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="#ABADB3" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_Gateway}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_DNS">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="430" IsEnabled="False"/>
+                            <TextBlock x:Name="Control_NetConfig_Tbl_DNS" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DNS}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" />
+                            <TextBlock x:Name="Control_NetConfig_Tbl_TimeServer" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_TimeServer}" />
                         </StackPanel>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="VLAN ID:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="430" />
+                                <TextBlock x:Name="Control_NetConfig_Tbl_VlanID" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="VLAN ID:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_VlanID}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="430"/>
+                                <TextBlock x:Name="Control_NetConfig_Tbl_DnsForwarder" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DnsForwarder}"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -757,7 +757,7 @@ $Xaml = @'
                 <!--#region Job-->
                 <StackPanel x:Name="Control_Job_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <ProgressBar x:Name="Control_Job_Pgb_Progress" Height="23.5" Width="550" Background="#1B4D72" Minimum="0" Maximum="100" Value="0" Foreground="#4F91CD" BorderThickness="0"/>
+                        <ProgressBar x:Name="Control_Job_Pgb_Progress" Height="23.5" Width="550" Background="#1B4D72" Minimum="0" Maximum="100" Value="0" Foreground="#4F91CD" BorderThickness="0" AutomationProperties.Name="Progress" Focusable="True"/>
                         <TextBlock x:Name="Control_Job_Tbl_Current" FontSize="12" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="" HorizontalAlignment="Left" Margin="0,10,0,0" />
                         <TextBlock x:Name="Control_Job_Tbl_Details" FontSize="12" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,10,0,0" />
                         <StackPanel x:Name="Control_Job_Stp_Netbxnda" Visibility="Collapsed">
@@ -784,7 +784,7 @@ $Xaml = @'
                 <StackPanel x:Name="Control_Summary_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
                             <TextBlock x:Name="Control_Summary_Tbl_Header1" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed" BorderBrush="#ABADB3" />
+                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed" BorderBrush="#ABADB3" AutomationProperties.LabeledBy="{Binding ElementName=Control_Summary_Tbl_Header1}" />
                         <StackPanel Orientation="Horizontal">
                             <Path x:Name="Control_Summary_Pth_Content1"  SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,10,0" Visibility="Collapsed"/>
                             <TextBlock x:Name="Control_Summary_Tbl_Content1"  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Width="550" />
@@ -921,7 +921,7 @@ $S_NetInterfaces = {
  
     
     $syncHash.Control_NetInterface_Stp_Wait.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Stp_Wait.Visibility="Collapsed"},"Normal")
-    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {
+    $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {        
         $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Lvw_Nics.AddChild($_)},"Normal")
         }
 }
@@ -2050,6 +2050,9 @@ $syncHash.Control_Creds_Btn_Next.Add_Click({
         $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
         $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
         $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+    }
+    Else {        
+        $syncHash.Control_Creds_Pwb_LocalPassword.Focus()                             
     }
 })
 

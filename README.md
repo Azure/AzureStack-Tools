@@ -1,5 +1,5 @@
 
-# Azure Stack Development Kit Version
+# Azure Stack Development Kit Version 
 
 These tools are meant for use with **Azure Stack Development Kit**.
 
