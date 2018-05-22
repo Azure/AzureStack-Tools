@@ -88,7 +88,7 @@ function Add-AzsVMImage {
     
         [Parameter(Mandatory = $true, ParameterSetName = 'VMImageFromLocal')]
         [Parameter(Mandatory = $true, ParameterSetName = 'VMImageFromAzure')]
-        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
+        [ValidatePattern("[a-zA-Z0-9-\.]{3,}")]
         [String] $Sku,
     
         [Parameter(Mandatory = $true, ParameterSetName = 'VMImageFromLocal')]
@@ -331,7 +331,7 @@ function Remove-AzsVMImage {
         [String] $Offer,
     
         [Parameter(Mandatory = $true)]
-        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
+        [ValidatePattern("[a-zA-Z0-9-\.]{3,}")]
         [String] $Sku,
     
         [Parameter(Mandatory = $true)]
@@ -406,7 +406,7 @@ function Get-AzsVMImage {
         [String] $Offer,
     
         [Parameter(Mandatory = $true)]
-        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
+        [ValidatePattern("[a-zA-Z0-9-\.]{3,}")]
         [String] $Sku,
     
         [Parameter(Mandatory = $true)]
