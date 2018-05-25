@@ -547,7 +547,7 @@ $Xaml = @'
                 <StackPanel Orientation="Horizontal" Margin="0,25,0,0">
                     <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Microsoft Azure Stack" />
                     <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="210,3,0,0" Text="Installer UI version: " />
-                    <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#FF74ACDB" Margin="0,3,0,0" />
+                    <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#879AAB" Margin="0,3,0,0" />
                 </StackPanel>
                 <TextBlock FontSize="44" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Development Kit" />
                 <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Foreground="#EBEBEB" Margin="0,50,0,30" Text="Title" Focusable="True" />
@@ -567,7 +567,7 @@ $Xaml = @'
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Padding="0,40,0,0" TextWrapping="Wrap" ><Run Text="The installer UI for the Azure Stack Development Kit is an open sourced script based on WPF and PowerShell. Additions to the toolkit can be submitted as Pull Request to the "/><Run Foreground="#FF74ACDB" Text="AzureStack-Tools repository"/><Run Text="."/></TextBlock>
+                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Padding="0,40,0,0" TextWrapping="Wrap" ><Run Text="The installer UI for the Azure Stack Development Kit is an open sourced script based on WPF and PowerShell. Additions to the toolkit can be submitted as Pull Request to the "/><Run Foreground="#879AAB" Text="AzureStack-Tools repository"/><Run Text="."/></TextBlock>
                 </StackPanel>
                 <!--#endregion Mode-->
                 <!--#region Prepare-->
@@ -680,6 +680,66 @@ $Xaml = @'
                                             <GridViewColumn Header="DHCP" Width="80" DisplayMemberBinding ="{Binding 'DHCP'}" />
                                         </GridView>
                                     </ListView.View>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListViewItem}">
+                                            <Setter Property="SnapsToDevicePixels" Value="true"/>
+                                            <Setter Property="OverridesDefaultStyle" Value="true"/>                                       
+                                            <Setter Property="AutomationProperties.Name">
+                                                <Setter.Value>
+                                                    <MultiBinding StringFormat="{}Name:{0};Status:{1};IPv4Address:{2};Gateway:{3};DHCP:{4}">
+                                                        <Binding Path="Name"/>
+                                                        <Binding Path="ConnectionState"/>
+                                                        <Binding Path="Ipv4Address"/>
+                                                        <Binding Path="Ipv4DefaultGateway"/>
+                                                        <Binding Path="DHCP"/>
+                                                    </MultiBinding>
+                                                </Setter.Value>
+                                            </Setter>                                             
+                                            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListViewItem">
+                                                                <Border Name="Border" Padding="2" SnapsToDevicePixels="true" Background="Transparent">
+                                                                    <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsSelected" Value="true">
+                                                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsMouseOver" Value="true">
+                                                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                                                        <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListViewItem">
+                                                                <Border Name="Border" Padding="2" SnapsToDevicePixels="true" Background="Transparent">
+                                                                    <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsSelected" Value="true">
+                                                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsMouseOver" Value="true">
+                                                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                                        <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>                                                                                                                                  
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
                                 </ListView>
                                 <StackPanel x:Name="Control_NetInterface_Stp_Wait" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
                                     <Ellipse x:Name="Control_NetInterface_Ell_Wait" Width="20" Height="20" StrokeDashArray="0,2" StrokeDashCap="Round" StrokeThickness="3.5" RenderTransformOrigin="0.5,0.5" >
