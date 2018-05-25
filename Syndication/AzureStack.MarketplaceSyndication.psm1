@@ -112,6 +112,21 @@ function Sync-AzSOfflineMarketplaceItem {
         $intAnswer = $a.popup($productDetails.properties.description, `
                 0, "Legal Terms", 4)
         If ($intAnswer -eq 6) {
+           
+            #Output Parameters required for Import
+            $FileExists = Test-Path "$destination\$azpkgName.txt"
+            $DestinationCheck = Test-Path $destination
+            If ($DestinationCheck -eq $false) {
+                new-item -ItemType Directory -force $destination
+            }
+            else {}
+
+            If ($FileExists -eq $true) {Remove-Item "$destination\$azpkgName.txt" -force} else {
+                New-Item "$destination\$azpkgName.txt"
+            }
+            $productDetails.properties|select publisherIdentifier,offer,offerversion,sku |out-file "$destination\$azpkgName.txt" -Append
+           
+           
             # download azpkg
             $azpkgsource = $downloadDetails.galleryPackageBlobSasUri
             $FileExists = Test-Path "$destination\$azpkgName.azpkg"
@@ -125,7 +140,9 @@ function Sync-AzSOfflineMarketplaceItem {
                 New-Item "$destination\$azpkgName.azpkg"
             }
             $azpkgdestination = "$destination\$azpkgName.azpkg"
-            Start-BitsTransfer -source $azpkgsource -destination $azpkgdestination -Priority High
+            (New-Object System.Net.WebClient).DownloadFile("$azpkgsource",$azpkgdestination) 
+
+
 
             switch ($downloadDetails.productKind) {
                 'virtualMachine' {
@@ -139,8 +156,7 @@ function Sync-AzSOfflineMarketplaceItem {
                             New-Item "$destination\$vhdName.vhd" 
                         }
                         $vhdDestination = "$destination\$vhdName.vhd"
-    
-                        Start-BitsTransfer -source $vhdSource -destination $vhdDestination -Priority High
+                        (New-Object System.Net.WebClient).DownloadFile("$vhdsource",$vhddestination) 
                     }
                 }
                 'virtualMachineExtension' {
