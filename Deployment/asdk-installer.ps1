@@ -97,8 +97,34 @@ $Xaml = @'
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        Title="Microsoft Azure Stack Development Kit" Height="650" Width="664" Background="#2D2D2F" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Microsoft Azure Stack Development Kit" Height="650" Width="664" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <!--#region window-->
+        <Style TargetType="{x:Type Window}">
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Background" Value="#2D2D2F" />                                         
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowColor}}"/>                                      
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!--#endregion window-->
+        <!--#region TextBlock-->
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!--#endregion TextBlock-->
         <!--#region Textbox -->
         <Style x:Key="{x:Type TextBox}" TargetType="{x:Type TextBoxBase}">
             <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -106,33 +132,58 @@ $Xaml = @'
             <Setter Property="KeyboardNavigation.TabNavigation" Value="None"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>            
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MinHeight" Value="23.5"/>
             <Setter Property="AllowDrop" Value="true"/>
             <Setter Property="ToolTipService.InitialShowDelay" Value="0"/>
-            <Setter Property="CaretBrush" Value="#EBEBEB"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type TextBoxBase}">
-                        <Border Name="Border" Padding="2,0,2,0" Background="#343447" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" >
-                            <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Border" Property="Background" Value="#343447"/>
-                                <Setter TargetName="Border" Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="#A0A0A0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
+                    <Setter Property="CaretBrush" Value="#EBEBEB"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type TextBoxBase}">
+                                <Border Name="Border" Padding="2,0,2,0" Background="#343447" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" >
+                                    <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Border" Property="Background" Value="#343447"/>
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#A0A0A0"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="CaretBrush" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type TextBoxBase}">
+                                <Border Name="Border" Padding="2,0,2,0" Background="{DynamicResource {x:Static SystemColors.WindowColor}}" BorderBrush="{TemplateBinding BorderBrush}"  BorderThickness="1" >
+                                    <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>                    
+                </DataTrigger>
+            </Style.Triggers>       
         </Style>
         <!--#endregion Textbox -->
         <!--#region Checkbox -->
-        <Style x:Key="CheckBoxFocusVisual">
+        <Style x:Key="CheckBoxFocusVisual">            
             <Setter Property="Control.Template">
                 <Setter.Value>
                     <ControlTemplate>
@@ -143,40 +194,84 @@ $Xaml = @'
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="{x:Type CheckBox}" TargetType="CheckBox">
-            <Setter Property="SnapsToDevicePixels" Value="true"/>
-            <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
-            <Setter Property="FocusVisualStyle"	Value="{StaticResource CheckBoxFocusVisual}"/>
-            <Setter Property="Template">
+        <Style x:Key="CheckBoxFocusVisualHighContrast">            
+            <Setter Property="Control.Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <BulletDecorator Background="Transparent">
-                            <BulletDecorator.Bullet>
-                                <Border x:Name="Border" Width="15" Height="15" Background="#343447" BorderThickness="1" BorderBrush="#ABADB3">
-                                    <Rectangle x:Name="CheckMark" Fill="#EBEBEB" Width="7" Height="7"/>
-                                </Border>
-                            </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" RecognizesAccessKey="True"/>
-                        </BulletDecorator>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="false">
-                                <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
-                            </Trigger>
-
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter TargetName="Border" Property="Background" Value="#343447" />
-                                <Setter TargetName="Border" Property="BorderBrush" Value="Transparent" />
-                                <Setter Property="Foreground" Value="#EBEBEB"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
+                    <ControlTemplate>
+                        <Border>
+                            <Rectangle Margin="15,0,0,0" StrokeThickness="1" Stroke="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" StrokeDashArray="1 2"/>
+                        </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+            <Setter Property="SnapsToDevicePixels" Value="true"/>
+            <Setter Property="OverridesDefaultStyle" Value="true"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>         
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
+                    <Setter Property="FocusVisualStyle"	Value="{StaticResource CheckBoxFocusVisual}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="CheckBox">
+                                <BulletDecorator Background="Transparent">
+                                    <BulletDecorator.Bullet>
+                                        <Border x:Name="Border" Width="15" Height="15" Background="#343447" BorderThickness="1" BorderBrush="#ABADB3">
+                                            <Rectangle x:Name="CheckMark" Fill="#EBEBEB" Width="7" Height="7"/>
+                                        </Border>
+                                    </BulletDecorator.Bullet>
+                                    <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" RecognizesAccessKey="True"/>
+                                </BulletDecorator>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="false">
+                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                                    </Trigger>
 
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter TargetName="Border" Property="Background" Value="#343447" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="Foreground" Value="#EBEBEB"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="FocusVisualStyle"	Value="{StaticResource CheckBoxFocusVisualHighContrast}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="CheckBox">
+                                <BulletDecorator Background="Transparent">
+                                    <BulletDecorator.Bullet>
+                                        <Border x:Name="Border" Width="15" Height="15" Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                                            <Rectangle x:Name="CheckMark" Fill="{DynamicResource {x:Static SystemColors.MenuHighlightBrushKey}}" Width="7" Height="7"/>
+                                        </Border>
+                                    </BulletDecorator.Bullet>
+                                    <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" RecognizesAccessKey="True"/>
+                                </BulletDecorator>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="false">
+                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                                    </Trigger>
+
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrushKey}}" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrushKey}}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
         <!--#endregion Checkbox -->
         <!--#region Passwordbox -->
         <Style x:Key="{x:Type PasswordBox}" TargetType="{x:Type PasswordBox}">
@@ -185,29 +280,54 @@ $Xaml = @'
             <Setter Property="KeyboardNavigation.TabNavigation" Value="None"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>            
             <Setter Property="PasswordChar" Value="●"/>
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MinHeight" Value="23.5"/>
-            <Setter Property="AllowDrop" Value="true"/>
-            <Setter Property="CaretBrush" Value="#EBEBEB"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type PasswordBox}">
-                        <Border Name="Border" Padding="2,0,2,0" Background="#343447" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" >
-                            <ScrollViewer x:Name="PART_ContentHost" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Border" Property="Background" Value="#343447"/>
-                                <Setter TargetName="Border" Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="#A0A0A0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="AllowDrop" Value="true"/>                        
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
+                    <Setter Property="CaretBrush" Value="#EBEBEB"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type PasswordBox}">
+                                <Border Name="Border" Padding="2,0,2,0" Background="#343447" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" >
+                                    <ScrollViewer x:Name="PART_ContentHost" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Border" Property="Background" Value="#343447"/>
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#A0A0A0"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="CaretBrush" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type PasswordBox}">
+                                <Border Name="Border" Padding="2,0,2,0" Background="{DynamicResource {x:Static SystemColors.WindowColor}}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" >
+                                    <ScrollViewer x:Name="PART_ContentHost" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrushKey}}"/>
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrush}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <!--#endregion Passwordbox -->
         <!--#region Combobox -->
@@ -231,6 +351,25 @@ $Xaml = @'
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
+        <ControlTemplate x:Key="ComboBoxToggleButtonHighContrast" TargetType="ToggleButton">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <!--ToggleButton OuterBorder and Dropdownbutton Block No Event -->
+                <Border x:Name="Border" Grid.ColumnSpan="2" Background="{DynamicResource {x:Static SystemColors.WindowColor}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" />
+                <!--ToggleButton InnerTextbox No Event -->
+                <Border Grid.Column="0" Margin="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0" />
+                <!--ToggleButton DropdownButton No Event -->
+                <Path x:Name="Arrow" Grid.Column="1" Fill="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsEnabled" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
         <ControlTemplate x:Key="ComboBoxTextBox" TargetType="TextBox">
             <Border x:Name="PART_ContentHost" Focusable="False"/>
         </ControlTemplate>
@@ -242,71 +381,144 @@ $Xaml = @'
             <Setter Property="ScrollViewer.CanContentScroll" Value="true"/>
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MinHeight" Value="23.5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Name="ToggleButton" Template="{StaticResource ComboBoxToggleButton}" Grid.Column="2" Focusable="false" IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" ClickMode="Press">
-                            </ToggleButton>
-                            <ContentPresenter Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Margin="5,3,23,3" VerticalAlignment="Center" HorizontalAlignment="Left" />
-                            <TextBox x:Name="PART_EditableTextBox" Style="{x:Null}" Template="{StaticResource ComboBoxTextBox}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,3,23,3" Focusable="True" Background="Transparent" Visibility="Hidden" IsReadOnly="{TemplateBinding IsReadOnly}"/>
-                            <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
-                                <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                    <!--Combobox Item Background No Event -->
-                                    <Border x:Name="DropDownBorder" Background="#343447" BorderThickness="1" BorderBrush="#ABADB3"/>
-                                    <ScrollViewer SnapsToDevicePixels="True">
-                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
-                                    </ScrollViewer>
-                                </Grid>
-                            </Popup>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="HasItems" Value="false">
-                                <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter Property="Foreground" Value="Green"/>
-                            </Trigger>
-                            <Trigger Property="IsGrouping" Value="true">
-                                <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
-                            </Trigger>
-                            <Trigger Property="IsEditable" Value="true">
-                                <Setter Property="IsTabStop" Value="false"/>
-                                <Setter TargetName="PART_EditableTextBox" Property="Visibility"	Value="Visible"/>
-                                <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
             <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBox">
+                                <Grid>
+                                    <ToggleButton Name="ToggleButton" Template="{StaticResource ComboBoxToggleButton}" Grid.Column="2" Focusable="false" IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" ClickMode="Press">
+                                    </ToggleButton>
+                                    <ContentPresenter Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Margin="5,3,23,3" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                    <TextBox x:Name="PART_EditableTextBox" Style="{x:Null}" Template="{StaticResource ComboBoxTextBox}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,3,23,3" Focusable="True" Background="Transparent" Visibility="Hidden" IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                    <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                        <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                            <!--Combobox Item Background No Event -->
+                                            <Border x:Name="DropDownBorder" Background="#343447" BorderThickness="1" BorderBrush="#ABADB3"/>
+                                            <ScrollViewer SnapsToDevicePixels="True">
+                                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </Popup>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="HasItems" Value="false">
+                                        <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter Property="Foreground" Value="Green"/>
+                                    </Trigger>
+                                    <Trigger Property="IsGrouping" Value="true">
+                                        <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEditable" Value="true">
+                                        <Setter Property="IsTabStop" Value="false"/>
+                                        <Setter TargetName="PART_EditableTextBox" Property="Visibility"	Value="Visible"/>
+                                        <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>                                     
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBox">
+                                <Grid>
+                                    <ToggleButton Name="ToggleButton" Template="{StaticResource ComboBoxToggleButtonHighContrast}" Grid.Column="2" Focusable="false" IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}" ClickMode="Press">
+                                    </ToggleButton>
+                                    <ContentPresenter Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Margin="5,3,23,3" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                    <TextBox x:Name="PART_EditableTextBox" Style="{x:Null}" Template="{StaticResource ComboBoxTextBox}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,3,23,3" Focusable="True" Background="Transparent" Visibility="Hidden" IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                    <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                        <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                            <!--Combobox Item Background No Event -->
+                                            <Border x:Name="DropDownBorder" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" BorderThickness="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                                            <ScrollViewer SnapsToDevicePixels="True">
+                                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </Popup>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="HasItems" Value="false">
+                                        <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsGrouping" Value="true">
+                                        <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEditable" Value="true">
+                                        <Setter Property="IsTabStop" Value="false"/>
+                                        <Setter TargetName="PART_EditableTextBox" Property="Visibility"	Value="Visible"/>
+                                        <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>            
             </Style.Triggers>
         </Style>
         <!-- ComboboxItem -->
         <Style x:Key="{x:Type ComboBoxItem}" TargetType="ComboBoxItem">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
             <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBoxItem">
-                        <Border Name="Border" Padding="5,3,5,3" SnapsToDevicePixels="true">
-                            <ContentPresenter />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsHighlighted" Value="true">
-                                <!-- ComboboxItem Hover -->
-                                <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="True">
-                                <!-- ComboboxItem Text -->
-                                <Setter Property="Foreground" Value="#EBEBEB"/>
-                                <Setter Property="FontFamily" Value="Segoe UI"/>
-                                <Setter Property="FontSize" Value="14"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border Name="Border" Padding="5,3,5,3" SnapsToDevicePixels="true">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="true">
+                                        <!-- ComboboxItem Hover -->
+                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="True">
+                                        <!-- ComboboxItem Text -->
+                                        <Setter Property="Foreground" Value="#EBEBEB"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                                        <Setter Property="FontSize" Value="14"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border Name="Border" Padding="5,3,5,3" SnapsToDevicePixels="true">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="true">
+                                        <!-- ComboboxItem Hover -->
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="True">
+                                        <!-- ComboboxItem Text -->
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                                        <Setter Property="FontSize" Value="14"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <!--#endregion Combobox -->
         <!--#region Button -->
@@ -321,51 +533,107 @@ $Xaml = @'
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <Style TargetType="Button">
-            <Setter Property="SnapsToDevicePixels" Value="true"/>
-            <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="FocusVisualStyle" Value="{StaticResource ButtonFocusVisual}"/>
-            <Setter Property="MinHeight" Value="23.5"/>
-            <Setter Property="MinWidth" Value="75"/>
-            <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
-            <Setter Property="Template">
+        <Style x:Key="ButtonFocusVisualHighContrast">
+            <Setter Property="Control.Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <!-- Background and Border No Event -->
-                        <Border x:Name="Border" BorderThickness="1" Background="#202020" BorderBrush="#ABADB3">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}" RecognizesAccessKey="True"/>
+                    <ControlTemplate>
+                        <Border>
+                            <Rectangle Margin="2" StrokeThickness="1" Stroke="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" StrokeDashArray="1 2"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocused" Value="true">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#ABADB3" />
-                            </Trigger>
-                            <Trigger Property="IsDefaulted" Value="true">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#ABADB3" />
-                            </Trigger>
-                            <!-- Button Hover -->
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="Border" Property="Background" Value="#4590CE" />
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#4590CE" />
-                                <Setter TargetName="Border" Property="Cursor" Value="Hand" />
-                            </Trigger>
-                            <!-- Button Pressed -->
-                            <Trigger Property="IsPressed" Value="true">
-                                <Setter TargetName="Border" Property="Background" Value="#4590CE" />
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#4590CE" />
-                            </Trigger>
-                            <!-- Button IsEnabled false -->
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter TargetName="Border" Property="Background" Value="#202020" />
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#555555" />
-                                <Setter Property="Foreground" Value="#555555"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="SnapsToDevicePixels" Value="true"/>
+            <Setter Property="OverridesDefaultStyle" Value="true"/>            
+            <Setter Property="MinHeight" Value="23.5"/>
+            <Setter Property="MinWidth" Value="75"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="14"/>            
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource ButtonFocusVisual}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <!-- Background and Border No Event -->
+                                <Border x:Name="Border" BorderThickness="1" Background="#202020" BorderBrush="#ABADB3">
+                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}" RecognizesAccessKey="True"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsKeyboardFocused" Value="true">
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#ABADB3" />
+                                    </Trigger>
+                                    <Trigger Property="IsDefaulted" Value="true">
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#ABADB3" />
+                                    </Trigger>
+                                     <!-- Button Hover -->
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="#4590CE" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#4590CE" />
+                                        <Setter TargetName="Border" Property="Cursor" Value="Hand" />
+                                    </Trigger>
+                                    <!-- Button Pressed -->
+                                    <Trigger Property="IsPressed" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="#4590CE" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#4590CE" />
+                                    </Trigger>
+                                    <!-- Button IsEnabled false -->
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter TargetName="Border" Property="Background" Value="#202020" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#555555" />
+                                        <Setter Property="Foreground" Value="#555555"/>
+                                    </Trigger>                                    
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource ButtonFocusVisualHighContrast}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <!-- Background and Border No Event -->
+                                <Border x:Name="Border" BorderThickness="1" Background="{DynamicResource {x:Static SystemColors.WindowColor}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}" RecognizesAccessKey="True"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsKeyboardFocused" Value="true">
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+                                    </Trigger>
+                                    <Trigger Property="IsDefaulted" Value="true">
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+                                    </Trigger>
+                                    <!-- Button Hover -->
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                        <Setter TargetName="Border" Property="Cursor" Value="Hand" />
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>                                 
+                                    </Trigger>
+                                    <!-- Button Pressed -->
+                                    <Trigger Property="IsPressed" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                    <!-- Button IsEnabled false -->
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrushKey}}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <!--#endregion Button -->
         <!--#region Listview -->
@@ -400,7 +668,6 @@ $Xaml = @'
         <Style x:Key="GridViewColumnHeaderGripper" TargetType="Thumb">
             <!-- Column Header Divider -->
             <Setter Property="Width" Value="18"/>
-            <Setter Property="Background" Value="#404040"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Thumb}">
@@ -410,120 +677,257 @@ $Xaml = @'
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Background" Value="#404040"/>                    
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowColor}}"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="{x:Type GridViewColumnHeader}" TargetType="GridViewColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>            
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="GridViewColumnHeader">
-                        <Grid>
-                            <!-- ColumnHeader NoEvent -->
-                            <Border Name="HeaderBorder" BorderThickness="0,0,0,0" BorderBrush="#ABADB3" Background="#202020" Padding="5,0,2,0">
-                                <ContentPresenter Name="HeaderContent" Margin="0,0,0,1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                            </Border>
-                            <Thumb x:Name="PART_HeaderGripper" HorizontalAlignment="Right" Margin="0,0,-9,0" Style="{StaticResource GridViewColumnHeaderGripper}"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <!--Column Even Mouseover -->
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="HeaderBorder" Property="Background" Value="#555555"/>
-                            </Trigger>
-                            <!--Column Is Pressed -->
-                            <Trigger Property="IsPressed" Value="true">
-                                <Setter TargetName="HeaderBorder" Property="Background" Value="#555555"/>
-                                <Setter TargetName="HeaderContent" Property="Margin" Value="1,1,0,0"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />       
             <Style.Triggers>
-                <Trigger Property="Role" Value="Floating">
-                    <Setter Property="Opacity" Value="0.7"/>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="GridViewColumnHeader">
-                                <Canvas Name="PART_FloatingHeaderCanvas">
-                                    <Rectangle Fill="#60000000" Width="{TemplateBinding ActualWidth}" Height="{TemplateBinding ActualHeight}"/>
-                                </Canvas>
+                                <Grid>
+                                    <!-- ColumnHeader NoEvent -->
+                                    <Border Name="HeaderBorder" BorderThickness="0,0,0,0" BorderBrush="#ABADB3" Background="#202020" Padding="5,0,2,0">
+                                        <ContentPresenter Name="HeaderContent" Margin="0,0,0,1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    </Border>
+                                    <Thumb x:Name="PART_HeaderGripper" HorizontalAlignment="Right" Margin="0,0,-9,0" Style="{StaticResource GridViewColumnHeaderGripper}"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <!--Column Even Mouseover -->
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="HeaderBorder" Property="Background" Value="#555555"/>
+                                    </Trigger>
+                                    <!--Column Is Pressed -->
+                                    <Trigger Property="IsPressed" Value="true">
+                                        <Setter TargetName="HeaderBorder" Property="Background" Value="#555555"/>
+                                        <Setter TargetName="HeaderContent" Property="Margin" Value="1,1,0,0"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextColor}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
-                    </Setter>
-                </Trigger>
-                <Trigger Property="Role" Value="Padding">
+                    </Setter>                    
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ActiveCaptionTextBrushKey}}"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="GridViewColumnHeader">
-                                <!-- Column Header Empty Space -->
-                                <Border Name="HeaderBorder" BorderThickness="0,0,0,0" BorderBrush="#ABADB3" Background="#202020"/>
+                                <Grid>
+                                    <!-- ColumnHeader NoEvent -->
+                                    <Border Name="HeaderBorder" BorderThickness="0,0,0,0" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" Padding="5,0,2,0">
+                                        <ContentPresenter Name="HeaderContent" Margin="0,0,0,1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    </Border>
+                                    <Thumb x:Name="PART_HeaderGripper" HorizontalAlignment="Right" Margin="0,0,-9,0" Style="{StaticResource GridViewColumnHeaderGripper}"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <!--Column Even Mouseover -->
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                    <!--Column Is Pressed -->
+                                    <Trigger Property="IsPressed" Value="true">
+                                        <Setter TargetName="HeaderBorder" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter TargetName="HeaderContent" Property="Margin" Value="1,1,0,0"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextColor}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
-                    </Setter>
-                </Trigger>
+                    </Setter>                    
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False" />
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Role}" Value="Floating" />
+                    </MultiDataTrigger.Conditions>
+                        <Setter Property="Opacity" Value="0.7"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="GridViewColumnHeader">
+                                    <Canvas Name="PART_FloatingHeaderCanvas">
+                                        <Rectangle Fill="#60000000" Width="{TemplateBinding ActualWidth}" Height="{TemplateBinding ActualHeight}"/>
+                                    </Canvas>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="True" />
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Role}" Value="Floating" />
+                    </MultiDataTrigger.Conditions>
+                        <Setter Property="Opacity" Value="0.7"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="GridViewColumnHeader">
+                                    <Canvas Name="PART_FloatingHeaderCanvas">
+                                        <Rectangle Fill="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Width="{TemplateBinding ActualWidth}" Height="{TemplateBinding ActualHeight}"/>
+                                    </Canvas>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False" />
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Role}" Value="Padding" />
+                    </MultiDataTrigger.Conditions>                        
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="GridViewColumnHeader">                                    
+                                    <!-- Column Header Empty Space -->
+                                    <Border Name="HeaderBorder" BorderThickness="0,0,0,0" BorderBrush="#ABADB3" Background="#202020"/>                                                                        
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="True" />
+                        <Condition Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Role}" Value="Padding" />
+                    </MultiDataTrigger.Conditions>                        
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="GridViewColumnHeader">                                    
+                                    <!-- Column Header Empty Space -->
+                                    <Border Name="HeaderBorder" BorderThickness="0,0,0,0" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>                                    
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                </MultiDataTrigger>                                                  
             </Style.Triggers>
         </Style>
-
         <Style x:Key="{x:Type ListView}" TargetType="ListView">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
             <Setter Property="OverridesDefaultStyle" Value="true"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
             <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="ScrollViewer.CanContentScroll" Value="true"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="#EBEBEB"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>            
             <Setter Property="FontFamily" Value="Segoe UI"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListView">
-                        <!-- Background -->
-                        <Border Name="Border" BorderThickness="1" BorderBrush="#ABADB3" Background="#343447">
-                            <ScrollViewer Style="{DynamicResource {x:Static GridView.GridViewScrollViewerStyleKey}}">
-                                <ItemsPresenter />
-                            </ScrollViewer>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsGrouping" Value="true">
-                                <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter TargetName="Border" Property="Background" Value="Green"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Foreground" Value="#EBEBEB"/>
+                    <Setter Property="Background" Value="#343447"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListView">
+                                <!-- Background -->
+                                <Border Name="Border" BorderThickness="1" BorderBrush="#ABADB3" Background="#343447">
+                                    <ScrollViewer Style="{DynamicResource {x:Static GridView.GridViewScrollViewerStyleKey}}">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsGrouping" Value="true">
+                                        <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter TargetName="Border" Property="Background" Value="Green"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowColor}}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListView">
+                                <!-- Background -->
+                                <Border Name="Border" BorderThickness="1" BorderBrush="{DynamicResource {x:Static SystemColors.WindowFrameBrushKey}}" Background="{DynamicResource {x:Static SystemColors.WindowColor}}">
+                                    <ScrollViewer Style="{DynamicResource {x:Static GridView.GridViewScrollViewerStyleKey}}">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsGrouping" Value="true">
+                                        <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="false">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveBorderBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style x:Key="{x:Type ListViewItem}" TargetType="ListViewItem">
             <Setter Property="SnapsToDevicePixels" Value="true"/>
-            <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListViewItem">
-                        <Border Name="Border" Padding="2" SnapsToDevicePixels="true" Background="Transparent">
-                            <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="true">
-                                <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
-                                <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="OverridesDefaultStyle" Value="true"/>            
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border Name="Border" Padding="2" SnapsToDevicePixels="true" Background="Transparent">
+                                    <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                        <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border Name="Border" Padding="2" SnapsToDevicePixels="true" Background="Transparent">
+                                    <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="true">
+                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <!--#endregion Listview -->
         <!--#region Wait Indicator -->
@@ -533,6 +937,19 @@ $Xaml = @'
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
         <!--#endregion Wait Indicator -->
+        <!--#region RadioButton-->
+        <Style TargetType="{x:Type RadioButton}">
+            <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.HighContrastKey}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource ButtonFocusVisual}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource ButtonFocusVisualHighContrast}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!--#endregion RadioButton-->
     </Window.Resources>
     <Window.Triggers>
         <!--#region Wait Indicator -->
@@ -545,42 +962,42 @@ $Xaml = @'
         <DockPanel LastChildFill="True" >
             <StackPanel DockPanel.Dock="Left" Width="550" HorizontalAlignment="Left" Margin="50,0,0,0" >
                 <StackPanel Orientation="Horizontal" Margin="0,25,0,0">
-                    <TextBlock FontSize="24" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Microsoft Azure Stack" />
-                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Margin="210,3,0,0" Text="Installer UI version: " />
+                    <TextBlock FontSize="24" FontFamily="Segoe UI Light"  Text="Microsoft Azure Stack" />
+                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light"  Margin="210,3,0,0" Text="Installer UI version: " />
                     <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#879AAB" Margin="0,3,0,0" />
                 </StackPanel>
-                <TextBlock FontSize="44" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Text="Development Kit" />
-                <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Foreground="#EBEBEB" Margin="0,50,0,30" Text="Title" Focusable="True" />
+                <TextBlock FontSize="44" FontFamily="Segoe UI Light" Text="Development Kit" />
+                <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Margin="0,50,0,30" Text="Title" Focusable="True" />
                 <!--#region Mode-->
                 <StackPanel x:Name="Control_Mode_Stp" Visibility="Visible">
                     <StackPanel Orientation="Horizontal">
                         <Button x:Name="Control_Mode_Btn_Left" Width="250" Height="250" Margin="0,0,50,0" AutomationProperties.LabeledBy="{Binding ElementName=Control_Mode_Tbl_LeftTitle}">
                             <StackPanel VerticalAlignment="Top">
-                                <TextBlock x:Name="Control_Mode_Tbl_LeftTitle" TextWrapping="Wrap" Padding="15" FontSize="18" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="LeftTitle" />
-                                <TextBlock x:Name="Control_Mode_Tbl_LeftContent" TextWrapping="Wrap" Padding="15,0,15,15" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="LeftContent"/>
+                                <TextBlock x:Name="Control_Mode_Tbl_LeftTitle" TextWrapping="Wrap" Padding="15" FontSize="18" FontFamily="Segoe UI" Text="LeftTitle" />
+                                <TextBlock x:Name="Control_Mode_Tbl_LeftContent" TextWrapping="Wrap" Padding="15,0,15,15" FontSize="14" FontFamily="Segoe UI" Text="LeftContent"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="Control_Mode_Btn_Right" Width="250" Height="250" AutomationProperties.LabeledBy="{Binding ElementName=Control_Mode_Tbl_RightTitle}" >
                             <StackPanel VerticalAlignment="Top">
-                                <TextBlock x:Name="Control_Mode_Tbl_RightTitle" TextWrapping="Wrap" Padding="15" FontSize="18" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="RightTitle" />
-                                <TextBlock x:Name="Control_Mode_Tbl_RightContent" TextWrapping="Wrap" Padding="15,0,15,15" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="RightContent"/>
+                                <TextBlock x:Name="Control_Mode_Tbl_RightTitle" TextWrapping="Wrap" Padding="15" FontSize="18" FontFamily="Segoe UI" Text="RightTitle" />
+                                <TextBlock x:Name="Control_Mode_Tbl_RightContent" TextWrapping="Wrap" Padding="15,0,15,15" FontSize="14" FontFamily="Segoe UI" Text="RightContent"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#EBEBEB" Padding="0,40,0,0" TextWrapping="Wrap" ><Run Text="The installer UI for the Azure Stack Development Kit is an open sourced script based on WPF and PowerShell. Additions to the toolkit can be submitted as Pull Request to the "/><Run Foreground="#879AAB" Text="AzureStack-Tools repository"/><Run Text="."/></TextBlock>
+                    <TextBlock FontSize="11.5" FontFamily="Segoe UI Light" Padding="0,40,0,0" TextWrapping="Wrap" ><Run Text="The installer UI for the Azure Stack Development Kit is an open sourced script based on WPF and PowerShell. Additions to the toolkit can be submitted as Pull Request to the "/><Run Foreground="#879AAB" Text="AzureStack-Tools repository"/><Run Text="."/></TextBlock>
                 </StackPanel>
                 <!--#endregion Mode-->
                 <!--#region Prepare-->
                 <StackPanel x:Name="Control_Prepare_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Cloudbuilder.vhdx" Margin="0,0,0,10" />
+                        <TextBlock FontSize="16" FontFamily="Segoe UI" Text="Cloudbuilder.vhdx" Margin="0,0,0,10" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBox x:Name="Control_Prepare_Tbx_Vhdx" BorderBrush="#ABADB3" Width="440" />
+                            <TextBox x:Name="Control_Prepare_Tbx_Vhdx" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="440" />
                             <Button x:Name="Control_Prepare_Btn_Vhdx" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
                         </StackPanel>
                         <CheckBox x:Name="Control_Prepare_Chb_Drivers" VerticalAlignment="Center" Content="Add drivers" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Prepare_Stp_Drivers" Orientation="Horizontal" Margin="25,0,0,10" Visibility="Collapsed">
-                            <TextBox x:Name="Control_Prepare_Tbx_Drivers" BorderBrush="#ABADB3" Width="415" />
+                            <TextBox x:Name="Control_Prepare_Tbx_Drivers" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="415" />
                             <Button x:Name="Control_Prepare_Btn_Drivers" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
                         </StackPanel>
                     </StackPanel>
@@ -596,27 +1013,27 @@ $Xaml = @'
                         <CheckBox x:Name="Control_Unattend_Chb_LocalAdmin" VerticalAlignment="Center" Content="Configure local admin account" Margin="0,0,0,10" IsChecked="True" />
                         <StackPanel x:Name="Control_Unattend_Stp_LocalAdmin" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Username:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox BorderBrush="#ABADB3" Width="405" Text="Administrator" IsEnabled="False" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Username:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" Text="Administrator" IsEnabled="False" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="120" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="405" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Password:" Width="120" HorizontalAlignment="Left"/>
+                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPassword" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Confirm Password:" Width="120" HorizontalAlignment="Left"/>
-                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPasswordConfirm" BorderBrush="#ABADB3" Width="405" IsEnabled="False" />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Confirm Password:" Width="120" HorizontalAlignment="Left"/>
+                                <PasswordBox x:Name="Control_Unattend_Pwb_LocalPasswordConfirm" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" IsEnabled="False" />
                             </StackPanel>
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_Computername" VerticalAlignment="Center" Content="Computername" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Unattend_Stp_Computername" Visibility="Collapsed">
-                            <TextBox x:Name="Control_Unattend_Tbx_Computername" BorderBrush="#ABADB3" Width="405" Text="" HorizontalAlignment="Right"/>
+                            <TextBox x:Name="Control_Unattend_Tbx_Computername" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" Text="" HorizontalAlignment="Right"/>
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_TimeZone" VerticalAlignment="Center" Content="Time Zone" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Unattend_Stp_TimeZone" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Timezone:" Width="120" HorizontalAlignment="Left"/>
-                                <ComboBox x:Name="Control_Unattend_Cbx_Timezone" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" Width="405"  />
+                                <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Timezone:" Width="120" HorizontalAlignment="Left"/>
+                                <ComboBox x:Name="Control_Unattend_Cbx_Timezone" FontFamily="Segoe UI" FontSize="14" Width="405"  />
                             </StackPanel>
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_StaticIP" VerticalAlignment="Center" Content="Static IP configuration" Margin="0,0,0,10" />
@@ -630,26 +1047,26 @@ $Xaml = @'
                 <!--#region Credentials-->
                 <StackPanel x:Name="Control_Creds_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Identity Provider" Margin="0,0,0,10"/>
+                        <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Identity Provider" Margin="0,0,0,10"/>
 
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock x:Name="Control_Creds_Tbl_Idp" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Type:" Width="120" HorizontalAlignment="Left"/>
-                            <ComboBox Width="430" x:Name="Control_Creds_Cbx_Idp" Foreground="#EBEBEB" FontFamily="Segoe UI" FontSize="14" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_Idp}" >
+                            <TextBlock x:Name="Control_Creds_Tbl_Idp" FontSize="14" FontFamily="Segoe UI"  Text="Type:" Width="120" HorizontalAlignment="Left"/>
+                            <ComboBox Width="430" x:Name="Control_Creds_Cbx_Idp" FontFamily="Segoe UI" FontSize="14" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_Idp}" >
                             </ComboBox>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_AAD" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock x:Name="Control_Creds_Tbl_AADTenant" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="#ABADB3" Width="430"  IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_AADTenant}" />
+                                <TextBlock x:Name="Control_Creds_Tbl_AADTenant" FontSize="14" FontFamily="Segoe UI"  Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430"  IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_AADTenant}" />
                             </StackPanel>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_LocalPassword" Visibility="Visible">
-                            <TextBlock x:Name="Control_Creds_Tbl_LocalAdminPassword"  FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Local Administrator Password" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="Control_Creds_Tbl_LocalAdminPassword"  FontSize="16" FontFamily="Segoe UI"  Text="Local Administrator Password" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Password:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Password:" Width="120" HorizontalAlignment="Left"/>
                                 <Grid>
-                                    <PasswordBox x:Name="Control_Creds_Pwb_LocalPassword" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_LocalAdminPassword}"/>
+                                    <PasswordBox x:Name="Control_Creds_Pwb_LocalPassword" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_LocalAdminPassword}"/>
                                     <Path x:Name="Control_Creds_Pth_LocalPassword" SnapsToDevicePixels="False" StrokeThickness="3" Data="M2,10 L8,16 L15,5" Stroke="#92D050" Margin="300,0,0,0" Visibility="Hidden"/>
                                 </Grid>
                             </StackPanel>
@@ -664,13 +1081,13 @@ $Xaml = @'
                 <!--#region NetworkInterface-->
                 <StackPanel x:Name="Control_NetInterface_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Select a network adapter" Margin="0,0,0,10"/>
+                        <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Select a network adapter" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <ListView x:Name="Control_NetInterface_Lvw_Nics" MinHeight="100" MaxHeight="200" Width="550" Background="#343447" SelectionMode="Single">
+                                <ListView x:Name="Control_NetInterface_Lvw_Nics" MinHeight="100" MaxHeight="200" Width="550" SelectionMode="Single">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="Name" Width="100" DisplayMemberBinding ="{Binding 'Name'}" />
@@ -727,10 +1144,12 @@ $Xaml = @'
                                                                 <ControlTemplate.Triggers>
                                                                     <Trigger Property="IsSelected" Value="true">
                                                                         <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
                                                                     </Trigger>
                                                                     <Trigger Property="IsMouseOver" Value="true">
                                                                         <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                                                         <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
                                                                     </Trigger>
                                                                 </ControlTemplate.Triggers>
                                                             </ControlTemplate>
@@ -757,12 +1176,12 @@ $Xaml = @'
                                             </LinearGradientBrush>
                                         </Ellipse.Stroke>
                                     </Ellipse>
-                                    <TextBlock Text="Getting network interface properties. Please wait..." Margin="10,0,0,0" FontFamily="Segoe UI" FontSize="14" Foreground="#EBEBEB" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Getting network interface properties. Please wait..." Margin="10,0,0,0" FontFamily="Segoe UI" FontSize="14"  VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock x:Name="Control_NetInterface_Tbl_Warning" Width="550" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" TextWrapping="Wrap" Text="" HorizontalAlignment="Left" />
+                            <TextBlock x:Name="Control_NetInterface_Tbl_Warning" Width="550" FontSize="14" FontFamily="Segoe UI"  TextWrapping="Wrap" Text="" HorizontalAlignment="Left" />
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -774,37 +1193,37 @@ $Xaml = @'
                 <!--#region NetConfig-->
                 <StackPanel x:Name="Control_NetConfig_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <RadioButton x:Name="Control_NetConfig_Rbt_DHCP" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,5" IsChecked="True" FocusVisualStyle="{StaticResource ButtonFocusVisual}" >
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DHCP" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
+                        <RadioButton x:Name="Control_NetConfig_Rbt_DHCP" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,5" IsChecked="True"  >
+                            <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="DHCP" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
                         </RadioButton>
-                        <RadioButton x:Name="Control_NetConfig_Rbt_Static" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,10" FocusVisualStyle="{StaticResource ButtonFocusVisual}" >
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Static" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
+                        <RadioButton x:Name="Control_NetConfig_Rbt_Static" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,10"  >
+                            <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Static" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
                         </RadioButton>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock x:Name="Control_NetConfig_Tbl_IpAddress" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="#ABADB3" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_IpAddress}"/>
+                            <TextBlock x:Name="Control_NetConfig_Tbl_IpAddress" FontSize="14" FontFamily="Segoe UI"  Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_IpAddress}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock x:Name="Control_NetConfig_Tbl_Gateway" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="#ABADB3" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_Gateway}"/>
+                            <TextBlock x:Name="Control_NetConfig_Tbl_Gateway" FontSize="14" FontFamily="Segoe UI"  Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"  Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_Gateway}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_DNS">
-                            <TextBlock x:Name="Control_NetConfig_Tbl_DNS" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="#ABADB3" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DNS}" />
+                            <TextBlock x:Name="Control_NetConfig_Tbl_DNS" FontSize="14" FontFamily="Segoe UI"  Text="DNS:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DNS}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock x:Name="Control_NetConfig_Tbl_TimeServer" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
-                            <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_TimeServer}" />
+                            <TextBlock x:Name="Control_NetConfig_Tbl_TimeServer" FontSize="14" FontFamily="Segoe UI"  Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_TimeServer}" />
                         </StackPanel>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
-                            <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Optional Configuration" Margin="0,0,0,10"/>
+                            <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock x:Name="Control_NetConfig_Tbl_VlanID" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="VLAN ID:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_VlanID}" />
+                                <TextBlock x:Name="Control_NetConfig_Tbl_VlanID" FontSize="14" FontFamily="Segoe UI"  Text="VLAN ID:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_VlanID}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock x:Name="Control_NetConfig_Tbl_DnsForwarder" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="#ABADB3" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DnsForwarder}"/>
+                                <TextBlock x:Name="Control_NetConfig_Tbl_DnsForwarder" FontSize="14" FontFamily="Segoe UI"  Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
+                                <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DnsForwarder}"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -818,18 +1237,18 @@ $Xaml = @'
                 <StackPanel x:Name="Control_Job_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
                         <ProgressBar x:Name="Control_Job_Pgb_Progress" Height="23.5" Width="550" Background="#1B4D72" Minimum="0" Maximum="100" Value="0" Foreground="#4F91CD" BorderThickness="0" AutomationProperties.Name="Progress" Focusable="True"/>
-                        <TextBlock x:Name="Control_Job_Tbl_Current" FontSize="12" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="" HorizontalAlignment="Left" Margin="0,10,0,0" />
-                        <TextBlock x:Name="Control_Job_Tbl_Details" FontSize="12" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                        <TextBlock x:Name="Control_Job_Tbl_Current" FontSize="12" FontFamily="Segoe UI"  Text="" HorizontalAlignment="Left" Margin="0,10,0,0" />
+                        <TextBlock x:Name="Control_Job_Tbl_Details" FontSize="12" FontFamily="Segoe UI"  Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,10,0,0" />
                         <StackPanel x:Name="Control_Job_Stp_Netbxnda" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal">
                                 <Path  SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,10,0" Visibility="Visible"/>
-                                <TextBlock  TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="An update cannot be downloaded" />
+                                <TextBlock  TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" Text="An update cannot be downloaded" />
                             </StackPanel>
-                            <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="The update could not be downloaded directly from this machine. Please download the update from the following url:" />
-                            <TextBox  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" BorderBrush="#ABADB3" Text="https://go.microsoft.com/fwlink/?linkid=852544" />
-                            <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Text="Save the file on this host, click the browse button and select the executable to continue." />
+                            <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" Text="The update could not be downloaded directly from this machine. Please download the update from the following url:" />
+                            <TextBox  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Text="https://go.microsoft.com/fwlink/?linkid=852544" />
+                            <TextBlock TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" Text="Save the file on this host, click the browse button and select the executable to continue." />
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBox x:Name="Control_Job_Tbx_Netbxnda" BorderBrush="#ABADB3" Width="440" IsReadOnly="True" />
+                                <TextBox x:Name="Control_Job_Tbx_Netbxnda" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="440" IsReadOnly="True" />
                                 <Button x:Name="Control_Job_Btn_Netbxnda" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
                             </StackPanel>
                         </StackPanel>
@@ -843,11 +1262,11 @@ $Xaml = @'
                 <!--#region Summary-->
                 <StackPanel x:Name="Control_Summary_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                            <TextBlock x:Name="Control_Summary_Tbl_Header1" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed" BorderBrush="#ABADB3" AutomationProperties.LabeledBy="{Binding ElementName=Control_Summary_Tbl_Header1}" />
+                            <TextBlock x:Name="Control_Summary_Tbl_Header1" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" />
+                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed"  AutomationProperties.LabeledBy="{Binding ElementName=Control_Summary_Tbl_Header1}" />
                         <StackPanel Orientation="Horizontal">
                             <Path x:Name="Control_Summary_Pth_Content1"  SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,10,0" Visibility="Collapsed"/>
-                            <TextBlock x:Name="Control_Summary_Tbl_Content1"  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" HorizontalAlignment="Left" Margin="0,0,0,10" Width="550" />
+                            <TextBlock x:Name="Control_Summary_Tbl_Content1"  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" Width="550" />
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -859,7 +1278,7 @@ $Xaml = @'
                 <!--#region Reboot-->
                 <StackPanel x:Name="Control_Reboot_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="280">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI" Foreground="#EBEBEB" Text="Select a onetime boot option" Margin="0,0,0,10"/>
+                        <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Select a onetime boot option" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <ListView x:Name="Control_Reboot_Lvw_Options" Height="100" Width="550" SelectionMode="Single" >
                                 <ListView.View>
@@ -870,7 +1289,7 @@ $Xaml = @'
                             </ListView>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI" Foreground="#EBEBEB" TextWrapping="Wrap" HorizontalAlignment="Left"/>
+                            <TextBlock FontSize="14" FontFamily="Segoe UI"  TextWrapping="Wrap" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -983,7 +1402,7 @@ $S_NetInterfaces = {
     $syncHash.Control_NetInterface_Stp_Wait.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Stp_Wait.Visibility="Collapsed"},"Normal")
     $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {        
         $syncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Lvw_Nics.AddChild($_)},"Normal")
-        }
+        }        
 }
 
 $S_PrepareVHDX = {
@@ -1522,7 +1941,7 @@ Function F_Regex {
         else {
             #parent stackpanel
             $control.value.ToolTip = $null
-            $control.value.BorderBrush="#ABADB3"
+            $control.value.BorderBrush=[System.Windows.SystemColors]::ActiveBorderBrush
     }
 }
 
@@ -1872,7 +2291,7 @@ $syncHash.Control_Mode_Btn_Left.Add_Click({
         $syncHash.Control_Prepare_Stp.Visibility = "Visible"
         $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Prepare_Title
     }
-    elseif ($Script:Initialized -eq "CloudBuilder_Install") {
+    elseif ($Script:Initialized -eq "CloudBuilder_Install") {        
         $syncHash.Control_Creds_Stp.Visibility = "Visible"
         $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.Credentials_Title
     }
@@ -2110,9 +2529,10 @@ $syncHash.Control_Creds_Btn_Next.Add_Click({
         $Runspace_Jobs.AddScript($S_NetInterfaces) | Out-Null
         $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
         $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
+        
     }
     Else {        
-        $syncHash.Control_Creds_Pwb_LocalPassword.Focus()                             
+        $syncHash.Control_Creds_Pwb_LocalPassword.Focus()            
     }
 })
 
