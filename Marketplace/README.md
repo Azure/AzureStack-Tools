@@ -15,7 +15,9 @@ To use the Marketplace Toolkit for Microsoft Azure Stack script you require:
 
 - This script
 - The gallerypackager executable (http://www.aka.ms/azurestackmarketplaceitem)
-- Access as Azure Stack administrator to the Azure Stack environment. This is only required if you want to publish the generated package to the marketplace. For this you will also need to install the current PowerShell modules to support Azure Stack on the machine that runs this script (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install).
+- Access as Azure Stack administrator to the Azure Stack environment. This is only required if you want to publish the generated package to the marketplace. For this you will also need to install the current PowerShell modules (1.3.0) to support Azure Stack on the machine that runs this script (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install).
+
+
 
 ## Download the Marketplace Toolkit
 To  download the Azure Stack Marketplace Toolkit from this repository, run the following PowerShell script:
@@ -65,8 +67,10 @@ The VM extension on the dashboard is used to create a marketplace item for a VM 
 
 ## Limitations
 
-- The current version of the script only supports Azure AD for directly publishing an package to the marketplace. We are working on adding support for ADFS. When you are using ADFS you can still create the marketplace item package with the tool, but publishing the package to the marketplace is a manual process in PowerShell. 
 
 ## Improvements
+- Added support for AD FS deployments
 
 The Marketplace Toolkit for Microsoft Azure Stack is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
+
+
