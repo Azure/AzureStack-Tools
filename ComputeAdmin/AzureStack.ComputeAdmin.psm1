@@ -135,6 +135,9 @@ function Add-AzsVMImage {
         [Parameter(ParameterSetName = 'VMImageFromAzure')]
         [bool] $CreateGalleryItem = $true,
 
+        [Parameter(ParameterSetName = 'VMImageFromLocal')]
+        [string] $MarketPlaceZipPath = '',
+
         [switch] $Force
     )
         
@@ -296,8 +299,8 @@ function Add-AzsVMImage {
     Set-AzureRmCurrentStorageAccount -StorageAccountName $storageAccountName -ResourceGroupName $resourceGroupName
     $container = Get-AzureStorageContainer -Name $containerName -ErrorAction SilentlyContinue
 
-    if ($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded') {
-        $GalleryItem = CreateGalleryItem -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -title $title -description $description 
+    if ($CreateGalleryItem -eq $true -And $platformImage.Properties.ProvisioningState -eq 'Succeeded') {        
+        $GalleryItem = CreateGalleryItem -publisher $publisher -offer $offer -sku $sku -version $version -osType $osType -title $title -description $description -MarketPlaceZipPath "$MarketPlaceZipPath"
         $null = $container| Set-AzureStorageBlobContent -File $GalleryItem.FullName -Blob $galleryItem.Name
         $galleryItemURI = '{0}{1}/{2}' -f $storageAccount.PrimaryEndpoints.Blob.AbsoluteUri, $containerName, $galleryItem.Name
 
@@ -472,8 +475,15 @@ function New-AzsServer2016VMImage {
         [Parameter()]
         [bool] $Net35 = $true,
         
+
+        [Parameter()]
+        [string] $MarketPlaceZipPath,
+
+
+        
         [Parameter()][alias('sku_version')]
         [version]$osImageSkuVersion = (date -Format yyyy.MM.dd).ToString()
+
     )
     begin {
         function CreateWindowsVHD {
@@ -660,10 +670,10 @@ function New-AzsServer2016VMImage {
 
                 if ($CreateGalleryItem) {
                     $description = "This evaluation image should not be used for production workloads."
-                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem
+                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Core Eval" -description $description -CreateGalleryItem $CreateGalleryItem -MarketPlaceZipPath "$MarketPlaceZipPath"                    
                 }
                 else {
-                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
+                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem -MarketPlaceZipPath "$MarketPlaceZipPath"                    
                 }
             }
             catch {
@@ -693,11 +703,11 @@ function New-AzsServer2016VMImage {
                     Write-Verbose -Message "Server Full VHD already found."
                 }
                 if ($CreateGalleryItem) {
-                    $description = "This evaluation image should not be used for production workloads."
-                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem
+                    $description = "This evaluation image should not be used for production workloads."                    
+                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -title "Windows Server 2016 Datacenter Eval" -description $description -CreateGalleryItem $CreateGalleryItem -MarketPlaceZipPath "$MarketPlaceZipPath"
                 }
-                else {
-                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem
+                else {                    
+                    Add-AzsVMImage -sku $sku -osDiskLocalPath $ImagePath @PublishArguments -CreateGalleryItem $CreateGalleryItem -MarketPlaceZipPath "$MarketPlaceZipPath"
                 }
             }
             catch {
@@ -732,7 +742,9 @@ Function CreateGalleryItem {
 
         [string] $Title,
 
-        [string] $Description
+        [string] $Description,
+
+        [string] $MarketPlaceZipPath = ''
     )
     $workdir = '{0}{1}' -f [System.IO.Path]::GetTempPath(), [System.Guid]::NewGuid().ToString() 
     New-Item $workdir -ItemType Directory | Out-Null
@@ -743,17 +755,45 @@ Function CreateGalleryItem {
     New-Item -ItemType directory -Path $extractedGalleryItemPath | Out-Null
     expand-archive -Path "$workdir\CustomizedVMGalleryItem.zip" -DestinationPath $extractedGalleryItemPath -Force
         
-    $maxAttempts = 5
-    for ($retryAttempts = 1; $retryAttempts -le $maxAttempts; $retryAttempts++) {
-        try {
-            Write-Verbose -Message "Downloading Azure Stack Marketplace Item Generator Attempt $retryAttempts"
-            Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile "$workdir\MarketplaceItem.zip" 
-            break
-        }
-        catch {
-            if ($retryAttempts -ge $maxAttempts) {
-                Write-Error "Failed to download Azure Stack Marketplace Item Generator" -ErrorAction Stop
+
+     # Check if we were provided with the MarketPlace Item Generator File
+    if ( $MarketPlaceZipPath -eq '' )
+    {
+    
+        $maxAttempts = 5
+        for ($retryAttempts = 1; $retryAttempts -le $maxAttempts; $retryAttempts++) {
+            try {
+                Write-Verbose -Message "Downloading Azure Stack Marketplace Item Generator Attempt $retryAttempts" -Verbose
+                Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile "$workdir\MarketplaceItem.zip" 
+                break
             }
+            catch {
+                if ($retryAttempts -ge $maxAttempts) {
+                    Write-Error "Failed to download Azure Stack Marketplace Item Generator" -ErrorAction Stop
+                }
+            }
+
+        }
+    }
+    else
+    {
+        write-verbose -Message "Copying Marketplace Item Generator to working directory" -Verbose
+
+        # Copy the provided file into the working directory
+        if ( Test-Path -Path "$MarketPlaceZipPath" )
+        {
+            try {
+                Write-Verbose -Message "Copying Market Place Item Generator zip file into working directory" -Verbose
+                copy-item -Path "$MarketPlaceZipPath" -Destination "$workdir\MarketplaceItem.zip"
+            }
+            catch
+            {
+                Write-Error "Failed to copy Market Place Item Generator zip into working directory: $_" -ErrorAction Stop
+            }
+        }
+        else
+        {
+            Write-Error "Provided Market Place Item Generator zip file does not exist" -ErrorAction Stop
         }
     }
 
