@@ -350,7 +350,7 @@ function Remove-AzsVMImage {
         
     $VMImageExists = $false
     if (Get-AzsVMImage -publisher $publisher -offer $offer -sku $sku -version $version -location $location -ErrorAction SilentlyContinue) {
-        Write-Verbose "VM Image is present in Azure Stack - continuing to remove" -Verbose
+        Write-Verbose "VM Image is present in Azure Stack - continuing to remove"
         $VMImageExists = $true
     }
     else {
@@ -367,7 +367,7 @@ function Remove-AzsVMImage {
                     ApiVersion   = "2015-12-01-preview"
                 }
 
-                Write-Verbose -Message "Deleting VM Image" -Verbose
+                Write-Verbose -Message "Deleting VM Image"
                 Remove-AzureRmResource @params -Force
             }
             catch {                
@@ -377,7 +377,7 @@ function Remove-AzsVMImage {
     }
 
     if (-not $KeepMarketplaceItem) {
-        Write-Verbose "Removing the marketplace item for the VM Image." -Verbose
+        Write-Verbose "Removing the marketplace item for the VM Image."
         $name = "$offer$sku"
         #Remove periods so that the offer and sku can be retrieved from the Marketplace Item name
         $name = $name -replace "\.", "-"
@@ -470,7 +470,10 @@ function New-AzsServer2016VMImage {
         [bool] $CreateGalleryItem = $true,
 
         [Parameter()]
-        [bool] $Net35 = $true
+        [bool] $Net35 = $true,
+        
+        [Parameter()][alias('sku_version')]
+        [version]$osImageSkuVersion = (date -Format yyyy.MM.dd).ToString()
     )
     begin {
         function CreateWindowsVHD {
@@ -560,7 +563,7 @@ function New-AzsServer2016VMImage {
     process {
     
         $location = Get-AzsHomeLocation -Location $location
-        Write-Verbose -Message "Checking ISO path for a valid ISO." -Verbose
+        Write-Verbose -Message "Checking ISO path for a valid ISO."
         if (!$IsoPath.ToLower().contains('.iso')) {
             Write-Error -Message "ISO path is not a valid ISO file." -ErrorAction Stop
         }
@@ -589,7 +592,7 @@ function New-AzsServer2016VMImage {
             else {
                 if ($IncludeLatestCU) {
                     #for latest CU, check https://support.microsoft.com/en-us/help/4000825/windows-10-and-windows-server-2016-update-history
-                    $Uri = 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/10/windows10.0-kb4041691-x64_6b578432462f6bec9b4c903b3119d437ef32eb29.msu'
+                    $Uri = 'http://download.windowsupdate.com/d/msdownload/update/software/updt/2018/05/windows10.0-kb4103720-x64_c1fb7676d38fffae5c28b9216220c1f033ce26ac.msu'
                     $OutFile = "$ModulePath\update.msu"
                 }
                 else {
@@ -605,7 +608,7 @@ function New-AzsServer2016VMImage {
                 }
                 $CurrentProgressPref = $ProgressPreference
                 $ProgressPreference = 'SilentlyContinue'
-                Write-Verbose -Message "Starting download of CU. This will take some time." -Verbose
+                Write-Verbose -Message "Starting download of CU. This will take some time."
                 Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing
                 $ProgressPreference = $CurrentProgressPref
                 Unblock-File -Path $OutFile
@@ -629,7 +632,7 @@ function New-AzsServer2016VMImage {
         $PublishArguments = @{
             publisher = 'MicrosoftWindowsServer'
             offer     = 'WindowsServer'
-            version   = '1.0.0'
+            version   = $osImageSkuVersion.ToString()
             osType    = 'Windows'
             location  = $location
         }
@@ -649,7 +652,7 @@ function New-AzsServer2016VMImage {
             try {
                 if ((!(Test-Path -Path $ImagePath)) -and (!$VMImageAlreadyAvailable)) {
                     Write-Verbose -Message "Creating Server Core Image"
-                    CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop -Verbose
+                    CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $CoreEdition -ErrorAction Stop
                 }
                 else {
                     Write-Verbose -Message "Server Core VHD already found."
@@ -683,8 +686,8 @@ function New-AzsServer2016VMImage {
                 }
 
                 if ((!(Test-Path -Path $ImagePath)) -and (!$VMImageAlreadyAvailable)) {
-                    Write-Verbose -Message "Creating Server Full Image" -Verbose
-                    CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop -Verbose
+                    Write-Verbose -Message "Creating Server Full Image"
+                    CreateWindowsVHD @ConvertParams -VHDPath $ImagePath -Edition $FullEdition -ErrorAction Stop
                 }
                 else {
                     Write-Verbose -Message "Server Full VHD already found."
@@ -718,7 +721,7 @@ Function CreateGalleryItem {
         [ValidatePattern("[a-zA-Z0-9-]{3,}")]
         [String] $Offer,
 
-        [ValidatePattern("[a-zA-Z0-9-]{3,}")]
+        [ValidatePattern("[a-zA-Z0-9-\.]{3,}")]
         [String] $Sku,
 
         [ValidatePattern("\d+\.\d+\.\d")]
@@ -743,7 +746,7 @@ Function CreateGalleryItem {
     $maxAttempts = 5
     for ($retryAttempts = 1; $retryAttempts -le $maxAttempts; $retryAttempts++) {
         try {
-            Write-Verbose -Message "Downloading Azure Stack Marketplace Item Generator Attempt $retryAttempts" -Verbose
+            Write-Verbose -Message "Downloading Azure Stack Marketplace Item Generator Attempt $retryAttempts"
             Invoke-WebRequest -Uri http://www.aka.ms/azurestackmarketplaceitem -OutFile "$workdir\MarketplaceItem.zip" 
             break
         }
