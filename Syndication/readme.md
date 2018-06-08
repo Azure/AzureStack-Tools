@@ -5,7 +5,7 @@ not use the build in portal feature to syndicate Azure Market place items and ma
 available to your users.
 
 This Tool allows you to download Azure Marketplace Items with a machine that has internet connectivity and side load them.
-The downloaded needs to transferred to machine with has connectivity to the Azure Stack deployment and imported.
+The downloaded items need to be transferred to a machine with has connectivity to the Azure Stack deployment before importing them.
 
 ![](demosyndicate.gif)
 
@@ -14,9 +14,13 @@ The downloaded needs to transferred to machine with has connectivity to the Azur
 - Azure Stack RP registered within your Azure Subscription
 
 - Azure Subscription used to register Azure Stack System (Multi Node or ASDK)
-- AzureRM 1.2.11 PowerShell needs to be installed
+- AzureStack 1.3.0 PowerShell needs to be installed
 
-(https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-quickstart)
+(https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install)
+
+- Optional: For best download performance (Premium Download) Azure Storage Tools are required
+(http://aka.ms/downloadazcopy)
+
 
 
 ## Import the Module

@@ -9,16 +9,33 @@ You must also have access to an account / directory that is an owner or contribu
 
 #>
 
-# Create log folder / prevent duplicate logs
-$LogFolder = "$env:SystemDrive\MASLogs"
-if (-not (Test-Path $LogFolder))
+# Generate log file(s)
+function New-RegistrationLogFile
 {
-    New-Item -Path $LogFolder -ItemType Directory -Force | Out-Null
-}
-if(-not $AzureRegistrationLog)
-{
-    $AzureRegistrationLog = "$LogFolder\AzureStack.AzureRegistration.$(Get-Date -Format yyyy-MM-dd.HH-mm-ss).log"
-    $null = New-Item -Path $AzureRegistrationLog -ItemType File -Force
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [String] $LogDate = (Get-Date -Format yyyy-MM-dd),
+
+        [Parameter(Mandatory=$false)]
+        [String] $RegistrationFunction = 'RegistrationOperation'
+    )
+
+    # Create log folder
+    $LogFolder = "$env:SystemDrive\MASLogs\Registration"
+    if (-not (Test-Path $LogFolder))
+    {
+        New-Item -Path $LogFolder -ItemType Directory -Force | Out-Null
+    }
+
+    $logFilePath = "$LogFolder\AzureStack.Activation.$RegistrationFunction-$LogDate.log"
+    Write-Verbose "Writing logs to file: $logFilePath"
+    if (-not (Test-Path $logFilePath -PathType Leaf))
+    {
+        $null = New-Item -Path $logFilePath -ItemType File -Force
+    }
+
+    $Script:registrationLog = $logFilePath
 }
 
 ################################################################
@@ -169,6 +186,8 @@ function Set-AzsRegistration{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
@@ -201,7 +220,7 @@ function Set-AzsRegistration{
     New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipal $servicePrincipal
 
     # Activate AzureStack syndication / usage reporting features
-    $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName
+    $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ConnectedScenario
     Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
     Activate-AzureStack -Session $session -ActivationKey $ActivationKey
 
@@ -277,6 +296,8 @@ function Remove-AzsRegistration{
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
@@ -390,6 +411,8 @@ Function Get-AzsRegistrationToken{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     if(($BillingModel -eq 'Capacity') -and ([String]::IsNullOrEmpty($AgreementNumber)))
     {
         Log-Throw -Message "Agreement number is null or empty when BillingModel is set to Capacity" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
@@ -502,6 +525,8 @@ Function Register-AzsEnvironment{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
@@ -587,6 +612,8 @@ Function UnRegister-AzsEnvironment{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     if (-not $RegistrationName)
@@ -662,9 +689,12 @@ Function Get-AzsRegistrationName{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
     $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
     $registrationName = Get-RegistrationName -Session $session
+    Log-Output "Registration name: $registrationName"
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
     return $registrationName
 }
@@ -703,11 +733,19 @@ Function Get-AzsActivationKey{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $KeyOutputFilePath
+        [String] $KeyOutputFilePath, 
+
+        [Parameter(Mandatory = $false)]
+        [Switch] $ConnectedScenario
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+
+    if (-not $ConnectedScenario)
+    {
+        New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
@@ -799,6 +837,8 @@ param(
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
@@ -842,6 +882,8 @@ Function Remove-AzsActivationResource{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
+    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
@@ -849,6 +891,7 @@ Function Remove-AzsActivationResource{
     try 
     {
         $AzureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
+        Log-Output "Logging in to AzureStack administrator account. TenantId: $($AzureStackStampInfo.AADTenantID) Environment: 'AzureStack'"
         Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment 'AzureStack'
         $azureStackContext = Get-AzureRmContext
 
@@ -1206,7 +1249,7 @@ function New-RBACAssignment{
                 Log-Output "Setting $RoleName role on '$($RegistrationResource.ResourceId)'"
     
                 # Determine if RBAC role has been assigned
-                $roleAssignmentScope = "/subscriptions/$($RegistrationResource.SubscriptionId)/resourceGroups/$($RegistrationResource.ResourceGroupName)/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.ResourceName)"
+                $roleAssignmentScope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.Name)"
                 $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
     
                 foreach ($role in $roleAssignments)
@@ -1358,13 +1401,46 @@ function Get-AzureAccountInfo{
     $AzureSubscription = $AzureContext.Subscription
 
     $tokens = @()
-    try{$tokens += [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()}catch{}
-    try{$tokens += [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()}catch{}
-    try{$tokens += $AzureContext.TokenCache.ReadItems()}catch{}
+    $exceptions = @()
+    try{
+        $tokens += $AzureContext.TokenCache.ReadItems()
+        if ($tokens.Count -eq 0)
+        {
+            throw "No Tokens collected."
+        }
+    }
+    catch{
+        Log-Warning "Tokens not collected using method: `$AzureContext.TokenCache.ReadItems() `r`n$_"
+        $exceptions += $_.Exception
+    }
 
-    if (-not $tokens -or ($tokens.Count -le 0))
+    try{
+        $tokens += [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
+        if ($tokens.Count -eq 0)
+        {
+            throw "No Tokens collected."
+        }
+    }
+    catch{ 
+        Log-Warning "Tokens not collected using method: [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() `r`n$_"
+        $exceptions += $_.Exception
+    }
+
+    try{
+        $tokens += [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
+        if ($tokens.Count -eq 0)
+        {
+            throw "No Tokens collected."
+        }
+    }
+    catch{
+        Log-Warning "Tokens not collected using method: [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() `r`n$_"
+        $exceptions += $_.Exception
+    }
+
+    if ($tokens.Count -lt 1)
     {
-        Log-Throw -Message "Token cache is empty `r`n$($_)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Throw -Message "Token cache is empty `r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name -ExceptionObject $exceptions
     }
 
     $token = $tokens |
@@ -1525,22 +1601,60 @@ function Confirm-StampVersion{
         [Parameter(Mandatory=$true)]
         [System.Management.Automation.Runspaces.PSSession] $PSSession
     )
+    
+    $registrationVersion = [Version]"1.1806.0.21"
     try
     {
         Log-Output "Verifying stamp version."
         $stampInfo = Invoke-Command -Session $PSSession -ScriptBlock { Get-AzureStackStampInformation -WarningAction SilentlyContinue }
-        $minVersion = [Version]"1.0.170828.1"
-        if ([Version]$stampInfo.StampVersion -lt $minVersion) {
-            Log-Throw -Message "Script only applicable for Azure Stack builds $minVersion or later." -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-        }
-
-        Log-Output -Message "Running registration actions on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
-        return $stampInfo
     }
     Catch
     {
         Log-Throw "An error occurred checking stamp information: `r`n$($_)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
+
+    $versionNumber = [Version]$stampInfo.StampVersion
+    $minVersion = [Version]"1.0.170928.1"
+    if ($versionNumber -lt $minVersion) 
+    {
+        Log-Throw -Message "Script only applicable for Azure Stack builds $minVersion or later." -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
+
+    if ($versionNumber -lt $registrationVersion)
+    {
+        switch ($versionNumber.Build)
+        {
+            "170928"
+            {
+                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
+                Log-Warning -Message "NOTE: The below URL is NOT a module and does not need to be imported!"
+                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1709/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+            "171020"
+            {
+                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
+                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1710/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+            "171201"
+            {
+                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
+                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1710/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+            "180106"
+            {
+                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
+                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1712/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            }
+        }
+    }
+    elseif (($versionNumber.Build -gt "180106") -and ($versionNumber.Build -lt $registrationVersion))
+    {
+        Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
+        Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1803/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
+
+    Log-Output -Message "Running registration actions on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"
+    return $stampInfo
 }
 
 <#
@@ -1611,7 +1725,7 @@ function Log-Output{
         [object] $Message
     )
 
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $AzureRegistrationLog -Append
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Script:registrationLog -Append
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
 }
 
@@ -1631,7 +1745,7 @@ function Log-Warning{
 
     # Write Error: line seperately otherwise out message will not contain stack trace
     Log-Output "*** WARNING ***"
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $AzureRegistrationLog -Append
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message" | Out-File $Script:registrationLog -Append
     Write-Warning "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $Message"
     Log-Output "*** End WARNING ***"
 }
@@ -1650,22 +1764,36 @@ function Log-Throw{
         [Object] $Message,
 
         [Parameter(Mandatory=$true)]
-        [String] $CallingFunction
+        [String] $CallingFunction,
+
+        [Parameter(Mandatory=$false)]
+        [PSObject] $ExceptionObject
     )
 
     $errorLine = "************************ Error ************************"
 
     # Write Error line seperately otherwise out message will not contain stack trace
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine" | Out-File $AzureRegistrationLog -Append
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine" | Out-File $Script:registrationLog -Append
     Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): $errorLine"
 
     Log-Output $Message
-    Log-Output $Message.ScriptStacktrace
+    if ($Message.ScriptStacktrace)
+    {
+        Log-Output $Message.ScriptStacktrace   
+    }
+
+    if ($ExceptionObject)
+    {
+        for ($exCount = 0; $exCount -lt $ExceptionObject.Count; $exCount++)
+        {
+            Log-Output "Exception #$exCount`: $($ExceptionObject[$exCount])"
+        }
+    }
 
     Log-OutPut "*********************** Ending registration action during $CallingFunction ***********************`r`n"
 
-    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" | Out-File $AzureRegistrationLog -Append
-    Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $AzureRegistrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" 
+    "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $Script:registrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" | Out-File $Script:registrationLog -Append
+    Write-Verbose "$(Get-Date -Format yyyy-MM-dd.hh-mm-ss): Logs can be found at: $Script:registrationLog  and  \\$PrivilegedEndpoint\c$\maslogs `r`n" 
 
     throw $Message
 }

@@ -24,7 +24,7 @@ To use the Marketplace Toolkit for Microsoft Azure Stack script you require:
 
 - This script
 - The gallerypackager executable (http://www.aka.ms/azurestackmarketplaceitem)
-- Access as Azure Atack administrator to the Azure Stack environment. This is only required if you want to publish the generated package to the marketplace. For this you will also need to install the current PowerShell modules to support Azure Stack on the machine that runs this script (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install).
+- Access as Azure Stack administrator to the Azure Stack environment. This is only required if you want to publish the generated package to the marketplace. For this you will also need to install the current PowerShell modules to support Azure Stack on the machine that runs this script (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install).
 
 The Marketplace Toolkit script for Microsoft Azure Stack is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
 
@@ -572,34 +572,6 @@ $XAML = @'
                                             <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
                                             <Button x:Name="Publish_Btn_Package" Content="Browse" Width="60" Height="23" Margin="8,0,0,0" />
                                         </StackPanel>
-
-                                        <StackPanel Orientation="Horizontal" Width="258" Height="25" >
-                                            <Label Content="*" Foreground="red"/>
-                                            <Label Content="Service admin name" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Width="258" Height="23" Margin="0,0,0,8" ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="2147483647" >
-                                            <TextBox x:Name="Publish_Tbx_Username" Width="258" />
-                                            <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
-                                        </StackPanel>
-
-                                        <StackPanel Orientation="Horizontal" Width="258" Height="25" >
-                                            <Label Content="*" Foreground="red"/>
-                                            <Label Content="Password" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Width="258" Height="23" Margin="0,0,0,8" ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="2147483647" >
-                                            <PasswordBox x:Name="Publish_Pwb_Password1" Width="258" />
-                                            <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
-                                        </StackPanel>
-
-                                        <StackPanel Orientation="Horizontal" Width="258" Height="25" >
-                                            <Label Content="*" Foreground="red"/>
-                                            <Label Content="Confirm password" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Width="258" Height="23" Margin="0,0,0,8" ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="2147483647" >
-                                            <PasswordBox x:Name="Publish_Pwb_Password2" Width="258" />
-                                            <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
-                                        </StackPanel>
-
                                         <StackPanel Orientation="Horizontal" Width="258" Height="25" >
                                             <Label Content="*" Foreground="red"/>
                                             <Label Content="API endpoint" />
@@ -608,7 +580,22 @@ $XAML = @'
                                             <TextBox x:Name="Publish_Tbx_Endpoint" Width="258" />
                                             <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
                                         </StackPanel>
-
+                                        <StackPanel Orientation="Horizontal" Width="258" Height="25" >
+                                            <Label Content="*" Foreground="red"/>
+                                            <Label Content="Azure TenantID" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Width="258" Height="23" Margin="0,0,0,8" ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="2147483647" >
+                                            <TextBox x:Name="Publish_Tbx_TenantID" Width="258" />
+                                            <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Width="258" Height="25" >
+                                        <Label Content="*" Foreground="red"/>
+                                        <Label Content="Region" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Width="258" Height="23" Margin="0,0,0,8" ToolTipService.InitialShowDelay="0" ToolTipService.ShowDuration="2147483647" >
+                                            <TextBox x:Name="Publish_Tbx_Region" Width="258" />
+                                            <Button Width="15" Content="!" Foreground="White" Background="Red" BorderThickness="1" BorderBrush="Red" Visibility="Collapsed" Cursor="Hand" />
+                                        </StackPanel>
                                         <Label Content="Publishing log" Margin="0,10,0,10" />
                                         <ListView x:Name="Publish_Lsv_Log" MinHeight="23" Background="#F9F9F9F9"/>
                                         <Border BorderBrush="#CCCCCC" BorderThickness="0,1,0,0" Margin="0,15,0,0">
@@ -657,8 +644,6 @@ $X_Input_Tbx_Icon115.Tag = @{'errormessage'='The image size must be 115x115.'}
 $X_Input_Tbx_Icon255.Tag = @{'errormessage'='The image size must be 255x115.'}
 $X_Input_Tbx_Screenshot.Tag = @{'errormessage'='The image size must be 533x324.'}
 $X_Params_Tbx_AddStep.Tag = @{'regex'='[ a-zA-Z]{1,20}';'errormessage'='Maximum 20 characters. Can only contain A-Z, a-z and spaces.'}
-$X_Publish_Pwb_Password1.Tag = @{'errormessage'='Passwords do not match.'}
-$X_Publish_Pwb_Password1.Tag = @{'errormessage'='Passwords do not match.'}
 }
 
 function F_Clear {
@@ -681,10 +666,8 @@ $X_Params_Tree_View.Tag = $null
 $X_Params_Tree_View.Items.Clear()
 $X_Params_Bdr_Steps.Visibility = 'Collapsed'
 $X_Publish_Tbx_Package.Text = $null
-$X_Publish_Tbx_Username.Text = $null
-$X_Publish_Pwb_Password1.Password = $null
-$X_Publish_Pwb_Password2.Password = $null
 $X_Publish_Tbx_Endpoint.Text = $null
+$X_Publish_Tbx_TenantID.Text = $null
 $X_Publish_Lsv_Log.Items.Clear()
 $timer.Stop()
 }
@@ -715,12 +698,7 @@ if ($regex){
         $Script:validation_error = $true 
         }
 }
-if ($compare){
-    if (($field_value.Length -gt 0) -and ($field_value -ne $compare)) { 
-        $Script:validation_error = $true 
-        $message = "Passwords do not match"
-        }
-    }
+
 if ($extension){ 
     if ($field_value.Length -gt 0){
         if (test-path $field_value){
@@ -831,7 +809,6 @@ if ($icon255x115) { $X_Input_Tbx_Icon255.Text = $icon255x115 }
 if ($screenshot533x324) { $X_Input_Tbx_Screenshot.Text = $screenshot533x324 }
 if ($armTemplate) { $X_Params_Tbx_Template.Text = $armTemplate }
 if ($executablePath) { $X_Params_Tbx_Exe.Text = $executablePath }
-if ($userName) { $X_Publish_Tbx_Username.Text = $userName }
 if ($endpoint) { $X_Publish_Tbx_Endpoint.Text = $endpoint }
 $X_Blade_Preview.Visibility = 'Visible'
 }
@@ -887,10 +864,7 @@ $params | foreach {
         $param | Add-Member -Type NoteProperty -Name regex -Value '^\d+$'
         $param | Add-Member -Type NoteProperty -Name validationMessage -Value 'Only numeric characters are allowed, and it must be a positive value'
         }
-    if ($_.value.type -eq 'securestring') {  
-        $param | Add-Member -Type NoteProperty -Name uiType -Value "Microsoft.Common.PasswordBox" 
-        $param | Add-Member -Type NoteProperty -Name constraints -Value $false
-        }
+    
 
     # Add each param to the grid varaiable
     $Script:Grid += $param
@@ -1295,17 +1269,7 @@ $script:grid | Sort-Object step, tag | forEach {
     }
     
 }
-    if ($_.uiType -eq 'Microsoft.Common.PasswordBox'){
-    $uiDef_param = [pscustomobject]@{
-        "name"= $uiDef_param_name
-        "type"= "Microsoft.Common.PasswordBox"
-        "label"= [pscustomobject]@{
-            "password"= "Password"
-            "confirmPassword"= "Confirm password"
-            }
-        "toolTip"= $uiDef_param_description
-        }
-    }
+    
 
 if ($_.step -eq 'elements') { 
     # element
@@ -1397,22 +1361,20 @@ $X_Params_Tbx_PackagePath.text = $createpackage_azpkg
 function F_PublishPackage {
 $timer.Start()
 $param_Endpoint = $X_Publish_Tbx_Endpoint.Text
-$param_User = $X_Publish_Tbx_Username.Text
-$param_Pass = $X_Publish_Pwb_Password1.Password
 $param_ResourceGroup = 'system.staging'
-$param_ResourceGroupLocation = 'local'
+$param_ResourceGroupLocation = $X_Publish_Tbx_Region.Text
 $param_StorageAccountName = 'artifacts'
 $param_StorageContainerName = 'marketplace'
 $param_Package = $X_Publish_Tbx_Package.Text
+$param_TenantID = $X_Publish_Tbx_TenantID.Text
 $job_publish_params = @(
     $param_Endpoint,
-    $param_User,
-    $param_Pass,
     $param_ResourceGroup,
     $param_ResourceGroupLocation,
     $param_StorageAccountName,
     $param_StorageContainerName
     $param_Package
+    $param_TenantID
     )
 $Script:job = Start-Job -Name "PublishPackage" -ArgumentList $job_publish_params -ScriptBlock $job_publish
 }
@@ -1422,13 +1384,12 @@ $Script:job = Start-Job -Name "PublishPackage" -ArgumentList $job_publish_params
 $job_publish = {
 Param (
 [string]$apiEndpoint = $args[0],
-[string]$User = $args[1],
-[string]$Pass = $args[2],
-[string]$ResourceGroup = $args[3],
-[string]$ResourceGroupLocation = $args[4],
-[string]$StorageAccountName = $args[5],
-[string]$StorageContainerName = $args[6],
-[string]$Package = $args[7]
+[string]$ResourceGroup = $args[1],
+[string]$ResourceGroupLocation = $args[2],
+[string]$StorageAccountName = $args[3],
+[string]$StorageContainerName = $args[4],
+[string]$Package = $args[5],
+[string]$TenantID = $args[6]
 )
 
 # log
@@ -1446,34 +1407,23 @@ catch {
     Exit
     }
 
-# log
-Write-Output 'Creating Credentials object'
-# activity
-$SecurePass = ConvertTo-SecureString $Pass -AsPlainText -Force
-$AdminCreds = New-Object System.Management.Automation.PSCredential ($User, $SecurePass) 
+
+
+
 
 # log
 write-output 'Creating Environment'
 # activity
-$AdminAadID = $user.Split('@')[1]
-$apiEndpointMetadata = Invoke-RestMethod -Uri https://$apiEndpoint/metadata/endpoints?api-version=1.0 -Method Get
-$EnvAzureStackAdmin = Add-AzureRmEnvironment -Name 'AzureStackCloud' `
-    -ActiveDirectoryEndpoint ($apiEndpointMetadata.authentication.loginEndpoint + $AdminAadID + '/') `
-    -ActiveDirectoryServiceEndpointResourceId $apiEndpointMetadata.authentication.audiences[0] `
-    -ResourceManagerEndpoint "https://$apiEndpoint/" `
-    -GalleryEndpoint $apiEndpointMetadata.galleryEndpoint `
-    -GraphEndpoint $apiEndpointMetadata.graphEndpoint 
+
+
+$EnvAzureStackAdmin = Add-AzureRmEnvironment -Name 'AzureStackCloud' -ARMEndpoint https://$apiEndpoint
 
 # log
 Write-Output 'Add account to environment'
 # activity
-$EnvAccountAzureStackAdmin = Add-AzureRmAccount -Environment $EnvAzureStackAdmin -Credential $AdminCreds
-$rmProfile = Select-AzureRmProfile -Profile $EnvAccountAzureStackAdmin
+Add-AzureRmAccount -Environment $EnvAzureStackAdmin -TenantId $TenantID
 
-# log
-Write-Output 'Select default subscription'
-# activity
-$Subscription = Select-AzureRmSubscription -SubscriptionName 'Default Provider Subscription'
+
 
 # condition
 $Exists = Get-AzureRmResourceGroup -Name $ResourceGroup -Location $ResourceGroupLocation -ErrorAction SilentlyContinue  
@@ -1539,7 +1489,7 @@ Remove-item $tempfolder -Force -Recurse
 $appName = ($manifest.publisher + '.' + $manifest.name + '.' + $manifest.version)
 
 #condition
-$Exists = Get-AzureRMGalleryItem -ErrorAction SilentlyContinue | where {$_.name -eq $appName}
+$Exists = Get-AzsGalleryItem -ErrorAction SilentlyContinue | where {$_.name -eq $appName}
 if ($Exists) { 
     Write-Output "The Publisher/Name/Version already exists"
     Write-Output "Package not published"
@@ -1549,15 +1499,16 @@ Else {
     # log
     Write-Output 'Upload package to storage container'
     # activity
-    $blob = Set-AzureStorageBlobContent -Container $StorageContainerName -File $package -Context $StorageContext -Force
+    $blob = Set-AzureStorageBlobContent -Container $StorageContainerName -File $package -Context $StorageContext -Force 
+    
     #log
     Write-Output 'Publish package to Marketplace'
     #activity
-    $publish = Add-AzureRMGalleryItem -GalleryItemUri ($blob.context.BlobEndPoint + $StorageContainerName + '/' + $blob.Name) -Verbose 
+    Add-AzsGalleryItem -GalleryItemUri ($blob.context.BlobEndPoint + $StorageContainerName + '/' + $blob.Name) -force
+    
     }
 
-if ($publish.StatusCode -eq '201'){ write-output 'Completed succesfully' }
-else { write-output 'Publish item failed' }
+
 
 }
 
@@ -2028,24 +1979,13 @@ $X_Publish_Tbx_Package.Add_LostFocus({
 F_Validation -field 'X_Publish_Tbx_Package' -field_value $X_Publish_Tbx_Package.Text -extension '.azpkg' -columnwidth 190
 })
 
-$X_Publish_Pwb_Password1.Add_LostFocus({
-if ($X_Publish_Pwb_Password2.Password -ne ''){
-    F_Validation -field 'X_Publish_Pwb_Password1' -field_value $X_Publish_Pwb_Password1.Password -compare $X_Publish_Pwb_Password2.Password -columnwidth 258 
-    }
-})
 
-$X_Publish_Pwb_Password2.Add_LostFocus({
-if ($X_Publish_Pwb_Password1.Password -ne ''){
-    F_Validation -field 'X_Publish_Pwb_Password2' -field_value $X_Publish_Pwb_Password2.Password -compare $X_Publish_Pwb_Password1.Password -columnwidth 258 
-    }
-})
 
 $X_Publish_Btn_Publish.Add_Click({
 F_Validation -field 'X_Publish_Tbx_Package' -field_value $X_Publish_Tbx_Package.Text -empty -extension '.azpkg' -columnwidth 190
-F_Validation -field 'X_Publish_Tbx_Username' -field_value $X_Publish_Tbx_Username.Text -empty -columnwidth 258
-F_Validation -field 'X_Publish_Pwb_Password1' -field_value $X_Publish_Pwb_Password1.Password -empty -compare $X_Publish_Pwb_Password2.Password -columnwidth 258
-F_Validation -field 'X_Publish_Pwb_Password2' -field_value $X_Publish_Pwb_Password2.Password -empty -compare $X_Publish_Pwb_Password1.Password -columnwidth 258
 F_Validation -field 'X_Publish_Tbx_Endpoint' -field_value $X_Publish_Tbx_Endpoint.Text -empty -columnwidth 258
+F_Validation -field 'X_Publish_Tbx_Region' -field_value $X_Publish_Tbx_Region.Text -empty -columnwidth 258
+F_Validation -field 'X_Publish_Tbx_TenantID' -field_value $X_Publish_Tbx_TenantID.Text -empty -columnwidth 258
 $validation = (Get-Variable | where {($_.name -match 'X_Publish_Tbx') -or ($_.name -match 'X_Publish_Pwb')}).value.parent.children | where {$_.GetType().fullname -eq 'System.Windows.Controls.Button' -and $_.Content -eq '!' -and $_.visibility -eq 'visible'}
 if ((!($validation)) -and ($Script:job.state -ne 'running')){
     $X_Publish_Lsv_Log.Items.Clear()
@@ -2092,10 +2032,9 @@ $X_Dashboard.Visibility = 'Visible'
 $X_Wizard_Btn_Publish.Background = 'White'
 $X_Wizard_Btn_Input.Background = '#B3EBFB'
 F_Validation -field 'X_Publish_Tbx_Package' -field_value $X_Publish_Tbx_Package.Text -columnwidth 190
-F_Validation -field 'X_Publish_Tbx_Username' -field_value $X_Publish_Tbx_Username.Text -columnwidth 258
-F_Validation -field 'X_Publish_Pwb_Password1' -field_value $X_Publish_Pwb_Password1.Password -columnwidth 258
-F_Validation -field 'X_Publish_Pwb_Password2' -field_value $X_Publish_Pwb_Password2.Password  -columnwidth 258
 F_Validation -field 'X_Publish_Tbx_Endpoint' -field_value $X_Publish_Tbx_Endpoint.Text -columnwidth 258
+F_Validation -field 'X_Publish_Tbx_Region' -field_value $X_Publish_Tbx_Region.Text -columnwidth 258
+F_Validation -field 'X_Publish_Tbx_TenantID' -field_value $X_Publish_Tbx_TenantID.Text -columnwidth 258
 if ($script:job.id){ remove-job $script:job.id -ErrorAction SilentlyContinue }
 })
 #endregion
