@@ -1,17 +1,12 @@
 
-# Azure Stack Development Kit Version 
+# Azure Stack
 
-These tools are meant for use with **Azure Stack Development Kit**.
+These tools are meant for use with **Azure Stack Development Kit** and Integrated Systems
 
-## Important Notification 5/8/2018
+## Import Notification
 
-The following Tools will be deprecated and removed from the repository by 5/31/2018.  The new Azure Stack Admin PowerShell Module 1.3.0 will replace those.
-- ComputeAdmin
-- Identity\New-AzsAdGraphServicePrincipal
-- Infrastructure
-- ServiceAdmin
-- CanaryValidator
-
+Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1804 can be found here
+https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1804
 
 ## Tools for using Azure and Azure Stack
 
@@ -50,58 +45,22 @@ Constrains Azure subscription to the capabilities available in the Azure Stack.
 
 - Apply Azure Stack policy to Azure subscriptions and resource groups
 
-## [Deployment of Azure Stack](Deployment)
+## [Deployment of Azure Stack Development Kit ](Deployment)
 
-Helps prepare for Azure Stack deployment.
+Helps prepare for ASDK deployment.
 
 - Prepare to Deploy (boot from VHD)
 - Prepare to Redeploy (boot back to original/base OS)
 
 ## [Connecting to Azure Stack](Connect)
 
-Connect to an Azure Stack instance from your personal computer/laptop.
+Connect to an Azure Stack ASDK instance from your personal computer/laptop.
 
 - Connect via VPN to an Azure Stack installation
 
 ## [Setting up Identity for Azure Stack](Identity)
 
 Create and manage identity related objects and configurations for Azure Stack
-
-## [Azure Stack Service Administration](ServiceAdmin) 
-
-- Manage plans and subscriptions in Azure Stack. 
-- Add default (unlimited) plans and quotas so that tenants can create new subscriptions 
-
-## [Azure Stack Compute Administration](ComputeAdmin) 
-
-- Manage compute (VM) service in Azure Stack. 
-- Add VM Image to the Azure Stack Marketplace 
-
-## [Azure Stack Infrastructure Administration](Infrastructure) 
-
-- Manage Azure Stack Infrastructure 
-- Get Infrastructure Roles 
-- Get Infrastructure Role Instances 
-- Start Infrastructure Role Instance 
-- Stop Infrastructure Role Instance 
-- Restart Infrastructure Role Instance 
-- Get Storage Capacity 
-- Get Storage Shares 
-- Get Scale Unit 
-- Get Scale Unit Node 
-- Get Gateway Pool 
-- Get Gateway 
-- Get SLB MUX 
-- Get IP Pool 
-- Add IP Pool 
-- Get MAC Address Pool 
-- Get Logical network 
-- Get Alert 
-- Close Alert 
-- Get Update Region Summary 
-- Get Update 
-- Apply Update 
-- Get Update run 
 
 ## [AzureRM Template Validator](TemplateValidator)
 

@@ -24,21 +24,6 @@ $directoryTenantId = Get-AzsDirectoryTenantIdentifier -Authority "<DirectoryTena
 An example of an authority for AAD is `https://login.windows.net/microsoft.onmicrosoft.com`
 and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 
-## Creating a Service Principal in a disconnected (AD FS) topology
-
-You can create a Service Principal by executing the following command after importing the Identity module
-
-```powershell
-$servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "myapp12" -AdminCredential $(Get-Credential) -Verbose
-```
-Note: For a Multi node Azure Stack installation you also have to provide the ERCSMachineName parameter to send the request to the Privileged endpoint of your Azure Stack instance.
-
-After the Service Principal is created, you should open your Azure Stack Portal to provide the appropriate level of RBAC to it. You can do this from the Access Control (IAM) tab of any resource. After the RBAC is given, you can login using the service principal as follows:
-
-```powershell
-Add-AzureRmAccount -EnvironmentName "<AzureStackEnvironmentName>" -ServicePrincipal -CertificateThumbprint $servicePrincipal.Thumbprint -ApplicationId $servicePrincipal.ApplicationId -TenantId $directoryTenantId
-```
-
 ## Enabling AAD Multi-Tenancy in Azure Stack
 
 Allowing users and service principals from multiple AAD directory tenants to sign in and create resources on Azure Stack.
