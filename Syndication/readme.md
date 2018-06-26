@@ -67,17 +67,22 @@ Once the download has been transferred to a machine that can access Azure Stack,
 
 ## Importing the VHD
 For detailed steps to use the Portal see:
+
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-add-vm-image
 
 For detailed steps using PowerShell see:
+
 https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsplatformimage?view=azurestackps-1.3.0
 
 
 
 ## Publishing the Gallery Item
 For detailed steps using PowerShell see:
+
 https://docs.microsoft.com/en-us/powershell/module/azs.gallery.admin/add-azsgalleryitem?view=azurestackps-1.3.0
 
 ## Publishing VM Extensions
+For detailed steps using PowerShell see:
+
 https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsvmextension?view=azurestackps-1.3.0
 
