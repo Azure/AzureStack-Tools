@@ -127,10 +127,6 @@ function Sync-AzSOfflineMarketplaceItem {
             $productDetails.properties|select publisherIdentifier,offer,sku,productKind,vmExtensionType  |out-file "$destination\$azpkgName.txt" -Append
             $productDetails.properties.productProperties|select version| out-file "$destination\$azpkgName.txt" -Append
 
-
-
-           
-           
             # download azpkg
             $azpkgsource = $downloadDetails.galleryPackageBlobSasUri
             $FileExists = Test-Path "$destination\$azpkgName.azpkg"
@@ -147,12 +143,14 @@ function Sync-AzSOfflineMarketplaceItem {
 
             #Select Premium Download
             $a = new-object -comobject wscript.shell
-            $intAnswer = $a.popup("Would yuu like to use Premium download? This requires Azure Storage Tools to be installed", `
+            $intAnswer = $a.popup("Would you like to use Premium download? This requires Azure Storage Tools to be installed", `
                     0, "Premium Download", 4)
         If ($intAnswer -eq 6) {
             ($checktool= test-path 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' )
             If ($checktool -eq $true){
                 & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$azpkgsource /Dest:$azpkgdestination /Y
+                $a.popup("$azpkgName.azpkg has been downloaded")
+                "$destination\$azpkgName.azpkg"|out-file "$destination\$azpkgName.txt" -Append
             }
             else{
                 $a.popup("Please install Azure Storage Tools first, canceling")
@@ -160,6 +158,8 @@ function Sync-AzSOfflineMarketplaceItem {
             
         } else {
             {(New-Object System.Net.WebClient).DownloadFile("$azpkgsource",$azpkgdestination) }
+            $a.popup("$azpkgName.azpkg has been downloaded")
+            "$destination\$azpkgName.azpkg"|out-file "$destination\$azpkgName.txt" -Append
         }
 
             switch ($downloadDetails.productKind) {
@@ -177,17 +177,22 @@ function Sync-AzSOfflineMarketplaceItem {
 
                         #Select Premium Download
             $a = new-object -comobject wscript.shell
-            $intAnswer = $a.popup("Would yuu like to use Premium download? This requires Azure Storage Tools to be installed", `
+            $intAnswer = $a.popup("Would you like to use Premium download? This requires Azure Storage Tools to be installed", `
                     0, "Premium Download", 4)
         If ($intAnswer -eq 6) {
             ($checktool= test-path 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' )
             If ($checktool -eq $true){        
             & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$vhdsource /Dest:$vhddestination /Y
+            $a.popup("$vhdName.vhd has been downloaded")
+            "$destination\$vhdName.vhd"|out-file "$destination\$azpkgName.txt" -Append
             }
             else{
                 $a.popup("Please install Azure Storage Tools first,canceling")
             }
-        }else{(New-Object System.Net.WebClient).DownloadFile("$vhdsource",$vhddestination) }
+        }else
+        {(New-Object System.Net.WebClient).DownloadFile("$vhdsource",$vhddestination) }
+        $a.popup("$vhdName.vhd has been downloaded")
+        "$destination\$vhdName.vhd"|out-file "$destination\$azpkgName.txt" -Append
                     }
                 }
                 'virtualMachineExtension' {
@@ -202,17 +207,21 @@ function Sync-AzSOfflineMarketplaceItem {
                         $zipDestination = "$destination\$zipName.zip"
                         #Select Premium Download
             $a = new-object -comobject wscript.shell
-            $intAnswer = $a.popup("Would yuu like to use Premium download? This requires Azure Storage Tools to be installed", `
+            $intAnswer = $a.popup("Would you like to use Premium download? This requires Azure Storage Tools to be installed", `
                     0, "Premium Download", 4)
         If ($intAnswer -eq 6) {
             ($checktool= test-path 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' )
             If ($checktool -eq $true){          
             & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$zipsource /Dest:$zipdestination /Y
+            $a.popup("$zipName.zip has been downloaded")
+            "$destination\$zipName.zip"|out-file "$destination\$azpkgName.txt" -Append
             }
             else{
                 $a.popup("Please install Azure Storage Tools first,canceling")
             }
         }else{(New-Object System.Net.WebClient).DownloadFile("$zipsource",$zipdestination)}
+        $a.popup("$zipName.zip has been downloaded")
+        "$destination\$zipName.zip"|out-file "$destination\$azpkgName.txt" -Append
                     }
                 }
 
@@ -220,6 +229,8 @@ function Sync-AzSOfflineMarketplaceItem {
                     Write-Warning "Unknown product kind '$_'"
                 }
             }
+        
+        
         }
 
         else {

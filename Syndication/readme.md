@@ -59,13 +59,17 @@ Default: AzureCloud
 
 Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
 
+## Downloaded Content
+
+Files (VHD, ZIP and AZPKG) associated with a gallery items are stored in the destination folder. This destination folder must be transferred for import to a machine that can access Azure Stack.
+
 
 ## Importing and publish into disconnected Azure Stack
 
-Once the download has been transferred to a machine that can access Azure Stack, you need to import the VHD and publish the AZPKG file.
+Once the download has been transferred to a machine that can access Azure Stack, you need to import the VHD and publish the AZPKG or ZIP file.
 
 
-## Importing the VHD
+### Importing the VHD
 For detailed steps to use the Portal see:
 
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-add-vm-image
@@ -76,12 +80,12 @@ https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsplat
 
 
 
-## Publishing the Gallery Item
+### Publishing the Gallery Item
 For detailed steps using PowerShell see:
 
 https://docs.microsoft.com/en-us/powershell/module/azs.gallery.admin/add-azsgalleryitem?view=azurestackps-1.3.0
 
-## Publishing VM Extensions
+### Publishing VM Extensions
 For detailed steps using PowerShell see:
 
 https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsvmextension?view=azurestackps-1.3.0
