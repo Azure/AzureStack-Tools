@@ -1467,6 +1467,9 @@ $S_PrepareVHDX = {
     $Prepare_Vhdx_Partitions = $Prepare_Vhdx_Mounted | Get-Partition | Sort-Object -Descending -Property Size
     $Prepare_Vhdx_DriveLetter = $Prepare_Vhdx_Partitions[0].DriveLetter
 
+    # Set EFI Partition MbrType
+    Get-Partition -UniqueId $Prepare_Vhdx_Partitions[1].UniqueId | Set-Partition -MbrType 0x1c
+
     # Reset Autoplay to original value
     If (Test-Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers\EventHandlersDefaultSelection\StorageOnArrival"){
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AutoplayHandlers\EventHandlersDefaultSelection\StorageOnArrival" -Name '(default)' -Type String -Value $Autoplay
