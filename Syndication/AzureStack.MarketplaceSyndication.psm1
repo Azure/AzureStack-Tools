@@ -124,7 +124,11 @@ function Sync-AzSOfflineMarketplaceItem {
             If ($FileExists -eq $true) {Remove-Item "$destination\$azpkgName.txt" -force} else {
                 New-Item "$destination\$azpkgName.txt"
             }
-            $productDetails.properties|select publisherIdentifier,offer,offerversion,sku |out-file "$destination\$azpkgName.txt" -Append
+            $productDetails.properties|select publisherIdentifier,offer,sku,productKind,vmExtensionType  |out-file "$destination\$azpkgName.txt" -Append
+            $productDetails.properties.productProperties|select version| out-file "$destination\$azpkgName.txt" -Append
+
+
+
            
            
             # download azpkg
