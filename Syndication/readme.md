@@ -35,7 +35,7 @@ Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder -AzureTenantID "Va
 
 ```
 
-## Requried Parameters
+## Required Parameters
 
 Parameter: AzureTenantID
 
