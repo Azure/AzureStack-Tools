@@ -35,6 +35,22 @@ Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder -AzureTenantID "Va
 
 ```
 
+## Required Parameters
+
+Parameter: AzureTenantID
+
+Description: Specify the Azure Tenant ID for Authentication. This can be retrieved via Portal using the resource explorer or using PS when doing add-azurermaccount.
+
+
+Parameter: SubscriptionID
+
+Description: Specify the Azure Subscription ID for Authentication when having multiple subscriptions. This can be retrieved via Portal using the resource explorer or using PS when doing add-azurermaccount.
+
+Parameter: destination
+
+Description: Specify a local destination that has enough free storage available.
+
+
 ## Optional Parameters
 
 Parameter: Cloud
@@ -44,26 +60,29 @@ Default: AzureCloud
 Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
 
 
-Parameter: AzureTenantID
+## Importing and publish into disconnected Azure Stack
 
-Description: Specify the Azure Tenant ID for Authentication
-
-
-Parameter: SubscriptionID
-
-Description: Specify the Azure Subscription ID for Authentication when having multiple subscriptions
-
-## Importing into Azure Stack
-
-Once the download has been transferred to a machine that can access Azure Stack, you need to import the VHD and publish the Gallery Item.
+Once the download has been transferred to a machine that can access Azure Stack, you need to import the VHD and publish the AZPKG file.
 
 
 ## Importing the VHD
-You can use the Portal or PowerShell.
+For detailed steps to use the Portal see:
 
 https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-add-vm-image
 
-## Publishing the Gallery Item
-You need to use PowerShell
+For detailed steps using PowerShell see:
 
-https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-create-and-publish-marketplace-item
+https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsplatformimage?view=azurestackps-1.3.0
+
+
+
+## Publishing the Gallery Item
+For detailed steps using PowerShell see:
+
+https://docs.microsoft.com/en-us/powershell/module/azs.gallery.admin/add-azsgalleryitem?view=azurestackps-1.3.0
+
+## Publishing VM Extensions
+For detailed steps using PowerShell see:
+
+https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsvmextension?view=azurestackps-1.3.0
+
