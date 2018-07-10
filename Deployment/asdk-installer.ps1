@@ -894,10 +894,10 @@ $Xaml = @'
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsSelected" Value="true">
-                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="true">
-                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
                                         <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
@@ -1123,10 +1123,10 @@ $Xaml = @'
                                                                 </Border>
                                                                 <ControlTemplate.Triggers>
                                                                     <Trigger Property="IsSelected" Value="true">
-                                                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
                                                                     </Trigger>
                                                                     <Trigger Property="IsMouseOver" Value="true">
-                                                                        <Setter TargetName="Border" Property="Background" Value="#4590CE"/>
+                                                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
                                                                         <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
                                                                     </Trigger>
                                                                 </ControlTemplate.Triggers>
