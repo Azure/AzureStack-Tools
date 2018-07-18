@@ -730,10 +730,10 @@ if ($vmextension){
         $ContentJSON = Get-Content ($field_value) -Raw
         $params = ($ContentJSON | ConvertFrom-Json).parameters 
         $params = $params.psobject.members | where {$_.membertype -eq 'NoteProperty'}
-        if (($params | where {(($_.name -eq 'vmName') -and ($_.value.type -eq 'string')) -or (($_.name -eq 'location') -and ($_.value.type -eq 'string'))}).count -lt 2){ 
-        $Script:validation_error = $true 
-        $message = 'Required string parameters "vmName" or/and  "location" not found in template'
-        }
+        #if (($params | where {(($_.name -eq 'vmName') -and ($_.value.type -eq 'string')) -or (($_.name -eq 'location') -and ($_.value.type -eq 'string'))}).count -lt 2){ 
+        #$Script:validation_error = $true 
+        #$message = 'Required string parameters "vmName" or/and  "location" not found in template'
+        #}
 }
 }
 if ($nocondition){ 
