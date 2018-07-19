@@ -28,39 +28,37 @@ param(
     [String] $ResourceName = "AzureStack"
 )
 
-$VerbosePreference     = "Continue"
-$ErrorActionPreference = "Stop"
+    $VerbosePreference     = "Continue"
+    $ErrorActionPreference = "Stop"
 
-Write-Verbose "Searching for registration resource using the provided parameters"
-$registrationResources = Find-AzureRmResource -ResourceNameContains $ResourceName -ResourceType 'Microsoft.AzureStack/registrations' -ResourceGroupNameEquals $ResourceGroupName
-$registrations = @()
-foreach ($resource in $registrationResources)
-{
-    $resource = Get-AzureRmResource -ResourceId $resource.ResourceId
-    if($AzureStackStampCloudId)
+    Write-Verbose "Searching for registration resource using the provided parameters"
+    $registrationResources = Find-AzureRmResource -ResourceNameContains $ResourceName -ResourceType 'Microsoft.AzureStack/registrations' -ResourceGroupNameEquals $ResourceGroupName
+    $registrations = @()
+    foreach ($resource in $registrationResources)
     {
-        if ($resource.Properties.CloudId -eq $AzureStackStampCloudId)
+        $resource = Get-AzureRmResource -ResourceId $resource.ResourceId
+        if($AzureStackStampCloudId)
         {
-            Write-Verbose "Registration resource found:`r`n$(ConvertTo-Json $resource)"
-            return $resource
+            if ($resource.Properties.CloudId -eq $AzureStackStampCloudId)
+            {
+                Write-Verbose "Registration resource found:`r`n$(ConvertTo-Json $resource)"
+                return $resource
+            }
         }
+        else
+        {
+            $registrations += $resource
+        }
+    }
+
+    if ($registrations.Count -gt 0)
+    {
+        Write-Verbose "Registrations: $registrations"
     }
     else
     {
-        $registrations += $resource
+        Write-Verbose "Registration resource(s) could not be located with the provided parameters."
     }
-}
-
-if ($registrations.Count -gt 0)
-{
-    Write-Verbose "Registrations: $registrations"
-}
-else
-{
-    Write-Verbose "Registration resource(s) could not be located with the provided parameters."
-}
-
-
 }
 
 
@@ -74,56 +72,54 @@ if it has been created via successful registration run.
 #>
 function Get-AzureStackActivationRecord{
 
-$currentContext = Get-AzureRmContext
-$contextDetails = @{
-    Account          = $currentContext.Account
-    Environment      = $currentContext.Environment
-    Subscription     = $currentContext.Subscription
-    Tenant           = $currentContext.Tenant
-}
+    $currentContext = Get-AzureRmContext
+    $contextDetails = @{
+        Account          = $currentContext.Account
+        Environment      = $currentContext.Environment
+        Subscription     = $currentContext.Subscription
+        Tenant           = $currentContext.Tenant
+    }
 
-if (-not($currentContext.Subscription))
-{
-    Write-Verbose "Current Azure context:`r`n$(ConvertTo-Json $ContextDetails)"
-    Throw "Current Azure context is not currently set. Please call Login-AzureRmAccount to set the Powershell context to Azure Stack service administrator."
-}
-
-$subscriptions = Get-AzureRmSubscription
-if ($subscriptions.Count -eq 1)
-{
-    if ($subscriptions.Name -eq 'Default Provider Subscription')
+    if (-not($currentContext.Subscription))
     {
-        try
+        Write-Verbose "Current Azure context:`r`n$(ConvertTo-Json $ContextDetails)"
+        Throw "Current Azure context is not currently set. Please call Login-AzureRmAccount to set the Powershell context to Azure Stack service administrator."
+    }
+
+    $subscriptions = Get-AzureRmSubscription
+    if ($subscriptions.Count -eq 1)
+    {
+        if ($subscriptions.Name -eq 'Default Provider Subscription')
         {
-            $activation = Get-AzureRmResource -ResourceId "/subscriptions/$($subscriptions.Id)/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
-            return $activation
+            try
+            {
+                $activation = Get-AzureRmResource -ResourceId "/subscriptions/$($subscriptions.Id)/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
+                return $activation
+            }
+            catch
+            {
+                Write-Warning "Activation record not found. Please register your Azure Stack with Azure: `r`nhttps://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register`r`n$_"
+            }
         }
-        catch
+        else
         {
-            Write-Warning "Activation record not found. Please register your Azure Stack with Azure: `r`nhttps://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register`r`n$_"
+            Write-Warning "Unable to retrieve activation record using the current Azure Powershell context."
         }
     }
     else
     {
-        Write-Warning "Unable to retrieve activation record using the current Azure Powershell context."
-    }
-}
-else
-{
-    foreach ($sub in $subscriptions)
-    {
-        try
+        foreach ($sub in $subscriptions)
         {
-            Get-AzureRmResource -ResourceId "/subscriptions/$($sub.Id)/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
-        }
-        catch
-        {
-            Write-Warning "Activation record not found. $_"
+            try
+            {
+                Get-AzureRmResource -ResourceId "/subscriptions/$($sub.Id)/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
+            }
+            catch
+            {
+                Write-Warning "Activation record not found. $_"
+            }
         }
     }
-}
-
-
 }
 
 
@@ -210,10 +206,10 @@ param
     [String] $ArmEndpoint
 )
 
-$endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
-Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
 
-Write-Output $endpoints
+    Write-Output $endpoints
 }
 
 Export-ModuleMember Get-AzureRegistrationResource
