@@ -109,11 +109,21 @@ This is a switch that determines if usage records are reported to Azure. Default
 
 Used when the billing model is set to capacity. You will need to provide a specific agreement number associated with your billing agreement.
 
+.PARAMETER RegistrationName
+
+The name of the registration resource to be created in Azure. A unique name is highly encouraged for those registering multiple environments.
+
 .EXAMPLE
 
 This example registers your AzureStack environment with Azure, enables syndication, and enables usage reporting to Azure.
 
 Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01"
+
+.EXAMPLE
+
+This example registers your AzureStack environment with Azure, enables syndication, and enables usage reporting to Azure, and supplies a custom name.
+
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01" -RegistrationName "AzsRegistration-TestEnvironment"
 
 .EXAMPLE
 
@@ -265,11 +275,21 @@ This is the name of the resource group in Azure where the registration resource 
 
 The location where the resource group has been created. Defaults to "westcentralus"
 
+.PARAMETER RegistrationName
+
+The name of the registration resource that was created in Azure. If you have a unique name you should supply it here for removing registration.
+
 .EXAMPLE
 
 This example unregisters your AzureStack environment with Azure.
 
 Remove-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint $PrivilegedEndpoint
+
+.EXAMPLE
+
+This example unregisters your AzureStack environment with Azure by pointing to a specific registration
+
+Remove-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint $PrivilegedEndpoint -RegistrationName "AzsRegistration-TestEnvironment"
 
 .NOTES
 
@@ -324,6 +344,10 @@ function Remove-AzsRegistration{
         if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
         {
             Log-Output "Registration resource found: $($registrationResource.ResourceId)"
+        }
+        else
+        {
+            Log-Throw "The registration resource found does not correlate the current environment's Cloud-Id. `r`nEnvironment Cloud Id: $($stampinfo.CloudId) `r`nResource Cloud Id: $($registrationResource.Properties.cloudId)"
         }
     }
     else
@@ -520,6 +544,10 @@ The name of the resource group that will contain the registration resource. Defa
 
 The Azure location where the registration resource group will be created. Defaults to 'westcentralus'
 
+.PARAMETER RegistrationName
+
+The name of the registration resource to be created in Azure. A unique name is highly encouraged for those registering multiple environments.
+
 .EXAMPLE
 
 This example will register your Azure Stack environment with all default parameters.
@@ -531,6 +559,12 @@ Register-AzsEnvironment -RegistrationToken $registrationToken
 This example will register your Azure Stack environment with a specific name for a resource group
 
 Register-AzsEnvironment -RegistrationToken $registrationToken -ResourceGroupName "ContosoRegistrations"
+
+.EXAMPLE
+
+This example will register your Azure Stack environment with a specific name for the registration resource
+
+Register-AzsEnvironment -RegistrationToken $registrationToken -RegistrationName "AzsRegistration-TestEnvironment"
 
 .NOTES
 
@@ -616,7 +650,7 @@ UnRegister-AzsEnvironment -RegistrationToken $registrationToken
 
 This exmple will unregister your Azure Stack environment using the registration name.
 
-UnRegister-AzsEnvironment -RegistrationName "AzureStack-33295300-80f3-4fa6-a031-26d51331e826"
+UnRegister-AzsEnvironment -RegistrationName "AzsRegistration-TestEnvironment"
 
 .NOTES
 
