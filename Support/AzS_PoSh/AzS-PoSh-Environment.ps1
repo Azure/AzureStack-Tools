@@ -93,7 +93,7 @@ $global:Toolspath ="C:\AzureStackTools\AzureStack-Tools-master"
     Write-Host "`t`n[Info] Installation of required powershell modules" -ForegroundColor Yellow
     Write-Host "`t`n[Prompt] Please approve to all prompts" -ForegroundColor Yellow
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted  
-    Install-Module -Name AzureStack -RequiredVersion 1.2.11 -Scope CurrentUser -AllowClobber -Force
+    Install-Module -Name AzureStack -RequiredVersion 1.4.0 -Scope CurrentUser -AllowClobber -Force
     Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser -AllowClobber -Force
     Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
     }
