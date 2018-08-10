@@ -14,7 +14,7 @@ The downloaded items need to be transferred to a machine with has connectivity t
 - Azure Stack RP registered within your Azure Subscription
 
 - Azure Subscription used to register Azure Stack System (Multi Node or ASDK)
-- AzureStack 1.3.0 PowerShell needs to be installed
+- AzureStack module version greater than or equal to 1.3.0 PowerShell needs to be installed
 
 (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install)
 
@@ -76,17 +76,17 @@ https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-add-vm-image
 
 For detailed steps using PowerShell see:
 
-https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsplatformimage?view=azurestackps-1.3.0
+https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsplatformimage?view=azurestackps-1.4.0
 
 
 
 ### Publishing the Gallery Item
 For detailed steps using PowerShell see:
 
-https://docs.microsoft.com/en-us/powershell/module/azs.gallery.admin/add-azsgalleryitem?view=azurestackps-1.3.0
+https://docs.microsoft.com/en-us/powershell/module/azs.gallery.admin/add-azsgalleryitem?view=azurestackps-1.4.0
 
 ### Publishing VM Extensions
 For detailed steps using PowerShell see:
 
-https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsvmextension?view=azurestackps-1.3.0
+https://docs.microsoft.com/en-us/powershell/module/azs.compute.admin/add-azsvmextension?view=azurestackps-1.4.0
 

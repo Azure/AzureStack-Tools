@@ -15,7 +15,7 @@ To use the Marketplace Toolkit for Microsoft Azure Stack script you require:
 
 - This script
 - The [gallerypackager executable](http://www.aka.ms/azurestackmarketplaceitem)
-- Access as Azure Stack administrator to the Azure Stack environment. This is only required if you want to publish the generated package to the marketplace. For this you will also need to install the current PowerShell modules (1.3.0) to support Azure Stack on the machine that runs this script. [Install PowerShell for Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install).
+- Access as Azure Stack administrator to the Azure Stack environment. This is only required if you want to publish the generated package to the marketplace. For this you will also need to install the current Azure Stack powerShell modules (1.4.0) on the machine that runs this script. [Install PowerShell for Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install).
 
 ## Download the Marketplace Toolkit
 
