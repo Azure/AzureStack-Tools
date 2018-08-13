@@ -281,7 +281,7 @@ $Xaml = @'
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>            
-            <Setter Property="PasswordChar" Value="?"/>
+            <Setter Property="PasswordChar" Value="●"/>
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="MinHeight" Value="23.5"/>
             <Setter Property="AllowDrop" Value="true"/>                        
