@@ -28,7 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.09"
+$Text_Generic.Version = "1.0.10"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -1331,7 +1331,10 @@ $AuthEndpoints = @{
         }
     'Azure China Cloud'= @{
         'Endpoint'='https://login.chinacloudapi.cn'
-        }   
+        }
+    'Azure US Government Cloud'= @{ 
+        'Endpoint'= 'https://login.microsoftonline.us'
+        }
     'ADFS'= @{
         'Endpoint'='https://adfs.local.azurestack.external'
         }
@@ -2128,7 +2131,7 @@ Function F_Summary {
         $InstallScript += "`r`n"
         $InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
 
-        # Azure Cloud, or Azure China Cloud, or ADFS
+        # Azure Cloud, Azure China Cloud, Azure US Government Cloud or ADFS
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
                 $InstallScript += " -InfraAzureDirectoryTenantName "
                 $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text                
@@ -2137,6 +2140,11 @@ Function F_Summary {
                 $InstallScript += " -InfraAzureDirectoryTenantName "
                 $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
                 $InstallScript += " -InfraAzureEnvironment AzureChinaCloud"
+        }
+        ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure US Government Cloud') {
+                $InstallScript += " -InfraAzureDirectoryTenantName "
+                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
+                $InstallScript += " -InfraAzureEnvironment AzureUSGovernment"
         }
         ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
                 $InstallScript += " -UseADFS"
@@ -2213,9 +2221,13 @@ Function F_Install {
     ".\InstallAzureStackPOC.ps1" |  Add-Content $filepath -NoNewline
     ' -AdminPassword $adminpass' |  Add-Content $filepath -NoNewline
 
-    # Azure Cloud, or Azure China Cloud, or ADFS
+    # Azure Cloud, Azure China Cloud, Azure US Government Cloud or ADFS
     If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
+    }
+    ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure US Government Cloud') {
+        ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -InfraAzureEnvironment AzureUSGovernment' |  Add-Content $filepath -NoNewline
     }
     ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure China Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
