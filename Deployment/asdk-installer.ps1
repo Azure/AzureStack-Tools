@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Short description
 This installer UI simplifies the preperation and deployment of the Azure Stack Development Kit
@@ -28,7 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.06"
+$Text_Generic.Version = "1.0.07"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -1330,7 +1330,7 @@ $AuthEndpoints = @{
         'Endpoint'='https://login.windows.net'
         }
     'Azure US Government Cloud'= @{
-        'Endpoint'= ‘https://login.microsoftonline.us'
+        'Endpoint'= 'https://login.microsoftonline.us'
         }   
 
     'Azure China Cloud'= @{
@@ -2132,7 +2132,7 @@ Function F_Summary {
         $InstallScript += "`r`n"
         $InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
 
-        # Azure Cloud, or Azure China Cloud, or ADFS
+        # Azure Cloud, Azure China Cloud, Azure US Government Cloud or ADFS
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
                 $InstallScript += " -InfraAzureDirectoryTenantName "
                 $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text                
@@ -2179,7 +2179,7 @@ Function F_Summary {
 
         $syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
 
-        # Azure Cloud or Azure China Cloud
+        # Azure Cloud, Azure China Cloud or Azure Government Cloud
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS') {
             $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
             $syncHash.Control_Summary_Tbl_Content1.Width = "510"
@@ -2223,7 +2223,7 @@ Function F_Install {
     ".\InstallAzureStackPOC.ps1" |  Add-Content $filepath -NoNewline
     ' -AdminPassword $adminpass' |  Add-Content $filepath -NoNewline
 
-    # Azure Cloud, or Azure China Cloud, or ADFS
+    # Azure Cloud, or Azure China Cloud, Azure Government Cloud or ADFS
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
     }
