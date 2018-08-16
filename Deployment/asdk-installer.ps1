@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Short description
 This installer UI simplifies the preperation and deployment of the Azure Stack Development Kit
@@ -28,7 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.06"
+$Text_Generic.Version = "1.0.07"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -214,7 +214,7 @@ $Xaml = @'
             <Style.Triggers>
                 <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self}, Path=Tag}" Value="False">
                     <Setter Property="Foreground" Value="#EBEBEB"/>
-                    <Setter Property="FocusVisualStyle"	Value="{StaticResource CheckBoxFocusVisual}"/>
+                    <Setter Property="FocusVisualStyle"              Value="{StaticResource CheckBoxFocusVisual}"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="CheckBox">
@@ -224,7 +224,7 @@ $Xaml = @'
                                             <Rectangle x:Name="CheckMark" Fill="#EBEBEB" Width="7" Height="7"/>
                                         </Border>
                                     </BulletDecorator.Bullet>
-                                    <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" RecognizesAccessKey="True"/>
+                                   <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left" RecognizesAccessKey="True"/>
                                 </BulletDecorator>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsChecked" Value="false">
@@ -243,7 +243,7 @@ $Xaml = @'
                 </DataTrigger>
                 <DataTrigger Binding="{Binding RelativeSource= {x:Static RelativeSource.Self},  Path=Tag}" Value="True">
                     <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextColor}}"/>
-                    <Setter Property="FocusVisualStyle"	Value="{StaticResource CheckBoxFocusVisualHighContrast}"/>
+                    <Setter Property="FocusVisualStyle"              Value="{StaticResource CheckBoxFocusVisualHighContrast}"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="CheckBox">
@@ -257,7 +257,7 @@ $Xaml = @'
                                 </BulletDecorator>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsChecked" Value="false">
-                                        <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                                       <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
                                     </Trigger>
 
                                     <Trigger Property="IsEnabled" Value="false">
@@ -374,7 +374,7 @@ $Xaml = @'
             <Border x:Name="PART_ContentHost" Focusable="False"/>
         </ControlTemplate>
         <Style x:Key="{x:Type ComboBox}" TargetType="ComboBox">
-            <Setter Property="SnapsToDevicePixels" Value="true"/>
+           <Setter Property="SnapsToDevicePixels" Value="true"/>
             <Setter Property="OverridesDefaultStyle" Value="true"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
             <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
@@ -415,7 +415,7 @@ $Xaml = @'
                                     </Trigger>
                                     <Trigger Property="IsEditable" Value="true">
                                         <Setter Property="IsTabStop" Value="false"/>
-                                        <Setter TargetName="PART_EditableTextBox" Property="Visibility"	Value="Visible"/>
+                                        <Setter TargetName="PART_EditableTextBox" Property="Visibility"              Value="Visible"/>
                                         <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
@@ -455,7 +455,7 @@ $Xaml = @'
                                     </Trigger>
                                     <Trigger Property="IsEditable" Value="true">
                                         <Setter Property="IsTabStop" Value="false"/>
-                                        <Setter TargetName="PART_EditableTextBox" Property="Visibility"	Value="Visible"/>
+                                        <Setter TargetName="PART_EditableTextBox" Property="Visibility"              Value="Visible"/>
                                         <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
@@ -617,7 +617,7 @@ $Xaml = @'
                                         <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>                                 
                                     </Trigger>
                                     <!-- Button Pressed -->
-                                    <Trigger Property="IsPressed" Value="true">
+                                   <Trigger Property="IsPressed" Value="true">
                                         <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
                                         <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
                                         <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
@@ -957,7 +957,7 @@ $Xaml = @'
             <BeginStoryboard Storyboard="{StaticResource Storyboard}"/>
         </EventTrigger>
         <!--#endregion Wait Indicator -->
-    </Window.Triggers>
+   </Window.Triggers>
     <Grid>
         <DockPanel LastChildFill="True" >
             <StackPanel DockPanel.Dock="Left" Width="550" HorizontalAlignment="Left" Margin="50,0,0,0" >
@@ -1119,7 +1119,7 @@ $Xaml = @'
                                                         <Setter.Value>
                                                             <ControlTemplate TargetType="ListViewItem">
                                                                 <Border Name="Border" Padding="2" SnapsToDevicePixels="true" Background="Transparent">
-                                                                    <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                                                   <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                                                                 </Border>
                                                                 <ControlTemplate.Triggers>
                                                                     <Trigger Property="IsSelected" Value="true">
@@ -1324,11 +1324,15 @@ $xaml.SelectNodes("//*[@*[contains(translate(name(.),'n','N'),'Name')]]") | Wher
 $syncHash.Control_Header_Tbl_Version.Text = $Text_Generic.Version
 #endregion
 
-#region AuthEndpoints
+#region AuthEndpoints AzureCloud-USGov-China-ADFS 
 $AuthEndpoints = @{
     'Azure Cloud'= @{
         'Endpoint'='https://login.windows.net'
         }
+    'Azure US Government Cloud'= @{
+        'Endpoint'= 'https://login.microsoftonline.us'
+        }   
+
     'Azure China Cloud'= @{
         'Endpoint'='https://login.chinacloudapi.cn'
         }   
@@ -1397,7 +1401,7 @@ $S_NetInterfaces = {
 
         $NetInterfaces += $properties
     }
- 
+
     
     $syncHash.Control_NetInterface_Stp_Wait.Dispatcher.Invoke([action]{$syncHash.Control_NetInterface_Stp_Wait.Visibility="Collapsed"},"Normal")
     $NetInterfaces | Sort-Object ConnectionState, IPv4DefaultGateway, InterfaceMetric, Ipv4Address -Descending | ForEach-Object {        
@@ -1501,7 +1505,7 @@ $S_PrepareVHDX = {
     #Logic
     $bootOptions = bcdedit /enum  | Select-String 'path' -Context 2,1
     $bootOptions | ForEach-Object {
-        if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack'))) {
+       if (((($_.Context.PreContext[1] -replace '^device +') -eq ('partition='+$Prepare_Vhdx_DriveLetter+':') -or (($_.Context.PreContext[1] -replace '^device +') -like '*CloudBuilder.vhdx*')) -and (($_.Context.PostContext[0] -replace '^description +') -ne 'Azure Stack'))) {
             $BootID = '"' + ($_.Context.PreContext[0] -replace '^identifier +') + '"'
             bcdedit /set $BootID description "Azure Stack"
         }
@@ -1559,7 +1563,7 @@ $S_PrepareVHDX = {
     </component>
     <component name="Microsoft-Windows-TerminalServices-LocalSessionManager" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <fDenyTSConnections>false</fDenyTSConnections>
-    </component>
+   </component>
     <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <RunSynchronous>
         <RunSynchronousCommand wcm:action="add">
@@ -1598,7 +1602,7 @@ $S_PrepareVHDX = {
     <component name="Microsoft-Windows-TCPIP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
           <Interfaces>
             <Interface wcm:action="add">
-	            <Identifier>$U_Unattend_input_macaddress</Identifier>
+                          <Identifier>$U_Unattend_input_macaddress</Identifier>
                 <Ipv4Settings>
                     <DhcpEnabled>false</DhcpEnabled>
                 </Ipv4Settings>
@@ -1663,14 +1667,14 @@ $S_PrepareVHDX = {
     #endregion oobeSystem
 
     
-    if($Unattend_Apply_LocalAdmin) {
+    if($Unattend_Apply_LocalAdmin) {
         $U_Unattend.unattend.AppendChild($U_Unattend.ImportNode($U_Unattend_oobeSysten_AdminPassword.unattend.settings, $true))
-        }
+        }
 
-    if($Unattend_Apply_StaticIP) {
+    if($Unattend_Apply_StaticIP) {
         ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_IPAddress.unattend.settings.component, $true))
         ($U_Unattend.unattend.settings | Where-Object {$_.pass -eq 'Specialize'}).AppendChild($U_Unattend.ImportNode($U_Unattend_specialize_DNS.unattend.settings.component, $true))
-        }
+        }
 
     $U_Unattend.OuterXml | Out-File ($Prepare_Vhdx_DriveLetter+":\unattend.xml") -Encoding ascii -Force
     #endregion
@@ -1679,7 +1683,7 @@ $S_PrepareVHDX = {
     #Condition
     $Prepare_ApplyDrivers = $SyncHash.Control_Prepare_Chb_Drivers.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Prepare_Chb_Drivers.IsChecked})
     $Prepare_Drivers_Path = $SyncHash.Control_Prepare_Tbx_Drivers.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Prepare_Tbx_Drivers.Text})
-    if ($Prepare_ApplyDrivers) {
+   if ($Prepare_ApplyDrivers) {
         $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='90'},"Normal")
         $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Add drivers..'},"Normal")
         $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
@@ -1738,7 +1742,7 @@ $S_Netbxnda = {
 
     #region Finalize
     $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='100'},"Normal")
-    $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Completed'},"Normal")
+   $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Completed'},"Normal")
     $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
     $syncHash.Control_Job_Btn_Next.Dispatcher.Invoke([action]{$syncHash.Control_Job_Btn_Next.IsEnabled=$true},"Normal")
     #endregion
@@ -1771,9 +1775,9 @@ $S_NetbxndaOffline = {
 $Runspace_Jobs_Properties =[runspacefactory]::CreateRunspace()
 $Runspace_Jobs_Properties.Name = "Jobs"
 $Runspace_Jobs_Properties.ApartmentState = "STA"
-$Runspace_Jobs_Properties.ThreadOptions = "ReuseThread"         
+$Runspace_Jobs_Properties.ThreadOptions = "ReuseThread"         
 $Runspace_Jobs_Properties.Open()
-$Runspace_Jobs_Properties.SessionStateProxy.SetVariable("syncHash",$syncHash)  
+$Runspace_Jobs_Properties.SessionStateProxy.SetVariable("syncHash",$syncHash)  
 $Runspace_Jobs = [PowerShell]::Create()
 #endregion
 
@@ -2077,40 +2081,40 @@ Function F_CopyNicProperties {
 }
 
 Function F_GetNetworkID {
-    $CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
+    $CIDRIPAddress = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
 
     $ipBinary = $null
     $dottedDecimal = $null
 
-    $IPAddress = $CIDRIPAddress.Split("/")[0] 
-    $cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
+    $IPAddress = $CIDRIPAddress.Split("/")[0] 
+    $cidr = [convert]::ToInt32($CIDRIPAddress.Split("/")[1]) 
 
-    $IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
+    $IPAddress.split(".") | ForEach-Object{$ipBinary=$ipBinary + $([convert]::toString($_,2).padleft(8,"0"))}
 
-    if($cidr -le 32) {
-        [Int[]]$array = (1..32) 
-        for($i=0;$i -lt $array.length;$i++) { 
-            if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
+    if($cidr -le 32) {
+        [Int[]]$array = (1..32) 
+        for($i=0;$i -lt $array.length;$i++) { 
+            if($array[$i] -gt $cidr){$array[$i]="0"}else{$array[$i]="1"} 
         }
-        $smBinary =$array -join "" 
+        $smBinary =$array -join "" 
     }
 
-    $netBits=$smBinary.indexOf("0") 
-    if ($netBits -ne -1) { 
-        #identify subnet boundaries 
+    $netBits=$smBinary.indexOf("0") 
+    if ($netBits -ne -1) { 
+        #identify subnet boundaries 
         $binary = $($ipBinary.substring(0,$netBits).padright(32,"0"))
         $i = 0
-        do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
-        $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
-    } 
-    else { 
-        #identify subnet boundaries 
-        $binary = $($ipBinary) 
+        do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+        $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    } 
+    else { 
+        #identify subnet boundaries 
+        $binary = $($ipBinary) 
         $i = 0
-        do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
+        do {$dottedDecimal += "." + [string]$([convert]::toInt32($binary.substring($i,8),2)); $i+=8 } while ($i -le 24)
 
-        $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
-    } 
+        $networkID = $dottedDecimal.substring(1) + "/" + $cidr.ToString()
+    } 
 
     return $networkID
 }
@@ -2128,7 +2132,7 @@ Function F_Summary {
         $InstallScript += "`r`n"
         $InstallScript += '.\InstallAzureStackPOC.ps1 -AdminPassword $adminpass'
 
-        # Azure Cloud, or Azure China Cloud, or ADFS
+        # Azure Cloud, Azure China Cloud, Azure US Government Cloud or ADFS
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
                 $InstallScript += " -InfraAzureDirectoryTenantName "
                 $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text                
@@ -2138,9 +2142,15 @@ Function F_Summary {
                 $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
                 $InstallScript += " -InfraAzureEnvironment AzureChinaCloud"
         }
+        ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure US Government Cloud') {
+                $InstallScript += " -InfraAzureDirectoryTenantName "
+                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
+                $InstallScript += " -InfraAzureEnvironment AzureUSGovernment"
+        }
         ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
                 $InstallScript += " -UseADFS"
-        }
+        } 
+
 
         If ($synchash.Control_NetConfig_Rbt_Static.IsChecked) {
                 $NetworkID = F_GetNetworkID
@@ -2169,7 +2179,7 @@ Function F_Summary {
 
         $syncHash.Control_Summary_Tbx_Content1.Text = $InstallScript
 
-        # Azure Cloud or Azure China Cloud
+        # Azure Cloud, Azure China Cloud or Azure Government Cloud
         If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS') {
             $syncHash.Control_Summary_Pth_Content1.Visibility = "Visible"
             $syncHash.Control_Summary_Tbl_Content1.Width = "510"
@@ -2213,17 +2223,21 @@ Function F_Install {
     ".\InstallAzureStackPOC.ps1" |  Add-Content $filepath -NoNewline
     ' -AdminPassword $adminpass' |  Add-Content $filepath -NoNewline
 
-    # Azure Cloud, or Azure China Cloud, or ADFS
-    If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
+    # Azure Cloud, or Azure China Cloud, Azure Government Cloud or ADFS
+        If ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
     }
     ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure China Cloud') {
         ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
         ' -InfraAzureEnvironment AzureChinaCloud' |  Add-Content $filepath -NoNewline
     }
+    ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Azure US Government Cloud') {
+        ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
+        ' -InfraAzureEnvironment AzureUSGovernment' |  Add-Content $filepath -NoNewline
+    }
     ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
         ' -UseADFS' |  Add-Content $filepath -NoNewline
-    }
+    } 
 
     If ($synchash.Control_NetConfig_Rbt_Static.IsChecked) {
         $NetworkID = F_GetNetworkID
@@ -2246,7 +2260,7 @@ Function F_Install {
     Else {
         ' -TimeServer "' + 'pool.ntp.org' + '"' |  Add-Content $filepath -NoNewline
     }
- 
+
     #endregion
 
     #region Rerun Count
@@ -2705,7 +2719,7 @@ $syncHash.Control_Job_Btn_Previous.Add_Click({
 })
 
 $syncHash.Control_Job_Btn_Next.Add_Click({
-    $syncHash.Control_Job_Stp.Visibility = "Collapsed"
+   $syncHash.Control_Job_Stp.Visibility = "Collapsed"
 
     if ($Script:Initialized -eq "SafeOS"){
         $syncHash.Control_Summary_Stp.Visibility = "Visible"
@@ -2819,3 +2833,5 @@ $syncHash.Control_Reboot_Btn_Next.Add_Click({
 F_Initialize
 
 $Form.ShowDialog() | out-null
+
+
