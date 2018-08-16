@@ -24,7 +24,7 @@ To install the Azure Stack Development Kit you require
 The Azure Stack Development Kit installer UI script is based on PowerShell and the Windows Presentation Foundation. It is published in this public repository so you can make improvements to it by submitting a pull request.
 #>
 
-#requires –runasadministrator
+#requires -runasadministrator
 
 #region Text
 $Text_Generic = @{}
