@@ -28,7 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.10"
+$Text_Generic.Version = "1.0.11"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -1029,13 +1029,6 @@ $Xaml = @'
                         <StackPanel x:Name="Control_Unattend_Stp_Computername" Visibility="Collapsed">
                             <TextBox x:Name="Control_Unattend_Tbx_Computername" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" Text="" HorizontalAlignment="Right"/>
                         </StackPanel>
-                        <CheckBox x:Name="Control_Unattend_Chb_TimeZone" VerticalAlignment="Center" Content="Time Zone" Margin="0,0,0,10" />
-                        <StackPanel x:Name="Control_Unattend_Stp_TimeZone" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
-                                <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Timezone:" Width="120" HorizontalAlignment="Left"/>
-                                <ComboBox x:Name="Control_Unattend_Cbx_Timezone" FontFamily="Segoe UI" FontSize="14" Width="405"  />
-                            </StackPanel>
-                        </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_StaticIP" VerticalAlignment="Center" Content="Static IP configuration" Margin="0,0,0,10" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -1345,14 +1338,6 @@ $syncHash.Control_Creds_Cbx_Idp.AddChild($_.Key)
 }
 #endregion AuthEndpoints
 
-#region TimeZones
-$syncHash.Timezones = [System.TimeZoneInfo]::GetSystemTimeZones()
-
-$syncHash.Timezones | ForEach-Object {
-$syncHash.Control_Unattend_Cbx_Timezone.AddChild($_.DisplayName)
-}
-#endregion TimeZones
-
 #region Regex
 $Regex = @{}
 $Regex.Fqdn = @'
@@ -1526,13 +1511,6 @@ $S_PrepareVHDX = {
         $U_Unattend_input_computername = $null
     }
     $Unattend_Apply_StaticIP = $SyncHash.Control_Unattend_Chb_StaticIP.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_StaticIP.IsChecked})
-    if ($SyncHash.Control_Unattend_Chb_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Chb_Timezone.IsChecked})){
-        $U_unattend_input_timezone_value = $SyncHash.Control_Unattend_Cbx_Timezone.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_Unattend_Cbx_Timezone.SelectedItem})
-        $U_Unattend_input_timezone = ($syncHash.Timezones | Where-Object {$_.DisplayName -eq $U_unattend_input_timezone_value}).ID
-    }
-    else {
-        $U_Unattend_input_timezone = "Pacific Standard Time"
-    }
 
     $U_Unattend_input_macaddress = $SyncHash.Control_NetInterface_Lvw_Nics.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_NetInterface_Lvw_Nics.SelectedItem.MacAddress})
     $U_Unattend_input_ipaddress = $SyncHash.Control_NetConfig_Tbx_IpAddress.Dispatcher.Invoke('Normal',[Func[Object]]{$SyncHash.Control_NetConfig_Tbx_IpAddress.Text})
@@ -1577,7 +1555,7 @@ $S_PrepareVHDX = {
       <IEHardenUser>false</IEHardenUser>
     </component>
     <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      <TimeZone>$U_Unattend_input_timezone</TimeZone>
+      <TimeZone>UTC</TimeZone>
       <ComputerName>$U_Unattend_input_computername</ComputerName>
     </component>
     <component name="Networking-MPSSVC-Svc" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -2048,7 +2026,6 @@ Function F_VerifyFields_Unattend {
 
     $LocalAdmin = $true
     $Computername = $true
-    $Timezone = $true
 
     if ($syncHash.Control_Unattend_Chb_LocalAdmin.IsChecked) {
         if ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -and
@@ -2061,12 +2038,7 @@ Function F_VerifyFields_Unattend {
         else {$Computername=$false}
     }
 
-    if ($syncHash.Control_Unattend_Chb_Timezone.IsChecked) {
-        if ($syncHash.Control_Unattend_Cbx_TimeZone.SelectedValue){$Timezone=$true}
-        else {$Timezone=$false}
-    }
-
-    if ($LocalAdmin -eq $true -and $Computername -eq $true -and $Timezone -eq $true){ $syncHash.Control_Unattend_Btn_Next.IsEnabled = $true}
+    if ($LocalAdmin -eq $true -and $Computername -eq $true){ $syncHash.Control_Unattend_Btn_Next.IsEnabled = $true}
     Else {$syncHash.Control_Unattend_Btn_Next.IsEnabled = $false}
 }
 
@@ -2504,22 +2476,6 @@ $syncHash.Control_Unattend_Chb_Computername.Add_Click({
 
 $syncHash.Control_Unattend_Tbx_Computername.Add_TextChanged({
     F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
-    F_VerifyFields_Unattend
-})
-
-$syncHash.Control_Unattend_Chb_Timezone.Add_Click({
-    if ($syncHash.Control_Unattend_Chb_Timezone.IsChecked) {
-        $syncHash.Control_Unattend_Stp_Timezone.Visibility = "Visible"
-        $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
-    }
-    else {
-        $syncHash.Control_Unattend_Stp_Timezone.Visibility = "Collapsed"
-        $syncHash.Control_Unattend_Cbx_Timezone.SelectedItem = $null
-        F_VerifyFields_Unattend
-    }
-})
-
-$syncHash.Control_Unattend_Cbx_Timezone.Add_SelectionChanged({
     F_VerifyFields_Unattend
 })
 #endregion Events Unattend

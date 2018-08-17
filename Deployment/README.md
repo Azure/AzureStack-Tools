@@ -39,7 +39,6 @@ Select the cloudbuilder.vhdx and optionally specify a path to a folder containin
 The host can be configured with the following options:
  - **Local administrator password** - If you uncheck this option the host will prompt for a password during the oobe setup when rebooting to the cloudbuilder.vhdx. Not specifying a local administrator password requires KVM access to the host to specify the password during boot.
  - **Computer name** - You can specify the name for the Azure Stack Development Kit host. The name needs to comply with FQDN requirements and cannot be longer than 15 characters. If you do not select the option, Windows generates a computername during OOBE.
- - **Timezone** - This options sets timezone for the Azure Stack Development Kit host to the selected value. If this option is not selected the timezone will be configred to (UTC-8:00) Pacific Time (US & Canada)
  - **Static IP Configuration** If the Azure Stack development kit needs to be configured with a static IP address, select this option. The installer will prompt for the networking interface and copy the current values for use in the cloudbuilder.vhdx during reboot. You can override the values that where copied if needed. If you do not select this option the network interfaces will be configured with DHCP when rebooted into the cloudbuilder.vhdx
 
  A job will perform the following actions:
