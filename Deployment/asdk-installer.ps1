@@ -28,7 +28,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.10"
+$Text_Generic.Version = "1.0.11"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
