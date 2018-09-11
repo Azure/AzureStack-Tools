@@ -1749,7 +1749,7 @@ function Set-ResourceGroupLocation{
         }
         else
         {
-            $CustomResourceGroupLocation = 'usdodeast'
+            $CustomResourceGroupLocation = 'usgovvirginia'
         }
     }
 
