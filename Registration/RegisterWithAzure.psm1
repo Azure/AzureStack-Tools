@@ -361,7 +361,7 @@ function Remove-AzsRegistration{
             }
             else
             {
-                Log-Throw "The registration resource found does not correlate the current environment's Cloud-Id. `r`nEnvironment Cloud Id: $($stampinfo.CloudId) `r`nResource Cloud Id: $($registrationResource.Properties.cloudId)"
+                Log-Throw "The registration resource found does not correlate the current environment's Cloud-Id. `r`nEnvironment Cloud Id: $($stampinfo.CloudId) `r`nResource Cloud Id: $($registrationResource.Properties.cloudId)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
             }
         }
         else
