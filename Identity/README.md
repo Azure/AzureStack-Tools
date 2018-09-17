@@ -1,9 +1,11 @@
 // Place your settings in this file to overwrite the default settings
 {
     "workbench.colorTheme": "Abyss"
-}nstall-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+}
+
+Install-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
+Install-AzureRmProfile -profile '2018-03-01-hybrid' -Force -Scope CurrentUser
+Install-Module -Name AzureStack -Scope CurrentUser
 ```
 
 Then make sure the following modules are imported:
