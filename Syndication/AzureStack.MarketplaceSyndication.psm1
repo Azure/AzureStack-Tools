@@ -7,54 +7,45 @@
     Requires an Azure Stack System to be registered for the subscription used to login
 #>
 
-function Sync-AzSOfflineMarketplaceItem {
+function Export-AzSOfflineMarketplaceItem {
     [CmdletBinding(DefaultParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
 
-    Param(    
+    Param(
         [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $Cloud = "AzureCloud",
 
         [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
-        [String] $Destination,
-
-        [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
-        [ValidateNotNullorEmpty()]
-        [String] $AzureTenantID,
-
-        [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
-        [ValidateNotNullorEmpty()]
-        [String] $AzureSubscriptionID
-        
+        [String] $Destination
     )
 
-
-   
-    $azureAccount = Add-AzureRmAccount -subscriptionid $AzureSubscriptionID -TenantId $AzureTenantID -Environment $Cloud
+    $AzureContext = Get-AzureRmContext
+    $AzureTenantID = $AzureContext.Tenant.TenantId
+    $AzureSubscriptionID = $AzureContext.Subscription.Id
 
     $azureEnvironment = Get-AzureRmEnvironment -Name $Cloud
 
     $resources = Get-AzureRmResource
     $resource = $resources.resourcename
-    $registrations = $resource|where-object {$_ -like "AzureStack*"}
+    if(!$resource) {
+        $resource = $resources.name
+    }
+
+    $registrations = $resource |where-object {$_ -like "AzureStack*"}
     if ($registrations.count -gt 1) {
         $Registration = $registrations[0]
-    }
-    else {
+    } else {
         $Registration = $registrations
     }
-        
 
     # Retrieve the access token
     $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureAccount.Context.Account.Id |Sort ExpiresOn |Select -Last 1
-
+    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $AzureContext.Account.id |Sort ExpiresOn |Select -Last 1
     
-    $uri1 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
+    $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
     $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"} 
-    $products = (Invoke-RestMethod -Method GET -Uri $uri1 -Headers $Headers).value
-    
+    $products = (Invoke-RestMethod -Method GET -Uri $productsUri -Headers $Headers).value
 
     $Marketitems = foreach ($product in $products) {
         switch ($product.properties.productKind) {
@@ -82,165 +73,948 @@ function Sync-AzSOfflineMarketplaceItem {
                     })
             }
 
+            'solution' {
+                Write-output ([pscustomobject]@{
+                        Id          = $product.name.Split('/')[-1]
+                        Type        = "Solution"
+                        Name        = $product.properties.displayName
+                        Description = $product.properties.description
+                        Publisher   = $product.properties.publisherDisplayName
+                        Version     = $product.properties.productProperties.version
+                        Size        = Set-String -size $product.properties.payloadLength
+                    })
+            }
+
+            'resourceProvider' {
+                Write-output ([pscustomobject]@{
+                        Id          = $product.name.Split('/')[-1]
+                        Type        = "Resource Provider"
+                        Name        = $product.properties.displayName
+                        Description = $product.properties.description
+                        Publisher   = $product.properties.publisherDisplayName
+                        Version     = $product.properties.productProperties.version
+                        Size        = Set-String -size $product.properties.payloadLength
+                    })
+            }
+
             Default {
                 Write-Warning "Unknown product kind '$_'"
             }
         }
     }
-      
-   
 
     $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
-
-        $productid = $_.id
-
-        # get name of azpkg
-        $uri2 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
-        Write-Debug $URI2
-        $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"} 
-        $productDetails = Invoke-RestMethod -Method GET -Uri $uri2 -Headers $Headers
-        $azpkgName = $productDetails.properties.galleryItemIdentity
-    
-
-        # get download location for apzkg
-        $uri3 = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
-        $uri3
-        $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri3 -Headers $Headers
-
-        #Create Legal Terms POPUP
-        $a = new-object -comobject wscript.shell
-        $intAnswer = $a.popup($productDetails.properties.description, `
-                0, "Legal Terms", 4)
-        If ($intAnswer -eq 6) {
-           
-            #Output Parameters required for Import
-            $FileExists = Test-Path "$destination\$azpkgName.txt"
-            $DestinationCheck = Test-Path $destination
-            If ($DestinationCheck -eq $false) {
-                new-item -ItemType Directory -force $destination
-            }
-            else {}
-
-            If ($FileExists -eq $true) {Remove-Item "$destination\$azpkgName.txt" -force} else {
-                New-Item "$destination\$azpkgName.txt"
-            }
-            $productDetails.properties|select publisherIdentifier,offer,sku,productKind,vmExtensionType  |out-file "$destination\$azpkgName.txt" -Append
-            $productDetails.properties.productProperties|select version| out-file "$destination\$azpkgName.txt" -Append
-
-            # download azpkg
-            $azpkgsource = $downloadDetails.galleryPackageBlobSasUri
-            $FileExists = Test-Path "$destination\$azpkgName.azpkg"
-            $DestinationCheck = Test-Path $destination
-            If ($DestinationCheck -eq $false) {
-                new-item -ItemType Directory -force $destination
-            }
-            else {}
-
-            If ($FileExists -eq $true) {Remove-Item "$destination\$azpkgName.azpkg" -force} else {
-                New-Item "$destination\$azpkgName.azpkg"
-            }
-            $azpkgdestination = "$destination\$azpkgName.azpkg"
-
-            #Select Premium Download
-            $a = new-object -comobject wscript.shell
-            $intAnswer = $a.popup("Would you like to use Premium download? This requires Azure Storage Tools to be installed", `
-                    0, "Premium Download", 4)
-        If ($intAnswer -eq 6) {
-            ($checktool= test-path 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' )
-            If ($checktool -eq $true){
-                & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$azpkgsource /Dest:$azpkgdestination /Y
-                $a.popup("$azpkgName.azpkg has been downloaded")
-                "$destination\$azpkgName.azpkg"|out-file "$destination\$azpkgName.txt" -Append
-            }
-            else{
-                $a.popup("Please install Azure Storage Tools first, canceling")
-            }
-            
-        } else {
-            {(New-Object System.Net.WebClient).DownloadFile("$azpkgsource",$azpkgdestination) }
-            $a.popup("$azpkgName.azpkg has been downloaded")
-            "$destination\$azpkgName.azpkg"|out-file "$destination\$azpkgName.txt" -Append
-        }
-
-            switch ($downloadDetails.productKind) {
-                'virtualMachine' {
-
-                    # download vhd
-                    $vhdName = $productDetails.properties.galleryItemIdentity
-                    $vhdSource = $downloadDetails.properties.osDiskImage.sourceBlobSasUri
-                    If ([string]::IsNullOrEmpty($vhdsource)) {exit} else {
-                        $FileExists = Test-Path "$destination\$vhdName.vhd" 
-                        If ($FileExists -eq $true) {Remove-Item "$destination\$vhdName.vhd" -force} else {
-                            New-Item "$destination\$vhdName.vhd" 
-                        }
-                        $vhdDestination = "$destination\$vhdName.vhd"
-
-                        #Select Premium Download
-            $a = new-object -comobject wscript.shell
-            $intAnswer = $a.popup("Would you like to use Premium download? This requires Azure Storage Tools to be installed", `
-                    0, "Premium Download", 4)
-        If ($intAnswer -eq 6) {
-            ($checktool= test-path 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' )
-            If ($checktool -eq $true){        
-            & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$vhdsource /Dest:$vhddestination /Y
-            $a.popup("$vhdName.vhd has been downloaded")
-            "$destination\$vhdName.vhd"|out-file "$destination\$azpkgName.txt" -Append
-            }
-            else{
-                $a.popup("Please install Azure Storage Tools first,canceling")
-            }
-        }else
-        {(New-Object System.Net.WebClient).DownloadFile("$vhdsource",$vhddestination) }
-        $a.popup("$vhdName.vhd has been downloaded")
-        "$destination\$vhdName.vhd"|out-file "$destination\$azpkgName.txt" -Append
-                    }
-                }
-                'virtualMachineExtension' {
-                    # download zip
-                    $zipName = $productDetails.properties.galleryItemIdentity
-                    $zipsource = $downloadDetails.properties.sourceBlob.uri
-                    If ([string]::IsNullOrEmpty($zipsource)) {exit} else {
-                        $FileExists = Test-Path "$destination\$zipName.zip" 
-                        If ($FileExists -eq $true) {Remove-Item "$destination\$zipName.zip" -force} else {
-                            New-Item "$destination\$zipName.zip" 
-                        }
-                        $zipDestination = "$destination\$zipName.zip"
-                        #Select Premium Download
-            $a = new-object -comobject wscript.shell
-            $intAnswer = $a.popup("Would you like to use Premium download? This requires Azure Storage Tools to be installed", `
-                    0, "Premium Download", 4)
-        If ($intAnswer -eq 6) {
-            ($checktool= test-path 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' )
-            If ($checktool -eq $true){          
-            & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$zipsource /Dest:$zipdestination /Y
-            $a.popup("$zipName.zip has been downloaded")
-            "$destination\$zipName.zip"|out-file "$destination\$azpkgName.txt" -Append
-            }
-            else{
-                $a.popup("Please install Azure Storage Tools first,canceling")
-            }
-        }else{(New-Object System.Net.WebClient).DownloadFile("$zipsource",$zipdestination)}
-        $a.popup("$zipName.zip has been downloaded")
-        "$destination\$zipName.zip"|out-file "$destination\$azpkgName.txt" -Append
-                    }
-                }
-
-                Default {
-                    Write-Warning "Unknown product kind '$_'"
-                }
-            }
-        
-        
-        }
-
-        else {
-            $a.popup("Legal Terms not accepted, canceling")
-        }
-
+        Get-Dependency -productid $_.id
     }
 }
 
+function Get-Dependency {
+    param (
+        [parameter(mandatory = $true)]
+        [String] $productid
+    )
 
+    $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
+    $uri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
+    $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri -Headers $Headers
+
+    if ($downloadDetails.properties.dependentProducts)
+    {
+        foreach ($id in $downloadDetails.properties.dependentProducts)
+        {
+            Get-Dependency -productid $id
+        }
+    }
+
+    Write-Host "`nDownloading product: $id" -ForegroundColor DarkCyan
+    Download-Product -productid $productid
+}
+
+function Download-Product {
+    param (
+        [parameter(mandatory = $true)]
+        [String] $productid
+    )
+
+    # get name of azpkg
+    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
+    Write-Debug $azpkgURI
+    $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
+    $productDetails = Invoke-RestMethod -Method GET -Uri $azpkgURI -Headers $Headers
+    $azpkgName = $productDetails.properties.galleryItemIdentity
+    if (!$azpkgName) {
+        $azpkgName = $productid
+    }
+
+    # get download location for azpkg
+    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
+    Write-Debug $downloadURI
+    $downloadDetails = Invoke-RestMethod -Method POST -Uri $downloadURI -Headers $Headers
+
+    # create Legal Terms POPUP
+    $legalTitle = "Legal Terms"
+    $legalText = $productDetails.properties.description -replace '<[^>]+>',''
+    Write-Host $("-"*20)
+    Write-Host "$legalTitle`n$legalText" -ForegroundColor DarkYellow
+    $confirmation = Read-Host "Accept Legal Terms. (Y/N)?"
+    If ($confirmation -eq 'Y') {
+        $productFolder = "$destination\$productid"
+
+        # output parameters required for import
+        $FileExists = Test-Path "$productFolder\$azpkgName.txt"
+        $DestinationCheck = Test-Path $productFolder
+        If ($DestinationCheck -eq $false) {
+            New-item -ItemType Directory -force $productFolder | Out-Null
+        }
+
+        If ($FileExists -eq $true) {Remove-Item "$productFolder\$azpkgName.txt" -force -ErrorAction SilentlyContinue | Out-Null} else {
+            New-Item "$productFolder\$azpkgName.txt" | Out-Null
+        }
+
+        If ($FileExists -eq $true) {Remove-Item "$productFolder\$azpkgName.json" -force -ErrorAction SilentlyContinue | Out-Null}
+
+        $productInfo = @{}
+        $productInfo['displayName'] = $productDetails.properties.displayName
+        $productInfo['description'] = $productDetails.properties.description
+        $productInfo['publisherDisplayName'] = $productDetails.properties.publisherDisplayName
+        $productInfo['publisherIdentifier'] = $productDetails.properties.publisherIdentifier
+        $productInfo['offer'] = $productDetails.properties.offer
+        $productInfo['offerVersion'] = $productDetails.properties.offerVersion
+        $productInfo['sku'] = $productDetails.properties.sku
+        $productInfo['billingPartNumber'] = $productDetails.properties.billingPartNumber
+        $productInfo['vmExtensionType'] = $productDetails.properties.vmExtensionType
+        $productInfo['legalTerms'] = $productDetails.properties.description
+        $productInfo['payloadLength'] = $productDetails.properties.payloadLength
+        $productInfo['galleryItemIdentity'] = $productDetails.properties.galleryItemIdentity
+        $productInfo['productKind'] = $productDetails.properties.productKind
+        $productInfo['productProperties'] = $productDetails.properties.productProperties
+        $productDetailsProperties = @{}
+        $productDetailsProperties['version'] = $downloadDetails.properties.version
+        if ($downloadDetails.productKind -in ('solution', 'resourceProvider')){
+            $productInfo['dependentProducts'] = $downloadDetails.properties.dependentProducts
+            $containerIds = @()
+            $containerIds += $downloadDetails.properties.fileContainers.Id
+            $productInfo['fileContainers'] = $containerIds
+            $productDetailsProperties['dependentProducts'] = $downloadDetails.properties.dependentProducts
+            $productDetailsProperties['fileContainers'] = $downloadDetails.properties.fileContainers
+        } elseif ($downloadDetails.productKind -eq 'virtualMachine') {
+            $productDetailsProperties['OsDiskImage'] = $downloadDetails.properties.OsDiskImage
+            $productDetailsProperties['DataDiskImages'] = $downloadDetails.properties.DataDiskImages
+        } else {
+            $productDetailsProperties['vmOsType'] = $downloadDetails.properties.vmOsType
+            $productDetailsProperties['sourceBlob'] = $downloadDetails.properties.sourceBlob
+            $productDetailsProperties['computeRole'] = $downloadDetails.properties.computeRole
+            $productDetailsProperties['vmScaleSetEnabled'] = $downloadDetails.properties.vmScaleSetEnabled
+            $productDetailsProperties['supportMultipleExtensions'] = $downloadDetails.properties.supportMultipleExtensions
+            $productDetailsProperties['isSystemExtension'] = $downloadDetails.properties.isSystemExtension
+        }
+
+        $productInfo['links'] = $productDetails.properties.links
+        $productInfo['iconUris'] = $productDetails.properties.iconUris
+        $productInfo['galleryPackageBlobSasUri'] = $downloadDetails.galleryPackageBlobSasUri
+
+        $productDetails.properties|select publisherIdentifier,offer,sku,productKind,vmExtensionType  |out-file "$productFolder\$azpkgName.txt" -Append
+        $productDetails.properties.productProperties|select version| out-file "$productFolder\$azpkgName.txt" -Append
+
+        if ($downloadDetails.productKind -ne 'resourceProvider')
+        {
+            # download azpkg
+            $azpkgsource = $downloadDetails.galleryPackageBlobSasUri
+            $FileExists = Test-Path "$productFolder\$azpkgName.azpkg"
+            $DestinationCheck = Test-Path $productFolder
+            If ($DestinationCheck -eq $false) {
+                New-item -ItemType Directory -force $productFolder | Out-Null
+            }
+
+            If ($FileExists -eq $true) {Remove-Item "$productFolder\$azpkgName.azpkg" -force | Out-Null}
+            $azpkgdestination = "$productFolder\$azpkgName.azpkg"
+
+            # select premium download
+            Write-Host $("-"*20)
+            $downloadConfirmation = Read-Host "Downloading gallery package. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+            If ($downloadConfirmation -eq 'Y') {
+                $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
+                If ($checktool -eq $true){
+                    DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -PremiumDownload -MaxRetry 2
+                    "$productFolder\$azpkgName.azpkg"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+                else{
+                    Write-Host "Please install Azure Storage Tools first, canceling"
+                }
+            } else {
+                DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -MaxRetry 2
+                "$productFolder\$azpkgName.azpkg"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+        }
+
+        $iconsFolder = "$productFolder\Icons"
+        $DestinationCheck = Test-Path $iconsFolder
+        If ($DestinationCheck -eq $false) {
+            New-item -ItemType Directory -force $iconsFolder | Out-Null
+        }
+
+        # download icons
+        $icon = $productDetails.properties.iconUris
+        If (Test-Path "$iconsFolder\hero.png") {Remove-Item "$iconsFolder\hero.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        If (Test-Path "$iconsFolder\large.png") {Remove-Item "$iconsFolder\large.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        If (Test-Path "$iconsFolder\medium.png") {Remove-Item "$iconsFolder\medium.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        If (Test-Path "$iconsFolder\small.png") {Remove-Item "$iconsFolder\small.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        If (Test-Path "$iconsFolder\wide.png") {Remove-Item "$iconsFolder\wide.png" -force -ErrorAction SilentlyContinue | Out-Null}
+
+        # select premium download
+        Write-Host $("-"*20)
+        $downloadConfirmation = Read-Host "Downloading icons. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+        If ($downloadConfirmation -eq 'Y') {
+            $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
+            If ($checktool -eq $true){
+                if ($icon.hero) {
+                    DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -PremiumDownload -MaxRetry 2
+                    "$iconsFolder\hero.png"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+                if ($icon.large) {
+                    DownloadMarketplaceProduct -Source "$($icon.large)" -Destination "$iconsFolder\large.png" -ProductName "large.png" -PremiumDownload -MaxRetry 2
+                    "$iconsFolder\large.png"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+                if ($icon.medium) {
+                    DownloadMarketplaceProduct -Source "$($icon.medium)" -Destination "$iconsFolder\medium.png" -ProductName "medium.png" -PremiumDownload -MaxRetry 2
+                    "$iconsFolder\medium.png"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+                if ($icon.small) {
+                    DownloadMarketplaceProduct -Source "$($icon.small)" -Destination "$iconsFolder\small.png" -ProductName "small.png" -PremiumDownload -MaxRetry 2
+                    "$iconsFolder\small.png"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+                if ($icon.wide) {
+                    DownloadMarketplaceProduct -Source "$($icon.wide)" -Destination "$iconsFolder\wide.png" -ProductName "wide.png" -PremiumDownload -MaxRetry 2
+                    "$iconsFolder\wide.png"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+                Write-Host "icons has been downloaded"
+            }
+            else{
+                Write-Host "Please install Azure Storage Tools first, canceling"
+            }
+        } else {
+            if ($icon.hero) {
+                DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -MaxRetry 2
+                "$iconsFolder\hero.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            if ($icon.large) {
+                DownloadMarketplaceProduct -Source "$($icon.large)" -Destination "$iconsFolder\large.png" -ProductName "large.png" -MaxRetry 2
+                "$iconsFolder\large.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            if ($icon.medium) {
+                DownloadMarketplaceProduct -Source "$($icon.medium)" -Destination "$iconsFolder\medium.png" -ProductName "medium.png" -MaxRetry 2
+                "$iconsFolder\medium.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            if ($icon.small) {
+                DownloadMarketplaceProduct -Source "$($icon.small)" -Destination "$iconsFolder\small.png" -ProductName "small.png" -MaxRetry 2
+                "$iconsFolder\small.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            if ($icon.wide) {
+                DownloadMarketplaceProduct -Source "$($icon.wide)" -Destination "$iconsFolder\wide.png" -ProductName "wide.png" -MaxRetry 2
+                "$iconsFolder\wide.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            Write-Host "icons has been downloaded"
+        }
+
+        switch ($downloadDetails.productKind) {
+            'virtualMachine' {
+                # download vhd
+                $vhdName = $productDetails.properties.galleryItemIdentity
+                $vhdSource = $downloadDetails.properties.osDiskImage.sourceBlobSasUri
+                If ([string]::IsNullOrEmpty($vhdsource))
+                {
+                    exit
+                }
+                else {
+                    $FileExists = Test-Path "$productFolder\$vhdName.vhd"
+                    If ($FileExists -eq $true) {Remove-Item "$productFolder\$vhdName.vhd" -force | Out-Null}
+                    $vhdDestination = "$productFolder\$vhdName.vhd"
+
+                    # select premium download
+                    Write-Host $("-"*20)
+                    $downloadConfirmation = Read-Host "Downloading vhd. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+                    If ($downloadConfirmation -eq 'Y') {
+                        $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
+                        If ($checktool -eq $true){
+                            DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -PremiumDownload -MaxRetry 2
+                            "$productFolder\$vhdName.vhd"|out-file "$productFolder\$azpkgName.txt" -Append
+                        }
+                        else{
+                            Write-Host "Please install Azure Storage Tools first,canceling"
+                        }
+                    }else
+                    {
+                        DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -MaxRetry 2
+                    }
+                    Write-Host "$vhdName.vhd has been downloaded"
+                    "$productFolder\$vhdName.vhd"|out-file "$productFolder\$azpkgName.txt" -Append
+                }
+            }
+            'virtualMachineExtension' {
+                # download zip
+                $zipName = $productDetails.properties.galleryItemIdentity
+                $zipsource = $downloadDetails.properties.sourceBlob.uri
+                If ([string]::IsNullOrEmpty($zipsource)) {exit} else {
+                    $FileExists = Test-Path "$productFolder\$zipName.zip"
+                    If ($FileExists -eq $true) {Remove-Item "$productFolder\$zipName.zip" -force | Out-Null}
+                    $zipDestination = "$productFolder\$zipName.zip"
+                    # select premium download
+                    Write-Host $("-"*20)
+                    $downloadConfirmation = Read-Host "Downloading VM extension zip. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+                    If ($downloadConfirmation -eq 'Y') {
+                        $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
+                        If ($checktool -eq $true){
+                            DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -PremiumDownload -MaxRetry 2
+                            "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
+                            $productDetailsProperties['sourceBlob'].uri = "$productFolder\$zipName.zip"
+                        }
+                        else{
+                            Write-Host "Please install Azure Storage Tools first,canceling"
+                        }
+                    }else{
+                        DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -MaxRetry 2
+                        "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
+                        $productDetailsProperties['sourceBlob'].uri = "$productFolder\$zipName.zip"
+                    }
+                }
+            }
+
+            {($_ -eq 'resourceProvider') -or ($_ -eq 'solution')} {
+                # download zip
+                foreach ($container in $downloadDetails.properties.fileContainers)
+                {
+                    $zipsource = $container.sourceUri
+                    $containerName = $container.id
+                    If ([string]::IsNullOrEmpty($zipsource)) {exit} else {
+                        $zipDestination = "$productFolder\$containerName"
+                        if ($container.type -match 'zip'){
+                            $zipDestination = "$productFolder\$containerName.zip"
+                        }
+
+                        $FileExists = Test-Path $zipDestination
+                        If ($FileExists -eq $true) {Remove-Item $zipDestination -force | Out-Null}
+
+                        # select premium download
+                        Write-Host $("-"*20)
+                        $downloadConfirmation = Read-Host "Downloading zip file. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+                        If ($downloadConfirmation -eq 'Y') {
+                            $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
+                            If ($checktool -eq $true){
+                                DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -PremiumDownload -MaxRetry 2
+                                "$productFolder\$containerName"|out-file "$productFolder\$azpkgName.txt" -Append
+                            }
+                            else{
+                                Write-Host "Please install Azure Storage Tools first,canceling"
+                            }
+                        }else{
+                            DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -MaxRetry 2
+                            "$productFolder\$containerName"|out-file "$productFolder\$azpkgName.txt" -Append
+                        }
+                    }
+                }
+            }
+
+            Default {
+                Write-Warning "Unknown product kind '$_'"
+            }
+        }
+
+        $productInfo['productDetailsProperties'] = $productDetailsProperties
+        $productInfo |ConvertTo-Json -Depth 99 |out-file "$productFolder\$productid.json"
+        Write-Host "Download marketplace product finished"
+    }
+    else {
+        Write-Host "Legal Terms not accepted, canceling"
+    }
+}
+
+function DownloadMarketplaceProduct {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [Uri] $Source,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [String] $Destination,
+
+        [Parameter(Mandatory = $true)]
+        [String] $ProductName,
+
+        [Parameter(Mandatory = $false)]
+        [Switch] $PremiumDownload,
+
+        [Parameter(Mandatory = $false)]
+        [object] $MaxRetry = 1
+    )
+
+    $content = $null
+    $response = $null
+    $completed = $false
+    $retryCount = 0
+    $sleepSeconds = 5
+    $tmpDestination = "$Destination.marketplace"
+
+    while (-not $completed) {
+        try {
+            if ($PremiumDownload) {
+                & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y
+            } else {
+                (New-Object System.Net.WebClient).DownloadFile("$Source",$tmpDestination)
+            }
+
+            $completed = $true
+            Write-Host "[$ProductName] has been downloaded"
+        }
+        catch
+        {
+            if ($retryCount -ge $MaxRetry) {
+                Write-Warning "Request to download from $Source failed the maximum number of $MaxRetry times."
+                throw
+            } else {
+                Write-Warning "Request to download from $Source failed. Retrying in $sleepSeconds seconds."
+                Start-Sleep $sleepSeconds
+                $retryCount++
+            }
+        }
+    }
+
+    Move-Item -Path $tmpDestination -Destination $Destination -Force
+}
+
+<#
+    .SYNOPSIS
+    Import all Azure Marketplace Items available for upload. These marketplace items should
+    be downloaded from Export-AzSOfflineMarketplaceItem step.
+#>
+
+function Import-AzSOfflineMarketplaceItem
+{
+    param (
+        [parameter(mandatory = $true)]
+        [String] $Origin
+    )
+
+    Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -ErrorAction Stop
+    $engine = New-Object CloudEngine.Engine.DefaultECEngine
+    $roles = $engine.GetRolesPublicInfo()
+    $WASRoleDefinition = $roles["WAS"].PublicConfiguration
+    $armEndpoint = (($WASRoleDefinition.PublicInfo.Endpoints.Endpoint | Where Name -EQ "ResourceManager").Address).Trim('/')
+
+    $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
+
+    $resourceGroup = "System.syndication"
+    $dirs = Get-ChildItem -Path $Origin
+    $importedProducts  = New-Object System.Collections.Generic.HashSet[string]
+
+    PreCheck -contentFolder $Origin
+
+    foreach($dir in $dirs)
+    {
+        Import-ByDependency -contentFolder $Origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -importedProducts $importedProducts
+    }
+
+    # remove note resource group
+    Get-AzureRmResourceGroup -Name $resourceGroup -ErrorVariable notPresent -ErrorAction SilentlyContinue
+    if(!$notPresent)
+    {
+        Write-Host "Removing temporary resource group '$resourceGroup'..."
+        Remove-AzureRmResourceGroup -Name $resourceGroup -Force | Out-Null
+    }
+
+    Write-Host "Import marketplace product finished"
+}
+
+function PreCheck
+{
+    param (
+        [parameter(mandatory = $true)]
+        [String] $contentFolder
+    )
+
+    foreach ($dir in $dirs)
+    {
+        $folderPath = $contentFolder + "\$dir"
+        $jsonFileExists = Test-Path "$folderPath\$dir.json"
+        if ($jsonFileExists -eq $False) {
+            throw "json file not exist for product '$dir'. Please download '$dir' again, then import"
+        }
+
+        $originFileExists = Test-Path "$folderPath\$dir.json.origin"
+        if ($originFileExists -eq $True) {
+            Write-Host "$dir.json.origin exists, you have probably run import before, if you want to import again, please replace $dir.json with $dir.json.origin, then run import"
+            throw "$dir.json.origin file exists"
+        }
+
+        $tmpfileExists = (Test-Path "$folderPath\*.marketplace") -or (Test-Path "$folderPath\icons\*.marketplace")
+        if ($tmpfileExists -eq $True) {
+            Write-Host ".marketplace file exists, these are temp files not fully downloaded. Please download product '$dir' again, then retry import"
+            throw ".marketplace file exists"
+        }
+    }
+}
+
+function Import-ByDependency
+{
+    param (
+        [parameter(mandatory = $true)]
+        [String] $contentFolder,
+        
+        [parameter(mandatory = $true)]
+        [String] $productid,
+
+        [parameter(mandatory = $true)]
+        [String] $resourceGroup,
+
+        [parameter(mandatory = $true)]
+        [String] $armEndpoint,
+
+        [parameter(mandatory = $true)]
+        [String] $defaultProviderSubscription,
+
+        [parameter(mandatory = $true)]
+        [Object] $importedProducts
+    )
+
+    if ($importedProducts.contains($productid)) {
+        Write-Debug "$productid already imported"
+        return
+    }
+
+    Write-Host "Importing product '$productid' ..."
+    $folderPath = $contentFolder + "\$productid"
+    $jsonFile = Get-Content "$folderPath\$productid.json"
+    $properties = $jsonFile | ConvertFrom-Json
+    if ($properties.dependentProducts) {
+        foreach($product in $properties.dependentProducts)
+        {
+            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -importedProducts $importedProducts
+        }
+    }
+
+    $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
+        $armEndpoint,
+        $defaultProviderSubscription,
+        $productid
+    )
+
+    $ctx = Get-AzureRmContext
+    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
+    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+
+    try {
+        $getStateResponse = Invoke-WebRequest -Method GET -Uri $syndicateUri -ContentType "application/json" -Headers $headers -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+        if ($getStateResponse -and $getStateResponse.Content) {
+            $content = $getStateResponse.Content | convertFrom-json
+            if ($content.properties.provisioningState -eq 'Succeeded') {
+                Write-Host "Marketplace product '$productid' was syndicated, skip import"
+                return
+            }
+        }
+    }
+    catch
+    {
+        if ($_.Exception.Response.StatusCode -ne 404)
+        {
+            Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+        }
+    }
+
+    Resolve-ToLocalURI -productFolder $folderPath -resourceGroup $resourceGroup
+    Syndicate-Product -productid $productid -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -downloadFolder $contentFolder
+    $importedProducts.Add($productid) | Out-Null
+}
+
+<#
+    .SYNOPSIS
+    Check consistency of all Azure Marketplace Items available for import.
+#>
+
+function Test-AzSOfflineMarketplaceItem {
+    param (
+        [parameter(mandatory = $true)]
+        [String] $Destination
+    )
+
+    Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -ErrorAction Stop
+    $engine = New-Object CloudEngine.Engine.DefaultECEngine
+    $roles = $engine.GetRolesPublicInfo()
+    $WASRoleDefinition = $roles["WAS"].PublicConfiguration
+    $armEndpoint = (($WASRoleDefinition.PublicInfo.Endpoints.Endpoint | Where Name -EQ "ResourceManager").Address).Trim('/')
+    $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
+
+    $ctx = Get-AzureRmContext
+    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
+    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+
+    foreach($product in $Destination)
+    {
+        $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
+            $armEndpoint,
+            $defaultProviderSubscription,
+            $product
+        )
+
+        try {
+            $getStateResponse = Invoke-WebRequest -Method GET -Uri $syndicateUri -ContentType "application/json" -Headers $headers -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+            if ($getStateResponse -and $getStateResponse.Content) {
+                $content = $getStateResponse.Content | convertFrom-json
+                if ($content.properties.provisioningState -eq 'Succeeded') {
+                    Write-Host "Marketplace product '$product' was syndicated, you can skip import"
+                }
+            }
+        }
+        catch
+        {
+            if ($_.Exception.Response.StatusCode -ne 404)
+            {
+                Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+            }
+        }
+    }
+
+    PreCheck -contentFolder $Destination
+
+    Write-Host "Test-AzSOfflineMarketplaceItem finished successfully"
+}
+
+function Resolve-ToLocalURI {
+    param (
+        [parameter(mandatory = $true)]
+        [String] $productFolder,
+
+        [parameter(mandatory = $true)]
+        [String] $resourceGroup
+    )
+
+    $jsonPath = Get-Item "$productFolder\*.json"
+    $jsonFile = Get-Content $jsonPath
+    $json = $jsonFile | ConvertFrom-Json
+
+    # check azpkg
+    if($json.galleryPackageBlobSasUri) {
+        $azpkgFile = Get-Item -path "$productFolder\*.azpkg"
+        $azpkgURI = Upload-ToStorage -filePath $azpkgFile.FullName -resourceGroup $resourceGroup
+        $json.galleryPackageBlobSasUri = $azpkgURI
+    }
+
+    # check icons
+    $iconsFolder = "$productFolder\Icons"
+    if ($json.iconUris.hero) {
+        $heroPath = "$iconsFolder\hero.png"
+        $heroURI = Upload-ToStorage -filePath $heroPath -resourceGroup $resourceGroup
+        $json.iconUris.hero = $heroURI
+    }
+    if ($json.iconUris.large) {
+        $largePath = "$iconsFolder\large.png"
+        $largeURI = Upload-ToStorage -filePath $largePath -resourceGroup $resourceGroup
+        $json.iconUris.large = $largeURI
+    }
+    if ($json.iconUris.medium) {
+        $mediumPath = "$iconsFolder\medium.png"
+        $mediumURI = Upload-ToStorage -filePath $mediumPath -resourceGroup $resourceGroup
+        $json.iconUris.medium = $mediumURI
+    }
+    if ($json.iconUris.small) {
+        $smallPath = "$iconsFolder\small.png"
+        $smallURI = Upload-ToStorage -filePath $smallPath -resourceGroup $resourceGroup
+        $json.iconUris.small = $smallURI
+    }
+    if ($json.iconUris.wide) {
+        $widePath = "$iconsFolder\wide.png"
+        $wideURI = Upload-ToStorage -filePath $widePath -resourceGroup $resourceGroup
+        $json.iconUris.wide = $wideURI
+    }
+
+    # check osDiskImage
+    if ($json.productDetailsProperties.OsDiskImage) {
+        $osDiskImageFile = Get-Item -path "$productFolder\*.vhd"
+        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -resourceGroup $resourceGroup
+        $json.productDetailsProperties.OsDiskImage.sourceBlobSasUri = $osImageURI
+    }
+
+    # check vm extension zip
+    if ($json.productDetailsProperties.sourceBlob) {
+        $vmExtensionZip = $json.productDetailsProperties.sourceBlob.uri
+        $vmExtensionURI = Upload-ToStorage -filePath $vmExtensionZip -resourceGroup $resourceGroup
+        $json.productDetailsProperties.sourceBlob.uri = $vmExtensionURI
+    }
+
+    # check fileContainers
+    if ($json.productDetailsProperties.fileContainers) {
+        for($i = 0; $i -le $json.productDetailsProperties.fileContainers.GetUpperBound(0); $i++)
+        {
+            $container = $json.productDetailsProperties.fileContainers[$i]
+            $containerId = $container.id
+            $containerFile = "$productFolder\$containerId.zip"
+            $containerURI = Upload-ToStorage -filePath $containerFile -resourceGroup $resourceGroup
+            $json.productDetailsProperties.fileContainers[$i].sourceUri = $containerURI
+        }
+    }
+
+    Move-Item -path $jsonPath.FullName -Destination "$jsonPath.origin"
+    $json |ConvertTo-Json -Depth 99 |out-file $jsonPath.FullName
+}
+
+function Resolve-AccessToken {
+    param(
+        [object] $context,
+        [string] $accessToken
+    )
+
+    if (-not [string]::IsNullOrEmpty($accessToken)) {
+        return $accessToken
+    }
+
+    $accessToken = $context.Account.ExtendedProperties.AccessToken
+
+    if (-not [string]::IsNullOrEmpty($accessToken)) {
+        return $accessToken
+    }
+
+    $cachedToken = $context.TokenCache.ReadItems() | Sort-Object -Property ExpiresOn -Descending | Select-Object -First 1
+
+    if ($null -ne $cachedToken) {
+        return $cachedToken.AccessToken
+    }
+
+    throw 'Unable to resolve access token.'
+}
+
+function Syndicate-Product {
+    param (
+        [parameter(mandatory = $true)]
+        [String] $productid,
+
+        [parameter(mandatory = $true)]
+        [String] $armEndpoint,
+
+        [parameter(mandatory = $true)]
+        [String] $defaultProviderSubscription,
+        
+        [parameter(mandatory = $true)]
+        [String] $downloadFolder
+    )
+
+    $jsonFile = Get-Content "$downloadFolder\$productid\*.json"
+    $properties = $jsonFile | ConvertFrom-Json
+
+    $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
+        $armEndpoint,
+        $defaultProviderSubscription,
+        $productid
+    )
+
+    $syndicateProperty = @{
+        GalleryPackageBlobSasUri = $properties.galleryPackageBlobSasUri
+        ProductDetailsProperties = $properties.productDetailsProperties
+        DisplayName = $properties.displayName
+        Description = $properties.description
+        PublisherDisplayName = $properties.publisherDisplayName
+        PublisherIdentifier = $properties.publisherIdentifier
+        Offer = $properties.offer
+        OfferVersion = $properties.offerVersion
+        Sku = $properties.sku
+        BillingPartNumber = $properties.billingPartNumber
+        VmExtensionType = $properties.vmExtensionType
+        GalleryItemIdentity = $properties.galleryItemIdentity
+        IconUris = $properties.iconUris
+        Links = $properties.links
+        FileContainers = $properties.fileContainers
+        LegalTerms = $properties.description
+        PayloadLength = $properties.payloadLength
+        ProductKind = $properties.productKind
+        ProductProperties = $properties.productProperties
+    }
+
+    $json = @{
+        properties = $syndicateProperty
+    }
+
+    $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -Body $json -MaxRetry 2
+
+    if ($syndicateResponse.StatusCode -eq 200) {
+        Write-Host "product '$productid' was syndicated"
+    } elseif (-not (Wait-AzsAsyncOperation -AsyncOperationStatusUri $syndicateResponse.Headers.'Azure-AsyncOperation' -Verbose)) {
+        Write-Error "Unable to complete syndication operation." -ErrorAction Stop
+    }
+}
+
+function Upload-ToStorage {
+    param (
+        [parameter(mandatory = $true)]
+        [String] $filePath,
+
+        [parameter(mandatory = $true)]
+        [String] $resourceGroup
+    )
+
+    $syndicationStorageName = "syndicationstorage"
+    $syndicationContainerName = "syndicationartifacts"
+
+    Get-AzureRmResourceGroup -Name $resourceGroup -ErrorVariable notPresent -ErrorAction SilentlyContinue | Out-Null
+    if($notPresent)
+    {
+        New-AzureRmResourceGroup -Name $resourceGroup -Location local -Force | Out-Null
+    }
+
+    $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $resourceGroup -AccountName $syndicationStorageName -ErrorVariable notPresent -ErrorAction SilentlyContinue
+    if($notPresent)
+    {
+        $storageAccount = New-AzureRmStorageAccount -ResourceGroupName $resourceGroup `
+            -Name $syndicationStorageName `
+            -Location local `
+            -Type Standard_LRS
+    }
+
+    $ctx = $storageAccount.Context
+    $container = Get-AzureStorageContainer -Name $syndicationContainerName -Context $ctx -ErrorVariable notPresent -ErrorAction SilentlyContinue
+    if($notPresent)
+    {
+        $container = New-AzureStorageContainer -Name $syndicationContainerName -Context $ctx -Permission blob
+    }
+
+    $file = Get-item -path $filePath
+
+    Set-AzureStorageBlobContent -File $file.FullName `
+        -Container $syndicationContainerName `
+        -Blob $file.Name `
+        -Context $ctx `
+        -Force | Out-Null
+
+    $fileURI = (Get-AzureStorageBlob -blob $file.Name -Container $syndicationContainerName -Context $ctx).ICloudBlob.Uri.AbsoluteUri
+    return $fileURI
+}
+
+function Ensure-SuccessStatusCode {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Net.HttpStatusCode] $StatusCode
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    if (-not (Test-SuccessStatusCode -StatusCode $StatusCode)) {
+        throw "HTTP response status code is not successful: $StatusCode"
+    }
+}
+
+function Wait-AzsAsyncOperation {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [Uri] $AsyncOperationStatusUri
+    )
+
+    $ErrorActionPreference = 'Stop'
+
+    # max wait for one hour, otherwise treat it as failed
+    $currentAttempt = 0
+    $maxAttempts = 720
+    $sleepSeconds = 5
+
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+    while ($true) {
+        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -MaxRetry 2
+
+        Ensure-SuccessStatusCode -StatusCode $response.StatusCode
+
+        $operationResult = $response.Content | ConvertFrom-Json
+
+        if (Test-OperationResultTerminalState $operationResult.status) {
+            if ($operationResult.status -eq 'Succeeded') {
+                return $true
+            }
+
+            return $false
+        }
+
+        $currentAttempt++
+        if ($currentAttempt -ge $maxAttempts)
+        {
+            throw "Async operation was not finished after $currentAttempt retries. Provisiong state: $operationResult.status"
+        }
+
+        Write-Debug "Sleeping for $sleepSeconds seconds, waiting time: $($stopwatch.Elapsed)"
+
+        Start-Sleep -Seconds $sleepSeconds
+    }
+}
+
+function Test-OperationResultTerminalState {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $Value
+    )
+
+    return $Value -in @('Canceled', 'Failed', 'Succeeded')
+}
+
+function Test-SuccessStatusCode {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Net.HttpStatusCode] $StatusCode
+    )
+
+    return [int]$StatusCode -ge 200 -and [int]$StatusCode -le 299
+}
+
+function InvokeWebRequest {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('GET', 'PUT', 'POST', 'DELETE')]
+        [string] $Method,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [Uri] $Uri,
+
+        [Parameter(Mandatory = $false)]
+        [object] $Body = $null,
+
+        [Parameter(Mandatory = $false)]
+        [object] $MaxRetry = 1
+    )
+
+    $ctx = Get-AzureRmContext
+    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
+    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+
+    $content = $null
+    $response = $null
+    $retryCount = 0
+    $completed = $false
+    $sleepSeconds = 5
+
+    if ($Body) {
+        $content = $body | ConvertTo-Json -Depth 99 -Compress
+    }
+
+    $VerbosePreference = "SilentlyContinue"
+    $ProgressPreference = "SilentlyContinue"
+
+    while (-not $completed) {
+        try {
+            [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json" -Headers $headers -Body $content -ErrorAction Stop)
+            Ensure-SuccessStatusCode -StatusCode $response.StatusCode
+            $completed = $true
+        }
+        catch
+        {
+            if ($retryCount -ge $MaxRetry) {
+                Write-Warning "Request to $Method $Uri failed the maximum number of $MaxRetry times."
+                throw
+            } else {
+                Write-Warning "Request to $Method $Uri failed. Retrying in $sleepSeconds seconds."
+                Start-Sleep $sleepSeconds
+                $retryCount++
+            }
+        }
+    }
+
+    return $response
+}
 
 function Set-String {
     param (
@@ -257,4 +1031,6 @@ function Set-String {
     else {return "<1 MB"} 
 }
 
-Export-ModuleMember -Function Sync-AzSOfflineMarketplaceItem
+Export-ModuleMember -Function Export-AzSOfflineMarketplaceItem
+Export-ModuleMember -Function Import-AzSOfflineMarketplaceItem
+Export-ModuleMember -Function Test-AzSOfflineMarketplaceItem
