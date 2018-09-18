@@ -787,6 +787,7 @@ if($IP)
 				{
 				$remoteip = $testconnect.RemoteAddress.IPAddressToString
 				$share = $testconnect.SourceAddress.IPAddress
+				$share = Read-InputBoxDialog -Message "Please enter upload share IP:" -WindowTitle "Log upload share IP:" -DefaultText $share
 				$myname = whoami
                 $date = Get-Date -format MM-dd-hhmm
                 $foldername = "-AzureStackLogs"
