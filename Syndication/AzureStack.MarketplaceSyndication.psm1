@@ -15,6 +15,10 @@ function Export-AzSOfflineMarketplaceItem {
         [ValidateNotNullorEmpty()]
         [String] $Cloud = "AzureCloud",
 
+        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [ValidateNotNullorEmpty()]
+        [String] $ResourceGroup = "azurestack",
+
         [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $Destination
@@ -43,7 +47,7 @@ function Export-AzSOfflineMarketplaceItem {
     $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
     $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $AzureContext.Account.id |Sort ExpiresOn |Select -Last 1
     
-    $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
+    $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$ResourceGroup/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
     $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"} 
     $products = (Invoke-RestMethod -Method GET -Uri $productsUri -Headers $Headers).value
 
@@ -492,14 +496,13 @@ function Import-AzSOfflineMarketplaceItem
 {
     param (
         [parameter(mandatory = $true)]
-        [String] $Origin
-    )
+        [ValidateNotNull()]
+        [String] $Origin,
 
-    Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -ErrorAction Stop
-    $engine = New-Object CloudEngine.Engine.DefaultECEngine
-    $roles = $engine.GetRolesPublicInfo()
-    $WASRoleDefinition = $roles["WAS"].PublicConfiguration
-    $armEndpoint = (($WASRoleDefinition.PublicInfo.Endpoints.Endpoint | Where Name -EQ "ResourceManager").Address).Trim('/')
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [Uri] $ArmEndpoint
+    )
 
     $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
 
@@ -511,7 +514,7 @@ function Import-AzSOfflineMarketplaceItem
 
     foreach($dir in $dirs)
     {
-        Import-ByDependency -contentFolder $Origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -importedProducts $importedProducts
+        Import-ByDependency -contentFolder $Origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $ArmEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -importedProducts $importedProducts
     }
 
     # remove note resource group

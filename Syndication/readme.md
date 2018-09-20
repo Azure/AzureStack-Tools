@@ -62,7 +62,7 @@ Configure Azure Stack Operator’s PowerShell session. More information cannot b
 Import the module and start the import process for an Azure Marketplace item
 ```powershell
 Import-Module .\AzureStack.MarketplaceSyndication.psm1
-Import-AzSOfflineMarketplaceItem -origin “marketplace content folder"
+Import-AzSOfflineMarketplaceItem -origin “marketplace content folder" -armendpoint "Environment Arm Endpoint"
 ```
 
 
