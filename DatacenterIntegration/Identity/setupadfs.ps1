@@ -44,21 +44,15 @@ $WindowsVersion= [environment]::OSVersion.Version
 If ($WindowsVersion.Build -lt 14393) {
 
 #Must be 2012 or 2012 R2 
-Add-ADFSRelyingPartyTrust -Name AzureStack -MetadataUrl $MetadataURL -IssuanceTransformRulesFile ($currentPath + '\claimrules.txt') -AutoUpdateEnabled:$true -MonitoringEnabled:$true -enabled:$true
+Add-ADFSRelyingPartyTrust -Name AzureStack -MetadataUrl $MetadataURL -IssuanceTransformRulesFile ($currentPath + '\claimrules.txt') -AutoUpdateEnabled:$true -MonitoringEnabled:$true -enabled:$true -TokenLifeTime 1440
 }
 else{
 #Must be 2016
-Add-ADFSRelyingPartyTrust -Name AzureStack -MetadataUrl $MetadataURL -IssuanceTransformRulesFile ($currentPath + '\claimrules.txt') -AutoUpdateEnabled:$true -MonitoringEnabled:$true -enabled:$true -AccessControlPolicyName “Permit everyone”
-
-
-#Enable Form Based Authentication
-Set-AdfsProperties -WIASupportedUserAgents @("MSAuthHost/1.0/In-Domain","MSIPC","Windows Rights Management Client","Kloud")
+Add-ADFSRelyingPartyTrust -Name AzureStack -MetadataUrl $MetadataURL -IssuanceTransformRulesFile ($currentPath + '\claimrules.txt') -AutoUpdateEnabled:$true -MonitoringEnabled:$true -enabled:$true -AccessControlPolicyName “Permit everyone” -TokenLifeTime 1440
 
 #Enable Supprt for Edge Browser
 Set-AdfsProperties -IgnoreTokenBinding $true
 
-#Enable Refresh Token
-Set-ADFSRelyingPartyTrust -TargetName AzureStack -TokenLifeTime 1440
 }
 }
 }
