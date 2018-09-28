@@ -136,7 +136,7 @@ function Get-AppServiceBillingRecords
     #build usage uri and set meters
     if ($TenantUsage)
     {
-        $usageResourceType = "Microsoft.Commerce/locations/subscriberUsageAggregates"
+        $usageResourceType = "Microsoft.Commerce.Admin/locations/subscriberUsageAggregates"
         $meters = $AppServiceTenantMeters
     }
     else
