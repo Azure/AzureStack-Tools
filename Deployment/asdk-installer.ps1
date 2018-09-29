@@ -1065,6 +1065,7 @@ $Xaml = @'
                                     <Path x:Name="Control_Creds_Pth_LocalPassword" SnapsToDevicePixels="False" StrokeThickness="3" Data="M2,10 L8,16 L15,5" Stroke="#92D050" Margin="300,0,0,0" Visibility="Hidden"/>
                                 </Grid>
                             </StackPanel>
+                            <TextBlock x:Name="Control_Creds_Tbl_ErrorMessage"  FontSize="14" FontFamily="Segoe UI"  Text="The specified password does not match the current local administrator password" Margin="30,0,0,10" Visibility="Hidden" Focusable="True" Foreground="Red"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -1970,7 +1971,10 @@ Function F_Verify_LocalAdminCreds {
     if ($dsa.ValidateCredentials('Administrator', $pass)){
     }
     else {
-        F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
+         $syncHash.Control_Creds_Tbl_ErrorMessage.Visibility='Visible'
+         $syncHash.Control_Creds_Tbl_ErrorMessage.Focus()
+
+         F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
     }
 }
 
@@ -2513,9 +2517,10 @@ $syncHash.Control_Creds_Btn_Next.Add_Click({
         $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
         
     }
-    Else {        
-        $syncHash.Control_Creds_Pwb_LocalPassword.Focus()            
-    }
+})
+
+$syncHash.Control_Creds_Pwb_LocalPassword.Add_PasswordChanged({
+$syncHash.Control_Creds_Tbl_ErrorMessage.Visibility='Hidden'  
 })
 
 $syncHash.Control_Creds_Cbx_Idp.Add_SelectionChanged({
