@@ -441,7 +441,7 @@ function Register-AzsWithMyDirectoryTenant {
         if (-not $refreshToken) {
             if ($tokens.Count -eq 1) {
                 Write-Warning "Failed to find target refresh token from Azure PowerShell Cache; attempting to reuse the single cached auth context..."
-                $refreshToken = $tokens[0]
+                $refreshToken = $tokens[0].RefreshToken | ConvertTo-SecureString -AsPlainText -Force
             }
             else {
                 throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance."
@@ -818,7 +818,7 @@ function Unregister-AzsWithMyDirectoryTenant {
         if (-not $refreshToken) {
             if ($tokens.Count -eq 1) {
                 Write-Warning "Failed to find target refresh token from Azure PowerShell Cache; attempting to reuse the single cached auth context..."
-                $refreshToken = $tokens[0]
+                $refreshToken = $tokens[0].RefreshToken | ConvertTo-SecureString -AsPlainText -Force
             }
             else {
                 throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance."
