@@ -444,7 +444,7 @@ function Register-AzsWithMyDirectoryTenant {
                 $refreshToken = $tokens[0].RefreshToken | ConvertTo-SecureString -AsPlainText -Force
             }
             else {
-                throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance."
+                throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance after running 'Clear-AzureRmContext -Scope CurrentUser -Force -Verbose'."
             }
         }
 
@@ -821,7 +821,7 @@ function Unregister-AzsWithMyDirectoryTenant {
                 $refreshToken = $tokens[0].RefreshToken | ConvertTo-SecureString -AsPlainText -Force
             }
             else {
-                throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance."
+                throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance after running 'Clear-AzureRmContext -Scope CurrentUser -Force -Verbose'."
             }
         }
 
