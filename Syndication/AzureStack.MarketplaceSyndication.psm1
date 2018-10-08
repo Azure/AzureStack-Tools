@@ -37,6 +37,14 @@ function Sync-AzSOfflineMarketplaceItem {
 
     $resources = Get-AzureRmResource
     $resource = $resources.resourcename
+    # workaround for a breaking change from moving from profile version 2017-03-09-profile to 2018-03-01-hybrid
+    # the output model of Get-AzureRmResource has changed between these versions
+    # in future this code path can be changed to simply with  (Get-AzureRMResource -Name "AzureStack*").Name
+    if($resource -eq $null)
+    {
+        $resource = $resources.Name
+    }
+    
     $registrations = $resource|where-object {$_ -like "AzureStack*"}
     if ($registrations.count -gt 1) {
         $Registration = $registrations[0]
