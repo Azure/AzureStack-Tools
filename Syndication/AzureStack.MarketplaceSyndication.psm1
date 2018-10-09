@@ -501,7 +501,10 @@ function Import-AzSOfflineMarketplaceItem
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [Uri] $ArmEndpoint
+        [Uri] $ArmEndpoint,
+
+        [Parameter(Mandatory = $false)]
+        [PSCredential] $AzsCredential
     )
 
     $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
@@ -512,9 +515,13 @@ function Import-AzSOfflineMarketplaceItem
 
     PreCheck -contentFolder $Origin
 
+    $ctx = Get-AzureRmContext
+    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
+    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+
     foreach($dir in $dirs)
     {
-        Import-ByDependency -contentFolder $Origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $ArmEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -importedProducts $importedProducts
+        Import-ByDependency -contentFolder $Origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $ArmEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -headers ([ref]$headers) -importedProducts $importedProducts -AzsCredential $AzsCredential
     }
 
     # remove note resource group
@@ -575,8 +582,14 @@ function Import-ByDependency
         [parameter(mandatory = $true)]
         [String] $defaultProviderSubscription,
 
+        [Parameter(mandatory = $true)]
+        [object] [ref]$headers,
+
         [parameter(mandatory = $true)]
-        [Object] $importedProducts
+        [Object] $importedProducts,
+
+        [Parameter(Mandatory = $false)]
+        [PSCredential] $AzsCredential
     )
 
     if ($importedProducts.contains($productid)) {
@@ -591,7 +604,7 @@ function Import-ByDependency
     if ($properties.dependentProducts) {
         foreach($product in $properties.dependentProducts)
         {
-            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -importedProducts $importedProducts
+            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -headers ([ref]$headers) -importedProducts $importedProducts -AzsCredential $AzsCredential
         }
     }
 
@@ -600,10 +613,6 @@ function Import-ByDependency
         $defaultProviderSubscription,
         $productid
     )
-
-    $ctx = Get-AzureRmContext
-    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
-    $headers = @{ 'authorization' = "Bearer $AccessToken"}
 
     try {
         $getStateResponse = Invoke-WebRequest -Method GET -Uri $syndicateUri -ContentType "application/json" -Headers $headers -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
@@ -623,8 +632,8 @@ function Import-ByDependency
         }
     }
 
-    Resolve-ToLocalURI -productFolder $folderPath -resourceGroup $resourceGroup
-    Syndicate-Product -productid $productid -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -downloadFolder $contentFolder
+    Resolve-ToLocalURI -productFolder $folderPath -productid $productid -resourceGroup $resourceGroup
+    Syndicate-Product -productid $productid -armEndpoint $armEndpoint -headers ([ref]$headers) -defaultProviderSubscription $defaultProviderSubscription -downloadFolder $contentFolder -AzsCredential $AzsCredential
     $importedProducts.Add($productid) | Out-Null
 }
 
@@ -687,6 +696,9 @@ function Resolve-ToLocalURI {
         [String] $productFolder,
 
         [parameter(mandatory = $true)]
+        [String] $productid,
+
+        [parameter(mandatory = $true)]
         [String] $resourceGroup
     )
 
@@ -697,7 +709,7 @@ function Resolve-ToLocalURI {
     # check azpkg
     if($json.galleryPackageBlobSasUri) {
         $azpkgFile = Get-Item -path "$productFolder\*.azpkg"
-        $azpkgURI = Upload-ToStorage -filePath $azpkgFile.FullName -resourceGroup $resourceGroup
+        $azpkgURI = Upload-ToStorage -filePath $azpkgFile.FullName -productid $productid -resourceGroup $resourceGroup
         $json.galleryPackageBlobSasUri = $azpkgURI
     }
 
@@ -705,41 +717,41 @@ function Resolve-ToLocalURI {
     $iconsFolder = "$productFolder\Icons"
     if ($json.iconUris.hero) {
         $heroPath = "$iconsFolder\hero.png"
-        $heroURI = Upload-ToStorage -filePath $heroPath -resourceGroup $resourceGroup
+        $heroURI = Upload-ToStorage -filePath $heroPath -productid $productid -resourceGroup $resourceGroup
         $json.iconUris.hero = $heroURI
     }
     if ($json.iconUris.large) {
         $largePath = "$iconsFolder\large.png"
-        $largeURI = Upload-ToStorage -filePath $largePath -resourceGroup $resourceGroup
+        $largeURI = Upload-ToStorage -filePath $largePath -productid $productid -resourceGroup $resourceGroup
         $json.iconUris.large = $largeURI
     }
     if ($json.iconUris.medium) {
         $mediumPath = "$iconsFolder\medium.png"
-        $mediumURI = Upload-ToStorage -filePath $mediumPath -resourceGroup $resourceGroup
+        $mediumURI = Upload-ToStorage -filePath $mediumPath -productid $productid -resourceGroup $resourceGroup
         $json.iconUris.medium = $mediumURI
     }
     if ($json.iconUris.small) {
         $smallPath = "$iconsFolder\small.png"
-        $smallURI = Upload-ToStorage -filePath $smallPath -resourceGroup $resourceGroup
+        $smallURI = Upload-ToStorage -filePath $smallPath -productid $productid -resourceGroup $resourceGroup
         $json.iconUris.small = $smallURI
     }
     if ($json.iconUris.wide) {
         $widePath = "$iconsFolder\wide.png"
-        $wideURI = Upload-ToStorage -filePath $widePath -resourceGroup $resourceGroup
+        $wideURI = Upload-ToStorage -filePath $widePath -productid $productid -resourceGroup $resourceGroup
         $json.iconUris.wide = $wideURI
     }
 
     # check osDiskImage
     if ($json.productDetailsProperties.OsDiskImage) {
         $osDiskImageFile = Get-Item -path "$productFolder\*.vhd"
-        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -resourceGroup $resourceGroup
+        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -productid $productid -resourceGroup $resourceGroup
         $json.productDetailsProperties.OsDiskImage.sourceBlobSasUri = $osImageURI
     }
 
     # check vm extension zip
     if ($json.productDetailsProperties.sourceBlob) {
         $vmExtensionZip = $json.productDetailsProperties.sourceBlob.uri
-        $vmExtensionURI = Upload-ToStorage -filePath $vmExtensionZip -resourceGroup $resourceGroup
+        $vmExtensionURI = Upload-ToStorage -filePath $vmExtensionZip -productid $productid -resourceGroup $resourceGroup
         $json.productDetailsProperties.sourceBlob.uri = $vmExtensionURI
     }
 
@@ -750,7 +762,7 @@ function Resolve-ToLocalURI {
             $container = $json.productDetailsProperties.fileContainers[$i]
             $containerId = $container.id
             $containerFile = "$productFolder\$containerId.zip"
-            $containerURI = Upload-ToStorage -filePath $containerFile -resourceGroup $resourceGroup
+            $containerURI = Upload-ToStorage -filePath $containerFile -productid $productid -resourceGroup $resourceGroup
             $json.productDetailsProperties.fileContainers[$i].sourceUri = $containerURI
         }
     }
@@ -784,6 +796,48 @@ function Resolve-AccessToken {
     throw 'Unable to resolve access token.'
 }
 
+function Get-AccessToken
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $AuthorityEndpoint,
+
+        [Parameter(Mandatory=$false)]
+        [String] $Resource,
+
+        [Parameter(Mandatory=$false)]
+        [String] $AadTenantId,
+
+        [Parameter(Mandatory=$false)]
+        [PSCredential] $Credential,
+
+        [Parameter(Mandatory=$false)]
+        [String] $ClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
+    )
+
+    Write-Verbose "Getting Access token using supplied credentials"
+
+    $contextAuthorityEndpoint = ([System.IO.Path]::Combine($AuthorityEndpoint, $AadTenantId)).Replace('\','/')
+    $authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($contextAuthorityEndpoint, $false)
+    $userCredential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential($Credential.UserName, $Credential.Password)
+    return ($authContext.AcquireToken($Resource, $ClientId, $userCredential)).AccessToken
+}
+
+function Get-ResourceManagerMetaDataEndpoints
+{
+    param
+    (
+        [Parameter(Mandatory=$true)]
+        [String] $ArmEndpoint
+    )
+
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+
+    Write-Output $endpoints
+}
+
 function Syndicate-Product {
     param (
         [parameter(mandatory = $true)]
@@ -792,11 +846,17 @@ function Syndicate-Product {
         [parameter(mandatory = $true)]
         [String] $armEndpoint,
 
+        [Parameter(mandatory = $true)]
+        [object] [ref]$headers,
+
         [parameter(mandatory = $true)]
         [String] $defaultProviderSubscription,
         
         [parameter(mandatory = $true)]
-        [String] $downloadFolder
+        [String] $downloadFolder,
+
+        [Parameter(Mandatory = $false)]
+        [PSCredential] $AzsCredential
     )
 
     $jsonFile = Get-Content "$downloadFolder\$productid\*.json"
@@ -834,11 +894,11 @@ function Syndicate-Product {
         properties = $syndicateProperty
     }
 
-    $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -Body $json -MaxRetry 2
+    $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -Body $json -MaxRetry 2 -AzsCredential $AzsCredential
 
     if ($syndicateResponse.StatusCode -eq 200) {
         Write-Host "product '$productid' was syndicated"
-    } elseif (-not (Wait-AzsAsyncOperation -AsyncOperationStatusUri $syndicateResponse.Headers.'Azure-AsyncOperation' -Verbose)) {
+    } elseif (-not (Wait-AzsAsyncOperation -AsyncOperationStatusUri $syndicateResponse.Headers.'Azure-AsyncOperation' -Headers ([ref]$headers) -AzsCredential $AzsCredential -Verbose)) {
         Write-Error "Unable to complete syndication operation." -ErrorAction Stop
     }
 }
@@ -849,16 +909,21 @@ function Upload-ToStorage {
         [String] $filePath,
 
         [parameter(mandatory = $true)]
+        [String] $productid,
+
+        [parameter(mandatory = $true)]
         [String] $resourceGroup
     )
 
     $syndicationStorageName = "syndicationstorage"
     $syndicationContainerName = "syndicationartifacts"
+    # Get environment region
+    $region = Get-AzureRmLocation
 
     Get-AzureRmResourceGroup -Name $resourceGroup -ErrorVariable notPresent -ErrorAction SilentlyContinue | Out-Null
     if($notPresent)
     {
-        New-AzureRmResourceGroup -Name $resourceGroup -Location local -Force | Out-Null
+        New-AzureRmResourceGroup -Name $resourceGroup -Location $region.Location -Force | Out-Null
     }
 
     $storageAccount = Get-AzureRmStorageAccount -ResourceGroupName $resourceGroup -AccountName $syndicationStorageName -ErrorVariable notPresent -ErrorAction SilentlyContinue
@@ -866,7 +931,7 @@ function Upload-ToStorage {
     {
         $storageAccount = New-AzureRmStorageAccount -ResourceGroupName $resourceGroup `
             -Name $syndicationStorageName `
-            -Location local `
+            -Location $region.Location `
             -Type Standard_LRS
     }
 
@@ -879,13 +944,25 @@ function Upload-ToStorage {
 
     $file = Get-item -path $filePath
 
-    Set-AzureStorageBlobContent -File $file.FullName `
-        -Container $syndicationContainerName `
-        -Blob $file.Name `
-        -Context $ctx `
-        -Force | Out-Null
+    $blobName = $productid + "_" + $file.Name
+    $blobInfo = Get-AzureStorageBlob -Container $syndicationContainerName -Blob $blobName -Context $ctx -ErrorAction SilentlyContinue -ErrorVariable notPresent
 
-    $fileURI = (Get-AzureStorageBlob -blob $file.Name -Container $syndicationContainerName -Context $ctx).ICloudBlob.Uri.AbsoluteUri
+    if($notPresent)
+    {
+        Set-AzureStorageBlobContent -File $file.FullName `
+            -Container $syndicationContainerName `
+            -Blob $blobName `
+            -Context $ctx `
+            -Force | Out-Null
+
+        $fileURI = (Get-AzureStorageBlob -blob $blobName -Container $syndicationContainerName -Context $ctx).ICloudBlob.Uri.AbsoluteUri
+    }
+    else
+    {
+        Write-Host "$blobName exist in storage, skip upload"
+        $fileURI = $blobInfo.ICloudBlob.uri.AbsoluteUri
+    }
+
     return $fileURI
 }
 
@@ -906,7 +983,14 @@ function Wait-AzsAsyncOperation {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [Uri] $AsyncOperationStatusUri
+        [Uri] $AsyncOperationStatusUri,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [object] [ref]$Headers,
+
+        [Parameter(Mandatory = $false)]
+        [PSCredential] $AzsCredential
     )
 
     $ErrorActionPreference = 'Stop'
@@ -919,7 +1003,7 @@ function Wait-AzsAsyncOperation {
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     while ($true) {
-        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -MaxRetry 2
+        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$Headers) -MaxRetry 2 -AzsCredential $AzsCredential
 
         Ensure-SuccessStatusCode -StatusCode $response.StatusCode
 
@@ -973,16 +1057,22 @@ function InvokeWebRequest {
         [ValidateNotNull()]
         [Uri] $Uri,
 
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [string] $ArmEndpoint,
+
+        [Parameter(Mandatory = $true)]
+        [object] [ref]$Headers,
+
         [Parameter(Mandatory = $false)]
         [object] $Body = $null,
 
         [Parameter(Mandatory = $false)]
-        [object] $MaxRetry = 1
-    )
+        [object] $MaxRetry = 1,
 
-    $ctx = Get-AzureRmContext
-    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
-    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+        [Parameter(Mandatory = $false)]
+        [PSCredential] $AzsCredential
+    )
 
     $content = $null
     $response = $null
@@ -999,7 +1089,7 @@ function InvokeWebRequest {
 
     while (-not $completed) {
         try {
-            [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json" -Headers $headers -Body $content -ErrorAction Stop)
+            [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json" -Headers $Headers -Body $content -ErrorAction Stop)
             Ensure-SuccessStatusCode -StatusCode $response.StatusCode
             $completed = $true
         }
@@ -1009,7 +1099,21 @@ function InvokeWebRequest {
                 Write-Warning "Request to $Method $Uri failed the maximum number of $MaxRetry times."
                 throw
             } else {
-                Write-Warning "Request to $Method $Uri failed. Retrying in $sleepSeconds seconds."
+                if ($_.Exception.Response.StatusCode -eq 401)
+                {
+                    if (!$AzsCredential) {
+                        Write-Warning -Message "Access token expired."
+                        $AzsCredential = Get-Credential -Message "Enter the azure stack operator credential"
+                    }
+                    $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $ArmEndpoint
+                    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
+                    $aadResource = $endpoints.authentication.audiences[0]
+                    $context = Get-AzureRmContext
+                    $AccessToken = Get-AccessToken -AuthorityEndpoint $aadAuthorityEndpoint -Resource $aadResource -AadTenantId $context.Tenant.TenantId -Credential $AzsCredential
+                    $Headers.authorization = "Bearer $AccessToken"
+                }
+
+                Write-Warning "Request to $Method $Uri failed with status $($_.Exception). Retrying in $sleepSeconds seconds."
                 Start-Sleep $sleepSeconds
                 $retryCount++
             }

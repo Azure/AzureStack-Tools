@@ -62,9 +62,11 @@ Configure Azure Stack Operator’s PowerShell session. More information cannot b
 Import the module and start the import process for an Azure Marketplace item
 ```powershell
 Import-Module .\AzureStack.MarketplaceSyndication.psm1
-Import-AzSOfflineMarketplaceItem -origin “marketplace content folder" -armendpoint "Environment Arm Endpoint"
+$credential = Get-Credential -Message "Enter the azure stack operator credential"
+Import-AzSOfflineMarketplaceItem -origin “marketplace content folder" -armendpoint "Environment Arm Endpoint" -AzsCredential $credential
 ```
 
+Option -AzsCredential is optional, it is used to renew access token in case token expires. 
 
 ## Downloaded Content
 
