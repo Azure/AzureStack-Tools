@@ -164,6 +164,9 @@ function Set-AzsRegistration{
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
@@ -186,10 +189,7 @@ function Set-AzsRegistration{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
-        [string] $AgreementNumber,
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName = "AzureStackRegistration"
+        [string] $AgreementNumber
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -638,6 +638,9 @@ Function Register-AzsEnvironment{
         [ValidateNotNull()]
         [String] $RegistrationToken,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
@@ -646,10 +649,7 @@ Function Register-AzsEnvironment{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName = "AzureStackRegistration"
+        [String] $ResourceGroupLocation = 'westcentralus'
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -864,7 +864,7 @@ Function Get-AzsActivationKey{
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [String] $RegistrationName = "AzureStackRegistration",
+        [String] $RegistrationName,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
