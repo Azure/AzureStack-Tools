@@ -39,8 +39,7 @@ function Export-AzSOfflineMarketplaceItem {
     {
         $resource = $resources.Name
     }
-
-    $registrations = $resource |where-object {$_ -like "AzureStack*"}
+    $registrations = $resource|where-object {$_ -like "AzureStack*"}
     if ($registrations.count -gt 1) {
         $Registration = $registrations[0]
     } else {

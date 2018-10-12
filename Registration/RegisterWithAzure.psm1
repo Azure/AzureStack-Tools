@@ -164,6 +164,9 @@ function Set-AzsRegistration{
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
@@ -186,10 +189,7 @@ function Set-AzsRegistration{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
-        [string] $AgreementNumber,
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName = "AzureStackRegistration"
+        [string] $AgreementNumber
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -366,13 +366,38 @@ function Remove-AzsRegistration{
         }
         else
         {
-            $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations"
-            $registrationResources = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+            Log-Output "Parameter 'RegistrationName' not supplied. Searching through all registration resources under current context."
+            try
+            {
+                Log-Output "Attempting to retrieve resources using command: 'Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName'"
+                $registrationResources = Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName
+            }
+            catch
+            {
+                Log-Warning "Could not retrieve resources from Azure `r`n$($_)"
+            }
+
+            if ($registrationResources.Count -eq 0)
+            {
+                try
+                {
+                    Log-Output "Attempting to retrieve resources using command: 'Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
+                    $registrationresources = Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
+                }
+                catch
+                {
+                    Log-Throw "Unable to retrieve registration resource(s) from Azure `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
+                }
+            }
+
+            Log-Output "Found $($registrationResources.Count) registration resources. Finding a matching CloudId may take some time."
             foreach ($resource in $registrationResources)
             {
-                if ($resource.Properties.cloudId -eq $stampInfo.CloudId)
+                $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
+                $resourceCloudId = (($resourceObject.Properties.ToString()) | ConvertFrom-Json).cloudId
+                if ($resourceCloudId -eq $stampInfo.CloudId)
                 {
-                    $registrationResource = $resource
+                    $registrationResource = $resourceObject
                     break   
                 }
             }
@@ -613,6 +638,9 @@ Function Register-AzsEnvironment{
         [ValidateNotNull()]
         [String] $RegistrationToken,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
@@ -621,10 +649,7 @@ Function Register-AzsEnvironment{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName = "AzureStackRegistration"
+        [String] $ResourceGroupLocation = 'westcentralus'
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -763,14 +788,39 @@ Function UnRegister-AzsEnvironment{
     }
     elseif ($CloudId)
     {
-        $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations"
-        $registrationResources = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        Log-Output "Parameter 'RegistrationName' not supplied. Searching through all registration resources under current context."
+        try
+        {
+            Log-Output "Attempting to retrieve resources using command: 'Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName'"
+            $registrationResources = Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName
+        }
+        catch
+        {
+            Log-Warning "Could not retrieve resources from Azure `r`n$($_)"
+        }
+
+        if ($registrationResources.Count -eq 0)
+        {
+            try
+            {
+                Log-Output "Attempting to retrieve resources using command: 'Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
+                $registrationresources = Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
+            }
+            catch
+            {
+                Log-Throw "Unable to retrieve registration resource(s) from Azure `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
+            }
+        }
+
+        Log-Output "Found $($registrationResources.Count) registration resources. Finding a matching CloudId may take some time."
         foreach ($resource in $registrationResources)
         {
-            if ($resource.Properties.cloudId -eq $CloudId)
+            $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
+            $resourceCloudId = (($resourceObject.Properties.ToString()) | ConvertFrom-Json).cloudId
+            if ($resourceCloudId -eq $stampInfo.CloudId)
             {
-                $registrationResource = $resource
-                break
+                $registrationResource = $resourceObject
+                break   
             }
         }
     }
@@ -814,7 +864,7 @@ Function Get-AzsActivationKey{
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [String] $RegistrationName = "AzureStackRegistration",
+        [String] $RegistrationName,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
@@ -1154,6 +1204,8 @@ function New-RegistrationResource{
         Properties        = @{ registrationToken = "$registrationToken" }
     }
 
+    Log-Output "Resource creation params: $(ConvertTo-Json $resourceCreationParams)"
+
     do
     {
         try
@@ -1174,8 +1226,6 @@ function New-RegistrationResource{
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
-
-    $resourceCreationParams['Location'] = 'Global'
 
     do
     {
@@ -1647,7 +1697,6 @@ function Confirm-StampVersion{
         [System.Management.Automation.Runspaces.PSSession] $PSSession
     )
     
-    $registrationVersion = [Version]"1.1806.0.21"
     try
     {
         Log-Output "Verifying stamp version."
@@ -1656,46 +1705,6 @@ function Confirm-StampVersion{
     Catch
     {
         Log-Throw "An error occurred checking stamp information: `r`n$($_)" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-    }
-
-    $versionNumber = [Version]$stampInfo.StampVersion
-    $minVersion = [Version]"1.0.170928.1"
-    if ($versionNumber -lt $minVersion) 
-    {
-        Log-Throw -Message "Script only applicable for Azure Stack builds $minVersion or later." -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-    }
-
-    if ($versionNumber -lt $registrationVersion)
-    {
-        switch ($versionNumber.Build)
-        {
-            "170928"
-            {
-                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                Log-Warning -Message "NOTE: The below URL is NOT a module and does not need to be imported!"
-                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1709/Registration/RegisterWithAzure.ps1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-            }
-            "171020"
-            {
-                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1710/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-            }
-            "171201"
-            {
-                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1710/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-            }
-            "180106"
-            {
-                Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-                Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1712/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-            }
-        }
-    }
-    elseif (($versionNumber.Build -gt "180106") -and ($versionNumber.Build -lt $registrationVersion))
-    {
-        Log-Warning -Message "Running a newer version of registration with an older version of Azure Stack. Registration version: $registrationVersion  Build version: $versionNumber"
-        Log-Throw -Message "Please download the correct version of the registration functions from the URL below and retry: `r`nhttps://github.com/Azure/AzureStack-Tools/blob/registration/v1803/Registration/RegisterWithAzure.psm1`r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
 
     Log-Output -Message "Running registration actions on build $($stampInfo.StampVersion). Cloud Id: $($stampInfo.CloudID), Deployment Id: $($stampInfo.DeploymentID)"

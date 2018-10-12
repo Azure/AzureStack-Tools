@@ -13,7 +13,7 @@ The powershell command will provide method to both download and upload the Azure
 - Azure Stack RP registered within your Azure Subscription
 
 - Azure Subscription used to register Azure Stack System (Multi Node or ASDK)
-- AzureStack module version greater than or equal to 1.3.0 PowerShell needs to be installed
+- AzureStack PowerShell needs to be installed
 
 (https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install)
 

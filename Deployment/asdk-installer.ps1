@@ -18,6 +18,7 @@ The Azure Stack Development Kit installer UI provides a UI with the following fe
 To install the Azure Stack Development Kit you require
 
 - A physical server that meets the requirements
+- The SafeOS must be running Windows Server 2016 or Windows 10
 - The latest cloudbuilder.vhdx
 - The installer UI script
 
@@ -28,7 +29,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.11"
+$Text_Generic.Version = "1.0.12"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -53,6 +54,7 @@ $Text_SafeOS.NetConfig_Title = "Azure Stack host IP configuration"
 $Text_SafeOS.Job_Title = "Preparing the environment"
 $Text_SafeOS.Summary_Content = "The cloudbuilder vhdx is prepared succesfully. Please reboot. The server will boot from the CloudBuilder VHD and you can start the installation after signing in as the administrator."
 $Text_SafeOS.Mode_RightLink = "https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-run-powershell-script"
+$Text_SafeOS.OS_Version = "The SafeOS must be running Windows Server 2016 or Windows 10 to use the ASDK Installer. Consider upgrading the SafeOS or use PowerShell to install the ASDK https://docs.microsoft.com/en-us/azure/azure-stack/asdk/asdk-deploy-powershell"
 
 $Text_Install = @{}
 $Text_Install.Mode_Title = "Installation"
@@ -1063,6 +1065,7 @@ $Xaml = @'
                                     <Path x:Name="Control_Creds_Pth_LocalPassword" SnapsToDevicePixels="False" StrokeThickness="3" Data="M2,10 L8,16 L15,5" Stroke="#92D050" Margin="300,0,0,0" Visibility="Hidden"/>
                                 </Grid>
                             </StackPanel>
+                            <TextBlock x:Name="Control_Creds_Tbl_ErrorMessage"  FontSize="14" FontFamily="Segoe UI"  Text="The specified password does not match the current local administrator password" Margin="30,0,0,10" Visibility="Hidden" Focusable="True" Foreground="Red"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -1842,6 +1845,15 @@ Function F_Initialize {
 
     # Booted in the SafeOS
     else {
+
+        # Verify SafeOS is Windows 2016 or Windows 10
+        if([int](Get-CimInstance -ClassName Win32_OperatingSystem).version.split('.')[0] -lt 10){
+            Write-Host ""
+            Write-Error $Text_SafeOS.OS_Version
+            Start-Sleep -seconds 3
+            Break
+        }
+
         $Script:Initialized="SafeOS"
         $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.Mode_Title
         $syncHash.Control_Mode_Tbl_LeftTitle.Text = $Text_SafeOS.Mode_LeftTitle
@@ -1959,7 +1971,10 @@ Function F_Verify_LocalAdminCreds {
     if ($dsa.ValidateCredentials('Administrator', $pass)){
     }
     else {
-        F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
+         $syncHash.Control_Creds_Tbl_ErrorMessage.Visibility='Visible'
+         $syncHash.Control_Creds_Tbl_ErrorMessage.Focus()
+
+         F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
     }
 }
 
@@ -2502,9 +2517,10 @@ $syncHash.Control_Creds_Btn_Next.Add_Click({
         $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
         
     }
-    Else {        
-        $syncHash.Control_Creds_Pwb_LocalPassword.Focus()            
-    }
+})
+
+$syncHash.Control_Creds_Pwb_LocalPassword.Add_PasswordChanged({
+$syncHash.Control_Creds_Tbl_ErrorMessage.Visibility='Hidden'  
 })
 
 $syncHash.Control_Creds_Cbx_Idp.Add_SelectionChanged({
