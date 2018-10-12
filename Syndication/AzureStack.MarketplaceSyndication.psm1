@@ -32,8 +32,12 @@ function Export-AzSOfflineMarketplaceItem {
 
     $resources = Get-AzureRmResource
     $resource = $resources.resourcename
-    if(!$resource) {
-        $resource = $resources.name
+    # workaround for a breaking change from moving from profile version 2017-03-09-profile to 2018-03-01-hybrid
+    # the output model of Get-AzureRmResource has changed between these versions
+    # in future this code path can be changed to simply with  (Get-AzureRMResource -Name "AzureStack*").Name
+    if($resource -eq $null)
+    {
+        $resource = $resources.Name
     }
 
     $registrations = $resource |where-object {$_ -like "AzureStack*"}
@@ -832,8 +836,8 @@ function Get-ResourceManagerMetaDataEndpoints
         [String] $ArmEndpoint
     )
 
-    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
-    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01"
+    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)"
 
     Write-Output $endpoints
 }
@@ -995,15 +999,15 @@ function Wait-AzsAsyncOperation {
 
     $ErrorActionPreference = 'Stop'
 
-    # max wait for one hour, otherwise treat it as failed
+    # max wait for two hours, otherwise treat it as failed
     $currentAttempt = 0
     $maxAttempts = 720
-    $sleepSeconds = 5
+    $sleepSeconds = 10
 
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     while ($true) {
-        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$Headers) -MaxRetry 2 -AzsCredential $AzsCredential
+        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$Headers) -MaxRetry 5 -AzsCredential $AzsCredential
 
         Ensure-SuccessStatusCode -StatusCode $response.StatusCode
 
@@ -1090,6 +1094,7 @@ function InvokeWebRequest {
     while (-not $completed) {
         try {
             [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json" -Headers $Headers -Body $content -ErrorAction Stop)
+            $retryCount = 0
             Ensure-SuccessStatusCode -StatusCode $response.StatusCode
             $completed = $true
         }
@@ -1099,23 +1104,31 @@ function InvokeWebRequest {
                 Write-Warning "Request to $Method $Uri failed the maximum number of $MaxRetry times."
                 throw
             } else {
+                $error = $_.Exception
                 if ($_.Exception.Response.StatusCode -eq 401)
                 {
-                    if (!$AzsCredential) {
-                        Write-Warning -Message "Access token expired."
-                        $AzsCredential = Get-Credential -Message "Enter the azure stack operator credential"
+                    try {
+                        if (!$AzsCredential) {
+                            Write-Warning -Message "Access token expired."
+                            $AzsCredential = Get-Credential -Message "Enter the azure stack operator credential"
+                        }
+                        $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $ArmEndpoint
+                        $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
+                        $aadResource = $endpoints.authentication.audiences[0]
+                        $context = Get-AzureRmContext
+                        $AccessToken = Get-AccessToken -AuthorityEndpoint $aadAuthorityEndpoint -Resource $aadResource -AadTenantId $context.Tenant.TenantId -Credential $AzsCredential
+                        $Headers.authorization = "Bearer $AccessToken"
                     }
-                    $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $ArmEndpoint
-                    $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
-                    $aadResource = $endpoints.authentication.audiences[0]
-                    $context = Get-AzureRmContext
-                    $AccessToken = Get-AccessToken -AuthorityEndpoint $aadAuthorityEndpoint -Resource $aadResource -AadTenantId $context.Tenant.TenantId -Credential $AzsCredential
-                    $Headers.authorization = "Bearer $AccessToken"
+                    catch
+                    {
+                        Write-Warning "webrequest exception. `n$error"
+                        throw
+                    }
                 }
 
-                Write-Warning "Request to $Method $Uri failed with status $($_.Exception). Retrying in $sleepSeconds seconds."
-                Start-Sleep $sleepSeconds
                 $retryCount++
+                Write-Warning "Request to $Method $Uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
+                Start-Sleep $sleepSeconds
             }
         }
     }
