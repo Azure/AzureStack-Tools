@@ -48,7 +48,7 @@ function Export-AzSOfflineMarketplaceItem {
 
     # Retrieve the access token
     $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $AzureContext.Account.id |Sort ExpiresOn |Select -Last 1
+    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $AzureContext.Account.id |Where TenantID -EQ $AzureTenantID |Sort ExpiresOn |Select -Last 1
     
     $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$ResourceGroup/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
     $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"} 
