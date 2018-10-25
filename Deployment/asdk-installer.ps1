@@ -29,7 +29,7 @@ The Azure Stack Development Kit installer UI script is based on PowerShell and t
 
 #region Text
 $Text_Generic = @{}
-$Text_Generic.Version = "1.0.12"
+$Text_Generic.Version = "1.0.13"
 $Text_Generic.Password_NotMatch = "Passwords do not match"
 $Text_Generic.Regex_Fqdn = "<yourtenant.onmicrosoft.com> can only contain A-Z, a-z, 0-9, dots and a hyphen"
 $Text_Generic.Regex_Computername = "Computername must be 15 characters or less and can only contain A-Z, a-z, 0-9 and a hyphen"
@@ -65,7 +65,7 @@ $Text_Install.Mode_RightContent = "Select the Operating System to override the d
 $Text_Install.Reboot_Title = "Reboot"
 $Text_Install.NetInterface_Title = "Select Network Interface for the Azure Stack host"
 $Text_Install.NetInterface_Warning = "Only one adapter can be used for the Azure Stack Development Kit host. Select the adapter used for the deployment. All other adapters will be disabled by the installer. Ensure you have network connectivity to the selected network adapter before proceeding."
-$Text_Install.NetConfig_Title = "Network Configuration for BGPNAT01"
+$Text_Install.NetConfig_Title = "Network Configuration"
 $Text_Install.Credentials_Title = "Specify Identity Provider and Credentials"
 $Text_Install.Summary_Title = "Summary"
 $Text_Install.Summary_Content = "The following script will be used for deploying the Development Kit"
@@ -1189,17 +1189,11 @@ $Xaml = @'
                 <!--#region NetConfig-->
                 <StackPanel x:Name="Control_NetConfig_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <RadioButton x:Name="Control_NetConfig_Rbt_DHCP" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,5" IsChecked="True"  >
-                            <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="DHCP" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
-                        </RadioButton>
-                        <RadioButton x:Name="Control_NetConfig_Rbt_Static" GroupName="NetworkConfig" VerticalContentAlignment="Center" Cursor="Hand" Margin="0,0,0,10"  >
-                            <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Static" Width="100" HorizontalAlignment="Left" Padding="5,0,0,0"/>
-                        </RadioButton>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_IpAddress">
                             <TextBlock x:Name="Control_NetConfig_Tbl_IpAddress" FontSize="14" FontFamily="Segoe UI"  Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_IpAddress}"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_Gateway">
                             <TextBlock x:Name="Control_NetConfig_Tbl_Gateway" FontSize="14" FontFamily="Segoe UI"  Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"  Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_Gateway}"/>
                         </StackPanel>
@@ -1213,10 +1207,6 @@ $Xaml = @'
                         </StackPanel>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Optional Configuration" Margin="0,0,0,10"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBlock x:Name="Control_NetConfig_Tbl_VlanID" FontSize="14" FontFamily="Segoe UI"  Text="VLAN ID:" Width="120" HorizontalAlignment="Left"/>
-                                <TextBox x:Name="Control_NetConfig_Tbx_VlanID" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_VlanID}" />
-                            </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <TextBlock x:Name="Control_NetConfig_Tbl_DnsForwarder" FontSize="14" FontFamily="Segoe UI"  Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DnsForwarder}"/>
@@ -2007,19 +1997,12 @@ Function F_VerifyFields_NetConfig {
         Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
     }
     else {
-        if (
-            (
-                $syncHash.Control_NetConfig_Rbt_DHCP.IsChecked -eq $true -and
-                ($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))
-            ) -or
-            (
-                $syncHash.Control_NetConfig_Rbt_Static.IsChecked -eq $true -and
-                ($syncHash.Control_NetConfig_Tbx_IpAddress.Text -and ($syncHash.Control_NetConfig_Tbx_IpAddress.BorderBrush.color -ne "#FFFF0000")) -and
-                ($syncHash.Control_NetConfig_Tbx_Gateway.Text -and ($syncHash.Control_NetConfig_Tbx_Gateway.BorderBrush.color -ne "#FFFF0000")) -and
-                ($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))
-            )
-            ) {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true}
-        Else {$syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false}
+        if (($syncHash.Control_NetConfig_Tbx_TimeServer.Text -and ($syncHash.Control_NetConfig_Tbx_TimeServer.BorderBrush.color -ne "#FFFF0000"))) {
+            $syncHash.Control_NetConfig_Btn_Next.IsEnabled = $true
+        }
+        Else {
+            $syncHash.Control_NetConfig_Btn_Next.IsEnabled = $false
+        }
     }
 }
 
@@ -2137,21 +2120,6 @@ Function F_Summary {
                 $InstallScript += " -UseADFS"
         }
 
-        If ($synchash.Control_NetConfig_Rbt_Static.IsChecked) {
-                $NetworkID = F_GetNetworkID
-                $InstallScript += " -NatIPv4Subnet "
-                $InstallScript += $NetworkID
-                $InstallScript += " -NatIPv4Address "
-                $InstallScript += $synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0]
-                $InstallScript += " -NatIPv4DefaultGateway "
-                $InstallScript += $synchash.Control_NetConfig_Tbx_Gateway.Text
-        }
-
-        If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0) {
-                $InstallScript += " -PublicVlanId "
-                $InstallScript += $synchash.Control_NetConfig_Tbx_VlanID.Text
-        }
-
         If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0) {
                 $InstallScript += " -DNSForwarder "
                 $InstallScript += $synchash.Control_NetConfig_Tbx_DnsForwarder.Text
@@ -2222,17 +2190,6 @@ Function F_Install {
     }
     ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
         ' -UseADFS' |  Add-Content $filepath -NoNewline
-    }
-
-    If ($synchash.Control_NetConfig_Rbt_Static.IsChecked) {
-        $NetworkID = F_GetNetworkID
-        ' -NatIPv4Subnet "' + $NetworkID + '"' |  Add-Content $filepath -NoNewline
-        ' -NatIPv4Address "' + $synchash.Control_NetConfig_Tbx_IpAddress.Text.Split("/")[0] + '"' |  Add-Content $filepath -NoNewline
-        ' -NatIPv4DefaultGateway "' + $synchash.Control_NetConfig_Tbx_Gateway.Text + '"' |  Add-Content $filepath -NoNewline
-    }
-
-    If ($synchash.Control_NetConfig_Tbx_VlanID.Text.Length -gt 0) {
-        ' -PublicVlanId "' + $synchash.Control_NetConfig_Tbx_VlanID.Text + '"' |  Add-Content $filepath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0) {
@@ -2567,8 +2524,6 @@ $syncHash.Control_NetInterface_Btn_Next.Add_Click({
     If ($Script:Initialized -eq "SafeOS") {
         $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
         $syncHash.Control_Header_Tbl_Title.Text = $Text_SafeOS.NetConfig_Title
-        $SyncHash.Control_NetConfig_Rbt_Static.Visibility="Collapsed"
-        $SyncHash.Control_NetConfig_Rbt_DHCP.Visibility="Collapsed"
         $SyncHash.Control_NetConfig_Stp_Optional.Visibility="Collapsed"
         F_CopyNicProperties
     }
@@ -2576,6 +2531,8 @@ $syncHash.Control_NetInterface_Btn_Next.Add_Click({
         $syncHash.Control_NetConfig_Stp.Visibility = "Visible"
         $syncHash.Control_Header_Tbl_Title.Text = $Text_Install.NetConfig_Title
         $syncHash.Control_NetConfig_Stp_DNS.Visibility="Collapsed"
+        $syncHash.Control_NetConfig_Stp_IpAddress.Visibility="Collapsed"
+        $syncHash.Control_NetConfig_Stp_Gateway.Visibility="Collapsed"
     }
 })
 
@@ -2619,28 +2576,6 @@ $syncHash.Control_NetConfig_Btn_Next.Add_Click({
         $Runspace_Jobs.Runspace = $Runspace_Jobs_Properties
         $Runspace_Jobs_Output = $Runspace_Jobs.BeginInvoke()
     }
-})
-
-$syncHash.Control_NetConfig_Rbt_DHCP.Add_Click({
-    $syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $false
-    $syncHash.Control_NetConfig_Tbx_IpAddress.Clear()
-    $syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $false
-    $syncHash.Control_NetConfig_Tbx_Gateway.Clear()
-    $syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $false
-    $syncHash.Control_NetConfig_Tbx_DNS.Clear()
-    F_VerifyFields_NetConfig
-})
-
-$syncHash.Control_NetConfig_Rbt_Static.Add_Click({
-    $syncHash.Control_NetConfig_Tbx_IpAddress.IsEnabled = $true
-    $syncHash.Control_NetConfig_Tbx_Gateway.IsEnabled = $true
-    $syncHash.Control_NetConfig_Tbx_DNS.IsEnabled = $true
-
-    if ($script:Initialized -eq "SafeOS"){
-        F_CopyNicProperties
-    }
-
-    F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_IpAddress.Add_TextChanged({
