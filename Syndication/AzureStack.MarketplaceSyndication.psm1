@@ -111,18 +111,21 @@ function Export-AzSOfflineMarketplaceItem {
     }
 
     $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
-        Get-Dependency -productid $_.id
+        Get-Dependency -productid $_.id -resourceGroup $ResourceGroup
     }
 }
 
 function Get-Dependency {
     param (
         [parameter(mandatory = $true)]
-        [String] $productid
+        [String] $productid,
+
+        [parameter(mandatory = $true)]
+        [String] $resourceGroup
     )
 
     $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
-    $uri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
+    $uri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
     $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri -Headers $Headers
 
     if ($downloadDetails.properties.dependentProducts)
@@ -134,17 +137,20 @@ function Get-Dependency {
     }
 
     Write-Host "`nDownloading product: $id" -ForegroundColor DarkCyan
-    Download-Product -productid $productid
+    Download-Product -productid $productid -resourceGroup $resourceGroup
 }
 
 function Download-Product {
     param (
         [parameter(mandatory = $true)]
-        [String] $productid
+        [String] $productid,
+
+        [parameter(mandatory = $true)]
+        [String] $resourceGroup
     )
 
     # get name of azpkg
-    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
+    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
     Write-Debug $azpkgURI
     $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
     $productDetails = Invoke-RestMethod -Method GET -Uri $azpkgURI -Headers $Headers
@@ -154,7 +160,7 @@ function Download-Product {
     }
 
     # get download location for azpkg
-    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/azurestack/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
+    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
     Write-Debug $downloadURI
     $downloadDetails = Invoke-RestMethod -Method POST -Uri $downloadURI -Headers $Headers
 
