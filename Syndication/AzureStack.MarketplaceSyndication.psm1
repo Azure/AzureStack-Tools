@@ -30,7 +30,7 @@ function Export-AzSOfflineMarketplaceItem {
 
     $azureEnvironment = Get-AzureRmEnvironment -Name $Cloud
 
-    $resources = Get-AzureRmResource
+    $resources = Get-AzureRmResource -ResourceGroupName $ResourceGroup -ResourceType Microsoft.AzureStack/registrations
     $resource = $resources.resourcename
     # workaround for a breaking change from moving from profile version 2017-03-09-profile to 2018-03-01-hybrid
     # the output model of Get-AzureRmResource has changed between these versions
@@ -39,7 +39,7 @@ function Export-AzSOfflineMarketplaceItem {
     {
         $resource = $resources.Name
     }
-    $registrations = $resource|where-object {$_ -like "AzureStack*"}
+    $registrations = $resource
     if ($registrations.count -gt 1) {
         $Registration = $registrations[0]
     } else {
