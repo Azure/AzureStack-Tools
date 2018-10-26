@@ -989,7 +989,10 @@ Function Remove-AzsActivationResource{
         [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $false)]
-        [String] $AzureStackAdminSubscriptionId
+        [String] $AzureStackAdminSubscriptionId,
+
+        [Parameter(Mandatory = $false)]
+        [String] $AzureEnvironmentName = "AzureStack"
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -1005,7 +1008,7 @@ Function Remove-AzsActivationResource{
 
         $AzureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
         Log-Output "Logging in to AzureStack administrator account. TenantId: $($AzureStackStampInfo.AADTenantID) Environment: 'AzureStack'"
-        Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment 'AzureStack'
+        Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment $AzureEnvironmentName
         $azureStackContext = Get-AzureRmContext
 
         $azureStackContextDetails = @{
