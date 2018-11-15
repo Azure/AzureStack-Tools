@@ -87,7 +87,7 @@ $meters = @{
     '7ba084ec-ef9c-4d64-a179-7732c6cb5e28' = 'Managed Disk ActualStandardDiskSize (GB * Month)'
     'daef389a-06e5-4684-a7f7-8813d9f792d5' = 'Managed Disk ActualPremiumDiskSize (GB * Month)'
     '75d4b707-1027-4403-9986-6ec7c05579c8' = 'Managed Disk ActualStandardSnapshotSize (GB * Month)'
-    '5ca1cbb9-6f14-4e76-8be8-1ca91547965e' = 'Managed Disk ActualPremiumDiskSize (GB * Month)'
+    '5ca1cbb9-6f14-4e76-8be8-1ca91547965e' = 'Managed Disk ActualPremiumSnapshotSize (GB * Month)'
     '5d76e09f-4567-452a-94cc-7d1f097761f0' = 'Managed Disk S4 (Disk * Hour) (Deprecated)'
     'dc9fc6a9-0782-432a-b8dc-978130457494' = 'Managed Disk S6 (Disk * Hour) (Deprecated)'
     'e5572fce-9f58-49d7-840c-b168c0f01fff' = 'Managed Disk S10 (Disk * Hour) (Deprecated)'
@@ -107,7 +107,7 @@ $meters = @{
     '8a409390-1913-40ae-917b-08d0f16f3c38' = 'Managed Disk ActualStandardDiskSize (Byte * Hour) (Deprecated)'
     '1273b16f-8458-4c34-8ce2-a515de551ef6' = 'Managed Disk ActualPremiumDiskSize (Byte * Hour) (Deprecated)'
     '89009682-df7f-44fe-aeb1-63fba3ddbf4c' = 'Managed Disk ActualStandardSnapshotSize (Byte * Hour) (Deprecated)'
-    '95b0c03f-8a82-4524-8961-ccfbf575f536' = 'Managed Disk ActualPremiumDiskSize (Byte * Hour) (Deprecated)'
+    '95b0c03f-8a82-4524-8961-ccfbf575f536' = 'Managed Disk ActualPremiumSnapshotSize (Byte * Hour) (Deprecated)'
 }
 
 #Build a subscription hashtable
