@@ -107,7 +107,7 @@ $meters = @{
     '8a409390-1913-40ae-917b-08d0f16f3c38' = 'Managed Disk ActualStandardDiskSize (Byte * Hour) (Deprecated)'
     '1273b16f-8458-4c34-8ce2-a515de551ef6' = 'Managed Disk ActualPremiumDiskSize (Byte * Hour) (Deprecated)'
     '89009682-df7f-44fe-aeb1-63fba3ddbf4c' = 'Managed Disk ActualStandardSnapshotSize (Byte * Hour) (Deprecated)'
-    '95b0c03f-8a82-4524-8961-ccfbf575f536' = 'Managed Disk ActualPremiumDiskSize (Byte * Hour) (Deprecated)'
+    '95b0c03f-8a82-4524-8961-ccfbf575f536' = 'Managed Disk ActualPremiumSnapshotSize (Byte * Hour) (Deprecated)'
 }
 
 #Build a subscription hashtable
