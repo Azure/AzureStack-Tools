@@ -462,7 +462,10 @@ Function Get-AzsRegistrationToken{
         [String] $TokenOutputFilePath,
 
         [Parameter(Mandatory = $false)]
-        [Switch] $UsageReportingEnabled = $true,
+        [Switch] $UsageReportingEnabled = $false,
+
+        [Parameter(Mandatory = $false)]
+        [Switch] $MarketplaceSyndicationEnabled = $false,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
@@ -504,10 +507,10 @@ Function Get-AzsRegistrationToken{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $params = @{
-        PrivilegedEndpointCredential          = $PrivilegedEndpointCredential
+        PrivilegedEndpointCredential  = $PrivilegedEndpointCredential
         PrivilegedEndpoint            = $PrivilegedEndpoint
         BillingModel                  = $BillingModel
-        MarketplaceSyndicationEnabled = $false
+        MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
         UsageReportingEnabled         = $UsageReportingEnabled
         AgreementNumber               = $AgreementNumber
         TokenOutputFilePath           = $TokenOutputFilePath
