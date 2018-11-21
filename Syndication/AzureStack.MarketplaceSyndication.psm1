@@ -132,7 +132,7 @@ function Get-Dependency {
     {
         foreach ($id in $downloadDetails.properties.dependentProducts)
         {
-            Get-Dependency -productid $id
+            Get-Dependency -productid $id -resourceGroup $resourceGroup
         }
     }
 
@@ -468,6 +468,12 @@ function DownloadMarketplaceProduct {
     $sleepSeconds = 5
     $tmpDestination = "$Destination.marketplace"
 
+    if ($Source -notmatch 'windows.net')
+    {
+        $PremiumDownload = $false
+        Write-Host "$Source is not in storage account, use regular download"
+    }
+
     while (-not $completed) {
         try {
             if ($PremiumDownload) {
@@ -561,13 +567,13 @@ function PreCheck
 
         $originFileExists = Test-Path "$folderPath\$dir.json.origin"
         if ($originFileExists -eq $True) {
-            Write-Host "$dir.json.origin exists, you have probably run import before, if you want to import again, please replace $dir.json with $dir.json.origin, then run import"
+            Write-Warning "$dir.json.origin exists, you have probably run import before, if you want to import again, please replace $dir.json with $dir.json.origin, then run import"
             throw "$dir.json.origin file exists"
         }
 
         $tmpfileExists = (Test-Path "$folderPath\*.marketplace") -or (Test-Path "$folderPath\icons\*.marketplace")
         if ($tmpfileExists -eq $True) {
-            Write-Host ".marketplace file exists, these are temp files not fully downloaded. Please download product '$dir' again, then retry import"
+            Write-Warning ".marketplace file exists, these are temp files not fully downloaded. Please download product '$dir' again, then retry import"
             throw ".marketplace file exists"
         }
     }
@@ -606,17 +612,6 @@ function Import-ByDependency
         return
     }
 
-    Write-Host "Importing product '$productid' ..."
-    $folderPath = $contentFolder + "\$productid"
-    $jsonFile = Get-Content "$folderPath\$productid.json"
-    $properties = $jsonFile | ConvertFrom-Json
-    if ($properties.dependentProducts) {
-        foreach($product in $properties.dependentProducts)
-        {
-            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -headers ([ref]$headers) -importedProducts $importedProducts -AzsCredential $AzsCredential
-        }
-    }
-
     $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
         $armEndpoint,
         $defaultProviderSubscription,
@@ -638,6 +633,20 @@ function Import-ByDependency
         if ($_.Exception.Response.StatusCode -ne 404)
         {
             Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+        }
+    }
+
+    Write-Host "Importing product '$productid' ..."
+    $folderPath = $contentFolder + "\$productid"
+    if (-not (Test-Path $folderPath)) {
+        throw "Folder $folderPath not exist."
+    }
+    $jsonFile = Get-Content "$folderPath\$productid.json"
+    $properties = $jsonFile | ConvertFrom-Json
+    if ($properties.dependentProducts) {
+        foreach($product in $properties.dependentProducts)
+        {
+            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -headers ([ref]$headers) -importedProducts $importedProducts -AzsCredential $AzsCredential
         }
     }
 
@@ -770,7 +779,11 @@ function Resolve-ToLocalURI {
         {
             $container = $json.productDetailsProperties.fileContainers[$i]
             $containerId = $container.id
-            $containerFile = "$productFolder\$containerId.zip"
+            $containerFile = "$productFolder\$containerId"
+            if ($container.type -match 'zip')
+            {
+                $containerFile = "$productFolder\$containerId.zip"
+            }
             $containerURI = Upload-ToStorage -filePath $containerFile -productid $productid -resourceGroup $resourceGroup
             $json.productDetailsProperties.fileContainers[$i].sourceUri = $containerURI
         }
@@ -1012,7 +1025,7 @@ function Wait-AzsAsyncOperation {
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     while ($true) {
-        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$Headers) -MaxRetry 5 -AzsCredential $AzsCredential
+        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$Headers) -MaxRetry 10 -AzsCredential $AzsCredential
 
         Ensure-SuccessStatusCode -StatusCode $response.StatusCode
 
@@ -1106,7 +1119,7 @@ function InvokeWebRequest {
         catch
         {
             if ($retryCount -ge $MaxRetry) {
-                Write-Warning "Request to $Method $Uri failed the maximum number of $MaxRetry times."
+                Write-Warning "Request to $Method $Uri failed the maximum number of $MaxRetry times. Timestamp: $($(get-date).ToString('T'))"
                 throw
             } else {
                 $error = $_.Exception
@@ -1132,7 +1145,7 @@ function InvokeWebRequest {
                 }
 
                 $retryCount++
-                Write-Warning "Request to $Method $Uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
+                Write-Debug "Request to $Method $Uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
                 Start-Sleep $sleepSeconds
             }
         }
