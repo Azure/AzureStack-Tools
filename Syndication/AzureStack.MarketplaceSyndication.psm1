@@ -402,6 +402,15 @@ function Download-Product {
                         $zipDestination = "$productFolder\$containerName"
                         if ($container.type -match 'zip'){
                             $zipDestination = "$productFolder\$containerName.zip"
+                        } else {
+                            $zipuri = [uri]$zipsource
+                            $fileName = $zipuri.Segments[-1]
+                            $dotposition = $fileName.LastIndexOf('.')
+                            if ($dotposition -ne -1)
+                            {
+                                $fileExtension = $fileName.Substring($dotposition+1)
+                                $zipDestination = "$productFolder\$containerName.$fileExtension"
+                            }
                         }
 
                         $FileExists = Test-Path $zipDestination
@@ -783,6 +792,11 @@ function Resolve-ToLocalURI {
             if ($container.type -match 'zip')
             {
                 $containerFile = "$productFolder\$containerId.zip"
+            }
+            else
+            {
+                $file = get-item -Path "$productFolder\$containerId*"
+                $containerFile = $file.FullName
             }
             $containerURI = Upload-ToStorage -filePath $containerFile -productid $productid -resourceGroup $resourceGroup
             $json.productDetailsProperties.fileContainers[$i].sourceUri = $containerURI
