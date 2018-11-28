@@ -566,6 +566,8 @@ function PreCheck
         [String] $contentFolder
     )
 
+    $dirs = Get-ChildItem -Path $contentFolder
+
     foreach ($dir in $dirs)
     {
         $folderPath = $contentFolder + "\$dir"
@@ -686,11 +688,12 @@ function Test-AzSOfflineMarketplaceItem {
     $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
     $headers = @{ 'authorization' = "Bearer $AccessToken"}
 
-    foreach($product in $Destination)
+    $dirs = Get-ChildItem -Path $Destination
+    foreach($product in $dirs)
     {
         $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
             $armEndpoint,
-            $defaultProviderSubscription,
+            $defaultProviderSubscription.subscription.id,
             $product
         )
 
