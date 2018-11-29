@@ -136,7 +136,7 @@ function Get-Dependency {
         }
     }
 
-    Write-Host "`nDownloading product: $id" -ForegroundColor DarkCyan
+    Write-Host "`nDownloading product: $productid" -ForegroundColor DarkCyan
     Download-Product -productid $productid -resourceGroup $resourceGroup
 }
 
