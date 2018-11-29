@@ -12,7 +12,7 @@
 function Add-AzsVpnConnection {
     param (
         [parameter(HelpMessage = "Azure Stack VPN Connection Name such as 'my-poc'")]
-        [string] $ConnectionName = "azurestack",
+        [string] $ConnectionName = "Azure Stack",
 
         [parameter(mandatory = $true, HelpMessage = "External IP of the Azure Stack NAT VM such as '1.2.3.4'")]
         [string] $ServerAddress,
@@ -53,7 +53,7 @@ Export-ModuleMember -Function 'Add-AzsVpnConnection'
 function Connect-AzsVpn {
     param (
         [parameter(HelpMessage = "Azure Stack VPN Connection Name such as 'my-poc'")]
-        [string] $ConnectionName = "azurestack",
+        [string] $ConnectionName = "Azure Stack",
         [parameter(HelpMessage = "Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory = $true, HelpMessage = "Administrator password used to deploy this Azure Stack instance")]

@@ -164,6 +164,9 @@ function Set-AzsRegistration{
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
@@ -186,10 +189,7 @@ function Set-AzsRegistration{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
-        [string] $AgreementNumber,
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName = "AzureStackRegistration"
+        [string] $AgreementNumber
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -317,14 +317,14 @@ function Remove-AzsRegistration{
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupLocation = 'westcentralus',
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
@@ -351,56 +351,16 @@ function Remove-AzsRegistration{
         # Find registration resource in Azure
         Log-Output "Searching for registration resource in Azure..."
         $registrationResource = $null
-        if ($RegistrationName)
+
+        $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
+        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
         {
-            $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-            $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
-            if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
-            {
-                Log-Output "Registration resource found: $($registrationResource.ResourceId)"
-            }
-            else
-            {
-                Log-Throw "The registration resource found does not correlate the current environment's Cloud-Id. `r`nEnvironment Cloud Id: $($stampinfo.CloudId) `r`nResource Cloud Id: $($registrationResource.Properties.cloudId)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
-            }
+            Log-Output "Registration resource found: $($registrationResource.ResourceId)"
         }
         else
         {
-            Log-Output "Parameter 'RegistrationName' not supplied. Searching through all registration resources under current context."
-            try
-            {
-                Log-Output "Attempting to retrieve resources using command: 'Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName'"
-                $registrationResources = Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName
-            }
-            catch
-            {
-                Log-Warning "Could not retrieve resources from Azure `r`n$($_)"
-            }
-
-            if ($registrationResources.Count -eq 0)
-            {
-                try
-                {
-                    Log-Output "Attempting to retrieve resources using command: 'Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
-                    $registrationresources = Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
-                }
-                catch
-                {
-                    Log-Throw "Unable to retrieve registration resource(s) from Azure `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
-                }
-            }
-
-            Log-Output "Found $($registrationResources.Count) registration resources. Finding a matching CloudId may take some time."
-            foreach ($resource in $registrationResources)
-            {
-                $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
-                $resourceCloudId = (($resourceObject.Properties.ToString()) | ConvertFrom-Json).cloudId
-                if ($resourceCloudId -eq $stampInfo.CloudId)
-                {
-                    $registrationResource = $resourceObject
-                    break   
-                }
-            }
+            Log-Throw "The registration resource found does not correlate the current environment's Cloud-Id. `r`nEnvironment Cloud Id: $($stampinfo.CloudId) `r`nResource Cloud Id: $($registrationResource.Properties.cloudId)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
         }
     
         if ($registrationResource)
@@ -502,7 +462,10 @@ Function Get-AzsRegistrationToken{
         [String] $TokenOutputFilePath,
 
         [Parameter(Mandatory = $false)]
-        [Switch] $UsageReportingEnabled = $true,
+        [Switch] $UsageReportingEnabled = $false,
+
+        [Parameter(Mandatory = $false)]
+        [Switch] $MarketplaceSyndicationEnabled = $false,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
@@ -544,10 +507,10 @@ Function Get-AzsRegistrationToken{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $params = @{
-        PrivilegedEndpointCredential          = $PrivilegedEndpointCredential
+        PrivilegedEndpointCredential  = $PrivilegedEndpointCredential
         PrivilegedEndpoint            = $PrivilegedEndpoint
         BillingModel                  = $BillingModel
-        MarketplaceSyndicationEnabled = $false
+        MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
         UsageReportingEnabled         = $UsageReportingEnabled
         AgreementNumber               = $AgreementNumber
         TokenOutputFilePath           = $TokenOutputFilePath
@@ -638,6 +601,9 @@ Function Register-AzsEnvironment{
         [ValidateNotNull()]
         [String] $RegistrationToken,
 
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
@@ -646,10 +612,7 @@ Function Register-AzsEnvironment{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
-
-        [Parameter(Mandatory = $false)]
-        [String] $RegistrationName = "AzureStackRegistration"
+        [String] $ResourceGroupLocation = 'westcentralus'
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -864,7 +827,7 @@ Function Get-AzsActivationKey{
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [String] $RegistrationName = "AzureStackRegistration",
+        [String] $RegistrationName,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
@@ -1029,7 +992,10 @@ Function Remove-AzsActivationResource{
         [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $false)]
-        [String] $AzureStackAdminSubscriptionId
+        [String] $AzureStackAdminSubscriptionId,
+
+        [Parameter(Mandatory = $false)]
+        [String] $AzureEnvironmentName = "AzureStack"
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -1045,7 +1011,7 @@ Function Remove-AzsActivationResource{
 
         $AzureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
         Log-Output "Logging in to AzureStack administrator account. TenantId: $($AzureStackStampInfo.AADTenantID) Environment: 'AzureStack'"
-        Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment 'AzureStack'
+        Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment $AzureEnvironmentName
         $azureStackContext = Get-AzureRmContext
 
         $azureStackContextDetails = @{
