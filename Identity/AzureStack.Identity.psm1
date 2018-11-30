@@ -224,7 +224,7 @@ $adminResourceManagerEndpoint = "https://adminmanagement.local.azurestack.extern
 $homeDirectoryTenantName = "<homeDirectoryTenant>.onmicrosoft.com"
 
 Update-AzsHomeDirectoryTenant -AdminResourceManagerEndpoint $adminResourceManagerEndpoint `
-    -DirectoryTenantName $homeDirectoryTenantName -Verbose -Debug
+    -DirectoryTenantName $homeDirectoryTenantName -Verbose
 #>
 
 function Update-AzsHomeDirectoryTenant {
