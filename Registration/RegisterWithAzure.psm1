@@ -779,7 +779,7 @@ Function UnRegister-AzsEnvironment{
         foreach ($resource in $registrationResources)
         {
             $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
-            $resourceCloudId = (($resourceObject.Properties.ToString()) | ConvertFrom-Json).cloudId
+            $resourceCloudId = $resourceObject.Properties.CloudId
             if ($resourceCloudId -eq $stampInfo.CloudId)
             {
                 $registrationResource = $resourceObject
