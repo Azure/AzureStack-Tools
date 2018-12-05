@@ -24,6 +24,9 @@ function Export-AzSOfflineMarketplaceItem {
         [String] $Destination
     )
 
+    # in case it is relative path
+    $Destination = Resolve-Path -Path $Destination
+
     $AzureContext = Get-AzureRmContext
     $AzureTenantID = $AzureContext.Tenant.TenantId
     $AzureSubscriptionID = $AzureContext.Subscription.Id
