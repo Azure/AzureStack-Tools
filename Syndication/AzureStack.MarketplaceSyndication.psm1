@@ -232,6 +232,10 @@ function Download-Product {
         $productDetails.properties|select publisherIdentifier,offer,sku,productKind,vmExtensionType  |out-file "$productFolder\$azpkgName.txt" -Append
         $productDetails.properties.productProperties|select version| out-file "$productFolder\$azpkgName.txt" -Append
 
+        # select premium download
+        Write-Host $("-"*20)
+        $downloadConfirmation = Read-Host "Downloading package files. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+
         if ($downloadDetails.productKind -ne 'resourceProvider')
         {
             # download azpkg
@@ -245,9 +249,6 @@ function Download-Product {
             If ($FileExists -eq $true) {Remove-Item "$productFolder\$azpkgName.azpkg" -force | Out-Null}
             $azpkgdestination = "$productFolder\$azpkgName.azpkg"
 
-            # select premium download
-            Write-Host $("-"*20)
-            $downloadConfirmation = Read-Host "Downloading gallery package. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
             If ($downloadConfirmation -eq 'Y') {
                 $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                 If ($checktool -eq $true){
@@ -277,9 +278,6 @@ function Download-Product {
         If (Test-Path "$iconsFolder\small.png") {Remove-Item "$iconsFolder\small.png" -force -ErrorAction SilentlyContinue | Out-Null}
         If (Test-Path "$iconsFolder\wide.png") {Remove-Item "$iconsFolder\wide.png" -force -ErrorAction SilentlyContinue | Out-Null}
 
-        # select premium download
-        Write-Host $("-"*20)
-        $downloadConfirmation = Read-Host "Downloading icons. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
         If ($downloadConfirmation -eq 'Y') {
             $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
             If ($checktool -eq $true){
@@ -346,9 +344,6 @@ function Download-Product {
                     If ($FileExists -eq $true) {Remove-Item "$productFolder\$vhdName.vhd" -force | Out-Null}
                     $vhdDestination = "$productFolder\$vhdName.vhd"
 
-                    # select premium download
-                    Write-Host $("-"*20)
-                    $downloadConfirmation = Read-Host "Downloading vhd. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
                     If ($downloadConfirmation -eq 'Y') {
                         $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                         If ($checktool -eq $true){
@@ -374,9 +369,7 @@ function Download-Product {
                     $FileExists = Test-Path "$productFolder\$zipName.zip"
                     If ($FileExists -eq $true) {Remove-Item "$productFolder\$zipName.zip" -force | Out-Null}
                     $zipDestination = "$productFolder\$zipName.zip"
-                    # select premium download
-                    Write-Host $("-"*20)
-                    $downloadConfirmation = Read-Host "Downloading VM extension zip. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+
                     If ($downloadConfirmation -eq 'Y') {
                         $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                         If ($checktool -eq $true){
@@ -419,9 +412,6 @@ function Download-Product {
                         $FileExists = Test-Path $zipDestination
                         If ($FileExists -eq $true) {Remove-Item $zipDestination -force | Out-Null}
 
-                        # select premium download
-                        Write-Host $("-"*20)
-                        $downloadConfirmation = Read-Host "Downloading zip file. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
                         If ($downloadConfirmation -eq 'Y') {
                             $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                             If ($checktool -eq $true){
