@@ -855,7 +855,7 @@ function Get-AccessToken
         [String] $ClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
     )
 
-    Write-Verbose "Getting Access token using supplied credentials" -verbose
+    Write-Debug "Getting Access token using supplied credentials"
 
     $contextAuthorityEndpoint = ([System.IO.Path]::Combine($AuthorityEndpoint, $AadTenantId)).Replace('\','/')
     $authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($contextAuthorityEndpoint, $false)
@@ -872,7 +872,7 @@ function Get-ResourceManagerMetaDataEndpoints
     )
 
     $endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -TimeoutSec 180
-    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -verbose
+    Write-Debug "Endpoints: $(ConvertTo-Json $endpoints)"
 
     Write-Output $endpoints
 }
