@@ -82,7 +82,7 @@ function Export-AzSOfflineMarketplaceItem {
     }
 
     $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
-        Get-Dependency -productid $_.id -resourceGroup $ResourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $AzureSubscriptionID -registration $Registration -token $token
+        Get-Dependency -productid $_.id -resourceGroup $ResourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $AzureSubscriptionID -registration $Registration -token $token -destination $Destination
     }
 }
 
@@ -104,7 +104,10 @@ function Get-Dependency {
         [String] $registration,
 
         [parameter(mandatory = $true)]
-        [Object] $token
+        [Object] $token,
+
+        [parameter(mandatory = $true)]
+        [String] $destination
     )
 
     $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
@@ -115,12 +118,19 @@ function Get-Dependency {
     {
         foreach ($id in $downloadDetails.properties.dependentProducts)
         {
-            Get-Dependency -productid $id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token
+            Get-Dependency -productid $id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination
         }
     }
 
+    $productFolder = "$destination\$productid"
+    $destinationCheck = Test-Path $productFolder
+    If ($destinationCheck) {
+        Write-Warning "$productid already exists at $destination\$productid, skip download"
+        return
+    }
+
     Write-Host "`nDownloading product: $productid" -ForegroundColor DarkCyan
-    Download-Product -productid $productid -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token
+    Download-Product -productid $productid -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination
 }
 
 function Download-Product {
@@ -141,7 +151,10 @@ function Download-Product {
         [String] $registration,
 
         [parameter(mandatory = $true)]
-        [Object] $token
+        [Object] $token,
+
+        [parameter(mandatory = $true)]
+        [String] $destination
     )
 
     # get name of azpkg
