@@ -53,11 +53,11 @@ The following command will run a set of test against a downloaded Azure Marketpl
 Test-AzSOfflineMarketplaceItem -Destination "marketplace content folder"
 ```
 
-## Exporting the downloaded Azure Marketplace item to your Azure Stack Marketplace
+## Importing the downloaded Azure Marketplace item to your Azure Stack Marketplace
 The previous downloaded files will need to be made available to your Azure Stack environment. The following structure showcase how the folder structure and files should look like
 ![](downloadedfiles.png)
 
-Configure Azure Stack Operator’s PowerShell session. More information cannot be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-quickstart
+Configure Azure Stack Operator’s PowerShell session. More information cannot be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-admin
 
 Import the module and start the import process for an Azure Marketplace item
 ```powershell
