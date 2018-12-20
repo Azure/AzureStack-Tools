@@ -4,10 +4,9 @@ When Azure Stack is deployed in disconnect mode (Without Internet connectivity) 
 not use the build in portal feature to syndicate Azure Market place items and make them
 available to your users.
 
-This Tool allows you to download Azure Marketplace Items with a machine that has internet connectivity and side load them.
+This powershell command set will allow you to download Azure Marketplace Items with a machine that has internet connectivity and side load them.
 The downloaded items need to be transferred to a machine with has connectivity to the Azure Stack deployment before importing them.
-
-![](demosyndicate.gif)
+The powershell command will provide method to both download and upload the Azure Marketplace Items. 
 
 ## Requirements
 
@@ -23,51 +22,60 @@ The downloaded items need to be transferred to a machine with has connectivity t
 
 
 
-## Import the Module
+## Importing Azure Marketplace items
+
+The tool will allow you to download an Azure Marletplace items along with its dependencies.
+
+From powershell, add the Azure account that you have used to register Azure Stack
+```powershell
+Add-AzureRmAccount -EnvironmentName "<Name>"
+```
+If you have more than one subscription for your account, you will need to select the previously used subscription for Azure Stack registration 
+```powershell
+Get-AzureRmSubscription -SubscriptionID '<Your Azure Subscription GUID>' | Select-AzureRmSubscription
+```
+
+Import the module and start the export process for an Azure Marketplace item
 ```powershell
 Import-Module .\AzureStack.MarketplaceSyndication.psm1
+Export-AzSOfflineMarketplaceItem -destination "Destination folder path"
 ```
 
+You will be prompted to select an Azure Marketplace item to download locally.
+![](downloadselection.png)
 
-## Launch the Tool
+After download completion, the item will be available in the folder specified in the script.
+
+
+## Validating the downloaded Azure Marketplace item
+The following command will run a set of test against a downloaded Azure Marketplace item. It is highly recommended to validate the download before proceeding to the next steps 
 ```powershell
-Sync-AzSOfflineMarketplaceItem -destination c:\donwloadfolder -AzureTenantID "Value" -AzureSubscriptionID "SubsciptionID"
-
+Test-AzSOfflineMarketplaceItem -Destination "marketplace content folder"
 ```
 
-## Required Parameters
+## Importing the downloaded Azure Marketplace item to your Azure Stack Marketplace
+The previous downloaded files will need to be made available to your Azure Stack environment. The following structure showcase how the folder structure and files should look like
+![](downloadedfiles.png)
 
-Parameter: AzureTenantID
+Configure Azure Stack Operator’s PowerShell session. More information cannot be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-admin
 
-Description: Specify the Azure Tenant ID for Authentication. This can be retrieved via Portal using the resource explorer or using PS when doing add-azurermaccount.
+Import the module and start the import process for an Azure Marketplace item
+```powershell
+Import-Module .\AzureStack.MarketplaceSyndication.psm1
+$credential = Get-Credential -Message "Enter the azure stack operator credential"
+Import-AzSOfflineMarketplaceItem -origin “marketplace content folder" -armendpoint "Environment Arm Endpoint" -AzsCredential $credential
+```
 
-
-Parameter: SubscriptionID
-
-Description: Specify the Azure Subscription ID for Authentication when having multiple subscriptions. This can be retrieved via Portal using the resource explorer or using PS when doing add-azurermaccount.
-
-Parameter: destination
-
-Description: Specify a local destination that has enough free storage available.
-
-
-## Optional Parameters
-
-Parameter: Cloud
-
-Default: AzureCloud
-
-Description: Once Azure Stack RP is available in other Clouds like Azure China you can specify which one to use
+Option -AzsCredential is optional, it is used to renew access token in case token expires. 
 
 ## Downloaded Content
 
 Files (VHD, ZIP and AZPKG) associated with a gallery items are stored in the destination folder. This destination folder must be transferred for import to a machine that can access Azure Stack.
 
 
-## Importing and publish into disconnected Azure Stack
+## Working with disconnected Azure Stack
 
-Once the download has been transferred to a machine that can access Azure Stack, you need to import the VHD and publish the AZPKG or ZIP file.
-
+Additional resources on how to work with disconnected Azure Stack
 
 ### Importing the VHD
 For detailed steps to use the Portal see:
