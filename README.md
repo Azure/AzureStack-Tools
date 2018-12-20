@@ -3,10 +3,14 @@
 
 These tools are meant for use with **Azure Stack Development Kit** and Integrated Systems
 
-## Import Notification
+## AzureStack-Tools Release/Tags Notification(s)
 
-Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1804 can be found here
-https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1804
+Please follow the below instructions to make sure you are using the right version of AzureStack-Tools repo:
+- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1811 can be found here
+    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1811
+
+- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1804 can be found here
+    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1804
 
 ## Tools for using Azure and Azure Stack
 
@@ -33,17 +37,33 @@ Install-Module -Name AzureStack -RequiredVersion 1.4.0
 Obtain the tools by cloning the git repository.
 
 ```commandline
+# For Azure Stack builds/releases 1811 and later:
 git clone https://github.com/Azure/AzureStack-Tools.git --recursive
+cd AzureStack-Tools
+```
+
+```commandline
+# For Azure Stack builds/releases prior to 1811:
+git clone --branch PRE-1811 https://github.com/Azure/AzureStack-Tools --recursive
 cd AzureStack-Tools
 ```
 
 Otherwise download the tools as follows:
 
 ```powershell
+# For Azure Stack builds/releases 1811 and later:
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
 expand-archive master.zip -DestinationPath . -Force
 cd AzureStack-Tools-master
+```
+
+```powershell
+# For Azure Stack builds/releases prior to 1811:
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/PRE-1811.zip -OutFile PRE-1811.zip
+expand-archive PRE-1811.zip -DestinationPath . -Force
+cd AzureStack-Tools-PRE-1811
 ```
 
 Instructions below are relative to the root of the repo.
