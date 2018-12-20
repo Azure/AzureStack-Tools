@@ -17,7 +17,7 @@ function Get-AzsDirectoryTenantidentifier {
     [CmdletBinding()]
     Param
     (
-        # Param1 help description
+        # The Authority of the identity system, e.g. "https://login.windows.net/microsoft.onmicrosoft.com"
         [Parameter(Mandatory = $true,
             Position = 0)]
         $Authority
@@ -212,6 +212,300 @@ function Register-AzsGuestDirectoryTenant {
     }
 
     Invoke-Main
+}
+
+<#
+.Synopsis
+Consents to any missing permissions for Azure Stack identity applications in the home directory of Azure Stack.
+.DESCRIPTION
+Consents to any missing permissions for Azure Stack identity applications in the home directory of Azure Stack. This is needed to complete the "installation" of new Resource Provider identity applications in Azure Stack. 
+.EXAMPLE
+$adminResourceManagerEndpoint = "https://adminmanagement.local.azurestack.external"
+$homeDirectoryTenantName = "<homeDirectoryTenant>.onmicrosoft.com"
+
+Update-AzsHomeDirectoryTenant -AdminResourceManagerEndpoint $adminResourceManagerEndpoint `
+    -DirectoryTenantName $homeDirectoryTenantName -Verbose
+#>
+
+function Update-AzsHomeDirectoryTenant {
+    [CmdletBinding()]
+    param
+    (
+        # The endpoint of the Azure Stack Resource Manager service.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNull()]
+        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [uri] $AdminResourceManagerEndpoint,
+
+        # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantName,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [Parameter()]
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $VerbosePreference = 'Continue'
+
+    # Install-Module AzureRm
+    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
+    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
+
+    function Invoke-Main {
+        # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
+        Write-Host "Authenticating user..."
+        $azureStackEnvironment = Initialize-AzureRmEnvironment 'AzureStackAdmin'
+        $refreshToken = Initialize-AzureRmUserAccount $azureStackEnvironment
+
+        # Initialize the Graph PowerShell module to communicate with the correct graph service
+        $graphEnvironment = Resolve-GraphEnvironment $azureStackEnvironment
+        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken
+
+        # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be initialized in the onboarding directory tenant
+        Write-Host "Acquiring an access token to communicate with Resource Manager..."
+        $armAccessToken = Get-ArmAccessToken $azureStackEnvironment
+
+        Write-Host "Looking-up the registered identity applications which need to be installed in your directory..."
+        $applicationRegistrationParams = @{
+            Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
+            Headers = @{ Authorization = "Bearer $armAccessToken" }
+            Uri     = "$($AdminResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
+        }
+        $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select -ExpandProperty value
+
+        # Identify which permissions have already been granted to each registered application and which additional permissions need to be granted
+        $permissions = @()
+        $count = 0
+        foreach ($applicationRegistration in $applicationRegistrations) {
+            # Initialize the service principal for the registered application
+            $count++
+            $applicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $applicationRegistration.appId
+            Write-Host "Installing Application... ($($count) of $($applicationRegistrations.Count)): $($applicationServicePrincipal.appId) '$($applicationServicePrincipal.appDisplayName)'"
+
+            # WORKAROUND - the recent Azure Stack update has a missing permission registration; temporarily "inject" this permission registration into the returned data
+            if ($applicationServicePrincipal.servicePrincipalNames | Where { $_ -like 'https://deploymentprovider.*/*' })
+            {
+                Write-Verbose "Adding missing permission registrations for application '$($applicationServicePrincipal.appDisplayName)' ($($applicationServicePrincipal.appId))..." -Verbose
+
+                $graph = Get-GraphApplicationServicePrincipal -ApplicationId (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
+
+                $applicationRegistration.appRoleAssignments = @(
+                    [pscustomobject]@{
+                        resource   = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
+                        client     = $applicationRegistration.appId
+                        roleId     = $graph.appRoles | Where value -EQ 'Directory.Read.All' | Select -ExpandProperty id
+                    },
+
+                    [pscustomobject]@{
+                        resource   = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
+                        client     = $applicationRegistration.appId
+                        roleId     = $graph.appRoles | Where value -EQ 'Application.ReadWrite.OwnedBy' | Select -ExpandProperty id
+                    }
+                )
+            }
+
+            # Initialize the necessary tags for the registered application
+            if ($applicationRegistration.tags) {
+                Update-GraphApplicationServicePrincipalTags -ApplicationId $applicationRegistration.appId -Tags $applicationRegistration.tags
+            }
+
+            # Lookup the permission consent status for the *application* permissions (either to or from) which the registered application requires
+            foreach ($appRoleAssignment in $applicationRegistration.appRoleAssignments) {
+                $params = @{
+                    ClientApplicationId   = $appRoleAssignment.client
+                    ResourceApplicationId = $appRoleAssignment.resource
+                    PermissionType        = 'Application'
+                    PermissionId          = $appRoleAssignment.roleId
+                }
+                $permissions += New-GraphPermissionDescription @params -LookupConsentStatus
+            }
+
+            # Lookup the permission consent status for the *delegated* permissions (either to or from) which the registered application requires
+            foreach ($oauth2PermissionGrant in $applicationRegistration.oauth2PermissionGrants) {
+                $resourceApplicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $oauth2PermissionGrant.resource
+                foreach ($scope in $oauth2PermissionGrant.scope.Split(' ')) {
+                    $params = @{
+                        ClientApplicationId                 = $oauth2PermissionGrant.client
+                        ResourceApplicationServicePrincipal = $resourceApplicationServicePrincipal
+                        PermissionType                      = 'Delegated'
+                        PermissionId                        = ($resourceApplicationServicePrincipal.oauth2Permissions | Where value -EQ $scope).id
+                    }
+                    $permissions += New-GraphPermissionDescription @params -LookupConsentStatus
+                }
+            }
+        }
+
+        # Trace the permission status
+        Write-Verbose "Current permission status: $($permissions | ConvertTo-Json -Depth 4)" -Verbose
+
+        $permissionFile = Join-Path -Path $PSScriptRoot -ChildPath "$DirectoryTenantName.permissions.json"
+        $permissionContent = $permissions | Select -Property * -ExcludeProperty isConsented | ConvertTo-Json -Depth 4 | Out-String
+        $permissionContent > $permissionFile
+
+        # Display application status to user
+        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = {'{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName}} | Sort clientApplicationDisplayName | Group Client
+        $readyApplications = @()
+        $pendingApplications = @()
+        foreach ($client in $permissionsByClient) {
+            if ($client.Group.isConsented -Contains $false) {
+                $pendingApplications += $client
+            }
+            else {
+                $readyApplications += $client
+            }
+        }
+
+        Write-Host ""
+        if ($readyApplications) {
+            Write-Host "Applications installed and configured:"
+            Write-Host "`t$($readyApplications.Name -join "`r`n`t")"
+        }
+        if ($readyApplications -and $pendingApplications) {
+            Write-Host ""
+        }
+        if ($pendingApplications) {
+            Write-Host "Applications waiting to be configured:"
+            Write-Host "`t$($pendingApplications.Name -join "`r`n`t")"
+        }
+        Write-Host ""
+
+        # Grant any missing permissions for registered applications
+        if ($permissions | Where isConsented -EQ $false | Select -First 1) {
+            Write-Host "Configuring applications... (this may take up to a few minutes to complete)"
+            Write-Host ""
+            $permissions | Where isConsented -EQ $false | Grant-GraphApplicationPermission
+        }
+
+        Write-Host "All applications installed and configured! Your home directory '$DirectoryTenantName' has been successfully updated to be used with Azure Stack!"
+        Write-Host ""
+        Write-Host "A more detailed description of the applications installed and with what permissions they have been configured can be found in the file '$permissionFile'."
+        Write-Host "Run this script again at any time to check the status of the Azure Stack applications in your directory."
+        Write-Warning "If your Azure Stack Administrator installs new services or updates in the future, you may need to run this script again."
+    }
+
+    function Initialize-AzureRmEnvironment([string]$environmentName) {
+        $endpoints = Invoke-RestMethod -Method Get -Uri "$($AdminResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -Verbose
+        Write-Verbose -Message "Endpoints: $(ConvertTo-Json $endpoints)" -Verbose
+
+        # resolve the directory tenant ID from the name
+        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($endpoints.authentication.loginEndpoint.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+
+        $azureEnvironmentParams = @{
+            Name                                     = $environmentName
+            ActiveDirectoryEndpoint                  = $endpoints.authentication.loginEndpoint.TrimEnd('/') + "/"
+            ActiveDirectoryServiceEndpointResourceId = $endpoints.authentication.audiences[0]
+            AdTenant                                 = $directoryTenantId
+            ResourceManagerEndpoint                  = $AdminResourceManagerEndpoint
+            GalleryEndpoint                          = $endpoints.galleryEndpoint
+            GraphEndpoint                            = $endpoints.graphEndpoint
+            GraphAudience                            = $endpoints.graphEndpoint
+        }
+
+        $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
+        $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
+
+        return $azureEnvironment
+    }
+
+    function Initialize-AzureRmUserAccount([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
+        $params = @{
+            EnvironmentName = $azureStackEnvironment.Name
+            TenantId        = $azureStackEnvironment.AdTenant
+        }
+
+        if ($AutomationCredential) {
+            $params += @{ Credential = $AutomationCredential }
+        }
+
+        # Prompts the user for interactive login flow if automation credential is not specified
+        $azureStackAccount = Add-AzureRmAccount @params
+
+        # Retrieve the refresh token
+        $tokens = @()
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $refreshToken = $tokens |
+            Where Resource -EQ $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId |
+            Where IsMultipleResourceRefreshToken -EQ $true |
+            Where DisplayableId -EQ $azureStackAccount.Context.Account.Id |
+            Sort ExpiresOn |
+            Select -Last 1 -ExpandProperty RefreshToken |
+            ConvertTo-SecureString -AsPlainText -Force
+
+        # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
+        if (-not $refreshToken) {
+            if ($tokens.Count -eq 1) {
+                Write-Warning "Failed to find target refresh token from Azure PowerShell Cache; attempting to reuse the single cached auth context..."
+                $refreshToken = $tokens[0].RefreshToken | ConvertTo-SecureString -AsPlainText -Force
+            }
+            else {
+                throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance after running 'Clear-AzureRmContext -Scope CurrentUser -Force -Verbose'."
+            }
+        }
+
+        return $refreshToken
+    }
+
+    function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment) {
+        $graphEnvironment = switch ($azureEnvironment.ActiveDirectoryAuthority) {
+            'https://login.microsoftonline.com/' { 'AzureCloud'        }
+            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
+            'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
+
+            Default { throw "Unsupported graph resource identifier: $_" }
+        }
+
+        return $graphEnvironment
+    }
+
+    function Get-ArmAccessToken([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
+        $armAccessToken = $null
+        $attempts = 0
+        $maxAttempts = 12
+        $delayInSeconds = 5
+        do {
+            try {
+                $attempts++
+                $armAccessToken = (Get-GraphToken -Resource $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData -ErrorAction Stop).access_token
+            }
+            catch {
+                if ($attempts -ge $maxAttempts) {
+                    throw
+                }
+                Write-Verbose "Error attempting to acquire ARM access token: $_`r`n$($_.Exception)" -Verbose
+                Write-Verbose "Delaying for $delayInSeconds seconds before trying again... (attempt $attempts/$maxAttempts)" -Verbose
+                Start-Sleep -Seconds $delayInSeconds
+            }
+        }
+        while (-not $armAccessToken)
+
+        return $armAccessToken
+    }
+
+    $logFile = Join-Path -Path $PSScriptRoot -ChildPath "$DirectoryTenantName.$(Get-Date -Format MM-dd_HH-mm-ss_ms).log"
+    Write-Verbose "Logging additional information to log file '$logFile'" -Verbose
+
+    $logStartMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Beginning invocation of '$($MyInvocation.InvocationName)' with parameters: $(ConvertTo-Json $PSBoundParameters -Depth 4)"
+    $logStartMessage >> $logFile
+
+    try {
+        # Redirect verbose output to a log file
+        Invoke-Main 4>> $logFile
+
+        $logEndMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Script completed successfully."
+        $logEndMessage >> $logFile
+    }
+    catch {
+        $logErrorMessage = "[$(Get-Date -Format 'hh:mm:ss tt')] - Script terminated with error: $_`r`n$($_.Exception)"
+        $logErrorMessage >> $logFile
+        Write-Warning "An error has occurred; more information may be found in the log file '$logFile'" -WarningAction Continue
+        throw
+    }
 }
 
 <#
@@ -882,6 +1176,7 @@ function Unregister-AzsWithMyDirectoryTenant {
 
 Export-ModuleMember -Function @(
     "Register-AzsGuestDirectoryTenant",
+    "Update-AzsHomeDirectoryTenant",
     "Register-AzsWithMyDirectoryTenant",
     "Unregister-AzsGuestDirectoryTenant",
     "Unregister-AzsWithMyDirectoryTenant",

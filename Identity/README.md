@@ -41,6 +41,20 @@ $directoryTenantId = Get-AzsDirectoryTenantIdentifier -Authority "<DirectoryTena
 An example of an authority for AAD is `https://login.windows.net/microsoft.onmicrosoft.com`
 and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 
+## Updating the Azure Stack AAD Home Directory (after installing updates or new Resource Providers)
+
+After installing updates or hotfixes to Azure Stack, new features may be introduced which require new permissions to be
+granted to one or more identity applications. Granting these permissions requires Administrative access to the
+home directory, and so it cannot be done automatically.
+
+```powershell
+$adminResourceManagerEndpoint = "https://adminmanagement.<region>.<domain>"
+$homeDirectoryTenantName = "<homeDirectoryTenant>.onmicrosoft.com" # this is the primary tenant Azure Stack is registered to
+
+Update-AzsHomeDirectoryTenant -AdminResourceManagerEndpoint $adminResourceManagerEndpoint `
+    -DirectoryTenantName $homeDirectoryTenantName -Verbose
+```
+
 ## Enabling AAD Multi-Tenancy in Azure Stack
 
 Allowing users and service principals from multiple AAD directory tenants to sign in and create resources on Azure Stack.
