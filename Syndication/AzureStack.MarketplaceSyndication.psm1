@@ -128,7 +128,7 @@ function Get-Dependency {
         $productJsonFile = "$productFolder\$productid.json"
         $jsonFileCheck = Test-Path $productJsonFile
         if ($jsonFileCheck) {
-            Write-Warning "$productid already exists at $destination\$productid, skip download. Please make sure $productid was not partial downloaded"
+            Write-Warning "$productid already exists at $destination\$productid, skip download."
             return
         }
     }
