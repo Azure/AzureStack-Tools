@@ -14,21 +14,83 @@ function Get-AzureRMCloudCapability() {
     [CmdletBinding()]
     [OutputType([string])]
     Param(
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Parameter(HelpMessage = 'Json output file')]
         [String] $OutputPath = "AzureCloudCapabilities.Json",
 
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Parameter(HelpMessage = 'Cloud Capabilities for the specified location')]
         [String] $Location,
 
+        [Parameter(Mandatory = $true, HelpMessage = "Directory containing api profile jsons for the supported api profiles. Use this parameter when running in a disconnected environment. Please save the api profile jsons from https://github.com/Azure/azure-rest-api-specs/tree/master/profile to a local directory and pass the location.", ParameterSetName = "local")]
+        [ValidateScript( { Test-Path -Path $_  })]
+        [String] $ApiProfilePath,
+
+        [Parameter(HelpMessage = "Url pointing to the location of the supported api profiles", ParameterSetName = "url")]
+        [String] $ApiProfilesUrl = "https://api.github.com/repos/Azure/azure-rest-api-specs/contents/profile",
+
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Parameter(HelpMessage = 'Set this to get compute resource provider Capabilities like Extensions, Images, Sizes')]
         [Switch] $IncludeComputeCapabilities,
 
+        [Parameter(ParameterSetName = "local")]
+        [Parameter(ParameterSetName = "url")]
         [Parameter(HelpMessage = 'Set this to get storage resource provider Capabilities like Sku')]
         [Switch] $IncludeStorageCapabilities
     )
 
     $sw = [Diagnostics.Stopwatch]::StartNew()
     Write-Verbose "Getting CloudCapabilities for location: '$location'"
+
+    $rootPath = $env:TEMP
+    $fileDir = "ApiProfiles"
+    $localDirPath = Join-Path -Path $rootPath -ChildPath $fileDir
+    if(Test-Path($localDirPath))
+    {
+        Remove-Item -Path $localDirPath -Recurse -Force -ErrorAction Stop
+    }
+    New-Item -Path $rootPath -Name $fileDir -ItemType "directory"
+    if ($PSCmdlet.ParameterSetName -eq "url")
+    {
+        Write-Verbose "Downloading api profile jsons from '$ApiProfilesUrl'"
+        try {
+            $content = Invoke-RestMethod -Method GET -UseBasicParsing -Uri $ApiProfilesUrl
+            $webClient = [System.Net.WebClient]::new()
+            foreach( $c in $content) {
+                $destPath = Join-Path -Path $localDirPath -ChildPath $c.name
+                $webClient.DownloadFile($c.download_url, $destPath)
+            }
+        }
+        catch {
+              $err = "Exception: Unable to get the api profile jsons. ApiProfilesUrl - $ApiProfilesUrl. $($_.Exception.Message)"
+              Write-Error $err
+        }
+    }
+    else
+    {
+        Write-Verbose "Using api profile jsons from local path: '$ApiProfilePath'"
+        $localDirPath = $ApiProfilePath
+    }
+    Write-Verbose "Reading api profiles jsons..."
+    $apiProfiles = @()
+    if(Test-Path($localDirPath)) {
+        $ApiProfilePattern = "*.json"
+        $ProfilesDirectory = Get-ChildItem -Path $localDirPath -Recurse -Include $ApiProfilePattern
+        foreach ($apiProfilejson in $ProfilesDirectory) { 
+            $apiProfileFileName = Split-path -Path $apiProfilejson.FullName -Leaf
+            Write-Verbose "Reading api profile $apiProfileFileName"
+            $apiProfile = ConvertFrom-Json (Get-Content -Path $apiProfilejson -Raw) -ErrorAction Stop
+            $apiProfileName = $apiProfile.info.name
+            $apiProfiles += $apiProfile
+        }
+    }
+    else {
+        Write-Warning "Api profiles jsons not found!"
+    }
+
     $providerNamespaces = (Get-AzureRmResourceProvider -ListAvailable -Location $location -ErrorAction Stop).ProviderNamespace
     $resources = @()
     foreach ($providerNamespace in $providerNamespaces) {
@@ -36,11 +98,20 @@ function Get-AzureRMCloudCapability() {
         try {
             $resourceTypes = (Get-AzureRmResourceProvider -ProviderNamespace $providerNamespace -ErrorAction Stop).ResourceTypes
             foreach ($resourceType in $resourceTypes) {
-                $result = "" | Select-Object ProviderNamespace, ResourceTypeName, Locations, ApiVersions
+                $result = "" | Select-Object ProviderNamespace, ResourceTypeName, Locations, ApiVersions, ApiProfiles
                 $result.ProviderNamespace = $providerNamespace
                 $result.ResourceTypeName = $resourceType.ResourceTypeName
                 $result.Locations = $resourceType.Locations
                 $result.ApiVersions = $resourceType.ApiVersions
+                $profileNames = @()
+                foreach ($apiProfile in $apiProfiles) {
+                    #if $resourceType.ResourceTypeName exists in $apiProfile add $apiProfile.info.name to $profileNames
+                    $apiProfileProviderNamespace = $apiProfile.'resource-manager'.$providerNamespace
+                    if($null -ne ($apiProfileProviderNamespace.Psobject.Properties | % { $_.value } | ? { $_ -eq $resourceType.ResourceTypeName } )) {
+                        $profileNames += $apiProfile.info.name
+                    }
+                }
+                $result.ApiProfiles = $profileNames
                 $resources += , $result
             }
         }

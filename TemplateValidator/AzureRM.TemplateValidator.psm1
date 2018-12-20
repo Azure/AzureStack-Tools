@@ -43,6 +43,7 @@ function Test-AzureRMTemplate() {
     )
     
     $capabilities = ConvertFrom-Json (Get-Content -Path $CapabilitiesPath -Raw) -ErrorAction Stop
+    $reportFilePath = Join-Path $PSScriptRoot $Report
     
     if ($PSCmdlet.ParameterSetName -eq "url")
     {
@@ -172,7 +173,7 @@ function Test-AzureRMTemplate() {
         $reportOutPut += $templateResults
     }
     if (([System.IO.FileInfo]$Report).Extension -eq '.csv') {
-        $reportOutPut | Export-CSV -delimiter ';' -NoTypeInformation -Encoding "unicode" -Path $Report
+        $reportOutPut | Export-CSV -delimiter ';' -NoTypeInformation -Encoding "unicode" -Path $reportFilePath
     }
     elseif (([System.IO.FileInfo]$Report).Extension -eq '.html') {
         $head = @"
@@ -242,9 +243,8 @@ table td:nth-child(3){white-space:pre-line}
             }
         }
         $reportHtml = $title + $validationSummary + $reportXml.OuterXml|Out-String
-        ConvertTo-Html  $postContent -head $head -Body $reportHtml | out-File $Report
+        ConvertTo-Html  $postContent -head $head -Body $reportHtml | out-File $reportFilePath
     }
-    $reportFilePath = Join-Path $PSScriptRoot $Report
     Write-Output "Validation Summary:
     `Passed: $passedCount
     `NotSupported: $notSupportedCount
@@ -674,27 +674,59 @@ function ValidateResource {
         $resourceOutput += $msg
     }
     else {
-        Write-Verbose "Validating API version for $ResourceProviderNameSpace\$ResourceTypeName"
         try {
             $templateResApiversion = $resource.apiversion
-            $templateResApiversionType = GetPropertyType $templateResApiversion
-            if ($templateResApiversionType -eq "function") {
-                $msg = "Recommend: apiVersion (Resource type: $($resource.type)). It is recommended to set it as a literal value."
-                Write-Warning $msg
-                $resourceOutput += $msg
+            if($templateResApiversion) {
+                Write-Verbose "Validating API version for $ResourceProviderNameSpace\$ResourceTypeName"
+                $templateResApiversionType = GetPropertyType $templateResApiversion
+                if ($templateResApiversionType -eq "function") {
+                    $msg = "Recommend: apiVersion (Resource type: $($resource.type)). It is recommended to set it as a literal value."
+                    Write-Warning $msg
+                    $resourceOutput += $msg
+                }
+                $templateResApiversion = Get-PropertyValue $templateResApiversion $Template $resource
+                $supportedApiVersions = $ResourceTypeProperties.Apiversions
+                $notSupported = CompareValues $templateResApiversion $supportedApiVersions
+                if ($notSupported) {
+                    if ($notSupported.NoneSupported) {
+                        $msg = "NotSupported: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
+                    }
+                    else {
+                        $msg = "Warning: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
+                    }
+                    Write-Warning $msg
+                    $resourceOutput += $msg
+                }
             }
-            $templateResApiversion = Get-PropertyValue $templateResApiversion $Template $resource
-            $supportedApiVersions = $ResourceTypeProperties.Apiversions
-            $notSupported = CompareValues $templateResApiversion $supportedApiVersions
-            if ($notSupported) {
-                if ($notSupported.NoneSupported) {
-                    $msg = "NotSupported: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
-                }
-                else {
-                    $msg = "Warning: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
-                }
-                Write-Warning $msg
-                $resourceOutput += $msg
+            else {
+                 $templateResApiProfileVersion = $Template.apiProfile
+                 if( -not $templateResApiProfileVersion) {
+                    $msg = "Exception: apiVersion and apiProfile for resource of type $ResourceTypeName is not specified. One of them has to be specified. "
+                    Write-Error $msg
+                    $resourceOutput += $msg
+                 }
+                 else {
+                    Write-Verbose "Validating API profile version for $ResourceProviderNameSpace\$ResourceTypeName"
+                    $supportedApiProfileVersions = $ResourceTypeProperties.ApiProfiles
+                    if( -not $supportedApiProfileVersions) {
+                        $msg = "NotSupported: No supported api profile versions for this resource, $ResourceProviderNameSpace\$ResourceTypeName."
+                        Write-Warning $msg
+                        $resourceOutput += $msg
+                    }                    
+                    else{
+                        $notSupported = CompareValues $templateResApiProfileVersion $supportedApiProfileVersions
+                        if ($notSupported) {
+                            if ($notSupported.NoneSupported) {
+                                $msg = "NotSupported: api profile version for (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
+                            }
+                            else {
+                                $msg = "Warning: apiversion (Resource type: $($resource.type)). Not Supported Values - $($notSupported.NotSupportedValues)"
+                            }
+                            Write-Warning $msg
+                            $resourceOutput += $msg
+                        }
+                    }
+                 }
             }
         }
         catch {
