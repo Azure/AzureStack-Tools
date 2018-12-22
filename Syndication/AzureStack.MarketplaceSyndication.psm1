@@ -503,7 +503,7 @@ function DownloadMarketplaceProduct {
     while (-not $completed) {
         try {
             if ($PremiumDownload) {
-                & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y
+                & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y /CheckMD5
             } else {
                 (New-Object System.Net.WebClient).DownloadFile("$Source",$tmpDestination)
             }
