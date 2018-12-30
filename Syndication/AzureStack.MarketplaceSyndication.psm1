@@ -395,7 +395,7 @@ function Download-Product {
                         If ($checktool -eq $true){
                             DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -PremiumDownload -MaxRetry 2
                             "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
-                            $productDetailsProperties['sourceBlob'].uri = "$productFolder\$zipName.zip"
+                            $productDetailsProperties['sourceBlob'].uri = "$zipName.zip"
                         } else {
                             Write-Verbose "Please install Azure Storage Tools AzCopy first,canceling" -verbose
                             return
@@ -403,7 +403,7 @@ function Download-Product {
                     } else {
                         DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -MaxRetry 2
                         "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
-                        $productDetailsProperties['sourceBlob'].uri = "$productFolder\$zipName.zip"
+                        $productDetailsProperties['sourceBlob'].uri = "$zipName.zip"
                     }
                 }
             }
@@ -797,7 +797,7 @@ function Resolve-ToLocalURI {
 
     # check vm extension zip
     if ($json.productDetailsProperties.sourceBlob) {
-        $vmExtensionZip = $json.productDetailsProperties.sourceBlob.uri
+        $vmExtensionZip = "$productFolder\" + $json.productDetailsProperties.sourceBlob.uri
         $vmExtensionURI = Upload-ToStorage -filePath $vmExtensionZip -productid $productid -resourceGroup $resourceGroup
         $json.productDetailsProperties.sourceBlob.uri = $vmExtensionURI
     }
