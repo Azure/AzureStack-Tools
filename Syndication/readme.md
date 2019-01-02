@@ -66,6 +66,7 @@ $credential = Get-Credential -Message "Enter the azure stack operator credential
 Import-AzSOfflineMarketplaceItem -origin “marketplace content folder" -armendpoint "Environment Arm Endpoint" -AzsCredential $credential
 ```
 
+Option -Origin needs to be the top level folder contains all the downloaded products. In the example above, Origin should be "D:\downloadfolder".
 Option -AzsCredential is optional, it is used to renew access token in case token expires. 
 
 ## Downloaded Content
@@ -75,7 +76,7 @@ Files (VHD, ZIP and AZPKG) associated with a gallery items are stored in the des
 
 ## Working with disconnected Azure Stack
 
-Additional resources on how to work with disconnected Azure Stack
+Additional resources on how to work with disconnected Azure Stack. You can also use the following method to import VM and VM extension.
 
 ### Importing the VHD
 For detailed steps to use the Portal see:
