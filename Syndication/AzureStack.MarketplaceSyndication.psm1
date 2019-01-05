@@ -505,7 +505,8 @@ function DownloadMarketplaceProduct {
             if ($PremiumDownload) {
                 & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y
             } else {
-                (New-Object System.Net.WebClient).DownloadFile("$Source",$tmpDestination)
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($Source, $tmpDestination)
             }
 
             $completed = $true
