@@ -48,9 +48,10 @@ After download completion, the item will be available in the folder specified in
 
 
 ## Validating the downloaded Azure Marketplace item
-The following command will run a set of test against a downloaded Azure Marketplace item. It is highly recommended to validate the download before proceeding to the next steps 
+Configure Azure Stack Operator’s PowerShell session. More information can be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-admin
+The following command will run a set of test against a downloaded Azure Marketplace item. It is highly recommended to validate the download before proceeding to the next steps.
 ```powershell
-Test-AzSOfflineMarketplaceItem -Destination "marketplace content folder"
+Test-AzSOfflineMarketplaceItem -Destination "marketplace content folder" -Armendpoint "Environment Arm Endpoint" -SubscriptionId "Default Provider Subscription Id"
 ```
 
 ## Importing the downloaded Azure Marketplace item to your Azure Stack Marketplace
