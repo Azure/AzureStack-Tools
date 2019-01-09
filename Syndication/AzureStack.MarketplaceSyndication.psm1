@@ -505,7 +505,8 @@ function DownloadMarketplaceProduct {
             if ($PremiumDownload) {
                 & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y /CheckMD5
             } else {
-                (New-Object System.Net.WebClient).DownloadFile("$Source",$tmpDestination)
+                $wc = New-Object System.Net.WebClient
+                $wc.DownloadFile($Source, $tmpDestination)
             }
 
             $completed = $true
@@ -691,15 +692,14 @@ function Import-ByDependency
 function Test-AzSOfflineMarketplaceItem {
     param (
         [parameter(mandatory = $true)]
-        [String] $Destination
-    )
+        [String] $Destination,
 
-    Import-Module C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1 -ErrorAction Stop
-    $engine = New-Object CloudEngine.Engine.DefaultECEngine
-    $roles = $engine.GetRolesPublicInfo()
-    $WASRoleDefinition = $roles["WAS"].PublicConfiguration
-    $armEndpoint = (($WASRoleDefinition.PublicInfo.Endpoints.Endpoint | Where Name -EQ "ResourceManager").Address).Trim('/')
-    $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
+        [parameter(mandatory = $true)]
+        [String] $ArmEndpoint,
+
+        [parameter(mandatory = $true)]
+        [String] $SubscriptionId
+    )
 
     $ctx = Get-AzureRmContext
     $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
@@ -709,8 +709,8 @@ function Test-AzSOfflineMarketplaceItem {
     foreach($product in $dirs)
     {
         $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
-            $armEndpoint,
-            $defaultProviderSubscription.subscription.id,
+            $ArmEndpoint,
+            $SubscriptionId,
             $product
         )
 
