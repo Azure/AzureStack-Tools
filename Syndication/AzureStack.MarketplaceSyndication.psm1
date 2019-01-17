@@ -1123,7 +1123,10 @@ function InvokeWebRequest {
 
     while (-not $completed) {
         try {
-            [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json" -Headers $Headers -Body $content -ErrorAction Stop)
+            if ($content -ne $null) {
+                $content = [System.Text.Encoding]::UTF8.GetBytes($content)
+            }
+            [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json; charset=utf-8" -Headers $Headers -Body $content -ErrorAction Stop)
             $retryCount = 0
             Ensure-SuccessStatusCode -StatusCode $response.StatusCode
             $completed = $true
