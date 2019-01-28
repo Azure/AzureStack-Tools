@@ -64,8 +64,12 @@ function Initialize-GraphEnvironment
 
     if ($AdfsFqdn)
     {
-        $Environment = 'ADFS'
+        $EnvironmentInternal = 'ADFS'
         Write-Warning "Parameters for ADFS have been specified; please note that only a subset of Graph APIs are available to be used in conjuction with ADFS."
+    }
+    else
+    {
+        $EnvironmentInternal = $Environment
     }
 
     if ($PromptForUserCredential)
@@ -75,15 +79,15 @@ function Initialize-GraphEnvironment
 
     if ($UserCredential)
     {
-        Write-Verbose "Initializing the module to use Graph environment '$Environment' for user '$($UserCredential.UserName)' in directory tenant '$DirectoryTenantId'." -Verbose
+        Write-Verbose "Initializing the module to use Graph environment '$EnvironmentInternal' for user '$($UserCredential.UserName)' in directory tenant '$DirectoryTenantId'." -Verbose
     }
     elseif ($RefreshToken)
     {
-        Write-Verbose "Initializing the module to use Graph environment '$Environment' (with refresh token) in directory tenant '$DirectoryTenantId'." -Verbose
+        Write-Verbose "Initializing the module to use Graph environment '$EnvironmentInternal' (with refresh token) in directory tenant '$DirectoryTenantId'." -Verbose
     }
     elseif ($ClientId -and $ClientCertificate)
     {
-        Write-Verbose "Initializing the module to use Graph environment '$Environment' for service principal '$($ClientId)' in directory tenant '$DirectoryTenantId' with certificate $($ClientCertificate.Thumbprint)." -Verbose
+        Write-Verbose "Initializing the module to use Graph environment '$EnvironmentInternal' for service principal '$($ClientId)' in directory tenant '$DirectoryTenantId' with certificate $($ClientCertificate.Thumbprint)." -Verbose
     }
     else
     {
@@ -91,7 +95,7 @@ function Initialize-GraphEnvironment
     }
 
     $graphEnvironmentTemplate = @{}
-    $graphEnvironmentTemplate += switch ($Environment)
+    $graphEnvironmentTemplate += switch ($EnvironmentInternal)
     {
         'AzureCloud'
         {
@@ -217,7 +221,7 @@ function Initialize-GraphEnvironment
 
                 IssuerTemplate = "https://$AdfsFqdn/adfs/{0}/"
 
-                LoginEndpoint = [Uri]"https://$AdfsFqdn/adfs/$DirectoryTenantId"
+                LoginEndpoint = [Uri]"https://$AdfsFqdn/adfs"
                 GraphEndpoint = [Uri]"https://$GraphFqdn/$DirectoryTenantId"
 
                 LoginBaseEndpoint = [Uri]"https://$AdfsFqdn/adfs/"
@@ -230,13 +234,13 @@ function Initialize-GraphEnvironment
 
         default
         {
-            throw New-Object NotImplementedException("Unknown environment type '$Environment'")
+            throw New-Object NotImplementedException("Unknown environment type '$EnvironmentInternal'")
         }
     }
 
     # Note: if this data varies from environment to environment, declare it in switch above
     $graphEnvironmentTemplate += @{
-        Environment       = $Environment
+        Environment       = $EnvironmentInternal
         DirectoryTenantId = $DirectoryTenantId
 
         User = [pscustomobject]@{
@@ -270,11 +274,6 @@ function Initialize-GraphEnvironment
             ReadDirectoryData                  = "Directory.Read.All"
             ManageAppsThatThisAppCreatesOrOwns = "Application.ReadWrite.OwnedBy"
         }
-    }
-
-    if ($AdfsFqdn)
-    {
-        $graphEnvironmentTemplate.Applications = [pscustomobject]@{}
     }
 
     $Script:GraphEnvironment = [pscustomobject]$graphEnvironmentTemplate
