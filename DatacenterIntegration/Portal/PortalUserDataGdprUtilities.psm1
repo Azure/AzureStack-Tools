@@ -94,12 +94,20 @@ function Clear-AzsUserData
     {
         $initializeGraphEnvParams.AdfsFqdn = (New-Object Uri $adminArmEnv.ActiveDirectoryAuthority).Host
         $initializeGraphEnvParams.GraphFqdn = (New-Object Uri $adminArmEnv.GraphUrl).Host
+
+        $QueryParameters = @{
+            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())'"
+        }
     }
     else
     {
         $graphEnvironment = Resolve-GraphEnvironment -AzureEnvironment $adminArmEnv
         Write-Verbose "Resolve the graph env as '$graphEnvironment '" -Verbose
         $initializeGraphEnvParams.Environment = $graphEnvironment
+
+        $QueryParameters = @{
+            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower())')"
+        }
     }
 
     foreach ($dirId in $directoryTenantIdsArray)
@@ -109,28 +117,29 @@ function Clear-AzsUserData
         Write-Verbose "Intialized graph env" -Verbose
 
         Write-Verbose "Querying all users..." -Verbose
-        $usersResponse = Invoke-GraphApi -ApiPath "/users"
+        $usersResponse = Invoke-GraphApi -ApiPath "/users" -QueryParameters $QueryParameters
+        Write-Verbose "Retrieved user object as $(ConvertTo-JSON $usersResponse.value)" -Verbose
 
-        $userObjectId = ($usersResponse.value | where { ($_.userPrincipalName -ieq $UserPrincipalName) -or ($_.userPrincipalName.ToLower().Contains($UserPrincipalName.Replace("@", "_").ToLower() + "#")) }).objectId
+        $userObjectId = $usersResponse.value.objectId
         Write-Verbose "Retrieved user object Id as $userObjectId" -Verbose
         if (-not $userObjectId)
         {
             Write-Warning "There is no user '$UserPrincipalName' under directory tenant Id $dirId."
-            $curResult = New-Object PSObject
-            $curResult | add-member Noteproperty DirectoryTenantId       $dirId
-            $curResult | add-member Noteproperty UserName                $UserPrincipalName
-            $curResult | add-member Noteproperty ErrorMessage            "No user under tenant directory"
-            $clearUserDataResult += @( $curResult )
+            $clearUserDataResult += [pscustomobject]@{
+                DirectoryTenantId = $dirId
+                UserPrincipalName = $UserPrincipalName
+                ErrorMessage      = "User not found in directory."
+            }
             continue
         }
         elseif (([string[]]$userObjectId).Length -gt 1)
         {
             Write-Warning "There is one more users retrieved with '$UserPrincipalName' under directory tenant Id $dirId."
-            $curResult = New-Object PSObject
-            $curResult | add-member Noteproperty DirectoryTenantId       $dirId
-            $curResult | add-member Noteproperty UserName                $UserPrincipalName
-            $curResult | add-member Noteproperty ErrorMessage            "User principal name incorrect. One more user accounts under tenant directory"
-            $clearUserDataResult += @( $curResult )
+            $clearUserDataResult += [pscustomobject]@{
+                DirectoryTenantId = $dirId
+                UserPrincipalName = $UserPrincipalName
+                ErrorMessage      = "One more user accounts found in directory. User principal name may be incorrect. "
+            }
             continue
         }
         else
@@ -193,34 +202,34 @@ function Clear-SinglePortalUserData
         }
         $httpPayload = ConvertTo-Json $payload -Depth 10
         Write-Verbose "Clearing user data with URI '$clearUserDataEndpoint' and payload: `r`n$httpPayload..." -Verbose
-        $clearUserDataResponse = $httpPayload | Invoke-RestMethod -Headers $headers -Method POST -Uri $clearUserDataEndpoint -Verbose
+        $clearUserDataResponse = $httpPayload | Invoke-RestMethod -Headers $headers -Method POST -Uri $clearUserDataEndpoint -TimeoutSec 120 -Verbose
 
-        $curResult = New-Object PSObject
-        $curResult | add-member Noteproperty DirectoryTenantId       $DirectoryTenantId
-        $curResult | add-member Noteproperty UserName                $UserPrincipalName
-        $curResult | add-member Noteproperty ResponseData            $clearUserDataResponse
-        return $curResult
+        return [pscustomobject]@{
+            DirectoryTenantId = $DirectoryTenantId
+            UserPrincipalName = $UserPrincipalName
+            ResponseData      = $clearUserDataResponse
+        }
     }
     catch 
     {
         if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound -and (ConvertFrom-JSON $_.ErrorDetails.Message).error.code -eq "NoPortalUserData")
         {
-            $curResult = New-Object PSObject
-            $curResult | add-member Noteproperty DirectoryTenantId       $DirectoryTenantId
-            $curResult | add-member Noteproperty UserName                $UserPrincipalName
-            $curResult | add-member Noteproperty ErrorMessage            "There is no portal user data"
             Write-Warning "No user data with user object Id and directory tenant Id"
-            return $curResult
+            return [pscustomobject]@{
+                DirectoryTenantId = $DirectoryTenantId
+                UserPrincipalName = $UserPrincipalName
+                ErrorMessage      = "No portal user data"
+            }
         }
         else
         {
-            $curResult = New-Object PSObject
-            $curResult | add-member Noteproperty DirectoryTenantId       $DirectoryTenantId
-            $curResult | add-member Noteproperty UserName                $UserPrincipalName
-            $curResult | add-member Noteproperty ErrorMessage            "Error when clearing user data"
-            $curResult | add-member Noteproperty Exception               $_.Exception
             Write-Warning "Exception when clear user data with user object Id and directory tenant Id: $_`r`n$($_.Exception)"
-            return $curResult
+            return [pscustomobject]@{
+                DirectoryTenantId = $DirectoryTenantId
+                UserPrincipalName = $UserPrincipalName
+                ErrorMessage      = "Exception when clearing user data"
+                Exception         = $_.Exception
+            }
         }
     }
 }
