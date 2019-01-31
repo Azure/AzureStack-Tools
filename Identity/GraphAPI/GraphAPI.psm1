@@ -493,9 +493,13 @@ function Update-GraphAccessToken
     $response = Get-GraphToken -UseEnvironmentData
 
     $Script:GraphEnvironment.User.AccessToken           = $response.access_token
-    $Script:GraphEnvironment.User.RefreshToken          = if ($response.refresh_token) { ConvertTo-SecureString $response.refresh_token -AsPlainText -Force } else { $null }
     $Script:GraphEnvironment.User.AccessTokenUpdateTime = [DateTime]::UtcNow
     $Script:GraphEnvironment.User.AccessTokenExpiresIn  = $response.expires_in
+
+    if ($response.refresh_token) 
+    { 
+        $Script:GraphEnvironment.User.RefreshToken = ConvertTo-SecureString $response.refresh_token -AsPlainText -Force
+    }
 }
 
 <#
