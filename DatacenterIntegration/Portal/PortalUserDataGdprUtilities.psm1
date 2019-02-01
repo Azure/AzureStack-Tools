@@ -8,17 +8,12 @@ $DefaultAdminSubscriptionName = "Default Provider Subscription"
 
 <#
 .Synopsis
-   Clear the portal user data under AAD environment
+   Clear the portal user data
 #>
 function Clear-AzsUserData
 {
     param
     (
-        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
-        [Parameter()]
-        [ValidateNotNull()]
-        [pscredential] $AutomationCredential = $null,
-
         # The directory tenant identifier of Azure Stack Administrator.
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
@@ -34,14 +29,18 @@ function Clear-AzsUserData
         [ValidateNotNullOrEmpty()]
         [string] $UserPrincipalName,
 
-        # The directory tenant identifier of account who's user data should be cleared.
+        # Optional: The directory tenant identifier of account who's user data should be cleared.
         # If it is not specified, it will delete all the 
         [Parameter(Mandatory=$false)]
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantId,
 
-        # Indicate whether it is ADFS env
-        [switch] $ADFS
+        # Indicate whether it is ADFS env or not
+        [switch] $ADFS,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
     )
     #requires -Version 4.0
     #requires -Module "AzureRM.Profile"

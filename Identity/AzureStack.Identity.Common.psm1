@@ -14,7 +14,7 @@ function Initialize-AzureRmEnvironment
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
         [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
-        [uri] $AdminResourceManagerEndpoint,
+        [uri] $ResourceManagerEndpoint,
 
         # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
         [Parameter(Mandatory = $true)]
@@ -29,7 +29,7 @@ function Initialize-AzureRmEnvironment
 
     $azureEnvironmentParams = @{
         Name                                     = $environmentName
-        ARMEndpoint                              = $AdminResourceManagerEndpoint
+        ARMEndpoint                              = $ResourceManagerEndpoint
     }
     $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
     $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
