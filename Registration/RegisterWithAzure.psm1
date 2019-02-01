@@ -308,7 +308,7 @@ Remove-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredenti
 It is very important to ensure you are logged in to the correct Azure Account in Powershell before running this function.
 
 #>
-function Remove-AzsRegistration{
+function Deactivate-AzsAzureStack{
 [CmdletBinding()]
     param(
     [Parameter(Mandatory = $true)]
@@ -348,38 +348,11 @@ function Remove-AzsRegistration{
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
         $stampInfo = Confirm-StampVersion -PSSession $session
 
-        # Find registration resource in Azure
-        Log-Output "Searching for registration resource in Azure..."
-        $registrationResource = $null
-
-        $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
-        if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
-        {
-            Log-Output "Registration resource found: $($registrationResource.ResourceId)"
-        }
-        else
-        {
-            Log-Throw "The registration resource found does not correlate the current environment's Cloud-Id. `r`nEnvironment Cloud Id: $($stampinfo.CloudId) `r`nResource Cloud Id: $($registrationResource.Properties.cloudId)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
-        }
+        Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
+        DeActivate-AzureStack -Session $session
     
-        if ($registrationResource)
-        {
-            Log-Output "Resource found. Deactivating Azure Stack and removing resource: $($registrationResource.ResourceId)"
+        Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
 
-            Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
-            DeActivate-AzureStack -Session $session
-        
-            Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
-
-            # Remove registration resource from Azure
-            Log-Output "Removing registration resource from Azure..."
-            Remove-RegistrationResource -ResourceId $registrationResource.ResourceId
-        }
-        else
-        {
-            Log-Throw -Message "Registration resource with matching CloudId property $($stampInfo.CloudId) was not found. Please ensure a registration resource exists in the provided subscription & resource group." -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
-        }   
     }
     finally
     {
@@ -1045,6 +1018,64 @@ Function Remove-AzsActivationResource{
     Log-Output "Activation resource has been removed from Azure Stack."
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
+
+function Deactivate-AzsAzureStack{
+    [CmdletBinding()]
+        param(
+        [Parameter(Mandatory = $true)]
+            [PSCredential] $PrivilegedEndpointCredential,
+    
+            [Parameter(Mandatory = $true)]
+            [String] $PrivilegedEndpoint,
+    
+            [Parameter(Mandatory = $true)]
+            [String] $RegistrationName,
+    
+            [Parameter(Mandatory = $false)]
+            [String] $ResourceGroupName = 'azurestack',
+    
+            [Parameter(Mandatory = $false)]
+            [String] $ResourceGroupLocation = 'westcentralus',
+    
+            [Parameter(Mandatory = $false)]
+            [ValidateNotNullorEmpty()]
+            [PSObject] $AzureContext = (Get-AzureRmContext)
+        )
+        #requires -Version 4.0
+        #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
+        #requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
+        #requires -RunAsAdministrator
+    
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+    
+        New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    
+        Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    
+        $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+        try
+        {
+            $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+            $stampInfo = Confirm-StampVersion -PSSession $session
+    
+            Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
+            DeActivate-AzureStack -Session $session
+        
+            Log-Output "Your environment is now unable to syndicate items and is no longer reporting usage data"
+    
+        }
+        finally
+        {
+            if ($session)
+            {
+                Log-OutPut "Removing any existing PSSession..."
+                $session | Remove-PSSession
+            }
+        }
+    
+        Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+    }
 
 #endregion
 
