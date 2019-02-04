@@ -541,10 +541,6 @@ function Import-AzSOfflineMarketplaceItem
         [ValidateNotNull()]
         [String] $Origin,
 
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNull()]
-        [Uri] $ArmEndpoint,
-
         [Parameter(Mandatory = $false)]
         [PSCredential] $AzsCredential
     )
@@ -560,6 +556,7 @@ function Import-AzSOfflineMarketplaceItem
     $ctx = Get-AzureRmContext
     $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
     $headers = @{ 'authorization' = "Bearer $AccessToken"}
+    $ArmEndpoint = $ctx.Environment.ResourceManagerUrl
 
     foreach($dir in $dirs)
     {
@@ -692,18 +689,15 @@ function Import-ByDependency
 function Test-AzSOfflineMarketplaceItem {
     param (
         [parameter(mandatory = $true)]
-        [String] $Destination,
-
-        [parameter(mandatory = $true)]
-        [String] $ArmEndpoint,
-
-        [parameter(mandatory = $true)]
-        [String] $SubscriptionId
+        [String] $Destination
     )
 
     $ctx = Get-AzureRmContext
     $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
     $headers = @{ 'authorization' = "Bearer $AccessToken"}
+    $ArmEndpoint = $ctx.Environment.ResourceManagerUrl
+    $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
+    $subscriptionId = $defaultProviderSubscription.subscription.id
 
     $dirs = Get-ChildItem -Path $Destination
     foreach($product in $dirs)
