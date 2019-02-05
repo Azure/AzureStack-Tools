@@ -1054,17 +1054,7 @@ function Deactivate-AzsAzureStack{
         [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
-        [String] $PrivilegedEndpoint,
-
-        [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupName = 'azurestack',
-
-        [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
-
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext)
+        [String] $PrivilegedEndpoint
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -1078,7 +1068,6 @@ function Deactivate-AzsAzureStack{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
     try
     {
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
