@@ -38,10 +38,10 @@ Get-AzureRmSubscription -SubscriptionID '<Your Azure Subscription GUID>' | Selec
 Import the module and start the export process for an Azure Marketplace item
 ```powershell
 Import-Module .\AzureStack.MarketplaceSyndication.psm1
-Export-AzSOfflineMarketplaceItem -destination "[Destination folder path]" -reduceDownloadThreads
+Export-AzSOfflineMarketplaceItem -destination "[Destination folder path]" -azCopyDownloadThreads "[AzCopy threads number]"
 ```
 
-Option -reduceDownloadThreads is optional. It should only be used when you have low-bandwidth network, and you are using premium download. It is to limit premium download threads number.
+Option -azCopyDownloadThreads is optional. It should only be used when you have low-bandwidth network, and you are using premium download. This option is to specifies the number of concurrent operations in AzCopy. If you are running across a low-bandwidth network, you can specify a lower number to avoid failure caused by resource competition.
 You can see more details at https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy#specify-the-number-of-concurrent-operations-to-start
 
 You will be prompted to select an Azure Marketplace item to download locally.
