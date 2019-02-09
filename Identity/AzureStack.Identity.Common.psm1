@@ -16,21 +16,19 @@ function Initialize-AzureRmEnvironment
         [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
         [uri] $ResourceManagerEndpoint,
 
-        # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string] $DirectoryTenantId,
-
         # The specified name of this environment
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $EnvironmentName
     )
 
+    Remove-AzureRMEnvironment -Name $environmentName -ErrorAction Ignore | Out-Null
     $azureEnvironmentParams = @{
         Name                                     = $environmentName
         ARMEndpoint                              = $ResourceManagerEndpoint
     }
+    
+    Write-Verbose -Message "Add azure environment with parameters: $(ConvertTo-Json $azureEnvironmentParams)" -Verbose
     $azureEnvironment = Add-AzureRmEnvironment @azureEnvironmentParams -ErrorAction Ignore
     $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
     return $azureEnvironment
@@ -50,12 +48,17 @@ function Initialize-AzureRmUserAccount
         [ValidateNotNull()]
         [Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment] $AzureEnvironment,
 
+        # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantId,
+
         # The identifier of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
         [string] $SubscriptionId = $null,
 
         # The display name of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
         [string] $SubscriptionName = $null,
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
@@ -67,8 +70,8 @@ function Initialize-AzureRmUserAccount
     $params = @{
         EnvironmentName = $azureEnvironment.Name
     }
-    if ($azureEnvironment.AdTenant) {
-        $params += @{ TenantId        = $azureEnvironment.AdTenant }
+    if (-not $azureEnvironment.EnableAdfsAuthentication) {
+        $params += @{ TenantId        = $DirectoryTenantId }
     }
     if ($AutomationCredential) {
         $params += @{ Credential = $AutomationCredential }
@@ -83,6 +86,7 @@ function Initialize-AzureRmUserAccount
     elseif ($SubscriptionId) {
         Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
     }
+
     return $azureAccount
 }
 
@@ -100,12 +104,17 @@ function Initialize-AzureRmUserRefreshToken
         [ValidateNotNull()]
         [Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment] $AzureEnvironment,
 
+        # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantId,
+
         # The identifier of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
         [string] $SubscriptionId = $null,
 
         # The display name of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [ValidateNotNull()]
+        [ValidateNotNullOrEmpty()]
         [string] $SubscriptionName = $null,
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
@@ -116,6 +125,7 @@ function Initialize-AzureRmUserRefreshToken
 
     $params = @{
         AzureEnvironment = $AzureEnvironment
+        DirectoryTenantId = $DirectoryTenantId
     }
     if ($SubscriptionId)
     {
@@ -129,6 +139,7 @@ function Initialize-AzureRmUserRefreshToken
     {
         $params.AutomationCredential = $AutomationCredential
     }
+    Write-Verbose "Initializing user account with parameters $(ConvertTo-JSON $params)" -Verbose
     $azureStackAccount = Initialize-AzureRmUserAccount @params
     
     # Retrieve the refresh token
@@ -136,9 +147,9 @@ function Initialize-AzureRmUserRefreshToken
     $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
     $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
     $refreshToken = $tokens |
-        Where Resource -EQ $AzureEnvironment.ActiveDirectoryServiceEndpointResourceId |
+        Where Resource -IEQ $AzureEnvironment.ActiveDirectoryServiceEndpointResourceId |
         Where IsMultipleResourceRefreshToken -EQ $true |
-        Where DisplayableId -EQ $azureStackAccount.Context.Account.Id |
+        Where DisplayableId -IEQ $azureStackAccount.Context.Account.Id |
         Sort ExpiresOn |
         Select -Last 1 -ExpandProperty RefreshToken |
         ConvertTo-SecureString -AsPlainText -Force
@@ -152,6 +163,7 @@ function Initialize-AzureRmUserRefreshToken
             throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance after running 'Clear-AzureRmContext -Scope CurrentUser -Force -Verbose'."
         }
     }
+
     return $refreshToken
 }
 
