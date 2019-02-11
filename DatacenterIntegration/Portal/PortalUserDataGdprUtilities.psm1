@@ -35,9 +35,6 @@ function Clear-AzsUserData
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantId,
 
-        # Indicate whether it is ADFS env or not
-        [switch] $ADFS,
-
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [ValidateNotNull()]
         [pscredential] $AutomationCredential = $null
@@ -55,12 +52,17 @@ function Clear-AzsUserData
 
     Write-Verbose "Login to Azure Stack Admin ARM..." -Verbose
     $AzsAdminEnvironmentName = "AzureStackAdmin"
-    $adminArmEnv = Initialize-AzureRmEnvironment -AdminResourceManagerEndpoint $AzsAdminArmEndpoint -DirectoryTenantId $AzsAdminDirectoryTenantId -EnvironmentName $AzsAdminEnvironmentName
+    $params = @{
+        ResourceManagerEndpoint     = $AzsAdminArmEndpoint
+        EnvironmentName             = $AzsAdminEnvironmentName
+    }
+    $adminArmEnv = Initialize-AzureRmEnvironment @params
     Write-Verbose "Created admin ARM env as $(ConvertTo-JSON $adminArmEnv)" -Verbose
 
     $params = @{
-        AzureEnvironment = $adminArmEnv
-        SubscriptionName = $DefaultAdminSubscriptionName
+        AzureEnvironment    = $adminArmEnv
+        DirectoryTenantId   = $AzsAdminDirectoryTenantId
+        SubscriptionName    = $DefaultAdminSubscriptionName
     }
     if ($AutomationCredential)
     {
@@ -89,7 +91,7 @@ function Clear-AzsUserData
     $initializeGraphEnvParams = @{
         RefreshToken = $refreshToken
     }
-    if ($ADFS)
+    if ($adminArmEnv.EnableAdfsAuthentication)
     {
         $initializeGraphEnvParams.AdfsFqdn = (New-Object Uri $adminArmEnv.ActiveDirectoryAuthority).Host
         $initializeGraphEnvParams.GraphFqdn = (New-Object Uri $adminArmEnv.GraphUrl).Host
@@ -105,9 +107,13 @@ function Clear-AzsUserData
         $initializeGraphEnvParams.Environment = $graphEnvironment
 
         $QueryParameters = @{
-            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower())')"
+            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower() + "#")')"
         }
     }
+
+    Write-Verbose "Retrieving access token..." -Verbose
+    Initialize-GraphEnvironment @initializeGraphEnvParams -DirectoryTenantId $AzsAdminDirectoryTenantId
+    $accessToken = (Get-GraphToken -Resource $adminArmEnv.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
 
     foreach ($dirId in $directoryTenantIdsArray)
     {
@@ -144,7 +150,7 @@ function Clear-AzsUserData
         else
         {
             $params = @{
-                AzsEnvironment      = $adminArmEnv
+                AccessToken         = $accessToken
                 UserObjectId        = $userObjectId
                 DirectoryTenantId   = $dirId
                 AdminSubscriptionId = $adminSubscriptionId
@@ -165,7 +171,7 @@ function Clear-SinglePortalUserData
         # The user credential with which to acquire an access token targeting Graph.
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
-        [Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment] $AzsEnvironment,
+        [string] $AccessToken,
 
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
@@ -187,9 +193,6 @@ function Clear-SinglePortalUserData
 
     try
     {
-        Write-Verbose "Retrieving access token..." -Verbose
-        $accessToken = (Get-GraphToken -Resource $AzsEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
-        
         $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$AdminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
         $headers = @{ 
             Authorization   = "Bearer $accessToken" 
