@@ -107,7 +107,7 @@ function Clear-AzsUserData
         $initializeGraphEnvParams.Environment = $graphEnvironment
 
         $QueryParameters = @{
-            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower())')"
+            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower() + "#")')"
         }
     }
 
