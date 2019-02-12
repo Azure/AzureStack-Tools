@@ -54,7 +54,7 @@ After download completion, the item will be available in the folder specified in
 Configure Azure Stack Operator’s PowerShell session. More information can be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-admin
 The following command will run a set of test against a downloaded Azure Marketplace item. It is highly recommended to validate the download before proceeding to the next steps.
 ```powershell
-Test-AzSOfflineMarketplaceItem -Destination "[marketplace content folder]" -Armendpoint "[Environment Arm Endpoint]" -SubscriptionId "[Default Provider Subscription Id]"
+Test-AzSOfflineMarketplaceItem -Destination "[marketplace content folder]"
 ```
 
 ## Importing the downloaded Azure Marketplace item to your Azure Stack Marketplace
@@ -67,7 +67,7 @@ Import the module and start the import process for an Azure Marketplace item
 ```powershell
 Import-Module .\AzureStack.MarketplaceSyndication.psm1
 $credential = Get-Credential -Message "Enter the azure stack operator credential"
-Import-AzSOfflineMarketplaceItem -origin “[marketplace content folder]" -armendpoint "[Environment Arm Endpoint]" -AzsCredential $credential
+Import-AzSOfflineMarketplaceItem -origin “[marketplace content folder]" -AzsCredential $credential
 ```
 
 Option -Origin needs to be the top level folder contains all the downloaded products. In the example above, Origin should be "D:\downloadfolder".

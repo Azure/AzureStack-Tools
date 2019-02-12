@@ -6,6 +6,9 @@ These tools are meant for use with **Azure Stack Development Kit** and Integrate
 ## AzureStack-Tools Release/Tags Notification(s)
 
 Please follow the below instructions to make sure you are using the right version of AzureStack-Tools repo:
+- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1901 can be found here
+    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1901
+    
 - Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1811 can be found here
     https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1811
 

@@ -13,11 +13,11 @@ function Export-AzSOfflineMarketplaceItem {
     Param(
         [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
-        [String] $Cloud = "AzureCloud",
+        [String] $cloud = "AzureCloud",
 
         [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
-        [String] $ResourceGroup = "azurestack",
+        [String] $resourceGroup = "azurestack",
 
         [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateRange(1, 128)]
@@ -25,19 +25,19 @@ function Export-AzSOfflineMarketplaceItem {
 
         [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
-        [String] $Destination
+        [String] $destination
     )
 
     # in case it is relative path
-    $Destination = Resolve-Path -Path $Destination
+    $destination = Resolve-Path -Path $destination
 
-    $AzureContext = Get-AzureRmContext
-    $AzureTenantID = $AzureContext.Tenant.TenantId
-    $AzureSubscriptionID = $AzureContext.Subscription.Id
+    $azureContext = Get-AzureRmContext
+    $azureTenantID = $azureContext.Tenant.TenantId
+    $azureSubscriptionID = $azureContext.Subscription.Id
 
-    $azureEnvironment = Get-AzureRmEnvironment -Name $Cloud
+    $azureEnvironment = Get-AzureRmEnvironment -Name $cloud
 
-    $resources = Get-AzureRmResource -ResourceGroupName $ResourceGroup -ResourceType Microsoft.AzureStack/registrations
+    $resources = Get-AzureRmResource -ResourceGroupName $resourceGroup -ResourceType Microsoft.AzureStack/registrations
     $resource = $resources.resourcename
     # workaround for a breaking change from moving from profile version 2017-03-09-profile to 2018-03-01-hybrid
     # the output model of Get-AzureRmResource has changed between these versions
@@ -48,18 +48,18 @@ function Export-AzSOfflineMarketplaceItem {
     }
     $registrations = $resource
     if ($registrations.count -gt 1) {
-        $Registration = $registrations[0]
+        $registration = $registrations[0]
     } else {
-        $Registration = $registrations
+        $registration = $registrations
     }
 
     # Retrieve the access token
     $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $AzureContext.Account.id |Where TenantID -EQ $AzureTenantID |Sort ExpiresOn |Select -Last 1
+    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureContext.Account.id |Where TenantID -EQ $azureTenantID |Sort ExpiresOn |Select -Last 1
     
-    $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$ResourceGroup/providers/Microsoft.AzureStack/registrations/$($Registration.ToString())/products?api-version=2016-01-01"
-    $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"} 
-    $products = (Invoke-RestMethod -Method GET -Uri $productsUri -Headers $Headers -TimeoutSec 180).value
+    $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$($registration.ToString())/products?api-version=2016-01-01"
+    $headers = @{ 'authorization' = "Bearer $($token.AccessToken)"}
+    $products = (Invoke-RestMethod -Method GET -Uri $productsUri -Headers $headers -TimeoutSec 180).value
 
     $displayKind = @{
         "virtualMachine" = "Virtual Machine"
@@ -67,7 +67,7 @@ function Export-AzSOfflineMarketplaceItem {
         "Solution" = "Solution"
         "resourceProvider" = "Resource Provider"
     }
-    $Marketitems = foreach ($product in $products) {
+    $marketitems = foreach ($product in $products) {
         if(!$displayKind.contains($product.properties.productKind))
         {
             throw "Unknown product kind '$_'"
@@ -85,11 +85,11 @@ function Export-AzSOfflineMarketplaceItem {
         })
     }
 
-    $Marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
+    $marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
         if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-            Get-Dependency -productid $_.id -resourceGroup $ResourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $AzureSubscriptionID -registration $Registration -token $token -destination $Destination -AzCopyDownloadThreads $AzCopyDownloadThreads
+            Get-Dependency -productid $_.id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination -AzCopyDownloadThreads $azCopyDownloadThreads
         } else {
-            Get-Dependency -productid $_.id -resourceGroup $ResourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $AzureSubscriptionID -registration $Registration -token $token -destination $Destination
+            Get-Dependency -productid $_.id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination
         }
     }
 }
@@ -122,9 +122,9 @@ function Get-Dependency {
         [Int] $azCopyDownloadThreads
     )
 
-    $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
+    $headers = @{ 'authorization' = "Bearer $($token.AccessToken)"}
     $uri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$registration/products/$productid/listDetails?api-version=2016-01-01"
-    $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri -Headers $Headers -TimeoutSec 180
+    $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri -Headers $headers -TimeoutSec 180
 
     if ($downloadDetails.properties.dependentProducts)
     {
@@ -140,7 +140,7 @@ function Get-Dependency {
 
     $productFolder = "$destination\$productid"
     $destinationCheck = Test-Path $productFolder
-    If ($destinationCheck) {
+    if ($destinationCheck) {
         $productJsonFile = "$productFolder\$productid.json"
         $jsonFileCheck = Test-Path $productJsonFile
         if ($jsonFileCheck) {
@@ -186,19 +186,19 @@ function Download-Product {
     )
 
     # get name of azpkg
-    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$Registration/products/$($productid)?api-version=2016-01-01"
+    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$registration/products/$($productid)?api-version=2016-01-01"
     Write-Debug $azpkgURI
-    $Headers = @{ 'authorization' = "Bearer $($Token.AccessToken)"}
-    $productDetails = Invoke-RestMethod -Method GET -Uri $azpkgURI -Headers $Headers -TimeoutSec 180
+    $headers = @{ 'authorization' = "Bearer $($token.AccessToken)"}
+    $productDetails = Invoke-RestMethod -Method GET -Uri $azpkgURI -Headers $headers -TimeoutSec 180
     $azpkgName = $productDetails.properties.galleryItemIdentity
     if (!$azpkgName) {
         $azpkgName = $productid
     }
 
     # get download location for azpkg
-    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($AzureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$Registration/products/$productid/listDetails?api-version=2016-01-01"
+    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$registration/products/$productid/listDetails?api-version=2016-01-01"
     Write-Debug $downloadURI
-    $downloadDetails = Invoke-RestMethod -Method POST -Uri $downloadURI -Headers $Headers -TimeoutSec 180
+    $downloadDetails = Invoke-RestMethod -Method POST -Uri $downloadURI -Headers $headers -TimeoutSec 180
 
     # create Legal Terms POPUP
     $legalTitle = "Legal Terms"
@@ -206,23 +206,23 @@ function Download-Product {
     Write-Host $("-"*20)
     Write-Host "$legalTitle`n$legalText" -ForegroundColor DarkYellow
     $confirmation = Read-Host "Accept Legal Terms. (Y/N)?"
-    If ($confirmation -eq 'Y') {
+    if ($confirmation -eq 'Y') {
         $productFolder = "$destination\$productid"
 
         # output parameters required for import
-        $FileExists = Test-Path "$productFolder\$azpkgName.txt"
-        $DestinationCheck = Test-Path $productFolder
-        If ($DestinationCheck -eq $false) {
+        $fileExists = Test-Path "$productFolder\$azpkgName.txt"
+        $destinationCheck = Test-Path $productFolder
+        if ($destinationCheck -eq $false) {
             New-item -ItemType Directory -force $productFolder | Out-Null
         }
 
-        If ($FileExists) {
+        if ($fileExists) {
             Remove-Item "$productFolder\$azpkgName.txt" -force -ErrorAction SilentlyContinue | Out-Null
         } else {
             New-Item "$productFolder\$azpkgName.txt" | Out-Null
         }
 
-        If ($FileExists) {
+        if ($fileExists) {
             Remove-Item "$productFolder\$azpkgName.json" -force -ErrorAction SilentlyContinue | Out-Null
         }
 
@@ -277,18 +277,18 @@ function Download-Product {
         {
             # download azpkg
             $azpkgsource = $downloadDetails.galleryPackageBlobSasUri
-            $FileExists = Test-Path "$productFolder\$azpkgName.azpkg"
-            $DestinationCheck = Test-Path $productFolder
-            If ($DestinationCheck -eq $false) {
+            $fileExists = Test-Path "$productFolder\$azpkgName.azpkg"
+            $destinationCheck = Test-Path $productFolder
+            if ($destinationCheck -eq $false) {
                 New-item -ItemType Directory -force $productFolder | Out-Null
             }
 
-            If ($FileExists) {
+            if ($fileExists) {
                 Remove-Item "$productFolder\$azpkgName.azpkg" -force | Out-Null
             }
             $azpkgdestination = "$productFolder\$azpkgName.azpkg"
 
-            If ($downloadConfirmation -eq 'Y') {
+            if ($downloadConfirmation -eq 'Y') {
                 $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                 If ($checktool -eq $true){
                     if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
@@ -310,22 +310,22 @@ function Download-Product {
         }
 
         $iconsFolder = "$productFolder\Icons"
-        $DestinationCheck = Test-Path $iconsFolder
-        If ($DestinationCheck -eq $false) {
+        $destinationCheck = Test-Path $iconsFolder
+        if ($destinationCheck -eq $false) {
             New-item -ItemType Directory -force $iconsFolder | Out-Null
         }
 
         # download icons
         $icon = $productDetails.properties.iconUris
-        If (Test-Path "$iconsFolder\hero.png") {Remove-Item "$iconsFolder\hero.png" -force -ErrorAction SilentlyContinue | Out-Null}
-        If (Test-Path "$iconsFolder\large.png") {Remove-Item "$iconsFolder\large.png" -force -ErrorAction SilentlyContinue | Out-Null}
-        If (Test-Path "$iconsFolder\medium.png") {Remove-Item "$iconsFolder\medium.png" -force -ErrorAction SilentlyContinue | Out-Null}
-        If (Test-Path "$iconsFolder\small.png") {Remove-Item "$iconsFolder\small.png" -force -ErrorAction SilentlyContinue | Out-Null}
-        If (Test-Path "$iconsFolder\wide.png") {Remove-Item "$iconsFolder\wide.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        if (Test-Path "$iconsFolder\hero.png") {Remove-Item "$iconsFolder\hero.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        if (Test-Path "$iconsFolder\large.png") {Remove-Item "$iconsFolder\large.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        if (Test-Path "$iconsFolder\medium.png") {Remove-Item "$iconsFolder\medium.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        if (Test-Path "$iconsFolder\small.png") {Remove-Item "$iconsFolder\small.png" -force -ErrorAction SilentlyContinue | Out-Null}
+        if (Test-Path "$iconsFolder\wide.png") {Remove-Item "$iconsFolder\wide.png" -force -ErrorAction SilentlyContinue | Out-Null}
 
-        If ($downloadConfirmation -eq 'Y') {
+        if ($downloadConfirmation -eq 'Y') {
             $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-            If ($checktool -eq $true){
+            if ($checktool -eq $true){
                 if ($icon.hero) {
                     if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
                         DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
@@ -401,16 +401,16 @@ function Download-Product {
                 # download vhd
                 $vhdName = $productDetails.properties.galleryItemIdentity
                 $vhdSource = $downloadDetails.properties.osDiskImage.sourceBlobSasUri
-                If ([string]::IsNullOrEmpty($vhdsource)) {
+                if ([string]::IsNullOrEmpty($vhdsource)) {
                     throw "VM vhd source is empty"
                 } else {
-                    $FileExists = Test-Path "$productFolder\$vhdName.vhd"
-                    If ($FileExists) {
+                    $fileExists = Test-Path "$productFolder\$vhdName.vhd"
+                    if ($fileExists) {
                         Remove-Item "$productFolder\$vhdName.vhd" -force | Out-Null
                     }
                     $vhdDestination = "$productFolder\$vhdName.vhd"
 
-                    If ($downloadConfirmation -eq 'Y') {
+                    if ($downloadConfirmation -eq 'Y') {
                         $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                         If ($checktool -eq $true){
                             if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
@@ -418,6 +418,7 @@ function Download-Product {
                             } else {
                                 DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -PremiumDownload -MaxRetry 2
                             }
+
                             "$productFolder\$vhdName.vhd"|out-file "$productFolder\$azpkgName.txt" -Append
                         } else {
                             Write-Verbose "Please install Azure Storage Tools AzCopy first,canceling" -verbose
@@ -434,16 +435,16 @@ function Download-Product {
                 # download zip
                 $zipName = $productDetails.properties.galleryItemIdentity
                 $zipsource = $downloadDetails.properties.sourceBlob.uri
-                If ([string]::IsNullOrEmpty($zipsource)) {
+                if ([string]::IsNullOrEmpty($zipsource)) {
                     throw "VM extension zip source is empty"
                 } else {
-                    $FileExists = Test-Path "$productFolder\$zipName.zip"
-                    If ($FileExists) {
+                    $fileExists = Test-Path "$productFolder\$zipName.zip"
+                    if ($fileExists) {
                         Remove-Item "$productFolder\$zipName.zip" -force | Out-Null
                     }
                     $zipDestination = "$productFolder\$zipName.zip"
 
-                    If ($downloadConfirmation -eq 'Y') {
+                    if ($downloadConfirmation -eq 'Y') {
                         $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                         If ($checktool -eq $true){
                             if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
@@ -451,6 +452,7 @@ function Download-Product {
                             } else {
                                 DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -PremiumDownload -MaxRetry 2
                             }
+
                             "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
                             $productDetailsProperties['sourceBlob'].uri = "$zipName.zip"
                         } else {
@@ -471,7 +473,7 @@ function Download-Product {
                 {
                     $zipsource = $container.sourceUri
                     $containerName = $container.id
-                    If ([string]::IsNullOrEmpty($zipsource)) {
+                    if ([string]::IsNullOrEmpty($zipsource)) {
                         throw "zip source is empty"
                     } else {
                         $zipDestination = "$productFolder\$containerName"
@@ -488,12 +490,12 @@ function Download-Product {
                             }
                         }
 
-                        $FileExists = Test-Path $zipDestination
-                        If ($FileExists) {
+                        $fileExists = Test-Path $zipDestination
+                        if ($fileExists) {
                             Remove-Item $zipDestination -force | Out-Null
                         }
 
-                        If ($downloadConfirmation -eq 'Y') {
+                        if ($downloadConfirmation -eq 'Y') {
                             $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
                             If ($checktool -eq $true){
                                 if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
@@ -501,6 +503,7 @@ function Download-Product {
                                 } else {
                                     DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -PremiumDownload -MaxRetry 2
                                 }
+
                                 "$productFolder\$containerName"|out-file "$productFolder\$azpkgName.txt" -Append
                             } else {
                                 Write-Verbose "Please install Azure Storage Tools AzCopy first,canceling" -verbose
@@ -532,24 +535,24 @@ function DownloadMarketplaceProduct {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [Uri] $Source,
+        [Uri] $source,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [String] $Destination,
+        [String] $destination,
 
         [Parameter(Mandatory = $true)]
-        [String] $ProductName,
+        [String] $productName,
 
         [parameter(mandatory = $false)]
         [ValidateRange(1, 128)]
         [Int] $azCopyDownloadThreads,
 
         [Parameter(Mandatory = $false)]
-        [Switch] $PremiumDownload,
+        [Switch] $premiumDownload,
 
         [Parameter(Mandatory = $false)]
-        [object] $MaxRetry = 1
+        [object] $maxRetry = 1
     )
 
     $content = $null
@@ -557,12 +560,12 @@ function DownloadMarketplaceProduct {
     $completed = $false
     $retryCount = 0
     $sleepSeconds = 5
-    $tmpDestination = "$Destination.marketplace"
+    $tmpDestination = "$destination.marketplace"
 
-    if ($Source -notmatch 'windows.net')
+    if ($source -notmatch 'windows.net')
     {
-        $PremiumDownload = $false
-        Write-Verbose "$Source is not in storage account, use regular download" -verbose
+        $premiumDownload = $false
+        Write-Verbose "$source is not in storage account, use regular download" -verbose
     }
 
     while (-not $completed) {
@@ -575,26 +578,26 @@ function DownloadMarketplaceProduct {
                 }
             } else {
                 $wc = New-Object System.Net.WebClient
-                $wc.DownloadFile($Source, $tmpDestination)
+                $wc.DownloadFile($source, $tmpDestination)
             }
 
             $completed = $true
-            Write-Verbose "[$ProductName] has been downloaded" -verbose
+            Write-Verbose "[$productName] has been downloaded" -verbose
         }
         catch
         {
-            if ($retryCount -ge $MaxRetry) {
-                Write-Warning "Request to download from $Source failed the maximum number of $MaxRetry times."
+            if ($retryCount -ge $maxRetry) {
+                Write-Warning "Request to download from $source failed the maximum number of $maxRetry times."
                 throw
             } else {
-                Write-Warning "Request to download from $Source failed. Retrying in $sleepSeconds seconds."
+                Write-Warning "Request to download from $source failed. Retrying in $sleepSeconds seconds."
                 Start-Sleep $sleepSeconds
                 $retryCount++
             }
         }
     }
 
-    Move-Item -Path $tmpDestination -Destination $Destination -Force
+    Move-Item -Path $tmpDestination -Destination $destination -Force
 }
 
 <#
@@ -608,31 +611,36 @@ function Import-AzSOfflineMarketplaceItem
     param (
         [parameter(mandatory = $true)]
         [ValidateNotNull()]
-        [String] $Origin,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNull()]
-        [Uri] $ArmEndpoint,
+        [String] $origin,
 
         [Parameter(Mandatory = $false)]
-        [PSCredential] $AzsCredential
+        [PSCredential] $azsCredential
     )
 
-    $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName 'Default Provider Subscription' | Select-AzureRmSubscription
+    if (-not (Test-Path $origin)) {
+        throw "$origin not exist."
+    }
+    if ((Get-Item $origin) -isnot [System.IO.DirectoryInfo]) {
+        throw "$origin is not folder."
+    }
+
+    Get-AzureRmSubscription | Out-Null
+    $defaultProviderSubscription = Select-AzureRmSubscription -SubscriptionName 'Default Provider Subscription'
 
     $resourceGroup = "System.syndication"
-    $dirs = Get-ChildItem -Path $Origin
+    $dirs = Get-ChildItem -Path $origin
     $importedProducts  = New-Object System.Collections.Generic.HashSet[string]
 
-    PreCheck -contentFolder $Origin
+    PreCheck -contentFolder $origin
 
     $ctx = Get-AzureRmContext
-    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
-    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+    $accessToken = Resolve-AccessToken -Context $ctx -AccessToken $accessToken
+    $headers = @{ 'authorization' = "Bearer $accessToken"}
+    $armEndpoint = $ctx.Environment.ResourceManagerUrl
 
     foreach($dir in $dirs)
     {
-        Import-ByDependency -contentFolder $Origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $ArmEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -headers ([ref]$headers) -importedProducts $importedProducts -AzsCredential $AzsCredential
+        Import-ByDependency -contentFolder $origin -productid $dir -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription.subscription.id -headers ([ref]$headers) -importedProducts $importedProducts -azsCredential $azsCredential
     }
 
     # remove note resource group
@@ -702,7 +710,7 @@ function Import-ByDependency
         [Object] $importedProducts,
 
         [Parameter(Mandatory = $false)]
-        [PSCredential] $AzsCredential
+        [PSCredential] $azsCredential
     )
 
     if ($importedProducts.contains($productid)) {
@@ -744,12 +752,12 @@ function Import-ByDependency
     if ($properties.dependentProducts) {
         foreach($product in $properties.dependentProducts)
         {
-            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -headers ([ref]$headers) -importedProducts $importedProducts -AzsCredential $AzsCredential
+            Import-ByDependency -contentFolder $contentFolder -productid $product -resourceGroup $resourceGroup -armEndpoint $armEndpoint -defaultProviderSubscription $defaultProviderSubscription -headers ([ref]$headers) -importedProducts $importedProducts -azsCredential $azsCredential
         }
     }
 
     Resolve-ToLocalURI -productFolder $folderPath -productid $productid -resourceGroup $resourceGroup
-    Syndicate-Product -productid $productid -armEndpoint $armEndpoint -headers ([ref]$headers) -defaultProviderSubscription $defaultProviderSubscription -downloadFolder $contentFolder -AzsCredential $AzsCredential
+    Syndicate-Product -productid $productid -armEndpoint $armEndpoint -headers ([ref]$headers) -defaultProviderSubscription $defaultProviderSubscription -downloadFolder $contentFolder -azsCredential $azsCredential
     $importedProducts.Add($productid) | Out-Null
 }
 
@@ -761,25 +769,30 @@ function Import-ByDependency
 function Test-AzSOfflineMarketplaceItem {
     param (
         [parameter(mandatory = $true)]
-        [String] $Destination,
-
-        [parameter(mandatory = $true)]
-        [String] $ArmEndpoint,
-
-        [parameter(mandatory = $true)]
-        [String] $SubscriptionId
+        [String] $destination
     )
 
-    $ctx = Get-AzureRmContext
-    $AccessToken = Resolve-AccessToken -Context $ctx -AccessToken $AccessToken
-    $headers = @{ 'authorization' = "Bearer $AccessToken"}
+    if (-not (Test-Path $destination)) {
+        throw "$destination not exist."
+    }
+    if ((Get-Item $destination) -isnot [System.IO.DirectoryInfo]) {
+        throw "$destination is not folder."
+    }
 
-    $dirs = Get-ChildItem -Path $Destination
+    $ctx = Get-AzureRmContext
+    $accessToken = Resolve-AccessToken -Context $ctx -AccessToken $accessToken
+    $headers = @{ 'authorization' = "Bearer $accessToken"}
+    $armEndpoint = $ctx.Environment.ResourceManagerUrl
+    Get-AzureRmSubscription | Out-Null
+    $defaultProviderSubscription = Select-AzureRmSubscription -SubscriptionName 'Default Provider Subscription'
+    $subscriptionId = $defaultProviderSubscription.subscription.id
+
+    $dirs = Get-ChildItem -Path $destination
     foreach($product in $dirs)
     {
         $syndicateUri = [string]::Format("{0}/subscriptions/{1}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default/downloadedProducts/{2}?api-version=2016-01-01",
-            $ArmEndpoint,
-            $SubscriptionId,
+            $armEndpoint,
+            $subscriptionId,
             $product
         )
 
@@ -801,7 +814,7 @@ function Test-AzSOfflineMarketplaceItem {
         }
     }
 
-    PreCheck -contentFolder $Destination
+    PreCheck -contentFolder $destination
 
     Write-Verbose "Test-AzSOfflineMarketplaceItem finished successfully" -verbose
 }
@@ -926,27 +939,27 @@ function Get-AccessToken
     param
     (
         [Parameter(Mandatory=$true)]
-        [String] $AuthorityEndpoint,
+        [String] $authorityEndpoint,
 
         [Parameter(Mandatory=$false)]
-        [String] $Resource,
+        [String] $resource,
 
         [Parameter(Mandatory=$false)]
-        [String] $AadTenantId,
+        [String] $aadTenantId,
 
         [Parameter(Mandatory=$false)]
-        [PSCredential] $Credential,
+        [PSCredential] $credential,
 
         [Parameter(Mandatory=$false)]
-        [String] $ClientId = "1950a258-227b-4e31-a9cf-717495945fc2"
+        [String] $clientId = "1950a258-227b-4e31-a9cf-717495945fc2"
     )
 
     Write-Debug "Getting Access token using supplied credentials"
 
-    $contextAuthorityEndpoint = ([System.IO.Path]::Combine($AuthorityEndpoint, $AadTenantId)).Replace('\','/')
+    $contextAuthorityEndpoint = ([System.IO.Path]::Combine($authorityEndpoint, $aadTenantId)).Replace('\','/')
     $authContext = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext($contextAuthorityEndpoint, $false)
-    $userCredential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential($Credential.UserName, $Credential.Password)
-    return ($authContext.AcquireToken($Resource, $ClientId, $userCredential)).AccessToken
+    $userCredential = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential($credential.UserName, $credential.Password)
+    return ($authContext.AcquireToken($resource, $clientId, $userCredential)).AccessToken
 }
 
 function Get-ResourceManagerMetaDataEndpoints
@@ -954,10 +967,10 @@ function Get-ResourceManagerMetaDataEndpoints
     param
     (
         [Parameter(Mandatory=$true)]
-        [String] $ArmEndpoint
+        [String] $armEndpoint
     )
 
-    $endpoints = Invoke-RestMethod -Method Get -Uri "$($ArmEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -TimeoutSec 180
+    $endpoints = Invoke-RestMethod -Method Get -Uri "$($armEndpoint.TrimEnd('/'))/metadata/endpoints?api-version=2015-01-01" -TimeoutSec 180
     Write-Debug "Endpoints: $(ConvertTo-Json $endpoints)"
 
     Write-Output $endpoints
@@ -981,7 +994,7 @@ function Syndicate-Product {
         [String] $downloadFolder,
 
         [Parameter(Mandatory = $false)]
-        [PSCredential] $AzsCredential
+        [PSCredential] $azsCredential
     )
 
     $jsonFile = Get-Content "$downloadFolder\$productid\*.json"
@@ -997,11 +1010,11 @@ function Syndicate-Product {
         properties = $properties
     }
 
-    $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -Body $json -MaxRetry 2 -AzsCredential $AzsCredential
+    $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -Body $json -MaxRetry 2 -azsCredential $azsCredential
 
     if ($syndicateResponse.StatusCode -eq 200) {
         Write-Verbose "product '$productid' was syndicated" -verbose
-    } elseif (-not (Wait-AzsAsyncOperation -AsyncOperationStatusUri $syndicateResponse.Headers.'Azure-AsyncOperation' -Headers ([ref]$headers) -AzsCredential $AzsCredential -Verbose)) {
+    } elseif (-not (Wait-AzsAsyncOperation -AsyncOperationStatusUri $syndicateResponse.Headers.'Azure-AsyncOperation' -Headers ([ref]$headers) -azsCredential $azsCredential -Verbose)) {
         Write-Error "Unable to complete syndication operation." -ErrorAction Stop
     }
 }
@@ -1072,13 +1085,13 @@ function Upload-ToStorage {
 function Ensure-SuccessStatusCode {
     param(
         [Parameter(Mandatory = $true)]
-        [System.Net.HttpStatusCode] $StatusCode
+        [System.Net.HttpStatusCode] $statusCode
     )
 
     $ErrorActionPreference = 'Stop'
 
-    if (-not (Test-SuccessStatusCode -StatusCode $StatusCode)) {
-        throw "HTTP response status code is not successful: $StatusCode"
+    if (-not (Test-SuccessStatusCode -statusCode $statusCode)) {
+        throw "HTTP response status code is not successful: $statusCode"
     }
 }
 
@@ -1086,14 +1099,14 @@ function Wait-AzsAsyncOperation {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [Uri] $AsyncOperationStatusUri,
+        [Uri] $asyncOperationStatusUri,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [object] [ref]$Headers,
+        [object] [ref]$headers,
 
         [Parameter(Mandatory = $false)]
-        [PSCredential] $AzsCredential
+        [PSCredential] $azsCredential
     )
 
     $ErrorActionPreference = 'Stop'
@@ -1106,9 +1119,9 @@ function Wait-AzsAsyncOperation {
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     while ($true) {
-        $response = InvokeWebRequest -Method GET -Uri $AsyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$Headers) -MaxRetry 10 -AzsCredential $AzsCredential
+        $response = InvokeWebRequest -Method GET -Uri $asyncOperationStatusUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -MaxRetry 10 -azsCredential $azsCredential
 
-        Ensure-SuccessStatusCode -StatusCode $response.StatusCode
+        Ensure-SuccessStatusCode -statusCode $response.statusCode
 
         $operationResult = $response.Content | ConvertFrom-Json
 
@@ -1135,46 +1148,46 @@ function Wait-AzsAsyncOperation {
 function Test-OperationResultTerminalState {
     param (
         [Parameter(Mandatory = $true)]
-        [string] $Value
+        [string] $value
     )
 
-    return $Value -in @('Canceled', 'Failed', 'Succeeded')
+    return $value -in @('Canceled', 'Failed', 'Succeeded')
 }
 
 function Test-SuccessStatusCode {
     param(
         [Parameter(Mandatory = $true)]
-        [System.Net.HttpStatusCode] $StatusCode
+        [System.Net.HttpStatusCode] $statusCode
     )
 
-    return [int]$StatusCode -ge 200 -and [int]$StatusCode -le 299
+    return [int]$statusCode -ge 200 -and [int]$statusCode -le 299
 }
 
 function InvokeWebRequest {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateSet('GET', 'PUT', 'POST', 'DELETE')]
-        [string] $Method,
+        [string] $method,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [Uri] $Uri,
+        [Uri] $uri,
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [string] $ArmEndpoint,
+        [string] $armEndpoint,
 
         [Parameter(Mandatory = $true)]
-        [object] [ref]$Headers,
+        [object] [ref]$headers,
 
         [Parameter(Mandatory = $false)]
-        [object] $Body = $null,
+        [object] $body = $null,
 
         [Parameter(Mandatory = $false)]
-        [object] $MaxRetry = 1,
+        [object] $maxRetry = 1,
 
         [Parameter(Mandatory = $false)]
-        [PSCredential] $AzsCredential
+        [PSCredential] $azsCredential
     )
 
     $content = $null
@@ -1183,7 +1196,7 @@ function InvokeWebRequest {
     $completed = $false
     $sleepSeconds = 5
 
-    if ($Body) {
+    if ($body) {
         $content = $body | ConvertTo-Json -Depth 99 -Compress
     }
 
@@ -1195,31 +1208,31 @@ function InvokeWebRequest {
             if ($content -ne $null) {
                 $content = [System.Text.Encoding]::UTF8.GetBytes($content)
             }
-            [void]($response = Invoke-WebRequest -Method $Method -Uri $Uri -ContentType "application/json; charset=utf-8" -Headers $Headers -Body $content -ErrorAction Stop)
+            [void]($response = Invoke-WebRequest -Method $method -Uri $uri -ContentType "application/json; charset=utf-8" -Headers $headers -Body $content -ErrorAction Stop)
             $retryCount = 0
             Ensure-SuccessStatusCode -StatusCode $response.StatusCode
             $completed = $true
         }
         catch
         {
-            if ($retryCount -ge $MaxRetry) {
-                Write-Warning "Request to $Method $Uri failed the maximum number of $MaxRetry times. Timestamp: $($(get-date).ToString('T'))"
+            if ($retryCount -ge $maxRetry) {
+                Write-Warning "Request to $method $uri failed the maximum number of $maxRetry times. Timestamp: $($(get-date).ToString('T'))"
                 throw
             } else {
                 $error = $_.Exception
                 if ($_.Exception.Response.StatusCode -eq 401)
                 {
                     try {
-                        if (!$AzsCredential) {
+                        if (!$azsCredential) {
                             Write-Warning -Message "Access token expired."
-                            $AzsCredential = Get-Credential -Message "Enter the azure stack operator credential"
+                            $azsCredential = Get-Credential -Message "Enter the azure stack operator credential"
                         }
-                        $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $ArmEndpoint
+                        $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $armEndpoint
                         $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
                         $aadResource = $endpoints.authentication.audiences[0]
                         $context = Get-AzureRmContext
-                        $AccessToken = Get-AccessToken -AuthorityEndpoint $aadAuthorityEndpoint -Resource $aadResource -AadTenantId $context.Tenant.TenantId -Credential $AzsCredential
-                        $Headers.authorization = "Bearer $AccessToken"
+                        $accessToken = Get-AccessToken -AuthorityEndpoint $aadAuthorityEndpoint -Resource $aadResource -AadTenantId $context.Tenant.TenantId -Credential $azsCredential
+                        $headers.authorization = "Bearer $accessToken"
                     }
                     catch
                     {
@@ -1228,7 +1241,7 @@ function InvokeWebRequest {
                 }
 
                 $retryCount++
-                Write-Debug "Request to $Method $Uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
+                Write-Debug "Request to $method $uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
                 Start-Sleep $sleepSeconds
             }
         }
