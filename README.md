@@ -126,6 +126,5 @@ WindowsAzure\Config\myvm0.1.ExtensionConfig.xml  | XML file containing part of V
 \var\log\syslog  | Standardized text-based log file(s) containing logging and event information.  
 \var\log\messages | Standardized text-based log file(s) containing logging and event information.  
 \var\log\waagent.log	  | Log file for the Azure Linux agent
-Content Cell  | Content Cell
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
