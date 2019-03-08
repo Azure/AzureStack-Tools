@@ -130,7 +130,6 @@ function Register-AzsGuestDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm -RequiredVersion '1.2.11'
     Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
 
     function Invoke-Main {
@@ -251,7 +250,6 @@ function Update-AzsHomeDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm
     Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
 
@@ -545,7 +543,6 @@ function Register-AzsWithMyDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm
     Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
 
@@ -873,7 +870,6 @@ function Unregister-AzsGuestDirectoryTenant {
 
     $ResourceManagerEndpoint = $AdminResourceManagerEndpoint
 
-    # Install-Module AzureRm
     Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
 
     function Invoke-Main {
@@ -1001,7 +997,6 @@ function Unregister-AzsWithMyDirectoryTenant {
 
     $ResourceManagerEndpoint = $TenantResourceManagerEndpoint
     
-    # Install-Module AzureRm
     Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
     Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
     
