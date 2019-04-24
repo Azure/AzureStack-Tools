@@ -273,7 +273,7 @@ function Get-AzsHealthReport {
         $healthReportUrl = "$($AdminResourceManagerEndpoint.AbsoluteUri)/subscriptions/$($defaultProviderSubscription.SubscriptionId)/providers/Microsoft.Subscriptions.Admin/checkIdentityHealth?api-version=2018-05-01"
         $headers = @{ "Authorization" = "Bearer $armAccessToken" }
 
-        $healthReport = (Invoke-WebRequest -Headers $headers -Uri $healthReportUrl -Method Post).Content | ConvertFrom-Json
+        $healthReport = (Invoke-WebRequest -Headers $headers -Uri $healthReportUrl -Method Post -UseBasicParsing -TimeoutSec 40).Content | ConvertFrom-Json
 
         return $healthReport
     }
