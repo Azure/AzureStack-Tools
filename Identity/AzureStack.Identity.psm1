@@ -90,7 +90,7 @@ function Register-AzsGuestDirectoryTenant {
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $AdminResourceManagerEndpoint,
 
         # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
@@ -204,7 +204,7 @@ function Register-AzsGuestDirectoryTenant {
             Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
         }
         elseif ($SubscriptionId) {
-            Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
+            Select-AzureRmSubscription -SubscriptionId $SubscriptionId | Out-Null
         }
 
         return $azureAccount
@@ -233,7 +233,7 @@ function Get-AzsHealthReport {
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $AdminResourceManagerEndpoint,
 
         # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
@@ -316,15 +316,15 @@ function Get-AzsHealthReport {
 
         # Retrieve the refresh token
         $tokens = @()
-        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
-        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() } catch { }
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch { }
         $refreshToken = $tokens |
-            Where Resource -EQ $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId |
-            Where IsMultipleResourceRefreshToken -EQ $true |
-            Where DisplayableId -EQ $azureStackAccount.Context.Account.Id |
-            Sort ExpiresOn |
-            Select -Last 1 -ExpandProperty RefreshToken |
-            ConvertTo-SecureString -AsPlainText -Force
+        Where Resource -EQ $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId |
+        Where IsMultipleResourceRefreshToken -EQ $true |
+        Where DisplayableId -EQ $azureStackAccount.Context.Account.Id |
+        Sort ExpiresOn |
+        Select -Last 1 -ExpandProperty RefreshToken |
+        ConvertTo-SecureString -AsPlainText -Force
 
         # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
         if (-not $refreshToken) {
@@ -342,10 +342,11 @@ function Get-AzsHealthReport {
 
     function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment) {
         $graphEnvironment = switch ($azureEnvironment.ActiveDirectoryAuthority) {
-            'https://login.microsoftonline.com/' { 'AzureCloud'        }
-            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
+            'https://login.microsoftonline.com/' { 'AzureCloud' }
+            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud' }
             'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-            'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
+            'https://login.microsoftonline.us/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/' { 'AzureGermanCloud' }
 
             Default { throw "Unsupported graph resource identifier: $_" }
         }
@@ -418,7 +419,7 @@ function Update-AzsHomeDirectoryTenant {
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $AdminResourceManagerEndpoint,
 
         # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
@@ -470,23 +471,22 @@ function Update-AzsHomeDirectoryTenant {
             Write-Host "Installing Application... ($($count) of $($applicationRegistrations.Count)): $($applicationServicePrincipal.appId) '$($applicationServicePrincipal.appDisplayName)'"
 
             # WORKAROUND - the recent Azure Stack update has a missing permission registration; temporarily "inject" this permission registration into the returned data
-            if ($applicationServicePrincipal.servicePrincipalNames | Where { $_ -like 'https://deploymentprovider.*/*' })
-            {
+            if ($applicationServicePrincipal.servicePrincipalNames | Where { $_ -like 'https://deploymentprovider.*/*' }) {
                 Write-Verbose "Adding missing permission registrations for application '$($applicationServicePrincipal.appDisplayName)' ($($applicationServicePrincipal.appId))..." -Verbose
 
                 $graph = Get-GraphApplicationServicePrincipal -ApplicationId (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
 
                 $applicationRegistration.appRoleAssignments = @(
                     [pscustomobject]@{
-                        resource   = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
-                        client     = $applicationRegistration.appId
-                        roleId     = $graph.appRoles | Where value -EQ 'Directory.Read.All' | Select -ExpandProperty id
+                        resource = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
+                        client   = $applicationRegistration.appId
+                        roleId   = $graph.appRoles | Where value -EQ 'Directory.Read.All' | Select -ExpandProperty id
                     },
 
                     [pscustomobject]@{
-                        resource   = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
-                        client     = $applicationRegistration.appId
-                        roleId     = $graph.appRoles | Where value -EQ 'Application.ReadWrite.OwnedBy' | Select -ExpandProperty id
+                        resource = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
+                        client   = $applicationRegistration.appId
+                        roleId   = $graph.appRoles | Where value -EQ 'Application.ReadWrite.OwnedBy' | Select -ExpandProperty id
                     }
                 )
             }
@@ -530,7 +530,7 @@ function Update-AzsHomeDirectoryTenant {
         $permissionContent > $permissionFile
 
         # Display application status to user
-        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = {'{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName}} | Sort clientApplicationDisplayName | Group Client
+        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = { '{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName } } | Sort clientApplicationDisplayName | Group Client
         $readyApplications = @()
         $pendingApplications = @()
         foreach ($client in $permissionsByClient) {
@@ -609,15 +609,15 @@ function Update-AzsHomeDirectoryTenant {
 
         # Retrieve the refresh token
         $tokens = @()
-        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
-        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() } catch { }
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch { }
         $refreshToken = $tokens |
-            Where Resource -EQ $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId |
-            Where IsMultipleResourceRefreshToken -EQ $true |
-            Where DisplayableId -EQ $azureStackAccount.Context.Account.Id |
-            Sort ExpiresOn |
-            Select -Last 1 -ExpandProperty RefreshToken |
-            ConvertTo-SecureString -AsPlainText -Force
+        Where Resource -EQ $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId |
+        Where IsMultipleResourceRefreshToken -EQ $true |
+        Where DisplayableId -EQ $azureStackAccount.Context.Account.Id |
+        Sort ExpiresOn |
+        Select -Last 1 -ExpandProperty RefreshToken |
+        ConvertTo-SecureString -AsPlainText -Force
 
         # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
         if (-not $refreshToken) {
@@ -635,10 +635,11 @@ function Update-AzsHomeDirectoryTenant {
 
     function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment) {
         $graphEnvironment = switch ($azureEnvironment.ActiveDirectoryAuthority) {
-            'https://login.microsoftonline.com/' { 'AzureCloud'        }
-            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
+            'https://login.microsoftonline.com/' { 'AzureCloud' }
+            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud' }
             'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-            'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
+            'https://login.microsoftonline.us/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/' { 'AzureGermanCloud' }
 
             Default { throw "Unsupported graph resource identifier: $_" }
         }
@@ -711,7 +712,7 @@ function Register-AzsWithMyDirectoryTenant {
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $TenantResourceManagerEndpoint,
 
         # The name of the directory tenant being onboarded.
@@ -810,7 +811,7 @@ function Register-AzsWithMyDirectoryTenant {
         $permissionContent > $permissionFile
 
         # Display application status to user
-        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = {'{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName}} | Sort clientApplicationDisplayName | Group Client
+        $permissionsByClient = $permissions | Select *, @{n = 'Client'; e = { '{0} {1}' -f $_.clientApplicationId, $_.clientApplicationDisplayName } } | Sort clientApplicationDisplayName | Group Client
         $readyApplications = @()
         $pendingApplications = @()
         foreach ($client in $permissionsByClient) {
@@ -876,12 +877,12 @@ function Register-AzsWithMyDirectoryTenant {
 
     function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
         $azureEnvironment = Get-AzureRmEnvironment |
-            Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
-            Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
+        Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
+        Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
 
         # Differentiate between AzureCloud and AzureUSGovernment
         if ($azureEnvironment.Count -ge 2) {
-            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/') { 'AzureUSGovernment' } else { 'AzureCloud' }
+            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/' -or $azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login.microsoftonline.us/') { 'AzureUSGovernment' } else { 'AzureCloud' }
             $azureEnvironment = $azureEnvironment | Where Name -EQ $name
         }
 
@@ -903,15 +904,15 @@ function Register-AzsWithMyDirectoryTenant {
 
         # Retrieve the refresh token
         $tokens = @()
-        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
-        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() } catch { }
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch { }
         $refreshToken = $tokens |
-            Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
-            Where IsMultipleResourceRefreshToken -EQ $true |
-            Where DisplayableId -EQ $azureAccount.Context.Account.Id |
-            Sort ExpiresOn |
-            Select -Last 1 -ExpandProperty RefreshToken |
-            ConvertTo-SecureString -AsPlainText -Force
+        Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
+        Where IsMultipleResourceRefreshToken -EQ $true |
+        Where DisplayableId -EQ $azureAccount.Context.Account.Id |
+        Sort ExpiresOn |
+        Select -Last 1 -ExpandProperty RefreshToken |
+        ConvertTo-SecureString -AsPlainText -Force
 
         # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
         if (-not $refreshToken) {
@@ -929,10 +930,11 @@ function Register-AzsWithMyDirectoryTenant {
 
     function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment) {
         $graphEnvironment = switch ($azureEnvironment.ActiveDirectoryAuthority) {
-            'https://login.microsoftonline.com/' { 'AzureCloud'        }
-            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
+            'https://login.microsoftonline.com/' { 'AzureCloud' }
+            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud' }
             'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-            'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
+            'https://login.microsoftonline.us/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/' { 'AzureGermanCloud' }
 
             Default { throw "Unsupported graph resource identifier: $_" }
         }
@@ -1016,7 +1018,7 @@ function Unregister-AzsGuestDirectoryTenant {
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $AdminResourceManagerEndpoint,
 
         # The name of the home Directory Tenant in which the Azure Stack Administrator subscription resides.
@@ -1114,7 +1116,7 @@ function Unregister-AzsGuestDirectoryTenant {
             Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
         }
         elseif ($SubscriptionId) {
-            Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
+            Select-AzureRmSubscription -SubscriptionId $SubscriptionId | Out-Null
         }
 
         return $azureAccount
@@ -1163,7 +1165,7 @@ function Unregister-AzsWithMyDirectoryTenant {
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $TenantResourceManagerEndpoint,
 
         # The name of the directory tenant being onboarded.
@@ -1251,12 +1253,12 @@ function Unregister-AzsWithMyDirectoryTenant {
     
     function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
         $azureEnvironment = Get-AzureRmEnvironment |
-            Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
-            Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
+        Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
+        Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
     
         # Differentiate between AzureCloud and AzureUSGovernment
         if ($azureEnvironment.Count -ge 2) {
-            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/') { 'AzureUSGovernment' } else { 'AzureCloud' }
+            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/' -or $azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login.microsoftonline.us/') { 'AzureUSGovernment' } else { 'AzureCloud' }
             $azureEnvironment = $azureEnvironment | Where Name -EQ $name
         }
     
@@ -1278,15 +1280,15 @@ function Unregister-AzsWithMyDirectoryTenant {
     
         # Retrieve the refresh token
         $tokens = @()
-        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
-        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+        $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() } catch { }
+        $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch { }
         $refreshToken = $tokens |
-            Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
-            Where IsMultipleResourceRefreshToken -EQ $true |
-            Where DisplayableId -EQ $azureAccount.Context.Account.Id |
-            Sort ExpiresOn |
-            Select -Last 1 -ExpandProperty RefreshToken |
-            ConvertTo-SecureString -AsPlainText -Force
+        Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |
+        Where IsMultipleResourceRefreshToken -EQ $true |
+        Where DisplayableId -EQ $azureAccount.Context.Account.Id |
+        Sort ExpiresOn |
+        Select -Last 1 -ExpandProperty RefreshToken |
+        ConvertTo-SecureString -AsPlainText -Force
 
         # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
         if (-not $refreshToken) {
@@ -1304,10 +1306,11 @@ function Unregister-AzsWithMyDirectoryTenant {
     
     function Resolve-GraphEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureEnvironment) {
         $graphEnvironment = switch ($azureEnvironment.ActiveDirectoryAuthority) {
-            'https://login.microsoftonline.com/' { 'AzureCloud'        }
-            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
+            'https://login.microsoftonline.com/' { 'AzureCloud' }
+            'https://login.chinacloudapi.cn/' { 'AzureChinaCloud' }
             'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-            'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
+            'https://login.microsoftonline.us/' { 'AzureUSGovernment' }
+            'https://login.microsoftonline.de/' { 'AzureGermanCloud' }
     
             Default { throw "Unsupported graph resource identifier: $_" }
         }
