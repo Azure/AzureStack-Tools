@@ -163,14 +163,14 @@ function Initialize-GraphEnvironment
 
                 IssuerTemplate = "https://sts.windows.net/{0}/"
 
-                LoginEndpoint = [Uri]"https://login-us.microsoftonline.com/$DirectoryTenantId"
+                LoginEndpoint = [Uri]"https://login.microsoftonline.us/$DirectoryTenantId"
                 GraphEndpoint = [Uri]"https://graph.windows.net/$DirectoryTenantId"
 
-                LoginBaseEndpoint = [Uri]"https://login-us.microsoftonline.com/"
+                LoginBaseEndpoint = [Uri]"https://login.microsoftonline.us/"
                 GraphBaseEndpoint = [Uri]"https://graph.windows.net/"
 
-                FederationMetadataEndpoint = [Uri]"https://login-us.microsoftonline.com/$DirectoryTenantId/federationmetadata/2007-06/federationmetadata.xml"
-                OpenIdMetadata             = [Uri]"https://login-us.microsoftonline.com/$DirectoryTenantId/.well-known/openid-configuration"
+                FederationMetadataEndpoint = [Uri]"https://login.microsoftonline.us/$DirectoryTenantId/federationmetadata/2007-06/federationmetadata.xml"
+                OpenIdMetadata             = [Uri]"https://login.microsoftonline.us/$DirectoryTenantId/.well-known/openid-configuration"
 
                 AadPermissions = [HashTable]@{
                     AccessDirectoryAsSignedInUser      = "a42657d6-7f20-40e3-b6f0-cee03008a62a"

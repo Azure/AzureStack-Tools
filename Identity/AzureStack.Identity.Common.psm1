@@ -5,15 +5,14 @@
 .Synopsis
     Initialize the Azure RM environment
 #>
-function Initialize-AzureRmEnvironment
-{
+function Initialize-AzureRmEnvironment {
     [CmdletBinding()]
     param
     (
         # The endpoint of the Azure Stack Resource Manager service.
         [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
-        [ValidateScript( {$_.Scheme -eq [System.Uri]::UriSchemeHttps})]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
         [uri] $ResourceManagerEndpoint,
 
         # The specified name of this environment
@@ -24,8 +23,8 @@ function Initialize-AzureRmEnvironment
 
     Remove-AzureRMEnvironment -Name $environmentName -ErrorAction Ignore | Out-Null
     $azureEnvironmentParams = @{
-        Name                                     = $environmentName
-        ARMEndpoint                              = $ResourceManagerEndpoint
+        Name        = $environmentName
+        ARMEndpoint = $ResourceManagerEndpoint
     }
     
     Write-Verbose -Message "Add azure environment with parameters: $(ConvertTo-Json $azureEnvironmentParams)" -Verbose
@@ -38,8 +37,7 @@ function Initialize-AzureRmEnvironment
 .Synopsis
     Initialize the Azure user account
 #>
-function Initialize-AzureRmUserAccount
-{
+function Initialize-AzureRmUserAccount {
     [CmdletBinding()]
     param
     (
@@ -71,7 +69,7 @@ function Initialize-AzureRmUserAccount
         EnvironmentName = $azureEnvironment.Name
     }
     if (-not $azureEnvironment.EnableAdfsAuthentication) {
-        $params += @{ TenantId        = $DirectoryTenantId }
+        $params += @{ TenantId = $DirectoryTenantId }
     }
     if ($AutomationCredential) {
         $params += @{ Credential = $AutomationCredential }
@@ -84,7 +82,7 @@ function Initialize-AzureRmUserAccount
         Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
     }
     elseif ($SubscriptionId) {
-        Select-AzureRmSubscription -SubscriptionId $SubscriptionId  | Out-Null
+        Select-AzureRmSubscription -SubscriptionId $SubscriptionId | Out-Null
     }
 
     return $azureAccount
@@ -94,8 +92,7 @@ function Initialize-AzureRmUserAccount
 .Synopsis
     Initialize the Azure user account and get refresh token for the azure environment
 #>
-function Initialize-AzureRmUserRefreshToken
-{
+function Initialize-AzureRmUserRefreshToken {
     [CmdletBinding()]
     param
     (
@@ -124,19 +121,16 @@ function Initialize-AzureRmUserRefreshToken
     )
 
     $params = @{
-        AzureEnvironment = $AzureEnvironment
+        AzureEnvironment  = $AzureEnvironment
         DirectoryTenantId = $DirectoryTenantId
     }
-    if ($SubscriptionId)
-    {
+    if ($SubscriptionId) {
         $params.SubscriptionId = $SubscriptionId
     }
-    if ($SubscriptionName)
-    {
+    if ($SubscriptionName) {
         $params.SubscriptionName = $SubscriptionName
     }
-    if ($AutomationCredential)
-    {
+    if ($AutomationCredential) {
         $params.AutomationCredential = $AutomationCredential
     }
     Write-Verbose "Initializing user account with parameters $(ConvertTo-JSON $params)" -Verbose
@@ -144,15 +138,15 @@ function Initialize-AzureRmUserRefreshToken
     
     # Retrieve the refresh token
     $tokens = @()
-    $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()        } catch {}
-    $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch {}
+    $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() } catch { }
+    $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch { }
     $refreshToken = $tokens |
-        Where Resource -IEQ $AzureEnvironment.ActiveDirectoryServiceEndpointResourceId |
-        Where IsMultipleResourceRefreshToken -EQ $true |
-        Where DisplayableId -IEQ $azureStackAccount.Context.Account.Id |
-        Sort ExpiresOn |
-        Select -Last 1 -ExpandProperty RefreshToken |
-        ConvertTo-SecureString -AsPlainText -Force
+    Where Resource -IEQ $AzureEnvironment.ActiveDirectoryServiceEndpointResourceId |
+    Where IsMultipleResourceRefreshToken -EQ $true |
+    Where DisplayableId -IEQ $azureStackAccount.Context.Account.Id |
+    Sort ExpiresOn |
+    Select -Last 1 -ExpandProperty RefreshToken |
+    ConvertTo-SecureString -AsPlainText -Force
     # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
     if (-not $refreshToken) {
         if ($tokens.Count -eq 1) {
@@ -171,8 +165,7 @@ function Initialize-AzureRmUserRefreshToken
 .Synopsis
     Resolve the graph enviornment name
 #>
-function Resolve-GraphEnvironment
-{
+function Resolve-GraphEnvironment {
     [CmdletBinding()]
     param
     (
@@ -183,10 +176,11 @@ function Resolve-GraphEnvironment
     )
 
     $graphEnvironment = switch ($AzureEnvironment.ActiveDirectoryAuthority) {
-        'https://login.microsoftonline.com/' { 'AzureCloud'        }
-        'https://login.chinacloudapi.cn/' { 'AzureChinaCloud'   }
+        'https://login.microsoftonline.com/' { 'AzureCloud' }
+        'https://login.chinacloudapi.cn/' { 'AzureChinaCloud' }
         'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-        'https://login.microsoftonline.de/' { 'AzureGermanCloud'  }
+        'https://login.microsoftonline.us/' { 'AzureUSGovernment' }
+        'https://login.microsoftonline.de/' { 'AzureGermanCloud' }
         Default { throw "Unsupported graph resource identifier: $_" }
     }
     return $graphEnvironment
