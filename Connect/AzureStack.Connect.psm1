@@ -34,7 +34,7 @@ function Add-AzsVpnConnection {
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
     $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
-    $connection = Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod MSChapv2 -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
+    $connection = Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod Eap -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
     
     Write-Verbose "Adding routes to Azure Stack VPN connection named $ConnectionName" -Verbose
     Add-VpnConnectionRoute -ConnectionName $ConnectionName -DestinationPrefix 192.168.102.0/24 -RouteMetric 2 -PassThru | Out-Null
@@ -68,7 +68,7 @@ function Connect-AzsVpn {
     $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
     # Connecting using legacy command. Need to use domainless cred. Domain will be assumed on the other end.
-    rasdial $ConnectionName $User $PlainPassword
+    rasphone $ConnectionName
 
     $azshome = "$env:USERPROFILE\Documents\$ConnectionName"
 

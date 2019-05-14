@@ -1,5 +1,8 @@
 # Connection Scripts
 
+  > [!Note]
+  > For Azure Stack versions 1903 or earlier, please use the code from the tag [PRE-1904](https://github.com/Azure/AzureStack-Tools/tree/PRE-1904). For the Azure Stack version 1902 and 1903, the work around mentioned in the [issue](https://github.com/Azure/AzureStack-Tools/issues/504) is also needed 
+
 As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
 
 For Azure stack 1901 or later
