@@ -1357,7 +1357,7 @@ function Activate-AzureStack{
     {
         try
         {
-            $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:ActivationKey }
+            $activation = Invoke-Command -Session $session -ScriptBlock { New-AzureStackActivation -ActivationKey $using:ActivationKey -TimeoutInSeconds 1800}
             break
         }
         catch
