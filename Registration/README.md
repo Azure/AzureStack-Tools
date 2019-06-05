@@ -2,12 +2,17 @@
 
 The functions in this module allow you to perform the steps of registering your Azure Stack with your Azure subscription. Additional details can be found in the [documentation](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register).
 
-These functions can be run on any machine that has access to the Privileged Endpoint. As a prerequisite, make sure that you have, and are an owner of, an Azure subscription and that you have installed the correct version of Azure Powershell as outlined here: [Install Powershell for Azure Stack](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-install)
+### Prerequisites 
 
-Once you have downloaded the RegisterWithAzure.psm1 module, open an elevated instance of Powershell ISE and run the functions contained:
+- You must install the correct version of Azure Powershell, and download the Azure Stack tools
+  - For Integrated Systems, see [Install Powershell for Azure Stack](https://docs.microsoft.com/azure-stack/operator/azure-stack-powershell-install). To download the Azure Stack tools, either clone this repository or [use the repository zip file](https://github.com/Azure/AzureStack-Tools/archive/master.zip).
+  - For ASDK: see [post-deployment configuration](https://docs.microsoft.com/azure-stack/asdk/asdk-post-deploy), which covers both the PowerShell for Azure Stack installation and downloading of the Azure Stack tools.
+- The registration functions must be run on a machine that has access to the Privileged Endpoint. 
+- You must have access to an Azure subscription, and your Azure account must be an Owner of the subscription.
+- Open an elevated instance of Powershell ISE (ie: Run as Administrator).
 
 ### Import RegisterWithAzure.psm1
-To import the RegisterWithAzure.psm1 module, navigate to where the module was downloaded and run the below:
+To import the RegisterWithAzure.psm1 module, navigate to where the module was downloaded (typically `C:\AzureStack-Tools-master\Registration`) and run the below:
 ```powershell
 Import-Module .\RegisterWithAzure.psm1 -Force -Verbose
 ```
@@ -26,7 +31,8 @@ Then you must run the below command from RegisterWithAzure.psm1:
 Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
 ```
 
-## ## Change or remove registration in a disconnected environment
+## Change or remove registration in a connected environment
+
 ### Remove Registration 
 To remove the existing registration resource and disable marketplace syndication and usage data reporting:
 ```powershell
@@ -89,6 +95,7 @@ New-AzsActivationResource -PrivilegedEndpoint "<Computer Name>-ERCS01" -Activati
 Registration and activation is now complete for a disconnected environment. If you need to change or update your registration in a disconnected environment follow the below instructions
 
 ## Change or remove registration in a disconnected environment
+
 ### Remove activation resource from Azure Stack
 You must first remove the activation resource from your Azure Stack
 ```powershell
