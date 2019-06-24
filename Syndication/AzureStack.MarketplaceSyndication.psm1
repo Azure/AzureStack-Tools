@@ -576,6 +576,11 @@ function DownloadMarketplaceProduct {
                 } else {
                     & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y
                 }
+                ## Check $LastExitcode to see if AzCopy Succeeded 
+                if ($LastExitCode -ne 0) {
+                    $downloadError = $_
+                    Write-Error "Unable downloading files using AzCopy: $downloadError LastExitCode: $LastExitCode" -ErrorAction Stop
+                }
             } else {
                 $wc = New-Object System.Net.WebClient
                 $wc.DownloadFile($source, $tmpDestination)
@@ -681,6 +686,28 @@ function PreCheck
         if ($tmpfileExists -eq $True) {
             Write-Warning ".marketplace file exists, these are temp files not fully downloaded. Please download product '$dir' again, then retry import"
             throw ".marketplace file exists"
+        }
+
+        ## Validate Json 
+        $jsonPath = "$folderPath\$dir.json"
+        $configuration = Get-Content $jsonPath | ConvertFrom-Json 
+        $properties = ($configuration | Get-Member -MemberType NoteProperty).Name
+        foreach ($property in $properties) {
+            if ($configuration.$property) {
+                Write-Verbose -Message "$property = $($configuration.$property)"              
+            }
+            else
+            {
+               Write-Warning -Message "Property value for $property is null. Please check JSON contents, then retry import."
+               throw "JSON file contains null values"
+            }
+        }
+
+        $iconUris = $configuration.iconUris
+        if ($iconUris.small -eq $null -or $iconUris.large -eq $null -or $iconUris.large -eq $null -or $iconUris.wide -eq $null )
+        {
+             Write-Warning -Message "Property value for certain Icons is null. Please check JSON contents, then retry import."
+             throw "JSON file contains null values for Icons"
         }
     }
 }
