@@ -692,14 +692,16 @@ function PreCheck
         $jsonPath = "$folderPath\$dir.json"
         $configuration = Get-Content $jsonPath | ConvertFrom-Json 
         $properties = ($configuration | Get-Member -MemberType NoteProperty).Name
-        foreach ($property in $properties) {
+        ## define required properties
+        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier","galleryPackageBlobSasUri", "offer", "offerVersion", "sku", "productProperties", "payloadLength", "iconUris", "productKind" )
+        foreach ($property in $requiredprops) {
             if ($configuration.$property) {
                 Write-Verbose -Message "$property = $($configuration.$property)"              
             }
             else
             {
                Write-Warning -Message "Property value for $property is null. Please check JSON contents, then retry import."
-               throw "JSON file contains null values"
+               throw "JSON file contains null values for required properties."
             }
         }
 
