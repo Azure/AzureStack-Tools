@@ -700,16 +700,17 @@ function PreCheck
             }
             else
             {
-               Write-Warning -Message "Property value for $property is null. Please check JSON contents, then retry import."
-               throw "JSON file contains null values for required properties."
+                Write-Error -Message "Property value for $property is null. Please check JSON contents, then retry import."
+                throw "JSON file contains null values for required properties."
             }
         }
 
         $iconUris = $configuration.iconUris
-        if ($iconUris.small -eq $null -or $iconUris.large -eq $null -or $iconUris.large -eq $null -or $iconUris.wide -eq $null )
+       
+        if ($iconUris.small -eq $null -or $iconUris.large -eq $null -or $iconUris.medium -eq $null -or $iconUris.wide -eq $null )
         {
-             Write-Warning -Message "Property value for certain Icons is null. Please check JSON contents, then retry import."
-             throw "JSON file contains null values for Icons"
+             Write-Error -Message "Property value for certain Icons is null. Please check JSON contents, then retry import."
+             throw "JSON file contains null values for certain Icons. Please ensure small, medium, large and wide icons exist in the JSON."
         }
     }
 }
