@@ -374,7 +374,7 @@ function Remove-AzsRegistration{
 
             # Remove registration resource from Azure
             Log-Output "Removing registration resource from Azure..."
-            Remove-RegistrationResource -ResourceId $registrationResource.ResourceId
+            Remove-RegistrationResource -ResourceId $registrationResource.ResourceId -ResourceGroupName $ResourceGroupName
         }
         else
         {
@@ -792,7 +792,7 @@ Function UnRegister-AzsEnvironment{
     {
         Log-Output "Found registration resource in Azure: $($registrationResource.ResourceId)"
         Log-Output "Removing registration resource from Azure..."
-        Remove-RegistrationResource -ResourceId $registrationResource.ResourceId
+        Remove-RegistrationResource -ResourceId $registrationResource.ResourceId -ResourceGroupName $ResourceGroupName
     }
     else
     {
@@ -1176,8 +1176,17 @@ function New-RegistrationResource{
     {
         try
         {
+            ## Remove any existing locks on the resource group
+            $lock = Get-AzureRmResourceLock -LockName 'RegistrationRGLock' -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+            if ($lock)
+            {
+                Write-Verbose "Unlocking Registration resource group lock  'RegistrationRGLock'..." -Verbose
+                Remove-AzureRmResourceLock -LockId $lock.LockId -Force
+            }
+
             Log-Output "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
             $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
+
             break
         }
         catch
@@ -1214,6 +1223,17 @@ function New-RegistrationResource{
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
+
+    
+    ## Set CanNotDelete Lock on Resource Group so the Registration resource is not deleted
+    Write-Verbose -Message "Adding CanNotDelete Lock on registration ResourceGroup $ResourceGroupName..."
+    $lockNotes ="'Cannot delete the parent registration resource group $ResourceGroupName"
+    New-AzureRmResourceLock -LockLevel CanNotDelete `
+         -LockNotes $lockNotes `
+         -LockName 'RegistrationRGLock' `
+         -ResourceGroupName $resourceGroupName `
+         -Force -Verbose
+    Write-Verbose -Message "Adding CanNotDelete Lock on registration ResourceGroup $ResourceGroupName."
 }
 
 <#
@@ -1622,7 +1642,10 @@ function Remove-RegistrationResource{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [String] $ResourceId
+        [String] $ResourceId,
+
+        [Parameter(Mandatory = $false)]
+        [String] $ResourceGroupName = 'azurestack'
     )
     
     $currentAttempt = 0
@@ -1632,6 +1655,12 @@ function Remove-RegistrationResource{
     {
         try
         {
+            $lock = Get-AzureRmResourceLock -LockName 'RegistrationRGLock' -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+            if ($lock)
+            {
+                Write-Verbose "Unlocking Registration resource group lock  'RegistrationRGLock'..." -Verbose
+                Remove-AzureRmResourceLock -LockId $lock.LockId -Force
+            }
             Remove-AzureRmResource -ResourceId $ResourceId -Force -Verbose
             break
         }
