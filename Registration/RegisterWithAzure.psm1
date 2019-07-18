@@ -374,7 +374,7 @@ function Remove-AzsRegistration{
 
             # Remove registration resource from Azure
             Log-Output "Removing registration resource from Azure..."
-            Remove-RegistrationResource -ResourceId $registrationResource.ResourceId
+            Remove-RegistrationResource -ResourceId $registrationResource.ResourceId -ResourceGroupName $ResourceGroupName
         }
         else
         {
@@ -792,7 +792,7 @@ Function UnRegister-AzsEnvironment{
     {
         Log-Output "Found registration resource in Azure: $($registrationResource.ResourceId)"
         Log-Output "Removing registration resource from Azure..."
-        Remove-RegistrationResource -ResourceId $registrationResource.ResourceId
+        Remove-RegistrationResource -ResourceId $registrationResource.ResourceId -ResourceGroupName $ResourceGroupName
     }
     else
     {
@@ -1171,13 +1171,24 @@ function New-RegistrationResource{
     }
 
     Log-Output "Resource creation params: $(ConvertTo-Json $resourceCreationParams)"
-
+    $resourceType = 'Microsoft.Azurestack/registrations'
     do
     {
         try
         {
+                         
+            ## Remove any existing locks on the resource group
+           
+            $lock = Get-AzureRmResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $RegistrationName -ErrorAction SilentlyContinue
+            if ($lock)
+            {
+                Write-Verbose "Unlocking Registration resource lock  'RegistrationResourceLock'..." -Verbose
+                Remove-AzureRmResourceLock -LockId $lock.LockId -Force
+            }
+
             Log-Output "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
             $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
+
             break
         }
         catch
@@ -1214,6 +1225,19 @@ function New-RegistrationResource{
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
+
+    
+    ## Registration resource is needed for syndication. Placing resource lock to prevent accidental deletion.
+    Write-Verbose -Message "Registration resource $RegistrationName is needed for syndication. Placing resource lock to prevent accidental deletion."
+    $lockNotes ="Registration resource $RegistrationName is needed for syndication. Placing resource lock to prevent accidental deletion."
+    New-AzureRmResourceLock -LockLevel CanNotDelete `
+                     -LockNotes $lockNotes `
+                     -LockName 'RegistrationResourceLock' `
+                     -ResourceName $RegistrationName `
+                     -ResourceGroupName $ResourceGroupName `
+                     -ResourceType $resourceType `
+                     -Force -Verbose
+    Write-Verbose -Message "Resource lock placed successfully."
 }
 
 <#
@@ -1622,7 +1646,10 @@ function Remove-RegistrationResource{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
-        [String] $ResourceId
+        [String] $ResourceId,
+
+        [Parameter(Mandatory = $false)]
+        [String] $ResourceGroupName = 'azurestack'
     )
     
     $currentAttempt = 0
@@ -1632,6 +1659,18 @@ function Remove-RegistrationResource{
     {
         try
         {
+            ## Remove any existing Resource level lock before deleting the resource
+            $existingRegistrationResource = Get-AzureRmResource -ResourceId $ResourceId
+            $resourceName = $existingRegistrationResource.Name
+
+            $resourceType = 'Microsoft.Azurestack/registrations'
+            $lock = Get-AzureRmResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $resourceName -ErrorAction SilentlyContinue
+            if ($lock)
+            {
+                Write-Verbose "Removing Registration resource lock  'RegistrationResourceLock'..." -Verbose
+                Remove-AzureRmResourceLock -LockId $lock.LockId -Force
+            }
+
             Remove-AzureRmResource -ResourceId $ResourceId -Force -Verbose
             break
         }
