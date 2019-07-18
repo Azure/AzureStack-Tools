@@ -1227,9 +1227,9 @@ function New-RegistrationResource{
     } while ($currentAttempt -lt $maxAttempt)
 
     
-    ## Set CanNotDelete Lock on Resource so the Registration resource is not deleted
-    Write-Verbose -Message "Adding CanNotDelete Lock on Registration Resource $RegistrationName..."
-    $lockNotes ="Cannot delete the Registration Resource $RegistrationName"
+    ## Registration resource is needed for syndication. Placing resource lock to prevent accidental deletion.
+    Write-Verbose -Message "Registration resource $RegistrationName is needed for syndication. Placing resource lock to prevent accidental deletion."
+    $lockNotes ="Registration resource $RegistrationName is needed for syndication. Placing resource lock to prevent accidental deletion."
     New-AzureRmResourceLock -LockLevel CanNotDelete `
                      -LockNotes $lockNotes `
                      -LockName 'RegistrationResourceLock' `
@@ -1237,7 +1237,7 @@ function New-RegistrationResource{
                      -ResourceGroupName $ResourceGroupName `
                      -ResourceType $resourceType `
                      -Force -Verbose
-    Write-Verbose -Message "Adding CanNotDelete Lock on Registration Resource $RegistrationName."
+    Write-Verbose -Message "Resource lock placed successfully."
 }
 
 <#
