@@ -34,62 +34,49 @@ function Export-AzSOfflineMarketplaceItem {
     $azureContext = Get-AzureRmContext
     $azureTenantID = $azureContext.Tenant.TenantId
     $azureSubscriptionID = $azureContext.Subscription.Id
-
     $azureEnvironment = Get-AzureRmEnvironment -Name $cloud
-
-    $resources = Get-AzureRmResource -ResourceGroupName $resourceGroup -ResourceType Microsoft.AzureStack/registrations
-    $resource = $resources.resourcename
-    # workaround for a breaking change from moving from profile version 2017-03-09-profile to 2018-03-01-hybrid
-    # the output model of Get-AzureRmResource has changed between these versions
-    # in future this code path can be changed to simply with  (Get-AzureRMResource -Name "AzureStack*").Name
-    if($resource -eq $null)
-    {
-        $resource = $resources.Name
-    }
-    $registrations = $resource
-    if ($registrations.count -gt 1) {
-        $registration = $registrations[0]
-    } else {
-        $registration = $registrations
-    }
 
     # Retrieve the access token
     $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
     $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureContext.Account.id |Where TenantID -EQ $azureTenantID |Sort ExpiresOn |Select -Last 1
     
-    $productsUri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$($registration.ToString())/products?api-version=2016-01-01"
-    $headers = @{ 'authorization' = "Bearer $($token.AccessToken)"}
-    $products = (Invoke-RestMethod -Method GET -Uri $productsUri -Headers $headers -TimeoutSec 180).value
-
-    $displayKind = @{
-        "virtualMachine" = "Virtual Machine"
-        "virtualMachineExtension" = "Virtual Machine Extension"
-        "Solution" = "Solution"
-        "resourceProvider" = "Resource Provider"
+    $params = @{
+        azureEnvironment        = $azureEnvironment
+        azureSubscriptionID     = $azureSubscriptionID
+        accessToken             = $token.AccessToken
+        resourceGroup           = $resourceGroup
+        resourceProvider        = $false
     }
-    $marketitems = foreach ($product in $products) {
-        if(!$displayKind.contains($product.properties.productKind))
-        {
-            throw "Unknown product kind '$_'"
-        }
-        $displayType = $displayKind[$product.properties.productKind]
+    $aggregatedProducts = Get-ProductsList @params
 
+    $productObjects = foreach ($product in $aggregatedProducts) {
         Write-output ([pscustomobject]@{
-            Id          = $product.name.Split('/')[-1]
-            Type        = $displayType
-            Name        = $product.properties.displayName
-            Description = $product.properties.description
-            Publisher   = $product.properties.publisherDisplayName
-            Version     = $product.properties.productProperties.version
-            Size        = Get-SizeDisplayString -size $product.properties.payloadLength
+            Id          = $product.ProductName
+            Type        = $product.Type
+            Name        = $product.Name
+            Publisher   = $product.Publisher
         })
     }
 
-    $marketitems|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
-        if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-            Get-Dependency -productid $_.id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination -AzCopyDownloadThreads $azCopyDownloadThreads
-        } else {
-            Get-Dependency -productid $_.id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination
+    $productObjects|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
+        $versionObjects = ($aggregatedProducts | Where ProductName -eq $_.Id).VersionEntries
+
+        $versionObjects|Out-GridView -Title 'Select version for $_.Id' -PassThru|foreach{
+            $params = @{
+                productid           = $_.id
+                resourceGroup       = $resourceGroup
+                azureEnvironment    = $azureEnvironment
+                azureSubscriptionID = $azureSubscriptionID
+                registration        = $registration
+                token               = $token
+                destination         = $destination
+            }
+
+            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                $params.AzCopyDownloadThreads = $azCopyDownloadThreads
+            }
+
+            Get-Dependency @params
         }
     }
 }
@@ -1293,6 +1280,85 @@ function Get-SizeDisplayString {
         return [string]([math]::Round($size / 1MB)) + " MB"
     }
     else {return "<1 MB"} 
+}
+
+function Get-ProductsList {
+    Param(
+        [parameter(mandatory = $true)]
+        [Object] $azureEnvironment,
+
+        [parameter(mandatory = $true)]
+        [String] $azureSubscriptionID,
+
+        [parameter(mandatory = $true)]
+        [string] $accessToken,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String] $resourceGroup,
+
+        [Parameter(Mandatory = $true)]
+        [Switch] $resourceProvider
+    )
+
+    $registrationResources = Get-AzureRmResource -ResourceGroupName $resourceGroup -ResourceType Microsoft.AzureStack/registrations
+    $registrationId = $registrationResources.ResourceId | Select-Object -First 1
+    $armEndpoint = $azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/')
+    $headers = @{ 'authorization' = "Bearer $accessToken"}
+    $productsUri = "$armEndpoint/$registrationId/products?api-version=2016-01-01"
+    $products = (Invoke-RestMethod -Method GET -Uri $productsUri -Headers $headers -TimeoutSec 180).value
+
+    if ($resourceProvider) {
+        $displayKind = @{
+            "resourceProvider" = "Resource Provider"
+        }
+    } else {
+        $displayKind = @{
+            "virtualMachine" = "Virtual Machine"
+            "virtualMachineExtension" = "Virtual Machine Extension"
+            "Solution" = "Solution"
+        }
+    }
+
+    $aggregatedProducts = [pscustomobject[]]@()
+
+    foreach ($product in $products) {
+        if(!$displayKind.contains($product.properties.productKind))
+        {
+            # skip
+            continue;
+        }
+
+        $displayType = $displayKind[$product.properties.productKind]
+        $productNameAndVersion = $product.name.Split('/')[-1]
+        $productName = $productNameAndVersion.substring(0, $productNameAndVersion.lastIndexOf('-'))
+
+        $versionEntry = [pscustomobject]@{
+            Id              = $product.name.Split('/')[-1]
+            version         = $product.properties.productProperties.version
+            Description     = $product.properties.description
+            Size            = Get-SizeDisplayString -size $product.properties.payloadLength
+            # Provide more dependencies information
+        }
+
+        $existingProductEntry = $aggregatedProducts | where { $_.productName -ieq $productName }
+
+        if ($existingProductEntry) {
+            $existingProductEntry.VersionEntries += $versionEntry
+        } else {
+            $newProductEntry = @{
+                ProductName     = $productName
+                Type            = $displayType
+                Name            = $product.properties.displayName
+                Publisher       = $product.properties.publisherDisplayName
+                VersionEntries  = [pscustomobject[]]@( $versionEntry )
+            }
+
+            $aggregatedProducts += @($newProductEntry)
+        }
+    }
+
+    return $aggregatedProducts
 }
 
 Export-ModuleMember -Function Export-AzSOfflineMarketplaceItem
