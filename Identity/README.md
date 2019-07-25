@@ -5,7 +5,7 @@
 
 As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
 
-For Azure Stack 1904 or later
+For Azure Stack 1904 to 1907
 
 Install the AzureRM.BootStrapper module. Select Yes when prompted to install NuGet
 Install-Module -Name AzureRM.BootStrapper
@@ -16,7 +16,7 @@ Install-Module -Name AzureStack -RequiredVersion 1.7.2
 
 
 
-For Azure stack 1903 or later
+For Azure stack 1901 to 1903
 
 ```powershell
 Install-Module -Name AzureRM -RequiredVersion 2.4.0
