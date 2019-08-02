@@ -839,7 +839,7 @@ function Test-AzSOfflineMarketplaceItem {
         {
             if ($_.Exception.Response.StatusCode -ne 404)
             {
-                Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+                Write-Warning -Message "Failed to execute web request, Exception: `r`n$($_.Exception)" 
             }
         }
     }
