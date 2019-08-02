@@ -768,7 +768,7 @@ function Import-ByDependency
     {
         if ($_.Exception.Response.StatusCode -ne 404)
         {
-            Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+            Write-Warning -Message "Failed to execute web request: Exception: $($_.Exception)" 
         }
     }
 
@@ -839,7 +839,7 @@ function Test-AzSOfflineMarketplaceItem {
         {
             if ($_.Exception.Response.StatusCode -ne 404)
             {
-                Write-Warning -Message "Failed to execute web request, Exception: `r`n$($_.Exception)" 
+                Write-Warning -Message "Failed to execute web request, Exception: `r`n$($_.Exception)"
             }
         }
     }
@@ -903,7 +903,7 @@ function Resolve-ToLocalURI {
     # check osDiskImage
     if ($json.productDetailsProperties.OsDiskImage) {
         $osDiskImageFile = Get-Item -path "$productFolder\*.vhd"
-        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -productid $productid -resourceGroup $resourceGroup
+        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -productid $productid -resourceGroup $resourceGroup -blobType Page
         $json.productDetailsProperties.OsDiskImage.sourceBlobSasUri = $osImageURI
     }
 
@@ -1040,6 +1040,8 @@ function Syndicate-Product {
         properties = $properties
     }
 
+    Write-Verbose -Message "properties : $($json)" -Verbose
+
     $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -Body $json -MaxRetry 2 -azsCredential $azsCredential
 
     if ($syndicateResponse.StatusCode -eq 200) {
@@ -1058,7 +1060,11 @@ function Upload-ToStorage {
         [String] $productid,
 
         [parameter(mandatory = $true)]
-        [String] $resourceGroup
+        [String] $resourceGroup,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Page', 'Block')]
+        [String] $blobType = "Block"
     )
 
     $syndicationStorageName = "syndicationstorage"
@@ -1099,6 +1105,7 @@ function Upload-ToStorage {
             -Container $syndicationContainerName `
             -Blob $blobName `
             -Context $ctx `
+            -BlobType $blobType `
             -Force | Out-Null
 
         $fileURI = (Get-AzureStorageBlob -blob $blobName -Container $syndicationContainerName -Context $ctx).ICloudBlob.Uri.AbsoluteUri
@@ -1246,7 +1253,8 @@ function InvokeWebRequest {
         catch
         {
             if ($retryCount -ge $maxRetry) {
-                Write-Warning "Request to $method $uri failed the maximum number of $maxRetry times. Timestamp: $($(get-date).ToString('T'))"
+                Write-Warning "Request to $method $uri failed the maximum number of $maxRetry times. Timestamp: $((get-date).ToString('T'))"
+                Write-Warning "Exception: `r`n$($_.Exception)"
                 throw
             } else {
                 $error = $_.Exception
@@ -1255,7 +1263,7 @@ function InvokeWebRequest {
                     try {
                         if (!$azsCredential) {
                             Write-Warning -Message "Access token expired."
-                            $azsCredential = Get-Credential -Message "Enter the azure stack operator credential"
+                            $azsCredential = Get-Credential -Message "Enter the Azure Stack operator credential"
                         }
                         $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $armEndpoint
                         $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
@@ -1266,12 +1274,12 @@ function InvokeWebRequest {
                     }
                     catch
                     {
-                        Write-Warning "webrequest exception. `n$error"
+                        Write-Warning "webrequest exception. `r`n$($_.Exception)"
                     }
                 }
 
                 $retryCount++
-                Write-Debug "Request to $method $uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
+                Write-Warning "Request to $method $uri failed with status $error. `r`nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $((get-date).ToString('T'))"
                 Start-Sleep $sleepSeconds
             }
         }
