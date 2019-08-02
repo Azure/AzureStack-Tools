@@ -13,8 +13,40 @@ function Export-AzSOfflineMarketplaceItem {
     Param(
         [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
-        [String] $cloud = "AzureCloud",
+        [String] $resourceGroup = "azurestack",
 
+        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [ValidateRange(1, 128)]
+        [Int] $AzCopyDownloadThreads,
+
+        [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [ValidateNotNullorEmpty()]
+        [String] $destination
+    )
+
+    $params = @{
+        resourceGroup       = $resourceGroup
+        destination         = $destination
+        resourceProvider    = $false
+    }
+    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads'))
+    {
+        $params.AzCopyDownloadThreads = $AzCopyDownloadThreads
+    }
+
+    Export-AzSOfflineProductInternal @params
+}
+
+<#
+    .SYNOPSIS
+    List all Azure Resource Providers available for syndication and allows to download them
+    Requires an Azure Stack System to be registered for the subscription used to login
+#>
+
+function Export-AzSOfflineResourceProvider {
+    [CmdletBinding(DefaultParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+
+    Param(
         [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
         [ValidateNotNullorEmpty()]
         [String] $resourceGroup = "azurestack",
@@ -28,80 +60,148 @@ function Export-AzSOfflineMarketplaceItem {
         [String] $destination
     )
 
+    $params = @{
+        resourceGroup       = $resourceGroup
+        destination         = $destination
+        resourceProvider    = $true
+    }
+    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads'))
+    {
+        $params.AzCopyDownloadThreads = $AzCopyDownloadThreads
+    }
+
+    Export-AzSOfflineProductInternal @params
+}
+
+function Export-AzSOfflineProductInternal {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String] $resourceGroup,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 128)]
+        [Int] $AzCopyDownloadThreads,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String] $destination,
+
+        [Parameter(Mandatory = $true)]
+        [Switch] $resourceProvider
+    )
+
     # in case it is relative path
     $destination = Resolve-Path -Path $destination
 
     $azureContext = Get-AzureRmContext
-    $azureTenantID = $azureContext.Tenant.TenantId
     $azureSubscriptionID = $azureContext.Subscription.Id
-    $azureEnvironment = Get-AzureRmEnvironment -Name $cloud
+    $azureEnvironment = $azureContext.Environment
 
     # Retrieve the access token
-    $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureContext.Account.id |Where TenantID -EQ $azureTenantID |Sort ExpiresOn |Select -Last 1
+    $accessToken = Get-AccessTokenFromContext
     
     $params = @{
         azureEnvironment        = $azureEnvironment
         azureSubscriptionID     = $azureSubscriptionID
-        accessToken             = $token.AccessToken
+        accessToken             = $accessToken
         resourceGroup           = $resourceGroup
-        resourceProvider        = $false
+        resourceProvider        = $resourceProvider
     }
     $aggregatedProducts = Get-ProductsList @params
 
     $productObjects = foreach ($product in $aggregatedProducts) {
+        if ($product.VersionEntries.length -eq 1) {
+            $version = $product.VersionEntries[0].version
+            $size = $product.VersionEntries[0].Size
+        }
+        else {
+            $version = "Multiple versions"
+            $size = "--"
+        }
+
         Write-output ([pscustomobject]@{
+            Name        = $product.Name
             Id          = $product.ProductName
             Type        = $product.Type
-            Name        = $product.Name
             Publisher   = $product.Publisher
+            Version     = $version
+            Size        = $size
         })
     }
 
-    $productObjects|Out-GridView -Title 'Azure Marketplace Items' -PassThru|foreach {
-        $versionObjects = ($aggregatedProducts | Where ProductName -eq $_.Id).VersionEntries
+    $selectedProducts = Out-GridView -InputObject $productObjects -Title 'Azure Marketplace Items' -PassThru
+    foreach ($selectedProduct in $selectedProducts) {
+        $versionEntries = ($aggregatedProducts | Where ProductName -eq $selectedProduct.Id).VersionEntries
 
-        $versionObjects|Out-GridView -Title 'Select version for $_.Id' -PassThru|foreach{
-            $params = @{
-                productid           = $_.id
-                resourceGroup       = $resourceGroup
-                azureEnvironment    = $azureEnvironment
-                azureSubscriptionID = $azureSubscriptionID
-                registration        = $registration
-                token               = $token
-                destination         = $destination
+        $getDependencyParam = @{
+            azureEnvironment    = $azureEnvironment
+            accessToken         = $accessToken
+            destination         = $destination
+        }
+
+        if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+            $params.AzCopyDownloadThreads = $azCopyDownloadThreads
+        }
+
+        if ($versionEntries.length -eq 1) {
+            $getDependencyParam.productid = $versionEntries[0].ProductId
+            $getDependencyParam.productResourceId = $versionEntries[0].ProductResourceId
+            Get-DependenciesAndDownload @getDependencyParam
+        }
+        else {
+            $versionObjects = foreach ($versionObject in $versionEntries) {
+                Write-output ([pscustomobject]@{
+                    Name        = $selectedProduct.Id  # Product Name
+                    Version     = $versionObject.Version
+                    Size        = $versionObject.Size
+                })
             }
 
-            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                $params.AzCopyDownloadThreads = $azCopyDownloadThreads
-            }
+            Out-GridView -InputObject $versionObjects -Title "Select version for $($selectedProduct.Id)" -PassThru|foreach {
+                $getDependencyParam.productid = "$($selectedProduct.Id)-$($versionObject.Version)"
+                $getDependencyParam.ProductResourceId = ($versionEntries | where ProductId -eq $getDependencyParam.productid).ProductResourceId
 
-            Get-Dependency @params
+                Get-DependenciesAndDownload @getDependencyParam
+            }
         }
     }
 }
 
-function Get-Dependency {
+function Get-AccessTokenFromContext {
+    $azureContext = Get-AzureRmContext
+    $azureTenantID = $azureContext.Tenant.TenantId
+    $azureSubscriptionID = $azureContext.Subscription.Id
+    $azureEnvironment = $azureContext.Environment
+
+    # Retrieve the access token
+    $tokens = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
+    $token = $tokens |Where Resource -EQ $azureEnvironment.ActiveDirectoryServiceEndpointResourceId |Where DisplayableId -EQ $azureContext.Account.id |Where TenantID -EQ $azureTenantID |Sort ExpiresOn |Select -Last 1
+
+    return $token.AccessToken
+}
+
+function Get-DependenciesAndDownload {
     param (
         [parameter(mandatory = $true)]
+        [ValidateNotNullorEmpty()]
         [String] $productid,
 
         [parameter(mandatory = $true)]
-        [String] $resourceGroup,
+        [ValidateNotNullorEmpty()]
+        [String] $productResourceId,
 
         [parameter(mandatory = $true)]
+        [ValidateNotNullorEmpty()]
         [Object] $azureEnvironment,
 
         [parameter(mandatory = $true)]
-        [String] $azureSubscriptionID,
+        [ValidateNotNullorEmpty()]
+        [string] $accessToken,
 
         [parameter(mandatory = $true)]
-        [String] $registration,
-
-        [parameter(mandatory = $true)]
-        [Object] $token,
-
-        [parameter(mandatory = $true)]
+        [ValidateNotNullorEmpty()]
         [String] $destination,
 
         [parameter(mandatory = $false)]
@@ -109,22 +209,32 @@ function Get-Dependency {
         [Int] $azCopyDownloadThreads
     )
 
-    $headers = @{ 'authorization' = "Bearer $($token.AccessToken)"}
-    $uri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$registration/products/$productid/listDetails?api-version=2016-01-01"
+    $headers = @{ 'authorization' = "Bearer $accessToken"}
+    $uri = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/$productResourceId/listDetails?api-version=2016-01-01"
     $downloadDetails = Invoke-RestMethod -Method POST -Uri $uri -Headers $headers -TimeoutSec 180
 
     if ($downloadDetails.properties.dependentProducts)
     {
-        foreach ($id in $downloadDetails.properties.dependentProducts)
+        foreach ($dependentProductId in $downloadDetails.properties.dependentProducts)
         {
-            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                Get-Dependency -productid $id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination -azCopyDownloadThreads $azCopyDownloadThreads
-            } else {
-                Get-Dependency -productid $id -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination
+            $dependentProductResourceId = $productResourceId.replace($productId, $dependentProductId)
+            $getDependencyParam = @{
+                productId           = $dependentProductId
+                productResourceId   = $dependentProductResourceId
+                azureEnvironment    = $azureEnvironment
+                azureSubscriptionID = $azureSubscriptionID
+                accessToken         = $accessToken
+                destination         = $destination
             }
+            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                $getDependencyParam.azCopyDownloadThreads = $azCopyDownloadThreads
+            }
+
+            Get-DependenciesAndDownload @getDependencyParam
         }
     }
 
+    $productResourceName = 
     $productFolder = "$destination\$productid"
     $destinationCheck = Test-Path $productFolder
     if ($destinationCheck) {
@@ -137,11 +247,17 @@ function Get-Dependency {
     }
 
     Write-Host "`nDownloading product: $productid" -ForegroundColor DarkCyan
-    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-        Download-Product -productid $productid -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination -azCopyDownloadThreads $azCopyDownloadThreads
-    } else {
-        Download-Product -productid $productid -resourceGroup $resourceGroup -azureEnvironment $azureEnvironment -azureSubscriptionID $azureSubscriptionID -registration $registration -token $token -destination $destination
+    $downloadProductParam = @{
+        productid           = $productid
+        productResourceId   = $productResourceId
+        azureEnvironment    = $azureEnvironment
+        accessToken         = $accessToken
+        destination         = $destination
     }
+    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+        $downloadProductParam.azCopyDownloadThreads = $azCopyDownloadThreads
+    }
+    Download-Product @downloadProductParam
 }
 
 function Download-Product {
@@ -150,19 +266,13 @@ function Download-Product {
         [String] $productid,
 
         [parameter(mandatory = $true)]
-        [String] $resourceGroup,
+        [String] $productResourceId,
 
         [parameter(mandatory = $true)]
         [Object] $azureEnvironment,
 
         [parameter(mandatory = $true)]
-        [String] $azureSubscriptionID,
-
-        [parameter(mandatory = $true)]
-        [String] $registration,
-
-        [parameter(mandatory = $true)]
-        [Object] $token,
+        [string] $accessToken,
 
         [parameter(mandatory = $true)]
         [String] $destination,
@@ -173,9 +283,9 @@ function Download-Product {
     )
 
     # get name of azpkg
-    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$registration/products/$($productid)?api-version=2016-01-01"
+    $azpkgURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/$($productResourceId)?api-version=2016-01-01"
     Write-Debug $azpkgURI
-    $headers = @{ 'authorization' = "Bearer $($token.AccessToken)"}
+    $headers = @{ 'authorization' = "Bearer $accessToken"}
     $productDetails = Invoke-RestMethod -Method GET -Uri $azpkgURI -Headers $headers -TimeoutSec 180
     $azpkgName = $productDetails.properties.galleryItemIdentity
     if (!$azpkgName) {
@@ -183,7 +293,7 @@ function Download-Product {
     }
 
     # get download location for azpkg
-    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/subscriptions/$($azureSubscriptionID.ToString())/resourceGroups/$resourceGroup/providers/Microsoft.AzureStack/registrations/$registration/products/$productid/listDetails?api-version=2016-01-01"
+    $downloadURI = "$($azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/'))/$productResourceId/listDetails?api-version=2016-01-01"
     Write-Debug $downloadURI
     $downloadDetails = Invoke-RestMethod -Method POST -Uri $downloadURI -Headers $headers -TimeoutSec 180
 
@@ -1285,12 +1395,15 @@ function Get-SizeDisplayString {
 function Get-ProductsList {
     Param(
         [parameter(mandatory = $true)]
+        [ValidateNotNull()]
         [Object] $azureEnvironment,
 
         [parameter(mandatory = $true)]
+        [ValidateNotNullorEmpty()]
         [String] $azureSubscriptionID,
 
         [parameter(mandatory = $true)]
+        [ValidateNotNullorEmpty()]
         [string] $accessToken,
 
         [Parameter(Mandatory = $true)]
@@ -1334,10 +1447,11 @@ function Get-ProductsList {
         $productName = $productNameAndVersion.substring(0, $productNameAndVersion.lastIndexOf('-'))
 
         $versionEntry = [pscustomobject]@{
-            Id              = $product.name.Split('/')[-1]
-            version         = $product.properties.productProperties.version
-            Description     = $product.properties.description
-            Size            = Get-SizeDisplayString -size $product.properties.payloadLength
+            ProductId               = $product.name.Split('/')[-1]
+            ProductResourceId       = $product.Id
+            Version                 = $product.properties.productProperties.version
+            Description             = $product.properties.description
+            Size                    = Get-SizeDisplayString -size $product.properties.payloadLength
             # Provide more dependencies information
         }
 
@@ -1345,6 +1459,7 @@ function Get-ProductsList {
 
         if ($existingProductEntry) {
             $existingProductEntry.VersionEntries += $versionEntry
+            $existingProductEntry.VersionEntries = $existingProductEntry.VersionEntries | Sort-Object -Property Version
         } else {
             $newProductEntry = @{
                 ProductName     = $productName
@@ -1358,7 +1473,7 @@ function Get-ProductsList {
         }
     }
 
-    return $aggregatedProducts
+    return $aggregatedProducts | Sort-Object -Property ProductId
 }
 
 Export-ModuleMember -Function Export-AzSOfflineMarketplaceItem
