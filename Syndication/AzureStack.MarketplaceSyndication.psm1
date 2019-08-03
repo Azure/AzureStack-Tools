@@ -700,8 +700,9 @@ function PreCheck
             }
             else
             {
-                Write-Error -Message "Property value for $property is null. Please check JSON contents, then retry import."
-                throw "JSON file contains null values for required properties."
+                $errorMessage = "`r`nProperty value for $property is null. Please check JSON contents, then retry import"
+                $errorMessage += "`r`nJSON file contains null values for required properties: $($properties)"
+                Write-Error -Message $errorMessage -ErrorAction Stop
             }
         }
 
@@ -709,8 +710,9 @@ function PreCheck
        
         if ($iconUris.small -eq $null -or $iconUris.large -eq $null -or $iconUris.medium -eq $null -or $iconUris.wide -eq $null )
         {
-             Write-Error -Message "Property value for certain Icons is null. Please check JSON contents, then retry import."
-             throw "JSON file contains null values for certain Icons. Please ensure small, medium, large and wide icons exist in the JSON."
+            $errorMessage = "`r`nProperty value for certain Icons is null. Please check JSON contents, then retry import."
+            $errorMessage += "`r`nJSON file contains null values for certain Icons. Please ensure small, medium, large and wide icons exist in the JSON."
+            Write-Error -Message $errorMessage -ErrorAction Stop
         }
     }
 }
@@ -1257,7 +1259,6 @@ function InvokeWebRequest {
                 Write-Warning "Exception: `r`n$($_.Exception)"
                 throw
             } else {
-                $error = $_.Exception
                 if ($_.Exception.Response.StatusCode -eq 401)
                 {
                     try {
@@ -1279,7 +1280,7 @@ function InvokeWebRequest {
                 }
 
                 $retryCount++
-                Write-Warning "Request to $method $uri failed with status $error. `r`nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $((get-date).ToString('T'))"
+                Write-Warning "Request to $method $uri failed with exception: `r`n$($_.Exception). `r`nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $((get-date).ToString('T'))"
                 Start-Sleep $sleepSeconds
             }
         }
