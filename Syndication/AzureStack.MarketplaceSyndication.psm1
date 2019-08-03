@@ -1042,7 +1042,7 @@ function Syndicate-Product {
         properties = $properties
     }
 
-    Write-Verbose -Message "properties : $($json)" -Verbose
+    Write-Verbose -Message "properties : $($json | ConvertTo-Json -Compress)" -Verbose
 
     $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -Body $json -MaxRetry 2 -azsCredential $azsCredential
 
