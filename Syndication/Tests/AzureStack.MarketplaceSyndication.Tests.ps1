@@ -174,6 +174,19 @@ InModuleScope $script:ModuleName {
         } )
     }
 
+    $rpProductEntity = @{
+      ProductName     = $mockedRpProductName
+        Type            = "Resource Provider"
+        Name            = $mockedRp.properties.displayName
+        Publisher       = $mockedRp.properties.publisherDisplayName
+        VersionEntries  = [pscustomobject[]]@( [pscustomobject]@{
+            ProductId               = "$mockedRpProductName-$mockedRpVersion"
+            ProductResourceId       = $mockedRp.Id
+            Version                 = $mockedRpVersion
+            Description             = $mockedRp.properties.description
+            Size                    = "3 MB"
+        } )
+    }
 
     $mockedContext = [pscustomobject]@{
         Tenant = [pscustomobject]@{
@@ -196,24 +209,25 @@ InModuleScope $script:ModuleName {
     Describe 'AzureStack.MarketplaceSyndication module - Download marketplace items or resource providers' {
         
         Context "User interface" {
+          Mock Get-AzureRmContext { return $mockedContext }
+          Mock Get-AccessTokenFromContext { return $mockedAccessToken }
+
           It 'Select marketplace item to download' {
-            Write-Verbose $bitnamiRedmine.Id -Verbose
-            Mock Get-AzureRmContext { return $mockedContext }
-            Mock Get-AccessTokenFromContext { return $mockedAccessToken }
+           
             Mock Get-ProductsList { 
               Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
               return @($bitnamiRedmineProductEntry, $sqliaasextensionProductEntry) 
             }
-            Mock Out-GridView { 
-              Write-Verbose "Input parameters of Out-GridView for product selection: $(ConvertTo-JSON $args)" -Verbose
+            Mock OutGridViewWrapper { 
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
               return [pscustomobject[]]@( [pscustomobject]@{
                 Id          = $bitnamiRedmineProductName
               }, [pscustomobject]@{
                 Id          = $sqliaasextensionProductName
               } ) 
-            } -ParameterFilter { $Title -eq "Azure Marketplace Items" }
-            Mock Out-GridView { 
-              Write-Verbose "Input parameters of Out-GridView for version selection: $(ConvertTo-JSON $args)" -Verbose
+            } -ParameterFilter { $Title -eq "Download marketplace items from Azure" }
+            Mock OutGridViewWrapper { 
+              Write-Verbose "Input parameters of OutGridViewWrapper for version selection: $(ConvertTo-JSON $args)" -Verbose
               return [pscustomobject[]]@( [pscustomobject]@{
                 Name        = $sqliaasextensionProductName
                 Version     = $sqliaasextension2_2_30_0Version
@@ -222,7 +236,7 @@ InModuleScope $script:ModuleName {
             Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
 
             $mockedDownloadDest = "$PSScriptRoot"
-            Export-AzSOfflineProductInternal -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest -resourceProvider:$false
+            Export-AzSOfflineMarketplaceItem -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
 
             Assert-MockCalled Get-AzureRmContext -Scope It -Times 1
             Assert-MockCalled Get-AccessTokenFromContext -Scope It -Times 1
@@ -233,8 +247,8 @@ InModuleScope $script:ModuleName {
               $resourceGroup -eq $mockedRegistrationResourceGroup -and `
               $resourceProvider -eq $false
             }
-            Assert-MockCalled Out-GridView -Scope It -Times 1 -ParameterFilter { 
-              $Title -eq "Azure Marketplace Items" -and `
+            Assert-MockCalled OutGridViewWrapper -Scope It -Times 1 -ParameterFilter { 
+              $Title -eq "Download marketplace items from Azure" -and `
               $InputObject.length -eq 2 -and `
               $InputObject[0].Name -eq $bitnamiRedmineProductEntry.Name -and `
               $InputObject[0].Id -eq $bitnamiRedmineProductName -and `
@@ -249,7 +263,7 @@ InModuleScope $script:ModuleName {
               $InputObject[1].Version -eq "Multiple versions"  -and `
               $InputObject[1].Size -eq "--"
             }
-            Assert-MockCalled Out-GridView -Scope It -Times 1 -ParameterFilter { 
+            Assert-MockCalled OutGridViewWrapper -Scope It -Times 1 -ParameterFilter { 
               $Title -eq "Select version for $sqliaasextensionProductName" -and `
               $InputObject.length -eq 2 -and `
               $InputObject[0].Name -eq $sqliaasextensionProductName -and `
@@ -272,9 +286,115 @@ InModuleScope $script:ModuleName {
               $productResourceId -eq $sqliaasextension2_2_30_0.Id
             }
           }
+
+          It 'Select resource provider to download' {
+           
+            Mock Get-ProductsList { 
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              return @($rpProductEntity) 
+            }
+            Mock OutGridViewWrapper { 
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+              return [pscustomobject[]]@( [pscustomobject]@{
+                Id          = $mockedRpProductName
+              } )
+            } -ParameterFilter { $Title -eq "Download resource providers from Azure" }
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+
+            $mockedDownloadDest = "$PSScriptRoot"
+            Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
+
+            Assert-MockCalled Get-AzureRmContext -Scope It -Times 1
+            Assert-MockCalled Get-AccessTokenFromContext -Scope It -Times 1
+            Assert-MockCalled Get-ProductsList -Scope It -Times 1 -ParameterFilter { 
+              $azureEnvironment -eq $mockedContext.Environment -and `
+              $azureSubscriptionID -eq $mockedContext.Subscription.Id -and `
+              $accessToken -eq $mockedAccessToken -and `
+              $resourceGroup -eq $mockedRegistrationResourceGroup -and `
+              $resourceProvider -eq $true
+            }
+            Assert-MockCalled OutGridViewWrapper -Scope It -Times 1 -ParameterFilter { 
+              $Title -eq "Download resource providers from Azure" -and `
+              $InputObject.Name -eq $rpProductEntity.Name -and `
+              $InputObject.Id -eq $mockedRpProductName -and `
+              $InputObject.Type -eq $rpProductEntity.Type -and `
+              $InputObject.Publisher -eq $rpProductEntity.Publisher -and `
+              $InputObject.Version -eq $rpProductEntity.VersionEntries[0].version -and `
+              $InputObject.Size -eq $rpProductEntity.VersionEntries[0].Size
+            }
+            
+            Assert-MockCalled Get-DependenciesAndDownload -Scope It -Times 1 -ParameterFilter { 
+              $azureEnvironment -eq $mockedContext.Environment -and `
+              $destination -eq $mockedDownloadDest -and `
+              $productid -eq "$mockedRpProductName-$mockedRpVersion" -and `
+              $productResourceId -eq $mockedRp.Id
+            }
+          }
+
+          It 'Select product to download when Azure returns empty' {
+           
+            Mock Get-ProductsList { 
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              return @()
+            }
+            Mock OutGridViewWrapper {
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+            } -ParameterFilter { $Title -eq "Download resource providers from Azure" }
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+
+            $mockedDownloadDest = "$PSScriptRoot"
+            Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
+
+            Assert-MockCalled Get-AzureRmContext -Scope It -Times 1
+            Assert-MockCalled Get-AccessTokenFromContext -Scope It -Times 1
+            Assert-MockCalled Get-ProductsList -Scope It -Times 1 -ParameterFilter { 
+              $azureEnvironment -eq $mockedContext.Environment -and `
+              $azureSubscriptionID -eq $mockedContext.Subscription.Id -and `
+              $accessToken -eq $mockedAccessToken -and `
+              $resourceGroup -eq $mockedRegistrationResourceGroup -and `
+              $resourceProvider -eq $true
+            }
+            Assert-MockCalled OutGridViewWrapper -Scope It -Times 1 -ParameterFilter { 
+              $Title -eq "Download resource providers from Azure"
+              ([pscustomobject[]]$InputObject).length -eq 0
+            }
+            
+            Assert-MockCalled Get-DependenciesAndDownload -Scope It -Times 0
+          }
+
+          It 'Select product to download when user select nothing' {
+           
+            Mock Get-ProductsList { 
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              return @($rpProductEntity)
+            }
+            Mock OutGridViewWrapper { 
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+            } -ParameterFilter { $Title -eq "Download resource providers from Azure" }
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+
+            $mockedDownloadDest = "$PSScriptRoot"
+            Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
+
+            Assert-MockCalled Get-AzureRmContext -Scope It -Times 1
+            Assert-MockCalled Get-AccessTokenFromContext -Scope It -Times 1
+            Assert-MockCalled Get-ProductsList -Scope It -Times 1 -ParameterFilter { 
+              $azureEnvironment -eq $mockedContext.Environment -and `
+              $azureSubscriptionID -eq $mockedContext.Subscription.Id -and `
+              $accessToken -eq $mockedAccessToken -and `
+              $resourceGroup -eq $mockedRegistrationResourceGroup -and `
+              $resourceProvider -eq $true
+            }
+            Assert-MockCalled OutGridViewWrapper -Scope It -Times 1 -ParameterFilter { 
+              $Title -eq "Download resource providers from Azure"
+              ([pscustomobject[]]$InputObject).length -eq 1
+            }
+            
+            Assert-MockCalled Get-DependenciesAndDownload -Scope It -Times 0
+          }
         }
 
-        Context "User interface" {
+        Context "Get-ProductsList context" {
 
           It 'Get marketplace items information from Azure' {
             $mockedRegistrationResource = [pscustomobject]@{
@@ -405,6 +525,83 @@ InModuleScope $script:ModuleName {
               $Headers.authorization -eq "Bearer $mockedAccessToken"
             }
           }
+
+          It 'Get product information from Azure with no registration' {
+            Mock Get-AzureRmResource { 
+              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)" -Verbose
+              return @() }
+
+            $params = @{
+              azureEnvironment = $mockedContext.Environment
+              azureSubscriptionID = $mockedContext.Subscription.Id
+              accessToken = $mockedAccessToken
+              resourceGroup = $mockedRegistrationResourceGroup
+              resourceProvider = $true
+            }
+
+            try
+            {
+              [pscustomobject[]](Get-ProductsList @params)
+              
+              throw "Get-ProductsList should throw exception because there is no registraion"
+            } catch {
+              $_.Exception.Message | Should Be "The subscription does not have Azure Stack registration. Please use the correct subscription."
+            }
+
+            Assert-MockCalled Get-AzureRmResource -Scope It -Times 1 -ParameterFilter {
+              $ResourceGroupName -eq $mockedRegistrationResourceGroup -and `
+              $ResourceType -eq "Microsoft.AzureStack/registrations"
+            }
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 0
+          }
+
+          It 'Get resource providers information from Azure with empty response' {
+            $mockedRegistrationResource = [pscustomobject]@{
+              ResourceId = "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName"
+            }
+
+            $mockedRegistrationResource2 = [pscustomobject]@{
+              ResourceId = "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/mocked2"
+            }
+
+            $mockedResponse = @{
+                value = @()
+            }
+
+            Mock Get-AzureRmResource { 
+              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)" -Verbose
+              return @($mockedRegistrationResource, $mockedRegistrationResource2) }
+            Mock Invoke-RestMethod { 
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)" -Verbose
+              return $mockedResponse }
+
+            $params = @{
+              azureEnvironment = $mockedContext.Environment
+              azureSubscriptionID = $mockedContext.Subscription.Id
+              accessToken = $mockedAccessToken
+              resourceGroup = $mockedRegistrationResourceGroup
+              resourceProvider = $true
+            }
+
+            $products = [pscustomobject[]](Get-ProductsList @params)
+
+            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)" -Verbose
+            $products.length | Should Be 0
+
+            Assert-MockCalled Get-AzureRmResource -Scope It -Times 1 -ParameterFilter {
+              $ResourceGroupName -eq $mockedRegistrationResourceGroup -and `
+              $ResourceType -eq "Microsoft.AzureStack/registrations"
+            }
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 1 -ParameterFilter {
+              $Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products?api-version=2016-01-01" -and `
+              $TimeoutSec -eq 180 -and `
+              $Method -eq 1 -and ` # GET
+              $Headers.authorization -eq "Bearer $mockedAccessToken"
+            }
+          }
+
         }
     }
 }

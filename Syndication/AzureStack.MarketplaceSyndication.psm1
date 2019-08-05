@@ -44,18 +44,16 @@ function Export-AzSOfflineMarketplaceItem {
 #>
 
 function Export-AzSOfflineResourceProvider {
-    [CmdletBinding(DefaultParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
-
     Param(
-        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [String] $resourceGroup = "azurestack",
 
-        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory = $false)]
         [ValidateRange(1, 128)]
         [Int] $AzCopyDownloadThreads,
 
-        [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [String] $destination
     )
@@ -111,7 +109,8 @@ function Export-AzSOfflineProductInternal {
     }
     $aggregatedProducts = Get-ProductsList @params
 
-    $productObjects = foreach ($product in $aggregatedProducts) {
+    $productObjects = [pscustomobject[]]@()
+    foreach ($product in $aggregatedProducts) {
         if ($product.VersionEntries.length -eq 1) {
             $version = $product.VersionEntries[0].version
             $size = $product.VersionEntries[0].Size
@@ -121,7 +120,7 @@ function Export-AzSOfflineProductInternal {
             $size = "--"
         }
 
-        Write-output ([pscustomobject]@{
+        $productObjects += ([pscustomobject]@{
             Name        = $product.Name
             Id          = $product.ProductName
             Type        = $product.Type
@@ -131,7 +130,12 @@ function Export-AzSOfflineProductInternal {
         })
     }
 
-    $selectedProducts = Out-GridView -InputObject $productObjects -Title 'Azure Marketplace Items' -PassThru
+    $selectionWindowsTitle = 'Download marketplace items from Azure'
+    if ($resourceProvider) {
+        $selectionWindowsTitle = 'Download resource providers from Azure'
+    }
+    
+    $selectedProducts = OutGridViewWrapper -InputObject $productObjects -Title $selectionWindowsTitle
     foreach ($selectedProduct in $selectedProducts) {
         $versionEntries = ($aggregatedProducts | Where ProductName -eq $selectedProduct.Id).VersionEntries
 
@@ -159,7 +163,7 @@ function Export-AzSOfflineProductInternal {
                 })
             }
 
-            Out-GridView -InputObject $versionObjects -Title "Select version for $($selectedProduct.Id)" -PassThru|foreach {
+            OutGridViewWrapper -InputObject $versionObjects -Title "Select version for $($selectedProduct.Id)" | foreach {
                 $getDependencyParam.productid = "$($selectedProduct.Id)-$($versionObject.Version)"
                 $getDependencyParam.ProductResourceId = ($versionEntries | where ProductId -eq $getDependencyParam.productid).ProductResourceId
 
@@ -167,6 +171,18 @@ function Export-AzSOfflineProductInternal {
             }
         }
     }
+}
+
+function OutGridViewWrapper {
+    param (
+        [parameter(mandatory = $true)]
+        [ValidateNotNullorEmpty()]
+        [String] $Title,
+
+        [pscustomobject[]] $InputObject
+    )
+
+    return ($InputObject | Out-GridView -Title $Title -PassThru)
 }
 
 function Get-AccessTokenFromContext {
@@ -234,7 +250,6 @@ function Get-DependenciesAndDownload {
         }
     }
 
-    $productResourceName = 
     $productFolder = "$destination\$productid"
     $destinationCheck = Test-Path $productFolder
     if ($destinationCheck) {
@@ -1416,6 +1431,11 @@ function Get-ProductsList {
 
     $registrationResources = Get-AzureRmResource -ResourceGroupName $resourceGroup -ResourceType Microsoft.AzureStack/registrations
     $registrationId = $registrationResources.ResourceId | Select-Object -First 1
+
+    if (-not $registrationId) {
+        throw "The subscription does not have Azure Stack registration. Please use the correct subscription."
+    }
+
     $armEndpoint = $azureEnvironment.ResourceManagerUrl.ToString().TrimEnd('/')
     $headers = @{ 'authorization' = "Bearer $accessToken"}
     $productsUri = "$armEndpoint/$registrationId/products?api-version=2016-01-01"
