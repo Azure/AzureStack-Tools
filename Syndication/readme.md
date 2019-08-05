@@ -52,10 +52,10 @@ Option -azCopyDownloadThreads is optional. It should only be used when you have 
 You can see more details at https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy#specify-the-number-of-concurrent-operations-to-start
 
 For both marketplace items and resource providers downloading, you will be prompted to select a product first.
-![](productSelection.png)
+![](productSelection.PNG)
 
 If the selected production has multiple versions, you will be promopted to select a version for the product and start downloading. Otherwise, the downloading will start directly after the product is selected.
-![](versionSelection.png)
+![](versionSelection.PNG)
 
 After download completion, the item will be available in the folder specified in the script.
 
@@ -71,13 +71,13 @@ Test-AzSOfflineMarketplaceItem -Destination "[marketplace content folder]"
 The previous downloaded files will need to be made available to your Azure Stack environment. The following structure showcase how the folder structure and files should look like
 ![](downloadedfiles.png)
 
-Configure Azure Stack Operator’s PowerShell session. More information can be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-admin
+Configure Azure Stack Operator's PowerShell session. More information can be found here https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-powershell-configure-admin
 
 Import the module and start the import process for an marketplace item or resource provider
 ```powershell
 Import-Module .\AzureStack.MarketplaceSyndication.psm1
 $credential = Get-Credential -Message "Enter the azure stack operator credential"
-Import-AzSOfflineMarketplaceItem -origin “[marketplace content folder]" -AzsCredential $credential
+Import-AzSOfflineMarketplaceItem -origin "[marketplace content folder]" -AzsCredential $credential
 ```
 
 Option -Origin needs to be the top level folder contains all the downloaded products. In the example above, Origin should be "D:\downloadfolder".
