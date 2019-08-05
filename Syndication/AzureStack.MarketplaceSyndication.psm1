@@ -157,7 +157,8 @@ function Export-AzSOfflineProductInternal {
         else {
             $versionObjects = foreach ($versionObject in $versionEntries) {
                 Write-output ([pscustomobject]@{
-                    Name        = $selectedProduct.Id  # Product Name
+                    Name        = $selectedProduct.Name  # Product Name
+                    "Product Id"= $selectedProduct.Id
                     Version     = $versionObject.Version
                     Size        = $versionObject.Size
                 })
