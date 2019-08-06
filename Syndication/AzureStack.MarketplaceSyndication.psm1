@@ -1511,5 +1511,6 @@ function Get-ProductsList {
 }
 
 Export-ModuleMember -Function Export-AzSOfflineMarketplaceItem
+Export-ModuleMember -Function Export-AzSOfflineResourceProvider
 Export-ModuleMember -Function Import-AzSOfflineMarketplaceItem
 Export-ModuleMember -Function Test-AzSOfflineMarketplaceItem
