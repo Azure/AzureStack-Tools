@@ -41,15 +41,16 @@ Import-Module .\AzureStack.MarketplaceSyndication.psm1
 ```
 - To start the export process for a marketplace item, run below cmdlet
 ```powershell
-Export-AzSOfflineMarketplaceItem -destination "[Destination folder path]" -azCopyDownloadThreads "[AzCopy threads number]"
+Export-AzSOfflineMarketplaceItem -destination "[Destination folder path]" -azCopyDownloadThreads "[AzCopy threads number]" -azureContext "[Specified Azure context]"
 ```
 - To start the export process for a resource provider, run below cmdlet
 ```powershell
-Export-AzSOfflineResourceProvider -destination "[Destination folder path]" -azCopyDownloadThreads "[AzCopy threads number]"
+Export-AzSOfflineResourceProvider -destination "[Destination folder path]" -azCopyDownloadThreads "[AzCopy threads number]" -azureContext "[Specified Azure context]"
 ```
 
-Option -azCopyDownloadThreads is optional. It should only be used when you have low-bandwidth network, and you are using premium download. This option is to specifies the number of concurrent operations in AzCopy. If you are running across a low-bandwidth network, you can specify a lower number to avoid failure caused by resource competition.
+Parameter -azCopyDownloadThreads is optional. It should only be used when you have low-bandwidth network, and you are using premium download. This option is to specifies the number of concurrent operations in AzCopy. If you are running across a low-bandwidth network, you can specify a lower number to avoid failure caused by resource competition.
 You can see more details at https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy#specify-the-number-of-concurrent-operations-to-start
+Parameter -azureContext is optional. If user do not specified the Azure context, then the cmdlet will use the default Azure context.
 
 For both marketplace items and resource providers downloading, you will be prompted to select a product first.
 ![](productSelection.PNG)

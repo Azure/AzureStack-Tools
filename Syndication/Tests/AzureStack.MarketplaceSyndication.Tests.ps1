@@ -215,25 +215,27 @@ InModuleScope $script:ModuleName {
           It 'Select marketplace item to download' {
            
             Mock Get-ProductsList { 
-              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)"
               return @($bitnamiRedmineProductEntry, $sqliaasextensionProductEntry) 
             }
             Mock OutGridViewWrapper { 
-              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)"
               return [pscustomobject[]]@( [pscustomobject]@{
                 Id          = $bitnamiRedmineProductName
+                Name        = $sqliaasextension1_2_30_0.properties.displayName
               }, [pscustomobject]@{
                 Id          = $sqliaasextensionProductName
+                Name        = $sqliaasextension1_2_30_0.properties.displayName
               } ) 
             } -ParameterFilter { $Title -eq "Download marketplace items from Azure" }
             Mock OutGridViewWrapper { 
-              Write-Verbose "Input parameters of OutGridViewWrapper for version selection: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of OutGridViewWrapper for version selection: $(ConvertTo-JSON $args)"
               return [pscustomobject[]]@( [pscustomobject]@{
                 Name        = $sqliaasextensionProductName
                 Version     = $sqliaasextension2_2_30_0Version
               } ) 
             } -ParameterFilter { $Title -eq "Select version for $sqliaasextensionProductName" }
-            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)"}
 
             $mockedDownloadDest = "$PSScriptRoot"
             Export-AzSOfflineMarketplaceItem -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
@@ -266,10 +268,12 @@ InModuleScope $script:ModuleName {
             Assert-MockCalled OutGridViewWrapper -Scope It -Times 1 -ParameterFilter { 
               $Title -eq "Select version for $sqliaasextensionProductName" -and `
               $InputObject.length -eq 2 -and `
-              $InputObject[0].Name -eq $sqliaasextensionProductName -and `
+              $InputObject[0].Name -eq $sqliaasextension1_2_30_0.properties.displayName -and `
+              $InputObject[0]."Product Id" -eq $sqliaasextensionProductName -and `
               $InputObject[0].Version -eq $sqliaasextension1_2_30_0Version -and `
               $InputObject[0].Size -eq $sqliaasextensionProductEntry.VersionEntries[0].Size -and `
-              $InputObject[1].Name -eq $sqliaasextensionProductName -and `
+              $InputObject[0].Name -eq $sqliaasextension2_2_30_0.properties.displayName -and `
+              $InputObject[1]."Product Id" -eq $sqliaasextensionProductName -and `
               $InputObject[1].Version -eq $sqliaasextension2_2_30_0Version  -and `
               $InputObject[1].Size -eq $sqliaasextensionProductEntry.VersionEntries[1].Size
             }
@@ -290,21 +294,21 @@ InModuleScope $script:ModuleName {
           It 'Select resource provider to download' {
            
             Mock Get-ProductsList { 
-              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)"
               return @($rpProductEntity) 
             }
             Mock OutGridViewWrapper { 
-              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)"
               return [pscustomobject[]]@( [pscustomobject]@{
                 Id          = $mockedRpProductName
               } )
             } -ParameterFilter { $Title -eq "Download resource providers from Azure" }
-            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)"}
 
             $mockedDownloadDest = "$PSScriptRoot"
-            Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
+            Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest -azureContext $mockedContext
 
-            Assert-MockCalled Get-AzureRmContext -Scope It -Times 1
+            Assert-MockCalled Get-AzureRmContext -Scope It -Times 0
             Assert-MockCalled Get-AccessTokenFromContext -Scope It -Times 1
             Assert-MockCalled Get-ProductsList -Scope It -Times 1 -ParameterFilter { 
               $azureEnvironment -eq $mockedContext.Environment -and `
@@ -334,13 +338,13 @@ InModuleScope $script:ModuleName {
           It 'Select product to download when Azure returns empty' {
            
             Mock Get-ProductsList { 
-              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)"
               return @()
             }
             Mock OutGridViewWrapper {
-              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)"
             } -ParameterFilter { $Title -eq "Download resource providers from Azure" }
-            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)"}
 
             $mockedDownloadDest = "$PSScriptRoot"
             Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
@@ -365,13 +369,13 @@ InModuleScope $script:ModuleName {
           It 'Select product to download when user select nothing' {
            
             Mock Get-ProductsList { 
-              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-ProductsList: $(ConvertTo-JSON $args)"
               return @($rpProductEntity)
             }
             Mock OutGridViewWrapper { 
-              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of OutGridViewWrapper for product selection: $(ConvertTo-JSON $args)"
             } -ParameterFilter { $Title -eq "Download resource providers from Azure" }
-            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)" -Verbose}
+            Mock Get-DependenciesAndDownload { Write-Verbose "Input parameters of Get-DependenciesAndDownload: $(ConvertTo-JSON $args)"}
 
             $mockedDownloadDest = "$PSScriptRoot"
             Export-AzSOfflineResourceProvider -resourceGroup $mockedRegistrationResourceGroup -destination $mockedDownloadDest
@@ -411,10 +415,10 @@ InModuleScope $script:ModuleName {
             }
 
             Mock Get-AzureRmResource { 
-              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)"
               return $mockedRegistrationResource }
             Mock Invoke-RestMethod { 
-              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)"
               return $mockedResponse }
 
             $params = @{
@@ -427,7 +431,7 @@ InModuleScope $script:ModuleName {
 
             $products = Get-ProductsList @params
 
-            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)" -Verbose
+            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)"
             $products.length | Should Be 2
             $products[0].ProductName | Should Be $bitnamiRedmineProductName
             $products[0].Type | Should Be "Virtual Machine"
@@ -485,10 +489,10 @@ InModuleScope $script:ModuleName {
             }
 
             Mock Get-AzureRmResource { 
-              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)"
               return @($mockedRegistrationResource, $mockedRegistrationResource2) }
             Mock Invoke-RestMethod { 
-              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)"
               return $mockedResponse }
 
             $params = @{
@@ -501,7 +505,7 @@ InModuleScope $script:ModuleName {
 
             $products = [pscustomobject[]](Get-ProductsList @params)
 
-            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)" -Verbose
+            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)"
             $products.length | Should Be 1
             $products[0].ProductName | Should Be $mockedRpProductName
             $products[0].Type | Should Be "Resource Provider"
@@ -528,7 +532,7 @@ InModuleScope $script:ModuleName {
 
           It 'Get product information from Azure with no registration' {
             Mock Get-AzureRmResource { 
-              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)"
               return @() }
 
             $params = @{
@@ -570,10 +574,10 @@ InModuleScope $script:ModuleName {
             }
 
             Mock Get-AzureRmResource { 
-              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Get-AzureRmResource: $(ConvertTo-JSON $args)"
               return @($mockedRegistrationResource, $mockedRegistrationResource2) }
             Mock Invoke-RestMethod { 
-              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)" -Verbose
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)"
               return $mockedResponse }
 
             $params = @{
@@ -586,7 +590,7 @@ InModuleScope $script:ModuleName {
 
             $products = [pscustomobject[]](Get-ProductsList @params)
 
-            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)" -Verbose
+            Write-Verbose "Results of Get-ProductsList is $(ConvertTo-JSOn $products)"
             $products.length | Should Be 0
 
             Assert-MockCalled Get-AzureRmResource -Scope It -Times 1 -ParameterFilter {

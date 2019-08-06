@@ -8,18 +8,22 @@
 #>
 
 function Export-AzSOfflineMarketplaceItem {
-    [CmdletBinding(DefaultParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+    [CmdletBinding()]
 
     Param(
-        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $azureContext = (Get-AzureRmContext),
+
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [String] $resourceGroup = "azurestack",
 
-        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory = $false)]
         [ValidateRange(1, 128)]
         [Int] $AzCopyDownloadThreads,
 
-        [Parameter(Mandatory = $true, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [String] $destination
     )
@@ -28,6 +32,7 @@ function Export-AzSOfflineMarketplaceItem {
         resourceGroup       = $resourceGroup
         destination         = $destination
         resourceProvider    = $false
+        azureContext        = $azureContext
     }
     if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads'))
     {
@@ -46,6 +51,10 @@ function Export-AzSOfflineMarketplaceItem {
 function Export-AzSOfflineResourceProvider {
     Param(
         [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $azureContext = (Get-AzureRmContext),
+
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [String] $resourceGroup = "azurestack",
 
@@ -62,6 +71,7 @@ function Export-AzSOfflineResourceProvider {
         resourceGroup       = $resourceGroup
         destination         = $destination
         resourceProvider    = $true
+        azureContext        = $azureContext
     }
     if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads'))
     {
@@ -74,6 +84,10 @@ function Export-AzSOfflineResourceProvider {
 function Export-AzSOfflineProductInternal {
     [CmdletBinding()]
     Param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $azureContext,
+
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
         [String] $resourceGroup,
@@ -93,7 +107,6 @@ function Export-AzSOfflineProductInternal {
     # in case it is relative path
     $destination = Resolve-Path -Path $destination
 
-    $azureContext = Get-AzureRmContext
     $azureSubscriptionID = $azureContext.Subscription.Id
     $azureEnvironment = $azureContext.Environment
 
