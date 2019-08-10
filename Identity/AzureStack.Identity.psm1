@@ -1064,11 +1064,11 @@ function Unregister-AzsGuestDirectoryTenant {
 
         # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
         $azureEnvironment = Initialize-AzureRmEnvironment 'AzureStackAdmin'
-        $azureAccount = Initialize-AzureRmUserAccount $azureEnvironment
+        $azureContext     = Initialize-AzureRmUserAccount $azureEnvironment
 
         # Remove the new directory tenant to the Azure Stack deployment
         $params = @{
-            ResourceId = "/subscriptions/$($azureAccount.Context.Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.Subscriptions.Admin/directoryTenants/$GuestDirectoryTenantName"
+            ResourceId = "/subscriptions/$($azureContext.Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.Subscriptions.Admin/directoryTenants/$GuestDirectoryTenantName"
             ApiVersion = '2015-11-01'
         }
         $output = Remove-AzureRmResource @params -Force -Verbose -ErrorAction Stop
@@ -1119,7 +1119,7 @@ function Unregister-AzsGuestDirectoryTenant {
             Select-AzureRmSubscription -SubscriptionId $SubscriptionId | Out-Null
         }
 
-        return $azureAccount
+        return (Get-AzureRmContext)
     }
 
     function Write-DecommissionImplicationsWarning {
