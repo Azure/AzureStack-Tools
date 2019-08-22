@@ -667,7 +667,21 @@ function PreCheck
     )
 
     $dirs = Get-ChildItem -Path $contentFolder
+    $iconsFolder = Join-Path -Path $contentFolder -ChildPath "Icons"
 
+     # Check if the user specified marketplace item folder instead of parent directory
+     if(Test-Path -Path $iconsFolder -PathType Container)
+     {
+        $message = @"
+        `r`nImport-AzSOfflineMarketplaceItem requires specified content folder (specified with -origin parameter) to have 1 or more downloaded product folders. 
+        Each product folder should contain a product definition json file.  
+        E.g. product folder c:\downloads\product1 should contain c:\downloads\product1\product1.json 
+        Please specifiy correct top level folder that contains the list of downloaded products.
+"@
+         Write-Verbose -Message "$message" -Verbose
+         throw "$message"
+     }
+ 
     foreach ($dir in $dirs)
     {
         $folderPath = $contentFolder + "\$dir"
