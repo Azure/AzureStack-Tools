@@ -10,15 +10,15 @@ function Initialize-UserDataClearEnv
 {
     param
     (
-        # The directory tenant identifier of Azure Stack Administrator.
+        # The directory tenant identifier of Azure Stack.
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string] $AzsAdminDirectoryTenantId,
+        [string] $AzsDirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [Uri] $AzsAdminArmEndpoint,
+        [Uri] $AzsArmEndpoint,
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [pscredential] $AutomationCredential = $null,
@@ -38,10 +38,10 @@ function Initialize-UserDataClearEnv
     Import-Module $PSScriptRoot\..\..\Identity\GraphAPI\GraphAPI.psm1 -Force
     Import-Module $PSScriptRoot\..\..\Identity\AzureStack.Identity.Common.psm1 -Force
 
-    Write-Verbose "Login to Azure Stack Admin ARM..." -Verbose
+    Write-Verbose "Login to Azure Stack ARM..." -Verbose
     $AzsAdminEnvironmentName = "AzureStackAdmin"
     $params = @{
-        ResourceManagerEndpoint     = $AzsAdminArmEndpoint
+        ResourceManagerEndpoint     = $AzsArmEndpoint
         EnvironmentName             = $AzsAdminEnvironmentName
     }
     $adminArmEnv = Initialize-AzureRmEnvironment @params
@@ -57,11 +57,7 @@ function Initialize-UserDataClearEnv
         $params.AutomationCredential = $AutomationCredential
     }
     $refreshToken = Initialize-AzureRmUserRefreshToken @params
-    Write-Verbose "Login into admin ARM and got the refresh token." -Verbose
-
-    $script:adminSubscriptionId = (Get-AzureRmSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
-    Write-Verbose "Get default Admin subscription id $script:adminSubscriptionId." -Verbose
-
+    Write-Verbose "Login into ARM and got the refresh token." -Verbose
 
     $script:initializeGraphEnvParams = @{
         RefreshToken = $refreshToken
@@ -86,7 +82,7 @@ function Initialize-UserDataClearEnv
         }
     }
 
-    Initialize-GraphEnvironment @script:initializeGraphEnvParams -DirectoryTenantId $AzsAdminDirectoryTenantId
+    Initialize-GraphEnvironment @script:initializeGraphEnvParams -DirectoryTenantId $AzsDirectoryTenantId
     $script:adminArmAccessToken = (Get-GraphToken -Resource $adminArmEnv.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
 }
 
@@ -238,7 +234,6 @@ function Clear-AzsUserData
                 AccessToken         = $script:adminArmAccessToken
                 UserObjectId        = $userObjectId
                 DirectoryTenantId   = $dirId
-                AdminSubscriptionId = $script:adminSubscriptionId
                 AzsAdminArmEndpoint = $AzsAdminArmEndpoint
             }
             $curResult = Clear-SinglePortalUserData @params
@@ -296,7 +291,6 @@ function Clear-AzsUserDataWithUserObjectId
         AccessToken         = $script:adminArmAccessToken
         UserObjectId        = $UserObjectId
         DirectoryTenantId   = $DirectoryTenantId
-        AdminSubscriptionId = $script:adminSubscriptionId
         AzsAdminArmEndpoint = $AzsAdminArmEndpoint
     }
     Clear-SinglePortalUserData @params
@@ -362,10 +356,6 @@ function Clear-SinglePortalUserData
         [ValidateNotNull()]
         [string] $DirectoryTenantId,
 
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNull()]
-        [string] $AdminSubscriptionId,
-
         # The Azure Stack ARM endpoint URI.
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
@@ -374,7 +364,10 @@ function Clear-SinglePortalUserData
 
     try
     {
-        $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$AdminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
+        $adminSubscriptionId = (Get-AzureRmSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
+        Write-Verbose "Get default Admin subscription id $adminSubscriptionId." -Verbose
+
+        $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$adminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
         $headers = @{ 
             Authorization   = "Bearer $accessToken" 
             "Content-Type"  = "application/json"
