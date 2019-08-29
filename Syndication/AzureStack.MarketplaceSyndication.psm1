@@ -971,7 +971,7 @@ function Resolve-AccessToken {
         return $accessToken
     }
 
-    $cachedToken = $context.TokenCache.ReadItems() | Sort-Object -Property ExpiresOn -Descending | Select-Object -First 1
+    $cachedToken = $context.TokenCache.ReadItems() | Where-Object {$_.Resource -eq $context.Environment.ActiveDirectoryServiceEndpointResourceId} | Sort-Object -Property ExpiresOn -Descending | Select-Object -First 1
 
     if ($null -ne $cachedToken) {
         return $cachedToken.AccessToken
