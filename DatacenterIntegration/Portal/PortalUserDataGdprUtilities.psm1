@@ -6,39 +6,27 @@
 
 $DefaultAdminSubscriptionName = "Default Provider Subscription"
 
-<#
-.Synopsis
-   Clear the portal user data
-#>
-function Clear-AzsUserData
+function Initialize-UserDataClearEnv
 {
     param
     (
-        # The directory tenant identifier of Azure Stack Administrator.
+        # The directory tenant identifier of Azure Stack.
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [string] $AzsAdminDirectoryTenantId,
+        [string] $AzsDirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
         [Parameter(Mandatory=$true)]
         [ValidateNotNullOrEmpty()]
-        [Uri] $AzsAdminArmEndpoint,
-
-        # The user principal name of the account who's user data should be cleared.
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [string] $UserPrincipalName,
-
-        # Optional: The directory tenant identifier of account who's user data should be cleared.
-        # If it is not specified, it will delete all the 
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string] $DirectoryTenantId,
+        [Uri] $AzsArmEndpoint,
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
-        [ValidateNotNull()]
-        [pscredential] $AutomationCredential = $null
+        [pscredential] $AutomationCredential = $null,
+
+        [ValidateNotNullOrEmpty()]
+        [string] $UserPrincipalName
     )
+
     #requires -Version 4.0
     #requires -Module "AzureRM.Profile"
     #requires -Module "Azs.Subscriptions.Admin"
@@ -50,10 +38,10 @@ function Clear-AzsUserData
     Import-Module $PSScriptRoot\..\..\Identity\GraphAPI\GraphAPI.psm1 -Force
     Import-Module $PSScriptRoot\..\..\Identity\AzureStack.Identity.Common.psm1 -Force
 
-    Write-Verbose "Login to Azure Stack Admin ARM..." -Verbose
+    Write-Verbose "Login to Azure Stack ARM..." -Verbose
     $AzsAdminEnvironmentName = "AzureStackAdmin"
     $params = @{
-        ResourceManagerEndpoint     = $AzsAdminArmEndpoint
+        ResourceManagerEndpoint     = $AzsArmEndpoint
         EnvironmentName             = $AzsAdminEnvironmentName
     }
     $adminArmEnv = Initialize-AzureRmEnvironment @params
@@ -69,10 +57,130 @@ function Clear-AzsUserData
         $params.AutomationCredential = $AutomationCredential
     }
     $refreshToken = Initialize-AzureRmUserRefreshToken @params
-    Write-Verbose "Login into admin ARM and got the refresh token." -Verbose
+    Write-Verbose "Login into ARM and got the refresh token." -Verbose
 
-    $adminSubscriptionId = (Get-AzureRmSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
-    Write-Verbose "Get default Admin subscription id $adminSubscriptionId." -Verbose
+    $script:initializeGraphEnvParams = @{
+        RefreshToken = $refreshToken
+    }
+    if ($adminArmEnv.EnableAdfsAuthentication)
+    {
+        $script:initializeGraphEnvParams.AdfsFqdn = (New-Object Uri $adminArmEnv.ActiveDirectoryAuthority).Host
+        $script:initializeGraphEnvParams.GraphFqdn = (New-Object Uri $adminArmEnv.GraphUrl).Host
+
+        $script:queryParameters = @{
+            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())'"
+        }
+    }
+    else
+    {
+        $graphEnvironment = Resolve-GraphEnvironment -AzureEnvironment $adminArmEnv
+        Write-Verbose "Resolve the graph env as '$graphEnvironment '" -Verbose
+        $script:initializeGraphEnvParams.Environment = $graphEnvironment
+
+        $script:queryParameters = @{
+            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower() + "#")')"
+        }
+    }
+
+    Initialize-GraphEnvironment @script:initializeGraphEnvParams -DirectoryTenantId $AzsDirectoryTenantId
+    $script:adminArmAccessToken = (Get-GraphToken -Resource $adminArmEnv.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
+}
+
+<#
+.Synopsis
+   Clear the portal user data
+#>
+function Clear-AzsUserDataWithUserPrincipalName
+{
+    param
+    (
+        # The directory tenant identifier of Azure Stack Administrator.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $AzsAdminDirectoryTenantId,
+
+        # The Azure Stack ARM endpoint URI.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [Uri] $AzsAdminArmEndpoint,
+
+        # The user principal name of the account whoes user data should be cleared.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $UserPrincipalName,
+
+        # Optional: The directory tenant identifier of account whoes user data should be cleared.
+        # If it is not specified, it will delete user with principal name under all regitered directory tenants
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantId,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $params = @{
+        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
+        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
+        UserPrincipalName           = $UserPrincipalName
+    }
+
+    if ($DirectoryTenantId) {
+        $params.DirectoryTenantId = $DirectoryTenantId
+    }
+
+    if ($AutomationCredential) {
+        $params.AutomationCredential = $AutomationCredential
+    }
+
+    Clear-AzsUserData @params
+}
+
+<#
+.Synopsis
+    Deprecated: Clear the portal user data
+#>
+function Clear-AzsUserData
+{
+    param
+    (
+        # The directory tenant identifier of Azure Stack Administrator.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $AzsAdminDirectoryTenantId,
+
+        # The Azure Stack ARM endpoint URI.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [Uri] $AzsAdminArmEndpoint,
+
+        # The user principal name of the account whoes user data should be cleared.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $UserPrincipalName,
+
+        # Optional: The directory tenant identifier of account whoes user data should be cleared.
+        # If it is not specified, it will delete user with principal name under all regitered directory tenants
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantId,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $VerbosePreference = 'Continue'
+
+    $params = @{
+        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
+        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
+        AutomationCredential        = $AutomationCredential
+        UserPrincipalName           = $UserPrincipalName
+    }
+    Initialize-UserDataClearEnv @params
 
     if ($DirectoryTenantId)
     {
@@ -88,41 +196,14 @@ function Clear-AzsUserData
 
     $clearUserDataResults = @() # key is directory Id, value is clear response
 
-    $initializeGraphEnvParams = @{
-        RefreshToken = $refreshToken
-    }
-    if ($adminArmEnv.EnableAdfsAuthentication)
-    {
-        $initializeGraphEnvParams.AdfsFqdn = (New-Object Uri $adminArmEnv.ActiveDirectoryAuthority).Host
-        $initializeGraphEnvParams.GraphFqdn = (New-Object Uri $adminArmEnv.GraphUrl).Host
-
-        $QueryParameters = @{
-            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())'"
-        }
-    }
-    else
-    {
-        $graphEnvironment = Resolve-GraphEnvironment -AzureEnvironment $adminArmEnv
-        Write-Verbose "Resolve the graph env as '$graphEnvironment '" -Verbose
-        $initializeGraphEnvParams.Environment = $graphEnvironment
-
-        $QueryParameters = @{
-            '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())' or startswith(userPrincipalName, '$($UserPrincipalName.Replace("@", "_").ToLower() + "#")')"
-        }
-    }
-
-    Write-Verbose "Retrieving access token..." -Verbose
-    Initialize-GraphEnvironment @initializeGraphEnvParams -DirectoryTenantId $AzsAdminDirectoryTenantId
-    $accessToken = (Get-GraphToken -Resource $adminArmEnv.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData).access_token
-
     foreach ($dirId in $directoryTenantIdsArray)
     {
         Write-Verbose "Intializing graph env..." -Verbose
-        Initialize-GraphEnvironment @initializeGraphEnvParams -DirectoryTenantId $dirId
+        Initialize-GraphEnvironment @script:initializeGraphEnvParams -DirectoryTenantId $dirId
         Write-Verbose "Intialized graph env" -Verbose
 
         Write-Verbose "Querying all users..." -Verbose
-        $usersResponse = Invoke-GraphApi -ApiPath "/users" -QueryParameters $QueryParameters
+        $usersResponse = Invoke-GraphApi -ApiPath "/users" -QueryParameters $script:queryParameters
         Write-Verbose "Retrieved user object as $(ConvertTo-JSON $usersResponse.value)" -Verbose
 
         $userObjectId = $usersResponse.value.objectId
@@ -150,10 +231,9 @@ function Clear-AzsUserData
         else
         {
             $params = @{
-                AccessToken         = $accessToken
+                AccessToken         = $script:adminArmAccessToken
                 UserObjectId        = $userObjectId
                 DirectoryTenantId   = $dirId
-                AdminSubscriptionId = $adminSubscriptionId
                 AzsAdminArmEndpoint = $AzsAdminArmEndpoint
             }
             $curResult = Clear-SinglePortalUserData @params
@@ -162,6 +242,101 @@ function Clear-AzsUserData
     }
 
     return $clearUserDataResult
+}
+
+<#
+.Synopsis
+   Clear the portal user data
+#>
+function Clear-AzsUserDataWithUserObjectId
+{
+    param
+    (
+        # The directory tenant identifier of Azure Stack Administrator.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $AzsAdminDirectoryTenantId,
+
+        # The Azure Stack ARM endpoint URI.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [Uri] $AzsAdminArmEndpoint,
+
+        # The user object Id of the account whoes user data should be cleared.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $UserObjectId,
+
+        # The directory tenant identifier of account whoes user data should be cleared.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantId,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $ErrorActionPreference = 'Stop'
+    $VerbosePreference = 'Continue'
+
+    $params = @{
+        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
+        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
+        AutomationCredential        = $AutomationCredential
+    }
+    Initialize-UserDataClearEnv @params
+
+    $params = @{
+        AccessToken         = $script:adminArmAccessToken
+        UserObjectId        = $UserObjectId
+        DirectoryTenantId   = $DirectoryTenantId
+        AzsAdminArmEndpoint = $AzsAdminArmEndpoint
+    }
+    Clear-SinglePortalUserData @params
+}
+
+function Get-UserObjectId
+{
+    param
+    (
+        # The directory tenant identifier of user account
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DirectoryTenantId,
+
+        # The Azure Stack ARM endpoint URI.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [Uri] $AzsArmEndpoint,
+
+        # The user principal name of the account whoes user data should be cleared.
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [string] $UserPrincipalName,
+
+        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
+        [ValidateNotNull()]
+        [pscredential] $AutomationCredential = $null
+    )
+
+    $params = @{
+        AzsAdminDirectoryTenantId   = $DirectoryTenantId
+        AzsAdminArmEndpoint         = $AzsArmEndpoint
+        AutomationCredential        = $AutomationCredential
+        UserPrincipalName           = $UserPrincipalName
+    }
+    Initialize-UserDataClearEnv @params
+
+    Write-Verbose "Intializing graph env..." -Verbose
+    Initialize-GraphEnvironment @script:initializeGraphEnvParams -DirectoryTenantId $DirectoryTenantId
+    Write-Verbose "Intialized graph env" -Verbose
+
+    Write-Verbose "Querying all users..." -Verbose
+    $usersResponse = Invoke-GraphApi -ApiPath "/users" -QueryParameters $script:queryParameters
+    Write-Verbose "Retrieved user object as $(ConvertTo-JSON $usersResponse.value)" -Verbose
+
+    return $usersResponse.value.objectId
 }
 
 function Clear-SinglePortalUserData
@@ -181,10 +356,6 @@ function Clear-SinglePortalUserData
         [ValidateNotNull()]
         [string] $DirectoryTenantId,
 
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNull()]
-        [string] $AdminSubscriptionId,
-
         # The Azure Stack ARM endpoint URI.
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
@@ -193,7 +364,10 @@ function Clear-SinglePortalUserData
 
     try
     {
-        $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$AdminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
+        $adminSubscriptionId = (Get-AzureRmSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
+        Write-Verbose "Get default Admin subscription id $adminSubscriptionId." -Verbose
+
+        $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$adminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
         $headers = @{ 
             Authorization   = "Bearer $accessToken" 
             "Content-Type"  = "application/json"
@@ -236,4 +410,7 @@ function Clear-SinglePortalUserData
     }
 }
 
+Export-ModuleMember -Function Get-UserObjectId
 Export-ModuleMember -Function Clear-AzsUserData
+Export-ModuleMember -Function Clear-AzsUserDataWithUserPrincipalName
+Export-ModuleMember -Function Clear-AzsUserDataWithUserObjectId
