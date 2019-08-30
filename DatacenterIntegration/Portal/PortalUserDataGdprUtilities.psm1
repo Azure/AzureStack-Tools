@@ -20,6 +20,11 @@ function Initialize-UserDataClearEnv
         [ValidateNotNullOrEmpty()]
         [Uri] $AzsArmEndpoint,
 
+        # The subscription name
+        [Parameter(Mandatory=$false)]
+        [ValidateNotNullOrEmpty()]
+        [string] $SubscriptionName,
+
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [pscredential] $AutomationCredential = $null,
 
@@ -39,7 +44,7 @@ function Initialize-UserDataClearEnv
     Import-Module $PSScriptRoot\..\..\Identity\AzureStack.Identity.Common.psm1 -Force
 
     Write-Verbose "Login to Azure Stack ARM..." -Verbose
-    $AzsAdminEnvironmentName = "AzureStackAdmin"
+    $AzsAdminEnvironmentName = New-Guid
     $params = @{
         ResourceManagerEndpoint     = $AzsArmEndpoint
         EnvironmentName             = $AzsAdminEnvironmentName
@@ -49,8 +54,11 @@ function Initialize-UserDataClearEnv
 
     $params = @{
         AzureEnvironment    = $adminArmEnv
-        DirectoryTenantId   = $AzsAdminDirectoryTenantId
-        SubscriptionName    = $DefaultAdminSubscriptionName
+        DirectoryTenantId   = $AzsDirectoryTenantId
+    }
+    if ($SubscriptionName)
+    {
+        $params.SubscriptionName = $SubscriptionName
     }
     if ($AutomationCredential)
     {
@@ -175,10 +183,11 @@ function Clear-AzsUserData
     $VerbosePreference = 'Continue'
 
     $params = @{
-        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
-        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
+        AzsDirectoryTenantId        = $AzsAdminDirectoryTenantId
+        AzsArmEndpoint              = $AzsAdminArmEndpoint
         AutomationCredential        = $AutomationCredential
         UserPrincipalName           = $UserPrincipalName
+        SubscriptionName            = $DefaultAdminSubscriptionName
     }
     Initialize-UserDataClearEnv @params
 
@@ -281,9 +290,10 @@ function Clear-AzsUserDataWithUserObjectId
     $VerbosePreference = 'Continue'
 
     $params = @{
-        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
-        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
+        AzsDirectoryTenantId        = $AzsAdminDirectoryTenantId
+        AzsArmEndpoint              = $AzsAdminArmEndpoint
         AutomationCredential        = $AutomationCredential
+        SubscriptionName            = $DefaultAdminSubscriptionName
     }
     Initialize-UserDataClearEnv @params
 
@@ -321,8 +331,8 @@ function Get-UserObjectId
     )
 
     $params = @{
-        AzsAdminDirectoryTenantId   = $DirectoryTenantId
-        AzsAdminArmEndpoint         = $AzsArmEndpoint
+        AzsDirectoryTenantId        = $DirectoryTenantId
+        AzsArmEndpoint              = $AzsArmEndpoint
         AutomationCredential        = $AutomationCredential
         UserPrincipalName           = $UserPrincipalName
     }
