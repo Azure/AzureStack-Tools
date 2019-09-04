@@ -607,5 +607,238 @@ InModuleScope $script:ModuleName {
           }
 
         }
+
+        Context "Product dependencies context" {
+          It 'Download product without dependencies' {
+            $mockedResponse = @{
+              productKind = "resourceProvider"
+              properties = @{
+                dependentProducts = @()
+                fileContainers = @()
+                version = "1.1"
+              }
+            }
+
+            Mock Invoke-RestMethod { 
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)"
+              return $mockedResponse 
+            }
+
+            Mock Download-Product {
+              Write-Verbose "Input parameters of Download-Product: $(ConvertTo-JSON $args)"
+            }
+
+            Mock Test-Path {
+              Write-Verbose "Input parameters of TestPath: $(ConvertTo-JSON $args)"
+
+              return $false
+            }
+
+            $productResourceId = "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1"
+            $productId = "microsoft.eventhub-1.0.1"
+            $mockedDownloadDest = "$PSScriptRoot"
+            $params = @{
+              productid           = $productId
+              productResourceId   = $productResourceId
+              azureEnvironment    = $mockedContext.Environment
+              accessToken         = $mockedAccessToken
+              destination         = $mockedDownloadDest
+            }
+
+            Get-DependenciesAndDownload @params
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 1 -ParameterFilter {
+              $Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1/listDetails?api-version=2016-01-01" -and `
+              $TimeoutSec -eq 180 -and `
+              $Method -eq 3 -and ` # POST
+              $Headers.authorization -eq "Bearer $mockedAccessToken"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\$productId"
+            }
+
+            Assert-MockCalled Download-Product -Scope It -Times 1 -ParameterFilter {
+              $productid -eq $productid -and `
+              $productResourceId -eq $productResourceId -and `
+              $azureEnvironment -eq $mockedContext.Environment -and ` # GET
+              $accessToken -eq $mockedAccessToken -and `
+              $destination -eq $mockedDownloadDest
+            }
+          }
+
+          It 'Download product already existed' {
+            $mockedResponse = @{
+              productKind = "resourceProvider"
+              properties = @{
+                dependentProducts = @()
+                fileContainers = @()
+                version = "1.1"
+              }
+            }
+
+            Mock Invoke-RestMethod { 
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)"
+              return $mockedResponse 
+            }
+
+            Mock Download-Product {
+              Write-Verbose "Input parameters of Download-Product: $(ConvertTo-JSON $args)"
+            }
+
+            Mock Test-Path {
+              Write-Verbose "Input parameters of TestPath: $(ConvertTo-JSON $args)"
+
+              return $true
+            }
+
+            $productResourceId = "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1"
+            $productId = "microsoft.eventhub-1.0.1"
+            $mockedDownloadDest = "$PSScriptRoot"
+            $params = @{
+              productid           = $productId
+              productResourceId   = $productResourceId
+              azureEnvironment    = $mockedContext.Environment
+              accessToken         = $mockedAccessToken
+              destination         = $mockedDownloadDest
+            }
+
+            Get-DependenciesAndDownload @params
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 1 -ParameterFilter {
+              $Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1/listDetails?api-version=2016-01-01" -and `
+              $TimeoutSec -eq 180 -and `
+              $Method -eq 3 -and ` # POST
+              $Headers.authorization -eq "Bearer $mockedAccessToken"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\$productId"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\$productId\$productid.json"
+            }
+
+            Assert-MockCalled Download-Product -Scope It -Times 0
+          }
+
+          It 'Download product with dependencies' {
+            $mockedResponse = @{
+              productKind = "resourceProvider"
+              properties = @{
+                dependentProducts = @(
+                  "microsoft.customscriptextension-arm-1.9.1",
+                  "microsoft.sqliaasextension-1.2.30.0"
+                )
+                fileContainers = @()
+                version = "1.1"
+              }
+            }
+
+            $productResourceId = "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1"
+            $productId = "microsoft.eventhub-1.0.1"
+            $mockedDownloadDest = "$PSScriptRoot"
+
+            Mock Invoke-RestMethod { 
+              Write-Verbose "Input parameters of Invoke-RestMethod: $(ConvertTo-JSON $args)"
+
+              if ($Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1/listDetails?api-version=2016-01-01") {
+                return $mockedResponse
+              } else {
+                return @{
+                  productKind = "resourceProvider"
+                  properties = @{
+                  }
+                }
+              }
+            }
+
+            Mock Download-Product {
+              Write-Verbose "Input parameters of Download-Product: $(ConvertTo-JSON $args)"
+            }
+
+            Mock Test-Path {
+              Write-Verbose "Input parameters of TestPath: $(ConvertTo-JSON $args)"
+
+              if ($Path -eq "$mockedDownloadDest\$productId") {
+                return $true
+              }
+
+              return $false
+            }
+
+            $params = @{
+              productid           = $productId
+              productResourceId   = $productResourceId
+              azureEnvironment    = $mockedContext.Environment
+              accessToken         = $mockedAccessToken
+              destination         = $mockedDownloadDest
+            }
+
+            Get-DependenciesAndDownload @params
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 1 -ParameterFilter {
+              $Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.eventhub-1.0.1/listDetails?api-version=2016-01-01" -and `
+              $TimeoutSec -eq 180 -and `
+              $Method -eq 3 -and ` # POST
+              $Headers.authorization -eq "Bearer $mockedAccessToken"
+            }
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 1 -ParameterFilter {
+              $Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.customscriptextension-arm-1.9.1/listDetails?api-version=2016-01-01" -and `
+              $TimeoutSec -eq 180 -and `
+              $Method -eq 3 -and ` # POST
+              $Headers.authorization -eq "Bearer $mockedAccessToken"
+            }
+
+            Assert-MockCalled Invoke-RestMethod -Scope It -Times 1 -ParameterFilter {
+              $Uri -eq "https://management.azure.com//subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.sqliaasextension-1.2.30.0/listDetails?api-version=2016-01-01" -and `
+              $TimeoutSec -eq 180 -and `
+              $Method -eq 3 -and ` # POST
+              $Headers.authorization -eq "Bearer $mockedAccessToken"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\$productId"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\microsoft.customscriptextension-arm-1.9.1"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\microsoft.sqliaasextension-1.2.30.0"
+            }
+
+            Assert-MockCalled Test-Path -Scope It -Times 1 -ParameterFilter {
+              $Path -eq "$mockedDownloadDest\$productId\$productid.json"
+            }
+
+            Assert-MockCalled Download-Product -Scope It -Times 1 -ParameterFilter {
+              $productid -eq $productid -and `
+              $productResourceId -eq $productResourceId -and `
+              $azureEnvironment -eq $mockedContext.Environment -and ` # GET
+              $accessToken -eq $mockedAccessToken -and `
+              $destination -eq $mockedDownloadDest
+            }
+
+            Assert-MockCalled Download-Product -Scope It -Times 1 -ParameterFilter {
+              $productid -eq "microsoft.customscriptextension-arm-1.9.1" -and `
+              $productResourceId -eq "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.customscriptextension-arm-1.9.1" -and `
+              $azureEnvironment -eq $mockedContext.Environment -and ` # GET
+              $accessToken -eq $mockedAccessToken -and `
+              $destination -eq $mockedDownloadDest
+            }
+
+            Assert-MockCalled Download-Product -Scope It -Times 1 -ParameterFilter {
+              $productid -eq "microsoft.sqliaasextension-1.2.30.0" -and `
+              $productResourceId -eq "/subscriptions/$mockedSubscriptionId/resourceGroups/$mockedRegistrationResourceGroup/providers/Microsoft.AzureStack/registrations/$mockedRegistrationName/products/microsoft.sqliaasextension-1.2.30.0" -and `
+              $azureEnvironment -eq $mockedContext.Environment -and ` # GET
+              $accessToken -eq $mockedAccessToken -and `
+              $destination -eq $mockedDownloadDest
+            }
+          }
+        }
     }
 }

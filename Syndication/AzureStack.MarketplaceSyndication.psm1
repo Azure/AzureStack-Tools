@@ -252,7 +252,6 @@ function Get-DependenciesAndDownload {
                 productId           = $dependentProductId
                 productResourceId   = $dependentProductResourceId
                 azureEnvironment    = $azureEnvironment
-                azureSubscriptionID = $azureSubscriptionID
                 accessToken         = $accessToken
                 destination         = $destination
             }
