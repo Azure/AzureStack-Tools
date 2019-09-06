@@ -128,6 +128,8 @@ function Clear-AzsUserDataWithUserPrincipalName
         [pscredential] $AutomationCredential = $null
     )
 
+    Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
+
     $params = @{
         AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
         AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
@@ -286,6 +288,8 @@ function Clear-AzsUserDataWithUserObjectId
         [pscredential] $AutomationCredential = $null
     )
 
+    Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
+
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
@@ -329,6 +333,8 @@ function Get-UserObjectId
         [ValidateNotNull()]
         [pscredential] $AutomationCredential = $null
     )
+
+    Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
 
     $params = @{
         AzsDirectoryTenantId        = $DirectoryTenantId
