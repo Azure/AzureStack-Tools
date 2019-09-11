@@ -25,8 +25,6 @@ Install-Module -Name AzureStack -RequiredVersion 1.7.1
 
 For all other azure stack versions, please follow the instructions at https://aka.ms/azspsh for the needed azure powershell
 
-```
-
 Then make sure the following modules are imported:
 
 ```powershell
