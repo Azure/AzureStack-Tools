@@ -970,16 +970,11 @@ param(
 <#
 .SYNOPSIS
 
-Removes the activation resource created during New-AzsActivationResource
+De-activates Azure Stack in Disconnected Environments
 
 .DESCRIPTION
 
-Prompts the user to log in to the Azure Stack Administrator account, finds and removes the activation resource created
-during New-AzsActivationResource. This will remove any downloaded marketplace products. 
-
-.PARAMETER AzureStackAdminSubscriptionId
-
-The subscription id of the Azure Stack administrator. This user must have access to the 'marketplace management' blade.
+Takes Azure Stack PrivilegedEndpoint and PrivilegedEndpoint credential as input, and deactivates the activation properties created by New-AzsActivationResource
 
 #>
 Function Remove-AzsActivationResource{
@@ -989,13 +984,7 @@ Function Remove-AzsActivationResource{
         [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
-        [String] $PrivilegedEndpoint,
-
-        [Parameter(Mandatory = $false)]
-        [String] $AzureStackAdminSubscriptionId,
-
-        [Parameter(Mandatory = $false)]
-        [String] $AzureEnvironmentName = "AzureStack"
+        [String] $PrivilegedEndpoint
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -1008,27 +997,9 @@ Function Remove-AzsActivationResource{
     try
     {
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
-
-        $AzureStackStampInfo = Invoke-Command -Session $session -ScriptBlock { Get-AzureStackStampInformation }
-        Log-Output "Logging in to AzureStack administrator account. TenantId: $($AzureStackStampInfo.AADTenantID) Environment: 'AzureStack'"
-        Login-AzureRmAccount -TenantId $AzureStackStampInfo.AADTenantID -Environment $AzureEnvironmentName
-        $azureStackContext = Get-AzureRmContext
-
-        $azureStackContextDetails = @{
-            Account          = $azureStackContext.Account
-            Environment      = $azureStackContext.Environment
-            Subscription     = $azureStackContext.Subscription
-            Tenant           = $azureStackContext.Tenant
-        }
-
-        Log-Output "Successfully logged into Azure Stack account: $(ConvertTo-Json $azureStackContextDetails)"
-        if (-not $AzureStackAdminSubscriptionId)
-        {
-            $AzureStackAdminSubscriptionId = $azureStackContext.Subscription.Id
-        }
-        $activationResource = Get-AzureRmResource -ResourceId "/subscriptions/$AzureStackAdminSubscriptionId/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default"
-        Log-Output "Activation resource found: $(ConvertTo-Json $activationResource)"
-        Remove-AzureRmResource -ResourceId $activationResource.ResourceId -Force
+        Log-Output "Successfully initialized session with endpoint: $PrivilegedEndpoint"
+        Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
+        Invoke-Command -Session $session -ScriptBlock { Remove-AzureStackActivation }
     }
     catch
     {
@@ -1042,7 +1013,7 @@ Function Remove-AzsActivationResource{
         }
     }
 
-    Log-Output "Activation resource has been removed from Azure Stack."
+    Log-Output "Successfully de-activated Azure Stack"
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
