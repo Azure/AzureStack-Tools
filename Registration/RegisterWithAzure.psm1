@@ -970,12 +970,11 @@ param(
 <#
 .SYNOPSIS
 
-Removes the activation resource created during New-AzsActivationResource
+De-activates Azure Stack in Disconnected Environments
 
 .DESCRIPTION
 
-Prompts the user to log in to the Azure Stack Administrator account, finds and removes the activation resource created
-during New-AzsActivationResource. This will remove any downloaded marketplace products. 
+Takes Azure Stack PrivilegedEndpoint and PrivilegedEndpoint credential as input, and deactivates the activation properties created by New-AzsActivationResource
 
 #>
 Function Remove-AzsActivationResource{
@@ -985,10 +984,7 @@ Function Remove-AzsActivationResource{
         [PSCredential] $PrivilegedEndpointCredential,
 
         [Parameter(Mandatory = $true)]
-        [String] $PrivilegedEndpoint,
-
-        [Parameter(Mandatory = $false)]
-        [String] $AzureEnvironmentName = "AzureStack"
+        [String] $PrivilegedEndpoint
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -1002,7 +998,8 @@ Function Remove-AzsActivationResource{
     {
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
         Log-Output "Successfully initialized session with endpoint: $PrivilegedEndpoint"
-        $activation = Invoke-Command -Session $session -ScriptBlock { Remove-AzureStackActivation }
+        Log-Output "De-Activating Azure Stack (this may take up to 10 minutes to complete)."
+        Invoke-Command -Session $session -ScriptBlock { Remove-AzureStackActivation }
     }
     catch
     {
@@ -1016,7 +1013,7 @@ Function Remove-AzsActivationResource{
         }
     }
 
-    Log-Output "Activation resource has been removed from Azure Stack."
+    Log-Output "Successfully de-activated Azure Stack"
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
 }
 
