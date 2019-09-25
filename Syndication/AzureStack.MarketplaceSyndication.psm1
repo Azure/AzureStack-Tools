@@ -157,6 +157,11 @@ function Get-Dependency {
     }
 }
 
+function Test-AzCopyInstalled
+{
+    return (Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe")
+}
+
 function Download-Product {
     param (
         [parameter(mandatory = $true)]
@@ -271,7 +276,31 @@ function Download-Product {
 
         # select premium download
         Write-Host $("-"*20)
-        $downloadConfirmation = Read-Host "Downloading package files. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+        
+        # We will default to azcopy if it's already installed, otherwise we'll ask the user if they want to install it
+        #  If they chose to not install, we will download with WebClient.Download() which takes much more time and does do checkpointing like azcopy does
+        $downloadConfirmation = 'Y'
+        
+        if(!(Test-AzCopyInstalled))
+        {
+            $downloadConfirmation = 'N'
+            $downloadConfirmation = Read-Host "Beginning download of package files. Would you like to enable premium download? " `
+                                              "This will install AzCopy and greatly improve the speed and reliability of the download (Y/N)"
+
+            if($downloadConfirmation -ieq 'Y')
+            {
+                $azCopyInstaller = "azcopy_installer.msi"
+                Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy" -OutFile $azCopyInstaller
+
+                if(!(Test-Path $azCopyInstaller))
+                {
+                    throw New-Object System.InvalidOperationException("Failed to download AzCopy. Download and install AzCopy manually from https://aka.ms/downloadazcopy")
+                }
+
+                Start-Process C:\Windows\System32\msiexec.exe -ArgumentList "/i $($azCopyInstaller) /q" -wait
+                Remove-Item $azCopyInstaller
+            }
+        }
 
         if ($downloadDetails.productKind -ne 'resourceProvider')
         {
