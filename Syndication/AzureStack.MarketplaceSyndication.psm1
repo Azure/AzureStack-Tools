@@ -186,7 +186,7 @@ function ValidateOrGetAzCopyPath($azCopyPath) {
             return $null
         }
     }catch{
-        Write-Verbose "$azCopyPath doesn't exist, canceling" -verbose
+        Write-Verbose "$azCopyPath doesn't exist." -verbose
         return $null
     }
     return $azCopyPath
