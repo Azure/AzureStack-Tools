@@ -723,9 +723,9 @@ function PreCheck
         $configuration = Get-Content $jsonPath | ConvertFrom-Json 
         $properties = ($configuration | Get-Member -MemberType NoteProperty).Name
         ## define required properties
-        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier","galleryPackageBlobSasUri", "offer", "offerVersion", "sku", "productProperties", "payloadLength", "iconUris", "productKind" )
+        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier","galleryPackageBlobSasUri", "productProperties", "payloadLength", "iconUris", "productKind" )
         foreach ($property in $requiredprops) {
-            if ($configuration.$property) {
+            if (-not [string]::IsNullOrEmpty($configuration.$property)) {
                 Write-Verbose -Message "$property = $($configuration.$property)"              
             }
             else
