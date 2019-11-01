@@ -175,7 +175,10 @@ function Set-AzsRegistration{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
+        [String] $ResourceGroupLocation = @{'AzureCloud'='westcentralus'; 
+                                            'AzureChinaCloud'='ChinaEast'; 
+                                            'AzureUSGovernment'='usgovvirginia'; 
+                                            'CustomCloud'='westcentralus'}[$AzureContext.Environment.Name],
         
         [Parameter(Mandatory = $false)]
         [ValidateSet('Capacity', 'PayAsYouUse', 'Development')]
@@ -230,9 +233,8 @@ function Set-AzsRegistration{
     
         # Register environment with Azure
 
-        # Set resource group location based on environment
-        $CustomResourceGroupLocation = Set-ResourceGroupLocation -AzureEnvironment $AzureContext.Environment.Name -ResourceGroupLocation $ResourceGroupLocation
-        New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $CustomResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
+        Log-Output "Creating registration resource at ResourceGroupLocation: $ResourceGroupLocation"
+        New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
 
         # Assign custom RBAC role
         Log-Output "Assigning custom RBAC role to resource $RegistrationName"
@@ -1429,14 +1431,6 @@ function Get-AzureAccountInfo{
         Environment      = $AzureContext.Environment
         Subscription     = $AzureContext.Subscription
         Tenant           = $AzureContext.Tenant
-    }
-
-    if (($AzureContext.Environment.name -ne 'AzureChinaCloud') -and ($AzureContext.Environment.name -ne 'AzureUsGovernment'))
-    {
-        if ($AzureContext.Environment.name -ne 'AzureCloud')
-        {
-            Log-Throw "The provided Azure Environment is not supported for registration: $($AzureContext.Environment.name )" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-        }
     }
 
     if (-not($AzureContext.Subscription))
