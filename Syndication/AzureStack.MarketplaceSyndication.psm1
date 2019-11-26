@@ -114,12 +114,12 @@ function Export-AzSOfflineProductInternal {
         [ValidateNotNullorEmpty()]
         [String] $destination,
 
-        [Parameter(Mandatory = $true)]
-        [Switch] $resourceProvider,
-
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [String] $azCopyPath
+        [String] $azCopyPath,
+        
+        [Parameter(Mandatory = $true)]
+        [Switch] $resourceProvider
     )
 
     # in case it is relative path
@@ -129,7 +129,7 @@ function Export-AzSOfflineProductInternal {
     $azureEnvironment = $azureContext.Environment
 
     # Retrieve the access token
-    $accessToken = Get-AccessTokenFromContext
+    $accessToken = Get-AccessTokenFromContext -azureContext $azureContext
     
     $params = @{
         azureEnvironment        = $azureEnvironment
@@ -177,10 +177,10 @@ function Export-AzSOfflineProductInternal {
         }
 
         if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-            $params.AzCopyDownloadThreads = $azCopyDownloadThreads
+            $getDependencyParam.AzCopyDownloadThreads = $azCopyDownloadThreads
         }
         if ($PSBoundParameters.ContainsKey('azCopyPath')) {
-            $params.azCopyPath = $azCopyPath
+            $getDependencyParam.azCopyPath = $azCopyPath
         }
 
         if ($versionEntries.length -eq 1) {
@@ -221,7 +221,13 @@ function OutGridViewWrapper {
 }
 
 function Get-AccessTokenFromContext {
-    $azureContext = Get-AzureRmContext
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $azureContext
+    )
+
     $azureTenantID = $azureContext.Tenant.TenantId
     $azureSubscriptionID = $azureContext.Subscription.Id
     $azureEnvironment = $azureContext.Environment
