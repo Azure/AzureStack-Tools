@@ -128,59 +128,6 @@ function Clear-AzsUserDataWithUserPrincipalName
         [pscredential] $AutomationCredential = $null
     )
 
-    Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
-
-    $params = @{
-        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
-        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
-        UserPrincipalName           = $UserPrincipalName
-    }
-
-    if ($DirectoryTenantId) {
-        $params.DirectoryTenantId = $DirectoryTenantId
-    }
-
-    if ($AutomationCredential) {
-        $params.AutomationCredential = $AutomationCredential
-    }
-
-    Clear-AzsUserData @params
-}
-
-<#
-.Synopsis
-    Deprecated: Clear the portal user data
-#>
-function Clear-AzsUserData
-{
-    param
-    (
-        # The directory tenant identifier of Azure Stack Administrator.
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [string] $AzsAdminDirectoryTenantId,
-
-        # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [Uri] $AzsAdminArmEndpoint,
-
-        # The user principal name of the account whoes user data should be cleared.
-        [Parameter(Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [string] $UserPrincipalName,
-
-        # Optional: The directory tenant identifier of account whoes user data should be cleared.
-        # If it is not specified, it will delete user with principal name under all regitered directory tenants
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNullOrEmpty()]
-        [string] $DirectoryTenantId,
-
-        # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
-        [ValidateNotNull()]
-        [pscredential] $AutomationCredential = $null
-    )
-
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
@@ -288,8 +235,6 @@ function Clear-AzsUserDataWithUserObjectId
         [pscredential] $AutomationCredential = $null
     )
 
-    Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
-
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
@@ -333,8 +278,6 @@ function Get-UserObjectId
         [ValidateNotNull()]
         [pscredential] $AutomationCredential = $null
     )
-
-    Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
 
     $params = @{
         AzsDirectoryTenantId        = $DirectoryTenantId
@@ -427,6 +370,5 @@ function Clear-SinglePortalUserData
 }
 
 Export-ModuleMember -Function Get-UserObjectId
-Export-ModuleMember -Function Clear-AzsUserData
 Export-ModuleMember -Function Clear-AzsUserDataWithUserPrincipalName
 Export-ModuleMember -Function Clear-AzsUserDataWithUserObjectId

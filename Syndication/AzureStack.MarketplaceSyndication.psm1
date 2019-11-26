@@ -25,7 +25,11 @@ function Export-AzSOfflineMarketplaceItem {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
-        [String] $destination
+        [String] $destination,
+
+        [Parameter(Mandatory = $false, ParameterSetName = 'SyncOfflineAzsMarketplaceItem')]
+        [ValidateNotNullorEmpty()]
+        [String] $azCopyPath
     )
 
     $params = @{
@@ -34,9 +38,11 @@ function Export-AzSOfflineMarketplaceItem {
         resourceProvider    = $false
         azureContext        = $azureContext
     }
-    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads'))
-    {
+    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
         $params.AzCopyDownloadThreads = $AzCopyDownloadThreads
+    }
+    if ($PSBoundParameters.ContainsKey('azCopyPath')) {
+        $params.azCopyPath = $azCopyPath
     }
 
     Export-AzSOfflineProductInternal @params
@@ -64,7 +70,11 @@ function Export-AzSOfflineResourceProvider {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullorEmpty()]
-        [String] $destination
+        [String] $destination,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [String] $azCopyPath
     )
 
     $params = @{
@@ -76,6 +86,10 @@ function Export-AzSOfflineResourceProvider {
     if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads'))
     {
         $params.AzCopyDownloadThreads = $AzCopyDownloadThreads
+    }
+    if ($PSBoundParameters.ContainsKey('azCopyPath'))
+    {
+        $params.azCopyPath = $azCopyPath
     }
 
     Export-AzSOfflineProductInternal @params
@@ -101,7 +115,11 @@ function Export-AzSOfflineProductInternal {
         [String] $destination,
 
         [Parameter(Mandatory = $true)]
-        [Switch] $resourceProvider
+        [Switch] $resourceProvider,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [String] $azCopyPath
     )
 
     # in case it is relative path
@@ -160,6 +178,9 @@ function Export-AzSOfflineProductInternal {
 
         if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
             $params.AzCopyDownloadThreads = $azCopyDownloadThreads
+        }
+        if ($PSBoundParameters.ContainsKey('azCopyPath')) {
+            $params.azCopyPath = $azCopyPath
         }
 
         if ($versionEntries.length -eq 1) {
@@ -236,7 +257,10 @@ function Get-DependenciesAndDownload {
 
         [parameter(mandatory = $false)]
         [ValidateRange(1, 128)]
-        [Int] $azCopyDownloadThreads
+        [Int] $azCopyDownloadThreads,
+
+        [Parameter(mandatory = $false)]
+        [String] $azCopyPath
     )
 
     $headers = @{ 'authorization' = "Bearer $accessToken"}
@@ -257,6 +281,9 @@ function Get-DependenciesAndDownload {
             }
             if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
                 $getDependencyParam.azCopyDownloadThreads = $azCopyDownloadThreads
+            }
+            if ($PSBoundParameters.ContainsKey('azCopyPath')) {
+                $getDependencyParam.azCopyPath = $azCopyPath
             }
 
             Get-DependenciesAndDownload @getDependencyParam
@@ -285,7 +312,38 @@ function Get-DependenciesAndDownload {
     if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
         $downloadProductParam.azCopyDownloadThreads = $azCopyDownloadThreads
     }
+    if ($PSBoundParameters.ContainsKey('azCopyPath')) {
+        $downloadProductParam.azCopyPath = $azCopyPath
+    }
     Download-Product @downloadProductParam
+}
+
+function ValidateOrGetAzCopyPath($azCopyPath) {
+    # getting azcopy path from environment variables user didn't provide azCopyPath parameter 
+    if ([string]::IsNullOrEmpty($azCopyPath)){ 
+        $azCopyPath = (Get-Command 'azcopy' -ErrorAction Ignore).Source
+        if ([string]::IsNullOrEmpty($azCopyPath)){
+            return $null
+        }
+    }else{
+        # if user just provided the directory containing azcopy.exe
+        if (-not ($azCopyPath -match ".exe$")){ $azCopyPath = $azCopyPath.TrimEnd("\")+"\azcopy.exe" }
+    }
+    try{
+        # invoking azcopy command to validate if it exists and getting info such as version
+        $azCopyInfo = & $azCopyPath
+        # getting version data from other details
+        $azCopyVersion = $azCopyInfo | Where-Object {$_ -match "AzCopy [0-9]+\.[0-9]+\.[0-9]+"} | Foreach {$matches[0]}
+        # checking if the AzCopy V10 is being used or not
+        if (-not ($azCopyVersion -match "10\.[0-9]+\.[0-9]+")){
+            Write-Verbose "$azCopyVersion is not compatible with this script." -verbose
+            return $null
+        }
+    }catch{
+        Write-Verbose "$azCopyPath doesn't exist." -verbose
+        return $null
+    }
+    return $azCopyPath
 }
 
 function Download-Product {
@@ -307,7 +365,11 @@ function Download-Product {
 
         [parameter(mandatory = $false)]
         [ValidateRange(1, 128)]
-        [Int] $azCopyDownloadThreads
+        [Int] $azCopyDownloadThreads,
+
+        # Get the path of AzCopy executable if path is set in Environment variables
+        [parameter(mandatory = $false)]
+        [String] $azCopyPath
     )
 
     # get name of azpkg
@@ -397,6 +459,14 @@ function Download-Product {
         # select premium download
         Write-Host $("-"*20)
         $downloadConfirmation = Read-Host "Downloading package files. Would you like to use Premium download? This requires Azure Storage Tools to be installed. (Y/N)?"
+        # getting azcopy path from environment variables if premium download is selected and user didn't provide azCopyPath parameter 
+        if ($downloadConfirmation -eq 'Y'){
+            $azCopyPath = ValidateOrGetAzCopyPath($azCopyPath)
+            if ([string]::IsNullOrEmpty($azCopyPath)) { 
+                Write-Verbose "Please download AzCopy V10 and add its path to Environment variables path or pass AzCopy V10 path as an addtional parameter (-azCopyPath), canceling" -verbose
+                return 
+            }
+        }
 
         if ($downloadDetails.productKind -ne 'resourceProvider')
         {
@@ -414,20 +484,12 @@ function Download-Product {
             $azpkgdestination = "$productFolder\$azpkgName.azpkg"
 
             if ($downloadConfirmation -eq 'Y') {
-                $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-                If ($checktool -eq $true){
-                    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                        DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                    } else {
-                        DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -PremiumDownload -MaxRetry 2
-                    }
-
-                    "$productFolder\$azpkgName.azpkg"|out-file "$productFolder\$azpkgName.txt" -Append
+                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                    DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                } else {
+                    DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                 }
-                else{
-                    Write-Verbose "Please install Azure Storage Tools AzCopy first, canceling" -verbose
-                    return
-                }
+                "$productFolder\$azpkgName.azpkg"|out-file "$productFolder\$azpkgName.txt" -Append
             } else {
                 DownloadMarketplaceProduct -Source $azpkgsource -Destination $azpkgdestination -ProductName "$azpkgName.azpkg" -MaxRetry 2
                 "$productFolder\$azpkgName.azpkg"|out-file "$productFolder\$azpkgName.txt" -Append
@@ -449,54 +511,47 @@ function Download-Product {
         if (Test-Path "$iconsFolder\wide.png") {Remove-Item "$iconsFolder\wide.png" -force -ErrorAction SilentlyContinue | Out-Null}
 
         if ($downloadConfirmation -eq 'Y') {
-            $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-            if ($checktool -eq $true){
-                if ($icon.hero) {
-                    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                        DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                    } else {
-                        DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -PremiumDownload -MaxRetry 2
-                    }
-                    "$iconsFolder\hero.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            if ($icon.hero) {
+                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                    DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                } else {
+                    DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                 }
-                if ($icon.large) {
-                    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                        DownloadMarketplaceProduct -Source "$($icon.large)" -Destination "$iconsFolder\large.png" -ProductName "large.png" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                    } else {
-                        DownloadMarketplaceProduct -Source "$($icon.large)" -Destination "$iconsFolder\large.png" -ProductName "large.png" -PremiumDownload -MaxRetry 2
-                    }
-                    "$iconsFolder\large.png"|out-file "$productFolder\$azpkgName.txt" -Append
-                }
-                if ($icon.medium) {
-                    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                        DownloadMarketplaceProduct -Source "$($icon.medium)" -Destination "$iconsFolder\medium.png" -ProductName "medium.png" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                    } else {
-                        DownloadMarketplaceProduct -Source "$($icon.medium)" -Destination "$iconsFolder\medium.png" -ProductName "medium.png" -PremiumDownload -MaxRetry 2
-                    }
-                    "$iconsFolder\medium.png"|out-file "$productFolder\$azpkgName.txt" -Append
-                }
-                if ($icon.small) {
-                    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                        DownloadMarketplaceProduct -Source "$($icon.small)" -Destination "$iconsFolder\small.png" -ProductName "small.png" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                    } else {
-                        DownloadMarketplaceProduct -Source "$($icon.small)" -Destination "$iconsFolder\small.png" -ProductName "small.png" -PremiumDownload -MaxRetry 2
-                    }
-                    "$iconsFolder\small.png"|out-file "$productFolder\$azpkgName.txt" -Append
-                }
-                if ($icon.wide) {
-                    if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                        DownloadMarketplaceProduct -Source "$($icon.wide)" -Destination "$iconsFolder\wide.png" -ProductName "wide.png" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                    } else {
-                        DownloadMarketplaceProduct -Source "$($icon.wide)" -Destination "$iconsFolder\wide.png" -ProductName "wide.png" -PremiumDownload -MaxRetry 2
-                    }
-                    "$iconsFolder\wide.png"|out-file "$productFolder\$azpkgName.txt" -Append
-                }
-                Write-Verbose "icons has been downloaded" -verbose
+                "$iconsFolder\hero.png"|out-file "$productFolder\$azpkgName.txt" -Append
             }
-            else{
-                Write-Verbose "Please install Azure Storage Tools AzCopy first, canceling" -verbose
-                return
+            if ($icon.large) {
+                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                    DownloadMarketplaceProduct -Source "$($icon.large)" -Destination "$iconsFolder\large.png" -ProductName "large.png" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                } else {
+                    DownloadMarketplaceProduct -Source "$($icon.large)" -Destination "$iconsFolder\large.png" -ProductName "large.png" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                }
+                "$iconsFolder\large.png"|out-file "$productFolder\$azpkgName.txt" -Append
             }
+            if ($icon.medium) {
+                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                    DownloadMarketplaceProduct -Source "$($icon.medium)" -Destination "$iconsFolder\medium.png" -ProductName "medium.png" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                } else {
+                    DownloadMarketplaceProduct -Source "$($icon.medium)" -Destination "$iconsFolder\medium.png" -ProductName "medium.png" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                }
+                "$iconsFolder\medium.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            if ($icon.small) {
+                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                    DownloadMarketplaceProduct -Source "$($icon.small)" -Destination "$iconsFolder\small.png" -ProductName "small.png" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                } else {
+                    DownloadMarketplaceProduct -Source "$($icon.small)" -Destination "$iconsFolder\small.png" -ProductName "small.png" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                }
+                "$iconsFolder\small.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            if ($icon.wide) {
+                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                    DownloadMarketplaceProduct -Source "$($icon.wide)" -Destination "$iconsFolder\wide.png" -ProductName "wide.png" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                } else {
+                    DownloadMarketplaceProduct -Source "$($icon.wide)" -Destination "$iconsFolder\wide.png" -ProductName "wide.png" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
+                }
+                "$iconsFolder\wide.png"|out-file "$productFolder\$azpkgName.txt" -Append
+            }
+            Write-Verbose "icons has been downloaded" -verbose
         } else {
             if ($icon.hero) {
                 DownloadMarketplaceProduct -Source "$($icon.hero)" -Destination "$iconsFolder\hero.png" -ProductName "hero.png" -MaxRetry 2
@@ -536,19 +591,12 @@ function Download-Product {
                     $vhdDestination = "$productFolder\$vhdName.vhd"
 
                     if ($downloadConfirmation -eq 'Y') {
-                        $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-                        If ($checktool -eq $true){
-                            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                                DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                            } else {
-                                DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -PremiumDownload -MaxRetry 2
-                            }
-
-                            "$productFolder\$vhdName.vhd"|out-file "$productFolder\$azpkgName.txt" -Append
+                        if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                            DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                         } else {
-                            Write-Verbose "Please install Azure Storage Tools AzCopy first,canceling" -verbose
-                            return
+                            DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                         }
+                        "$productFolder\$vhdName.vhd"|out-file "$productFolder\$azpkgName.txt" -Append
                     } else {
                         DownloadMarketplaceProduct -Source $vhdsource -Destination $vhddestination -ProductName "$vhdName.vhd" -MaxRetry 2
                     }
@@ -570,20 +618,13 @@ function Download-Product {
                     $zipDestination = "$productFolder\$zipName.zip"
 
                     if ($downloadConfirmation -eq 'Y') {
-                        $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-                        If ($checktool -eq $true){
-                            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                                DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                            } else {
-                                DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -PremiumDownload -MaxRetry 2
-                            }
-
-                            "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
-                            $productDetailsProperties['sourceBlob'].uri = "$zipName.zip"
+                        if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                            DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                         } else {
-                            Write-Verbose "Please install Azure Storage Tools AzCopy first,canceling" -verbose
-                            return
+                            DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                         }
+                        "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
+                        $productDetailsProperties['sourceBlob'].uri = "$zipName.zip"
                     } else {
                         DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "$zipName.zip" -MaxRetry 2
                         "$productFolder\$zipName.zip"|out-file "$productFolder\$azpkgName.txt" -Append
@@ -621,19 +662,12 @@ function Download-Product {
                         }
 
                         if ($downloadConfirmation -eq 'Y') {
-                            $checktool= Test-Path "C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe"
-                            If ($checktool -eq $true){
-                                if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                                    DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -azCopyDownloadThreads $azCopyDownloadThreads -PremiumDownload -MaxRetry 2
-                                } else {
-                                    DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -PremiumDownload -MaxRetry 2
-                                }
-
-                                "$productFolder\$containerName"|out-file "$productFolder\$azpkgName.txt" -Append
+                            if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
+                                DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -azCopyDownloadThreads $azCopyDownloadThreads -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                             } else {
-                                Write-Verbose "Please install Azure Storage Tools AzCopy first,canceling" -verbose
-                                return
+                                DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -azCopyPath $azCopyPath -PremiumDownload -MaxRetry 2
                             }
+                            "$productFolder\$containerName"|out-file "$productFolder\$azpkgName.txt" -Append
                         } else {
                             DownloadMarketplaceProduct -Source $zipsource -Destination $zipdestination -ProductName "Container [$containerName]" -MaxRetry 2
                             "$productFolder\$containerName"|out-file "$productFolder\$azpkgName.txt" -Append
@@ -677,7 +711,10 @@ function DownloadMarketplaceProduct {
         [Switch] $premiumDownload,
 
         [Parameter(Mandatory = $false)]
-        [object] $maxRetry = 1
+        [object] $maxRetry = 1,
+
+        [Parameter(Mandatory = $false)]
+        [String] $azCopyPath
     )
 
     $content = $null
@@ -696,10 +733,12 @@ function DownloadMarketplaceProduct {
     while (-not $completed) {
         try {
             if ($PremiumDownload) {
+                Write-Verbose "azCopyPath: $azCopyPath" -Verbose
                 if ($PSBoundParameters.ContainsKey('azCopyDownloadThreads')) {
-                    & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y /NC:$azCopyDownloadThreads
+                    $env:AZCOPY_CONCURRENCY_VALUE = $azCopyDownloadThreads
+                    & $azCopyPath copy $Source $tmpDestination --recursive
                 } else {
-                    & 'C:\Program Files (x86)\Microsoft SDKs\Azure\AzCopy\AzCopy.exe' /Source:$Source /Dest:$tmpDestination /Y
+                    & $azCopyPath copy $Source $tmpDestination --recursive
                 }
                 ## Check $LastExitcode to see if AzCopy Succeeded 
                 if ($LastExitCode -ne 0) {
@@ -792,7 +831,21 @@ function PreCheck
     )
 
     $dirs = Get-ChildItem -Path $contentFolder
+    $iconsFolder = Join-Path -Path $contentFolder -ChildPath "Icons"
 
+     # Check if the user specified marketplace item folder instead of parent directory
+     if(Test-Path -Path $iconsFolder -PathType Container)
+     {
+        $message = @"
+        `r`nImport-AzSOfflineMarketplaceItem requires specified content folder (specified with -origin parameter) to have 1 or more downloaded product folders. 
+        Each product folder should contain a product definition json file.  
+        E.g. product folder c:\downloads\product1 should contain c:\downloads\product1\product1.json 
+        Please specifiy correct top level folder that contains the list of downloaded products.
+"@
+         Write-Verbose -Message "$message" -Verbose
+         throw "$message"
+     }
+ 
     foreach ($dir in $dirs)
     {
         $folderPath = $contentFolder + "\$dir"
@@ -818,15 +871,16 @@ function PreCheck
         $configuration = Get-Content $jsonPath | ConvertFrom-Json 
         $properties = ($configuration | Get-Member -MemberType NoteProperty).Name
         ## define required properties
-        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier","galleryPackageBlobSasUri", "offer", "offerVersion", "sku", "productProperties", "payloadLength", "iconUris", "productKind" )
+        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier","galleryPackageBlobSasUri", "productProperties", "payloadLength", "iconUris", "productKind" )
         foreach ($property in $requiredprops) {
-            if ($configuration.$property) {
+            if (-not [string]::IsNullOrEmpty($configuration.$property)) {
                 Write-Verbose -Message "$property = $($configuration.$property)"              
             }
             else
             {
-                Write-Error -Message "Property value for $property is null. Please check JSON contents, then retry import."
-                throw "JSON file contains null values for required properties."
+                $errorMessage = "`r`nProperty value for $property is null. Please check JSON contents, then retry import"
+                $errorMessage += "`r`nJSON file contains null values for required properties: $($properties)"
+                Write-Error -Message $errorMessage -ErrorAction Stop
             }
         }
 
@@ -834,8 +888,9 @@ function PreCheck
        
         if ($iconUris.small -eq $null -or $iconUris.large -eq $null -or $iconUris.medium -eq $null -or $iconUris.wide -eq $null )
         {
-             Write-Error -Message "Property value for certain Icons is null. Please check JSON contents, then retry import."
-             throw "JSON file contains null values for certain Icons. Please ensure small, medium, large and wide icons exist in the JSON."
+            $errorMessage = "`r`nProperty value for certain Icons is null. Please check JSON contents, then retry import."
+            $errorMessage += "`r`nJSON file contains null values for certain Icons. Please ensure small, medium, large and wide icons exist in the JSON."
+            Write-Error -Message $errorMessage -ErrorAction Stop
         }
     }
 }
@@ -893,7 +948,7 @@ function Import-ByDependency
     {
         if ($_.Exception.Response.StatusCode -ne 404)
         {
-            Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+            Write-Warning -Message "Failed to execute web request: Exception: $($_.Exception)" 
         }
     }
 
@@ -964,7 +1019,7 @@ function Test-AzSOfflineMarketplaceItem {
         {
             if ($_.Exception.Response.StatusCode -ne 404)
             {
-                Write-Warning -Message "Failed to execute web request" -Exception $_.Exception
+                Write-Warning -Message "Failed to execute web request, Exception: `r`n$($_.Exception)"
             }
         }
     }
@@ -1028,7 +1083,7 @@ function Resolve-ToLocalURI {
     # check osDiskImage
     if ($json.productDetailsProperties.OsDiskImage) {
         $osDiskImageFile = Get-Item -path "$productFolder\*.vhd"
-        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -productid $productid -resourceGroup $resourceGroup
+        $osImageURI = Upload-ToStorage -filePath $osDiskImageFile.FullName -productid $productid -resourceGroup $resourceGroup -blobType Page
         $json.productDetailsProperties.OsDiskImage.sourceBlobSasUri = $osImageURI
     }
 
@@ -1165,6 +1220,8 @@ function Syndicate-Product {
         properties = $properties
     }
 
+    Write-Verbose -Message "properties : $($json | ConvertTo-Json -Compress)" -Verbose
+
     $syndicateResponse = InvokeWebRequest -Method PUT -Uri $syndicateUri -ArmEndpoint $armEndpoint -Headers ([ref]$headers) -Body $json -MaxRetry 2 -azsCredential $azsCredential
 
     if ($syndicateResponse.StatusCode -eq 200) {
@@ -1183,7 +1240,11 @@ function Upload-ToStorage {
         [String] $productid,
 
         [parameter(mandatory = $true)]
-        [String] $resourceGroup
+        [String] $resourceGroup,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Page', 'Block')]
+        [String] $blobType = "Block"
     )
 
     $syndicationStorageName = "syndicationstorage"
@@ -1224,6 +1285,7 @@ function Upload-ToStorage {
             -Container $syndicationContainerName `
             -Blob $blobName `
             -Context $ctx `
+            -BlobType $blobType `
             -Force | Out-Null
 
         $fileURI = (Get-AzureStorageBlob -blob $blobName -Container $syndicationContainerName -Context $ctx).ICloudBlob.Uri.AbsoluteUri
@@ -1371,16 +1433,16 @@ function InvokeWebRequest {
         catch
         {
             if ($retryCount -ge $maxRetry) {
-                Write-Warning "Request to $method $uri failed the maximum number of $maxRetry times. Timestamp: $($(get-date).ToString('T'))"
+                Write-Warning "Request to $method $uri failed the maximum number of $maxRetry times. Timestamp: $((get-date).ToString('T'))"
+                Write-Warning "Exception: `r`n$($_.Exception)"
                 throw
             } else {
-                $error = $_.Exception
                 if ($_.Exception.Response.StatusCode -eq 401)
                 {
                     try {
                         if (!$azsCredential) {
                             Write-Warning -Message "Access token expired."
-                            $azsCredential = Get-Credential -Message "Enter the azure stack operator credential"
+                            $azsCredential = Get-Credential -Message "Enter the Azure Stack operator credential"
                         }
                         $endpoints = Get-ResourceManagerMetaDataEndpoints -ArmEndpoint $armEndpoint
                         $aadAuthorityEndpoint = $endpoints.authentication.loginEndpoint
@@ -1391,12 +1453,12 @@ function InvokeWebRequest {
                     }
                     catch
                     {
-                        Write-Warning "webrequest exception. `n$error"
+                        Write-Warning "webrequest exception. `r`n$($_.Exception)"
                     }
                 }
 
                 $retryCount++
-                Write-Debug "Request to $method $uri failed with status $error. `nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $($(get-date).ToString('T'))"
+                Write-Warning "Request to $method $uri failed with exception: `r`n$($_.Exception). `r`nRetrying in $sleepSeconds seconds, retry count - $retryCount. Timestamp: $((get-date).ToString('T'))"
                 Start-Sleep $sleepSeconds
             }
         }
