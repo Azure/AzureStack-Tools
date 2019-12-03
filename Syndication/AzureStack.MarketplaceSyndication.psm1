@@ -161,6 +161,11 @@ function Export-AzSOfflineProductInternal {
         })
     }
 
+    if (-not $productObjects) {
+        Write-Warning "There is not existing products from Azure, please check your subscription"
+        return
+    }
+
     $selectionWindowsTitle = 'Download marketplace items from Azure'
     if ($resourceProvider) {
         $selectionWindowsTitle = 'Download resource providers from Azure'
@@ -199,7 +204,7 @@ function Export-AzSOfflineProductInternal {
             }
 
             OutGridViewWrapper -InputObject $versionObjects -Title "Select version for $($selectedProduct.Id)" | foreach {
-                $getDependencyParam.productid = "$($selectedProduct.Id)-$($versionObject.Version)"
+                $getDependencyParam.productid = "$($selectedProduct.Id)-$($_.Version)"
                 $getDependencyParam.ProductResourceId = ($versionEntries | where ProductId -eq $getDependencyParam.productid).ProductResourceId
 
                 Get-DependenciesAndDownload @getDependencyParam
@@ -877,7 +882,7 @@ function PreCheck
         $configuration = Get-Content $jsonPath | ConvertFrom-Json 
         $properties = ($configuration | Get-Member -MemberType NoteProperty).Name
         ## define required properties
-        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier","galleryPackageBlobSasUri", "productProperties", "payloadLength", "iconUris", "productKind" )
+        $requiredprops = @("displayName","publisherDisplayName","publisherIdentifier", "productProperties", "payloadLength", "iconUris", "productKind" )
         foreach ($property in $requiredprops) {
             if (-not [string]::IsNullOrEmpty($configuration.$property)) {
                 Write-Verbose -Message "$property = $($configuration.$property)"              
