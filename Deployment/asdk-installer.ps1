@@ -1061,6 +1061,10 @@ $Xaml = @'
                             <ComboBox Width="430" x:Name="Control_Creds_Cbx_Idp" FontFamily="Segoe UI" FontSize="14" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_Idp}" >
                             </ComboBox>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock x:Name="Control_Creds_Tbl_ArmEndpoint" FontSize="14" FontFamily="Segoe UI"  Text="ARM Endpoint:" Width="120" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="Control_Creds_Tbx_ArmEndpoint" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_ArmEndpoint}" />
+                        </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_AAD" Visibility="Visible">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <TextBlock x:Name="Control_Creds_Tbl_AADTenant" FontSize="14" FontFamily="Segoe UI"  Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
@@ -1395,6 +1399,7 @@ $AuthEndpoints = @{
     'ADFS'= @{
         'Endpoint'='https://adfs.local.azurestack.external'
         }
+    'Custom Cloud'=''
 }
 
 $AuthEndpoints.GetEnumerator() | ForEach-Object {
@@ -1835,7 +1840,8 @@ Function F_Initialize {
     Write-Host "." -NoNewline -ForegroundColor Cyan
 
     # Get environment details CloudBuilder
-    if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
+    if ($true) {
+    #if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
         if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")) {
             # Deployment not initialized
             $Script:Initialized="CloudBuilder_Install"
@@ -2061,6 +2067,10 @@ Function F_VerifyFields_Creds {
     {
         $syncHash.Control_Creds_Btn_Next.IsEnabled = $true
     }
+    elseif ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud')
+    {
+        $syncHash.Control_Creds_Btn_Next.IsEnabled = ($syncHash.Control_Creds_Tbx_ArmEndpoint.Text.Length -gt 0)
+    }
     elseif (
         ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS' -and
         ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0)) -or
@@ -2074,6 +2084,13 @@ Function F_VerifyFields_Creds {
     }
     Else {
         $syncHash.Control_Creds_Btn_Next.IsEnabled = $false
+    }
+
+    if (-not $Script:Restore -and $syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
+        $syncHash.Control_Creds_Tbx_ArmEndpoint.IsEnabled = $true
+    }
+    else {
+        $syncHash.Control_Creds_Tbx_ArmEndpoint.IsEnabled = $false
     }
 }
 
@@ -2244,6 +2261,11 @@ Function F_Summary {
         ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
                 $InstallScript += " -UseADFS"
         }
+        ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
+                $InstallScript += " -InfraAzureEnvironment CustomCloud"
+                $InstallScript += " -CustomCloudARMEndpoint "
+                $InstallScript += $syncHash.Control_Creds_Tbx_ArmEndpoint.Text
+        }
 
         If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0) {
                 $InstallScript += " -DNSForwarder "
@@ -2341,6 +2363,10 @@ Function F_Install {
     }
     ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS') {
         ' -UseADFS' |  Add-Content $filepath -NoNewline
+    }
+    ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
+        ' -InfraAzureEnvironment CustomCloud' | Add-Content $filePath -NoNewline
+        ' -CustomCloudARMEndpoint "' + $syncHash.Control_Creds_Tbx_ArmEndpoint.Text + '"' | Add-Content $filePath -NoNewline
     }
 
     If ($synchash.Control_NetConfig_Tbx_DnsForwarder.Text.Length -gt 0) {
@@ -2687,6 +2713,10 @@ $syncHash.Control_Creds_Tbx_AADTenant.Add_TextChanged({
 
 $syncHash.Control_Creds_Pwb_LocalPassword.Add_PasswordChanged({
     F_Regex -field 'Control_Creds_Pwb_LocalPassword'
+    F_VerifyFields_Creds
+})
+
+$syncHash.Control_Creds_Tbx_ArmEndpoint.Add_TextChanged({
     F_VerifyFields_Creds
 })
 #endregion Events Creds
