@@ -1840,8 +1840,7 @@ Function F_Initialize {
     Write-Host "." -NoNewline -ForegroundColor Cyan
 
     # Get environment details CloudBuilder
-    if ($true) {
-    #if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
+    if (test-path "C:\CloudDeployment\Setup\InstallAzureStackPOC.ps1") {
         if(!(test-path "C:\CloudDeployment\ECEngine\EnterpriseCloudEngine.psd1")) {
             # Deployment not initialized
             $Script:Initialized="CloudBuilder_Install"
@@ -2061,21 +2060,28 @@ Function F_Verify_LocalAdminCreds {
 }
 
 Function F_VerifyFields_Creds {
-    if ($Script:Restore -and
-        ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0) -and
-        ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000")))
+    if (
+        ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') -and
+        ($syncHash.Control_Creds_Tbx_AADTenant.Text.Length -gt 0) -and
+        ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000") -and
+        ($syncHash.Control_Creds_Tbx_ArmEndpoint.Text.Length -gt 0) -and
+        ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0))
     {
         $syncHash.Control_Creds_Btn_Next.IsEnabled = $true
     }
-    elseif ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud')
+    elseif ($Script:Restore -and
+        ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0) -and
+        ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000")) -and
+        ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -ne 'Custom Cloud'))
     {
-        $syncHash.Control_Creds_Btn_Next.IsEnabled = ($syncHash.Control_Creds_Tbx_ArmEndpoint.Text.Length -gt 0)
+        $syncHash.Control_Creds_Btn_Next.IsEnabled = $true
     }
     elseif (
         ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'ADFS' -and
         ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0)) -or
         (
         $syncHash.Control_Creds_Cbx_Idp.SelectedItem -ne 'ADFS' -and
+        $syncHash.Control_Creds_Cbx_Idp.SelectedItem -ne 'Custom Cloud' -and
         $syncHash.Control_Creds_Cbx_Idp.SelectedItem -and
         ($syncHash.Control_Creds_Tbx_AADTenant.Text -and ($syncHash.Control_Creds_Tbx_AADTenant.BorderBrush.color -ne "#FFFF0000")) -and
         ($syncHash.Control_Creds_Pwb_LocalPassword.Password.Length -gt 0))
@@ -2086,11 +2092,12 @@ Function F_VerifyFields_Creds {
         $syncHash.Control_Creds_Btn_Next.IsEnabled = $false
     }
 
-    if (-not $Script:Restore -and $syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
+    if ($syncHash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
         $syncHash.Control_Creds_Tbx_ArmEndpoint.IsEnabled = $true
     }
     else {
         $syncHash.Control_Creds_Tbx_ArmEndpoint.IsEnabled = $false
+        $syncHash.Control_Creds_Tbx_ArmEndpoint.Text = ''
     }
 }
 
@@ -2262,6 +2269,8 @@ Function F_Summary {
                 $InstallScript += " -UseADFS"
         }
         ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
+                $InstallScript += " -InfraAzureDirectoryTenantName "
+                $InstallScript += $synchash.Control_Creds_Tbx_AADTenant.Text
                 $InstallScript += " -InfraAzureEnvironment CustomCloud"
                 $InstallScript += " -CustomCloudARMEndpoint "
                 $InstallScript += $syncHash.Control_Creds_Tbx_ArmEndpoint.Text
@@ -2365,6 +2374,7 @@ Function F_Install {
         ' -UseADFS' |  Add-Content $filepath -NoNewline
     }
     ElseIf ($synchash.Control_Creds_Cbx_Idp.SelectedItem -eq 'Custom Cloud') {
+        ' -InfraAzureDirectoryTenantName "' + $synchash.Control_Creds_Tbx_AADTenant.Text + '"' |  Add-Content $filepath -NoNewline
         ' -InfraAzureEnvironment CustomCloud' | Add-Content $filePath -NoNewline
         ' -CustomCloudARMEndpoint "' + $syncHash.Control_Creds_Tbx_ArmEndpoint.Text + '"' | Add-Content $filePath -NoNewline
     }
