@@ -188,7 +188,10 @@ function Set-AzsRegistration{
         [switch] $MarketplaceSyndicationEnabled = $true,
 
         [Parameter(Mandatory = $false)]
-        [switch] $UsageReportingEnabled = $true,
+        [switch] $UsageReportingEnabled = @{'Capacity'=$true; 
+                                            'PayAsYouUse'=$true; 
+                                            'Development'=$true; 
+                                            'Custom'=$false}[$BillingModel],
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
