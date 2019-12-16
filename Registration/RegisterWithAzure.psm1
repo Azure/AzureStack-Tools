@@ -181,25 +181,18 @@ function Set-AzsRegistration{
                                             'CustomCloud'='westcentralus'}[$AzureContext.Environment.Name],
         
         [Parameter(Mandatory = $false)]
-        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development')]
         [string] $BillingModel = 'Development',
 
         [Parameter(Mandatory = $false)]
         [switch] $MarketplaceSyndicationEnabled = $true,
 
         [Parameter(Mandatory = $false)]
-        [switch] $UsageReportingEnabled = @{'Capacity'=$true; 
-                                            'PayAsYouUse'=$true; 
-                                            'Development'=$true; 
-                                            'Custom'=$false}[$BillingModel],
+        [switch] $UsageReportingEnabled = $true,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
-        [string] $AgreementNumber,
-
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNull()]
-        [string] $MsAssetTag
+        [string] $AgreementNumber
     )
     #requires -Version 4.0
     #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
@@ -229,7 +222,6 @@ function Set-AzsRegistration{
             MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
             UsageReportingEnabled         = $UsageReportingEnabled
             AgreementNumber               = $AgreementNumber
-            MsAssetTag                    = $MsAssetTag
         }
         Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
         if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled))
@@ -464,7 +456,7 @@ Function Get-AzsRegistrationToken{
         [String] $PrivilegedEndpoint,
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet('Capacity', 'Development','Custom')]
+        [ValidateSet('Capacity', 'Development')]
         [string] $BillingModel = 'Capacity',
 
         [Parameter(Mandatory = $false)]
@@ -479,11 +471,7 @@ Function Get-AzsRegistrationToken{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
-        [string] $AgreementNumber,
-
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNull()]
-        [string] $MsAssetTag
+        [string] $AgreementNumber
     )
     #requires -Version 4.0
     #requires -RunAsAdministrator
@@ -528,7 +516,6 @@ Function Get-AzsRegistrationToken{
         UsageReportingEnabled         = $UsageReportingEnabled
         AgreementNumber               = $AgreementNumber
         TokenOutputFilePath           = $TokenOutputFilePath
-        MsAssetTag                    = $MsAssetTag
     }
 
     Log-Output "Registration action params: $(ConvertTo-Json $params)"
@@ -1059,7 +1046,7 @@ Function Get-RegistrationToken{
         [String] $PrivilegedEndpoint,
         
         [Parameter(Mandatory = $false)]
-        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development')]
         [string] $BillingModel = 'Development',
 
         [Parameter(Mandatory = $false)]
@@ -1079,11 +1066,7 @@ Function Get-RegistrationToken{
         [PSObject] $StampInfo,
 
         [Parameter(Mandatory = $false)]
-        [String] $TokenOutputFilePath,
-
-        [Parameter(Mandatory=$false)]
-        [ValidateNotNull()]
-        [string] $MsAssetTag
+        [String] $TokenOutputFilePath
     )
 
     if (-not $StampInfo)
@@ -1099,7 +1082,7 @@ Function Get-RegistrationToken{
         try
         {
             Log-Output "Creating registration token. Attempt $currentAttempt of $maxAttempt"
-            $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber -MsAssetTag $using:MsAssetTag }
+            $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
             if ($TokenOutputFilePath)
             {
                 Log-Output "Registration token will be written to: $TokenOutputFilePath"
