@@ -1088,7 +1088,13 @@ Function Get-RegistrationToken{
 
     if (-not $StampInfo)
     {
-        Confirm-StampVersion -PSSession $session | Out-Null
+        $StampInfo = Confirm-StampVersion -PSSession $session
+    }
+
+    $StampVersion = $StampInfo.StampVersion
+    $CustomBillingModelVersion = [Version]"1.1912.0.0"
+    if( ($StampVersion -lt $CustomBillingModelVersion) -and ($BillingModel -eq 'Custom') ){
+        Log-Throw -Message "Custom BillingModel is not supported for StampVersion less than $CustomBillingModelVersion" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
     
     $currentAttempt = 0
@@ -1099,7 +1105,11 @@ Function Get-RegistrationToken{
         try
         {
             Log-Output "Creating registration token. Attempt $currentAttempt of $maxAttempt"
-            $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber -MsAssetTag $using:MsAssetTag }
+            if( $StampVersion -ge $CustomBillingModelVersion){
+                $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber -MsAssetTag $using:MsAssetTag }
+            } else{
+                $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
+            }
             if ($TokenOutputFilePath)
             {
                 Log-Output "Registration token will be written to: $TokenOutputFilePath"
