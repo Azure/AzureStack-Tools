@@ -46,7 +46,7 @@ function Initialize-GraphEnvironment
         [Parameter(ParameterSetName='Credential_AAD')]
         [Parameter(ParameterSetName='RefreshToken_AAD')]
         [Parameter(ParameterSetName='ServicePrincipal_AAD')]
-        [ValidateSet('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')]
+        [ValidateSet('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud', 'CustomCloud')]
         [string] $Environment = 'AzureCloud',
 
         # The fully-qualified domain name of the ADFS service (e.g. "adfs.azurestack.local").
@@ -59,17 +59,26 @@ function Initialize-GraphEnvironment
         [Parameter(Mandatory=$true, ParameterSetName='Credential_ADFS')]
         [Parameter(Mandatory=$true, ParameterSetName='RefreshToken_ADFS')]
         [ValidateNotNullOrEmpty()]
-        [string] $GraphFqdn
+        [string] $GraphFqdn,
+
+        [Parameter(Mandatory=$false, ParameterSetName='Credential_AAD')]
+        [Parameter(Mandatory=$false, ParameterSetName='RefreshToken_AAD')]
+        [Parameter(Mandatory=$false, ParameterSetName='ServicePrincipal_AAD')]
+        [string] $CustomCloudARMEndpoint
     )
 
     if ($AdfsFqdn)
     {
-        $EnvironmentInternal = 'ADFS'
+        $Environment = 'ADFS'
         Write-Warning "Parameters for ADFS have been specified; please note that only a subset of Graph APIs are available to be used in conjuction with ADFS."
     }
-    else
+
+    $CustomCloudProps = ''
+    if ($Environment -eq 'CustomCloud')
     {
-        $EnvironmentInternal = $Environment
+        if(!$CustomCloudARMEndpoint){ throw "CustomCloudARMEndpoint is a required parameter for Environment CustomCloud" }
+        Write-Verbose "Getting Custom Cloud properties for given ARM Endpoint '$CustomCloudARMEndpoint'" -Verbose
+        $CustomCloudProps = Get-Endpoints -CloudARMEndpoint $CustomCloudARMEndpoint
     }
 
     if ($PromptForUserCredential)
@@ -79,15 +88,15 @@ function Initialize-GraphEnvironment
 
     if ($UserCredential)
     {
-        Write-Verbose "Initializing the module to use Graph environment '$EnvironmentInternal' for user '$($UserCredential.UserName)' in directory tenant '$DirectoryTenantId'." -Verbose
+        Write-Verbose "Initializing the module to use Graph environment '$Environment' for user '$($UserCredential.UserName)' in directory tenant '$DirectoryTenantId'." -Verbose
     }
     elseif ($RefreshToken)
     {
-        Write-Verbose "Initializing the module to use Graph environment '$EnvironmentInternal' (with refresh token) in directory tenant '$DirectoryTenantId'." -Verbose
+        Write-Verbose "Initializing the module to use Graph environment '$Environment' (with refresh token) in directory tenant '$DirectoryTenantId'." -Verbose
     }
     elseif ($ClientId -and $ClientCertificate)
     {
-        Write-Verbose "Initializing the module to use Graph environment '$EnvironmentInternal' for service principal '$($ClientId)' in directory tenant '$DirectoryTenantId' with certificate $($ClientCertificate.Thumbprint)." -Verbose
+        Write-Verbose "Initializing the module to use Graph environment '$Environment' for service principal '$($ClientId)' in directory tenant '$DirectoryTenantId' with certificate $($ClientCertificate.Thumbprint)." -Verbose
     }
     else
     {
@@ -95,7 +104,7 @@ function Initialize-GraphEnvironment
     }
 
     $graphEnvironmentTemplate = @{}
-    $graphEnvironmentTemplate += switch ($EnvironmentInternal)
+    $graphEnvironmentTemplate += switch ($Environment)
     {
         'AzureCloud'
         {
@@ -221,7 +230,7 @@ function Initialize-GraphEnvironment
 
                 IssuerTemplate = "https://$AdfsFqdn/adfs/{0}/"
 
-                LoginEndpoint = [Uri]"https://$AdfsFqdn/adfs"
+                LoginEndpoint = [Uri]"https://$AdfsFqdn/adfs/$DirectoryTenantId"
                 GraphEndpoint = [Uri]"https://$GraphFqdn/$DirectoryTenantId"
 
                 LoginBaseEndpoint = [Uri]"https://$AdfsFqdn/adfs/"
@@ -232,15 +241,45 @@ function Initialize-GraphEnvironment
             }
         }
 
+                
+        'CustomCloud'
+        {
+            @{
+                GraphVersion  = "1.6"
+                GraphResource = $CustomCloudProps.Graph
+
+                IssuerTemplate = Get-IssuerTemplate -LoginUri $CustomCloudProps.Login -DirectoryTenantId $DirectoryTenantId
+
+                LoginEndpoint = [Uri]($CustomCloudProps.Login.TrimEnd('/')+"/$DirectoryTenantId")
+                GraphEndpoint = [Uri]($CustomCloudProps.Graph.TrimEnd('/')+"/$DirectoryTenantId")
+
+                LoginBaseEndpoint = [Uri]$CustomCloudProps.Login
+                GraphBaseEndpoint = [Uri]$CustomCloudProps.Graph
+
+                FederationMetadataEndpoint = [Uri]($CustomCloudProps.Login.TrimEnd('/')+"/$DirectoryTenantId/federationmetadata/2007-06/federationmetadata.xml")
+                OpenIdMetadata             = [Uri]($CustomCloudProps.Login.TrimEnd('/')+"/$DirectoryTenantId/.well-known/openid-configuration")
+
+                AadPermissions = [HashTable]@{
+                    AccessDirectoryAsSignedInUser      = "a42657d6-7f20-40e3-b6f0-cee03008a62a"
+                    EnableSignOnAndReadUserProfiles    = "311a71cc-e848-46a1-bdf8-97ff7156d8e6"
+                    ReadAllGroups                      = "6234d376-f627-4f0f-90e0-dff25c5211a3"
+                    ReadAllUsersBasicProfile           = "cba73afc-7f69-4d86-8450-4978e04ecd1a"
+                    ReadAllUsersFullProfile            = "c582532d-9d9e-43bd-a97c-2667a28ce295"
+                    ReadDirectoryData                  = "5778995a-e1bf-45b8-affa-663a9f3f4d04"
+                    ManageAppsThatThisAppCreatesOrOwns = "824c81eb-e3f8-4ee6-8f6d-de7f50d565b7"
+                }
+            }
+        }
+
         default
         {
-            throw New-Object NotImplementedException("Unknown environment type '$EnvironmentInternal'")
+            throw New-Object NotImplementedException("Unknown environment type '$Environment'")
         }
     }
 
     # Note: if this data varies from environment to environment, declare it in switch above
     $graphEnvironmentTemplate += @{
-        Environment       = $EnvironmentInternal
+        Environment       = $Environment
         DirectoryTenantId = $DirectoryTenantId
 
         User = [pscustomobject]@{
@@ -262,6 +301,7 @@ function Initialize-GraphEnvironment
             PowerShell                  = [pscustomobject]@{ Id = "1950a258-227b-4e31-a9cf-717495945fc2" }
             WindowsAzureActiveDirectory = [pscustomobject]@{ Id = "00000002-0000-0000-c000-000000000000" }
             VisualStudio                = [pscustomobject]@{ Id = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1" }
+            VisualStudioCode            = [pscustomobject]@{ Id = "aebc6443-996d-45c2-90f0-388ff96faa56" }
             AzureCLI                    = [pscustomobject]@{ Id = "04b07795-8ddb-461a-bbee-02f9e1bf7b46" }
         }
 
@@ -276,6 +316,11 @@ function Initialize-GraphEnvironment
         }
     }
 
+    if ($AdfsFqdn)
+    {
+        $graphEnvironmentTemplate.Applications = [pscustomobject]@{}
+    }
+
     $Script:GraphEnvironment = [pscustomobject]$graphEnvironmentTemplate
     Write-Verbose "Graph Environment initialized: client-request-id: $($Script:GraphEnvironment.User.ClientRequestId)" -Verbose
 
@@ -285,6 +330,40 @@ function Initialize-GraphEnvironment
         Update-GraphAccessToken -Verbose
     }
 }
+
+
+<#
+.Synopsis
+   Builds graph and login endpoints for a given CloudARMEndpoint
+#>
+function Get-Endpoints([string] $CloudARMEndpoint)
+{
+    $fullUri = $CloudARMEndpoint.TrimEnd('/')+"/metadata/endpoints?api-version=2015-01-01"
+    $response = Invoke-RestMethod -Uri $fullUri -ErrorAction Stop -UseBasicParsing -TimeoutSec 30 -Verbose
+
+    $EndpointProperties = @{
+        Graph = $response.graphEndpoint
+        Login = $response.authentication.loginEndpoint
+    }
+
+    return $EndpointProperties
+}
+
+<#
+.Synopsis
+   Retrieves Issuer Template for a given LoginUri
+#>
+function Get-IssuerTemplate([string] $LoginUri, [string] $DirectoryTenantId){
+
+    $loginConfigurationUri = "$($LoginUri.TrimEnd('/'))/$DirectoryTenantId/.well-known/openid-configuration"
+    $response = Invoke-RestMethod -Uri $loginConfigurationUri -ErrorAction Stop -UseBasicParsing -TimeoutSec 30 -Verbose
+    $issuerTemplate = ($response.issuer -split "$DirectoryTenantId")[0].TRimEnd('/') + "/{0}/"
+    if([string]::IsNullOrEmpty($issuerTemplate)) { throw "Error in retrieving issuer template for LoginUri: $LoginUri" }
+    Write-Verbose "IssuerTemplate: $issuerTemplate" -Verbose
+    return $issuerTemplate
+
+}
+
 
 <#
 .Synopsis
@@ -493,13 +572,9 @@ function Update-GraphAccessToken
     $response = Get-GraphToken -UseEnvironmentData
 
     $Script:GraphEnvironment.User.AccessToken           = $response.access_token
+    $Script:GraphEnvironment.User.RefreshToken          = if ($response.refresh_token) { ConvertTo-SecureString $response.refresh_token -AsPlainText -Force } else { $null }
     $Script:GraphEnvironment.User.AccessTokenUpdateTime = [DateTime]::UtcNow
     $Script:GraphEnvironment.User.AccessTokenExpiresIn  = $response.expires_in
-
-    if ($response.refresh_token) 
-    { 
-        $Script:GraphEnvironment.User.RefreshToken = ConvertTo-SecureString $response.refresh_token -AsPlainText -Force
-    }
 }
 
 <#
@@ -757,9 +832,17 @@ function Find-GraphApplication
         [string] $DisplayName
     )
 
-    $filter = if ($DisplayName) {"displayName eq '$DisplayName'"} elseif($AppUri) {"identifierUris/any(i:i eq '$AppUri')"} else {"appId eq '$AppId'"}
-    $response = Invoke-GraphApi -ApiPath "applications" -QueryParameters @{ '$filter' = $filter } -ErrorAction Stop
-    Write-Output $response.value
+    if ($AppId)
+    {
+        $application = Invoke-GraphApi -ApiPath "applicationsByAppId/$AppId" -ErrorAction Stop
+        Write-Output $application
+    }
+    else
+    {
+        $filter = if ($AppUri) {"identifierUris/any(i:i eq '$AppUri')"} else {"displayName eq '$DisplayName'"}
+        $response = Invoke-GraphApi -ApiPath "applications" -QueryParameters @{ '$filter' = $filter } -ErrorAction Stop
+        Write-Output $response.value
+    }
 }
 
 <#
@@ -1054,13 +1137,23 @@ function Update-GraphApplicationServicePrincipalTags
 
         # Additional tags to include in the application service principal (if not already present).
         [Parameter(Mandatory=$true)]
-        [string[]] $Tags = @()
+        [string[]] $Tags = @(),
+
+        # Indicates whether to keep or remove existing tags on the service principal. True by default.
+        [Switch] $PreserveExistingTags = $true
     )
 
     $params = if ($ApplicationId) { @{ ApplicationId = $ApplicationId } } else { @{ ApplicationIdentifierUri = $ApplicationIdentifierUri } }
     $servicePrincipal = Get-GraphApplicationServicePrincipal @params
 
-    $updatedTags = New-Object System.Collections.Generic.HashSet[string](,[string[]]$servicePrincipal.tags)
+    $existingTags = $servicePrincipal.tags
+    if (-not $PreserveExistingTags)
+    {
+        Write-Verbose "Removing existing tags from service principal: ($($existingTags -join ', '))" -Verbose
+        $existingTags = [string[]]@()
+    }
+
+    $updatedTags  = New-Object System.Collections.Generic.HashSet[string](,[string[]]$existingTags)
     foreach ($tag in $Tags)
     {
         if ($updatedTags.Add($tag))
@@ -1925,6 +2018,7 @@ function Initialize-GraphApplication
             'LegacyPowerShell',
             'PowerShell',
             'VisualStudio',
+            'VisualStudioCode',
             'AzureCLI'
         )]
         [string[]] $OAuth2PermissionGrants = @(),
@@ -2123,7 +2217,7 @@ function Initialize-GraphApplication
             }
             else
             {
-                Write-Verbose "Permission ($($aadPermission.id)) already granted on AAD application ($($existingRequiredResourceAccess.resourceAppId))" -Verbose
+                Write-Verbose "Permission ($($aadPermission.id)) already advertised on AAD application ($($existingRequiredResourceAccess.resourceAppId))" -Verbose
             }
         }
     }
@@ -2252,37 +2346,37 @@ function Initialize-GraphApplication
     # Create a service principal for the application (if one doesn't already exist)
     $primaryServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $application.appId -Tags $Tags
 
-    # Initialize OAuth2Permission grants to other (first-party) applications
-    foreach ($applicationName in $OAuth2PermissionGrants)
-    {
-        $params = @{
-            ClientApplicationId   = $Script:GraphEnvironment.Applications."$applicationName".Id
-            ResourceApplicationId = $application.appId
-        }
-
-        Initialize-GraphOAuth2PermissionGrant @params
-    }
-
-    # Initialize OAuth2Permission grants to other (non-first-party) applications
-    foreach ($applicationUri in $OAuth2PermissionGrantsByAppUris)
-    {
-        if (-not ($targetApplication = Find-GraphApplication -AppUri $applicationUri))
-        {
-            Write-Error "Application '$applicationUri' does not exist. Unable to grant OAuth2Permissions for this application to the target application."
-            continue
-        }
-
-        $params = @{
-            ClientApplicationId   = $targetApplication.appId
-            ResourceApplicationId = $application.appId
-        }
-
-        Initialize-GraphOAuth2PermissionGrant @params
-    }
-
     # "Consent" to application permissions
     if ($ConsentToAppPermissions)
     {
+        # Initialize OAuth2Permission grants to other (first-party) applications
+        foreach ($applicationName in $OAuth2PermissionGrants)
+        {
+            $params = @{
+                ClientApplicationId   = $Script:GraphEnvironment.Applications."$applicationName".Id
+                ResourceApplicationId = $application.appId
+            }
+
+            Initialize-GraphOAuth2PermissionGrant @params
+        }
+
+        # Initialize OAuth2Permission grants to other (non-first-party) applications
+        foreach ($applicationUri in $OAuth2PermissionGrantsByAppUris)
+        {
+            if (-not ($targetApplication = Find-GraphApplication -AppUri $applicationUri))
+            {
+                Write-Error "Application '$applicationUri' does not exist. Unable to grant OAuth2Permissions for this application to the target application."
+                continue
+            }
+
+            $params = @{
+                ClientApplicationId   = $targetApplication.appId
+                ResourceApplicationId = $application.appId
+            }
+
+            Initialize-GraphOAuth2PermissionGrant @params
+        }
+
         Grant-GraphApplicationPermissions -ApplicationId $application.appId
     }
 
@@ -2394,7 +2488,7 @@ function Set-GraphApplicationClientCertificates
     }
 
     $requestBodyAsJson = $requestBody | ConvertTo-Json -Depth 10
-    $apiPath           = "directoryObjects/$($application.objectId)/Microsoft.DirectoryServices.Application"
+    $apiPath           = "applications/$($application.objectId)"
     
     Write-Verbose "Updating key credentials on application '$($application.displayName)' ($($application.appId))..." -Verbose
     $noResponse = Invoke-GraphApi -Method Patch -ApiPath $apiPath -Body $requestBodyAsJson -Verbose -ErrorAction Stop
@@ -2524,55 +2618,64 @@ function Add-GraphApplicationClientCertificate
         # The new client certificate to add to be used to authenticate with graph as the application / service principal.
         [Parameter(Mandatory=$true)]
         [ValidateNotNull()]
-        [System.Security.Cryptography.X509Certificates.X509Certificate2] $NewClientCertificate
+        [System.Security.Cryptography.X509Certificates.X509Certificate2[]] $NewClientCertificate
     )
 
     # https://msdn.microsoft.com/en-us/Library/Azure/Ad/Graph/api/functions-and-actions#AddKey
 
-    $application         = Invoke-GraphApi -ApiPath "applicationsByAppId/$ApplicationId" -ErrorAction Stop
-    $customKeyIdentifier = [Convert]::ToBase64String($NewClientCertificate.GetCertHash())
+    $application = Invoke-GraphApi -ApiPath "applicationsByAppId/$ApplicationId" -ErrorAction Stop
 
-    if (($keyCredential = $application.keyCredentials | Where customKeyIdentifier -EQ $customKeyIdentifier))
+    $jwt = $null
+
+    foreach ($newCert in $NewClientCertificate)
     {
-        Write-Verbose "Application '$($application.displayName)' ($ApplicationId) already has certificate '$($NewClientCertificate.Thumbprint)' added under keyId '$($keyCredential.keyId)' and customKeyIdentifier '$customKeyIdentifier'" -Verbose
-        Write-Verbose "keyCredential: $(ConvertTo-Json $keyCredential -Depth 4)"
-        return $keyCredential.keyId
-    }
+        $customKeyIdentifier = [Convert]::ToBase64String($newCert.GetCertHash())
+        if (($keyCredential = $application.keyCredentials | Where customKeyIdentifier -EQ $customKeyIdentifier))
+        {
+            Write-Verbose "Application '$($application.displayName)' ($ApplicationId) already has certificate '$($newCert.Thumbprint)' added under keyId '$($keyCredential.keyId)' and customKeyIdentifier '$customKeyIdentifier'" -Verbose
+            Write-Verbose "keyCredential: $(ConvertTo-Json $keyCredential -Depth 4)"
+            Write-Output $keyCredential.keyId
+            continue
+        }
 
-    $params = @{
-        ClientCertificate = $CurrentClientCertificate
-        ClientId          = $ApplicationId
+        if (-not $jwt)
+        {
+            $params = @{
+                ClientCertificate = $CurrentClientCertificate
+                ClientId          = $ApplicationId
 
-        # Audience needs to be AAD Graph SPN
-        Audience = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
+                # Audience needs to be AAD Graph SPN
+                Audience = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
 
-        # The token lifespan should not exceed 10 minutes. Where token lifespan is the difference between EXP and NBF claims.
-        NotBeforeSecondsRelativeToNow  = -90
-        ExpirationSecondsRelativeToNow = 500
-    }
-    $jwt = New-SelfSignedJsonWebToken @params
-
-    $params = @{
-        Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Post
-        ApiPath = "applicationsByAppId/$ApplicationId/addKey"
-        Body    = (ConvertTo-Json -Depth 4 -Compress ([pscustomobject]@{
-            keyCredential = @{
-                type                = "AsymmetricX509Cert"
-                usage               = "Verify"
-                customKeyIdentifier = $customKeyIdentifier
-                value               = [Convert]::ToBase64String($NewClientCertificate.GetRawCertData())
-                startDate           = $NewClientCertificate.NotBefore.ToUniversalTime().ToString('o')
-                endDate             = $NewClientCertificate.NotAfter.ToUniversalTime().ToString('o')
+                # The token lifespan should not exceed 10 minutes. Where token lifespan is the difference between EXP and NBF claims.
+                NotBeforeSecondsRelativeToNow  = -90
+                ExpirationSecondsRelativeToNow = 500
             }
-            proof = "Bearer $jwt"
-        }))
-    }
+            $jwt = New-SelfSignedJsonWebToken @params
+        }
 
-    $response = Invoke-GraphApi @params -ErrorAction Stop
-    $keyId    = $response.value[0].keyId
-    Write-Verbose "Response: $(ConvertTo-Json $response -Depth 4)"
-    Write-Verbose "Client certificate added to application '$($application.displayName)' ($ApplicationId) with thumbprint '$($NewClientCertificate.Thumbprint)' under keyId '$keyId' and customKeyIdentifier '$customKeyIdentifier'" -Verbose
-    return $keyId
+        $params = @{
+            Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Post
+            ApiPath = "applicationsByAppId/$ApplicationId/addKey"
+            Body    = (ConvertTo-Json -Depth 4 -Compress ([pscustomobject]@{
+                keyCredential = @{
+                    type                = "AsymmetricX509Cert"
+                    usage               = "Verify"
+                    customKeyIdentifier = $customKeyIdentifier
+                    value               = [Convert]::ToBase64String($newCert.GetRawCertData())
+                    startDate           = $newCert.NotBefore.ToUniversalTime().ToString('o')
+                    endDate             = $newCert.NotAfter.ToUniversalTime().ToString('o')
+                }
+                proof = "Bearer $jwt"
+            }))
+        }
+
+        $response = Invoke-GraphApi @params -ErrorAction Stop
+        $keyId    = $response.value[0].keyId
+        Write-Verbose "Response: $(ConvertTo-Json $response -Depth 4)"
+        Write-Verbose "Client certificate added to application '$($application.displayName)' ($ApplicationId) with thumbprint '$($newCert.Thumbprint)' under keyId '$keyId' and customKeyIdentifier '$customKeyIdentifier'" -Verbose
+        Write-Output $keyId
+    }
 }
 
 <#
@@ -2595,19 +2698,35 @@ function Remove-GraphApplicationClientCertificate
         [System.Security.Cryptography.X509Certificates.X509Certificate2] $CurrentClientCertificate,
 
         # The client certificate to remove from the application to no-longer be used to authenticate with graph as the application / service principal.
-        [Parameter(Mandatory=$true)]
+        # If no certificate is provided, all certificates will be removed except for the one used to authenticate.
+        [Parameter(Mandatory=$false)]
         [ValidateNotNull()]
-        [System.Security.Cryptography.X509Certificates.X509Certificate2] $ClientCertificateToRemove
+        [System.Security.Cryptography.X509Certificates.X509Certificate2] $ClientCertificateToRemove = $null
     )
 
     # https://msdn.microsoft.com/en-us/Library/Azure/Ad/Graph/api/functions-and-actions#removeKey
 
-    $application         = Invoke-GraphApi -ApiPath "applicationsByAppId/$ApplicationId" -ErrorAction Stop
-    $customKeyIdentifier = [Convert]::ToBase64String($ClientCertificateToRemove.GetCertHash())
+    $application = Invoke-GraphApi -ApiPath "applicationsByAppId/$ApplicationId" -ErrorAction Stop
 
-    if (-not ($keyCredential = $application.keyCredentials | Where customKeyIdentifier -EQ $customKeyIdentifier))
+    if ($ClientCertificateToRemove)
     {
-        Write-Verbose "Application '$($application.displayName)' ($ApplicationId) does not have certificate '$($ClientCertificateToRemove.Thumbprint)' added under customKeyIdentifier '$customKeyIdentifier' or has already had this certificate ." -Verbose
+        $customKeyIdentifier = [Convert]::ToBase64String($ClientCertificateToRemove.GetCertHash())
+        if (-not ($keyCredential = $application.keyCredentials | Where customKeyIdentifier -EQ $customKeyIdentifier))
+        {
+            Write-Verbose "Application '$($application.displayName)' ($ApplicationId) does not have certificate '$($ClientCertificateToRemove.Thumbprint)' added under customKeyIdentifier '$customKeyIdentifier' or has already had this certificate ." -Verbose
+            return
+        }
+        $keyCredentialsToRemove = @($keyCredential)
+    }
+    else
+    {
+        $customKeyIdentifier = [Convert]::ToBase64String($CurrentClientCertificate.GetCertHash())
+        $keyCredentialsToRemove = $application.keyCredentials | Where customKeyIdentifier -NE $customKeyIdentifier
+    }
+
+    if (-not $keyCredentialsToRemove.Count)
+    {
+        Write-Verbose "Application '$($application.displayName)' ($ApplicationId) does not have any certificates besides '$($CurrentClientCertificate.Thumbprint)' added under customKeyIdentifier '$customKeyIdentifier' which cannot be removed." -Verbose
         return
     }
 
@@ -2623,18 +2742,21 @@ function Remove-GraphApplicationClientCertificate
         ExpirationSecondsRelativeToNow = 500
     }
     $jwt = New-SelfSignedJsonWebToken @params
+    
+    foreach ($keyCredential in $keyCredentialsToRemove)
+    {
+        $params = @{
+            Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Post
+            ApiPath = "applicationsByAppId/$ApplicationId/removeKey"
+            Body    = (ConvertTo-Json -Depth 4 -Compress ([pscustomobject]@{
+                keyId = $keyCredential.keyId
+                proof = "Bearer $jwt"
+            }))
+        }
 
-    $params = @{
-        Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Post
-        ApiPath = "applicationsByAppId/$ApplicationId/removeKey"
-        Body    = (ConvertTo-Json -Depth 4 -Compress ([pscustomobject]@{
-            keyId = $keyCredential.keyId
-            proof = "Bearer $jwt"
-        }))
+        $noResponse = Invoke-GraphApi @params -ErrorAction Stop
+        Write-Verbose "Removed client certificate on application '$($application.displayName)' ($ApplicationId) with thumbprint '$($ClientCertificateToRemove.Thumbprint)' under keyId '$($keyCredential.keyId)' and customKeyIdentifier '$($keyCredential.customKeyIdentifier)' [$($keyCredential.startDate) - $($keyCredential.endDate)]" -Verbose
     }
-
-    $noResponse = Invoke-GraphApi @params -ErrorAction Stop
-    Write-Verbose "Removed client certificate on application '$($application.displayName)' ($ApplicationId) with thumbprint '$($ClientCertificateToRemove.Thumbprint)' under keyId '$($keyCredential.keyId)' and customKeyIdentifier '$customKeyIdentifier'" -Verbose
 }
 
 [System.Reflection.Assembly]::LoadWithPartialName('System.Web') | Out-Null
@@ -2660,6 +2782,7 @@ function ConvertTo-QueryString
 
 Export-ModuleMember -Function @(
     'Initialize-GraphEnvironment'
+    'Get-Endpoints'
     'Get-GraphEnvironmentInfo'
     #'Assert-GraphEnvironmentIsInitialized'
     #'Assert-GraphConnection'
