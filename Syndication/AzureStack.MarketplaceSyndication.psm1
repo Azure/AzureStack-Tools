@@ -7,6 +7,14 @@
     Requires an Azure Stack System to be registered for the subscription used to login
 #>
 
+function PrintModuleInfo
+{
+    Write-Verbose -Message "List of Azure and AzS PowerShell modules" -Verbose
+    $moduleList = Get-Module -Name "Azure*" -ListAvailable
+    $moduleList +=  Get-Module -Name "Azs*" -ListAvailable
+    Write-Verbose -Message "$($moduleList | Select-Object ModuleType, Version, Name, Path | Out-String)" -Verbose
+}
+
 function Export-AzSOfflineMarketplaceItem {
     [CmdletBinding()]
 
@@ -796,6 +804,8 @@ function Import-AzSOfflineMarketplaceItem
         [Parameter(Mandatory = $false)]
         [PSCredential] $azsCredential
     )
+
+    PrintModuleInfo
 
     if (-not (Test-Path $origin)) {
         throw "$origin not exist."
