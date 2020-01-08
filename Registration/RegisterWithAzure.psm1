@@ -1092,7 +1092,7 @@ Function Get-RegistrationToken{
     }
 
     $StampVersion = $StampInfo.StampVersion
-    $CustomBillingModelVersion = [Version]"1.1912.0.0"
+    $CustomBillingModelVersion = [Version]"1.1912.0.19"
     if( ($StampVersion -lt $CustomBillingModelVersion) -and ($BillingModel -eq 'Custom') ){
         Log-Throw -Message "Custom BillingModel is not supported for StampVersion less than $CustomBillingModelVersion" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
