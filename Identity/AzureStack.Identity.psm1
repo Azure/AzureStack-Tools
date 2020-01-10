@@ -215,6 +215,20 @@ function Resolve-GraphEnvironment {
     return $graphEnvironment
 }
 
+function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
+    $azureEnvironment = Get-AzureRmEnvironment |
+    Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
+    Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud', 'CustomCloud')
+
+    # Differentiate between AzureCloud and AzureUSGovernment
+    if ($azureEnvironment.Count -ge 2) {
+        $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/' -or $azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login.microsoftonline.us/') { 'AzureUSGovernment' } else { 'AzureCloud' }
+        $azureEnvironment = $azureEnvironment | Where Name -EQ $name
+    }
+
+    return $azureEnvironment
+}
+
 function Get-ArmAccessToken([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
     $armAccessToken = $null
     $attempts = 0
@@ -303,37 +317,33 @@ function Register-AzsGuestDirectoryTenant {
 
     Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
 
-    function Invoke-Main {
-        # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
-        $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-        $azureAccount = Initialize-AzureRmUserAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
+    # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
+    $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
+    $azureAccount = Initialize-AzureRmUserAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
 
-        foreach ($directoryTenantName in $GuestDirectoryTenantName) {
-            # Resolve the guest directory tenant ID from the name
-            $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($azureEnvironment.ActiveDirectoryAuthority.TrimEnd('/'))/$directoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
+    foreach ($directoryTenantName in $GuestDirectoryTenantName) {
+        # Resolve the guest directory tenant ID from the name
+        $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($azureEnvironment.ActiveDirectoryAuthority.TrimEnd('/'))/$directoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
 
-            # Add (or update) the new directory tenant to the Azure Stack deployment
-            $params = @{
-                ApiVersion        = '2015-11-01'
-                ResourceType      = "Microsoft.Subscriptions.Admin/directoryTenants"
-                ResourceGroupName = $ResourceGroupName
-                ResourceName      = $directoryTenantName
-                Location          = $Location
-                Properties        = @{ tenantId = $directoryTenantId }
-            }
-            
-            # Check if resource group exists, create it if it doesn't
-            $rg = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue
-            if ($rg -eq $null) {
-                New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue | Out-Null
-            }
-            
-            $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
-            Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
+        # Add (or update) the new directory tenant to the Azure Stack deployment
+        $params = @{
+            ApiVersion        = '2015-11-01'
+            ResourceType      = "Microsoft.Subscriptions.Admin/directoryTenants"
+            ResourceGroupName = $ResourceGroupName
+            ResourceName      = $directoryTenantName
+            Location          = $Location
+            Properties        = @{ tenantId = $directoryTenantId }
         }
+        
+        # Check if resource group exists, create it if it doesn't
+        $rg = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue
+        if ($rg -eq $null) {
+            New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue | Out-Null
+        }
+        
+        $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
+        Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
     }
-
-    Invoke-Main
 }
 
 <#
@@ -465,7 +475,7 @@ function Update-AzsHomeDirectoryTenant {
         # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
         $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
+        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
         $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
@@ -772,20 +782,6 @@ function Register-AzsWithMyDirectoryTenant {
         Write-Warning "If your Azure Stack Administrator installs new services or updates in the future, you may need to run this script again."
     }
 
-    function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
-        $azureEnvironment = Get-AzureRmEnvironment |
-        Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
-        Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
-
-        # Differentiate between AzureCloud and AzureUSGovernment
-        if ($azureEnvironment.Count -ge 2) {
-            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/' -or $azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login.microsoftonline.us/') { 'AzureUSGovernment' } else { 'AzureCloud' }
-            $azureEnvironment = $azureEnvironment | Where Name -EQ $name
-        }
-
-        return $azureEnvironment
-    }
-
     function Initialize-ResourceManagerServicePrincipal {
         $identityInfo = Invoke-RestMethod -Method Get -Uri "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/metadata/identity?api-version=2015-01-01" -Verbose
         Write-Verbose -Message "Resource Manager identity information: $(ConvertTo-Json $identityInfo)" -Verbose
@@ -998,20 +994,6 @@ function Unregister-AzsWithMyDirectoryTenant {
         }
     
         Write-Host "All Azure Stack applications have been uninstalled! Your directory '$DirectoryTenantName' has been successfully decommissioned and can no-longer be used with Azure Stack."
-    }
-    
-    function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
-        $azureEnvironment = Get-AzureRmEnvironment |
-        Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
-        Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud')
-    
-        # Differentiate between AzureCloud and AzureUSGovernment
-        if ($azureEnvironment.Count -ge 2) {
-            $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/' -or $azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login.microsoftonline.us/') { 'AzureUSGovernment' } else { 'AzureCloud' }
-            $azureEnvironment = $azureEnvironment | Where Name -EQ $name
-        }
-    
-        return $azureEnvironment
     }
     
     function Write-DecommissionImplicationsWarning {
