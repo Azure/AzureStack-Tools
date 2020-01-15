@@ -201,11 +201,6 @@ function Set-AzsRegistration{
         [ValidateNotNull()]
         [string] $MsAssetTag
     )
-    #requires -Version 4.0
-    #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
-    #requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
-    #requires -RunAsAdministrator
-
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
@@ -340,10 +335,6 @@ function Remove-AzsRegistration{
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext)
     )
-    #requires -Version 4.0
-    #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
-    #requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
-    #requires -RunAsAdministrator
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
@@ -485,8 +476,6 @@ Function Get-AzsRegistrationToken{
         [ValidateNotNull()]
         [string] $MsAssetTag
     )
-    #requires -Version 4.0
-    #requires -RunAsAdministrator
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
@@ -629,10 +618,6 @@ Function Register-AzsEnvironment{
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupLocation = 'westcentralus'
     )
-    #requires -Version 4.0
-    #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
-    #requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
-    #requires -RunAsAdministrator
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
@@ -719,11 +704,7 @@ Function UnRegister-AzsEnvironment{
         [Parameter(Mandatory = $false)]
         [String] $CloudId
     )
-    #requires -Version 4.0
-    #requires -Modules @{ModuleName = "AzureRM.Profile" ; ModuleVersion = "1.0.4.4"} 
-    #requires -Modules @{ModuleName = "AzureRM.Resources" ; ModuleVersion = "1.0.4.4"} 
-    #requires -RunAsAdministrator
-
+   
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
 
