@@ -11,7 +11,20 @@ Configures existing AD FS for Azure Stack
  
 It will create a relying Party Trust to Azure Stack's AD FS with the necessary rules. It will also turn on form based authentication and Enable as setting to support Edge
  
-.PARAMETER ExternalDNSZoneSpecify the Extnerl Dns Zone of Azure Stack which was also provided for initial deployment.EXAMPLE .\setupadfs.ps1 -externaldnszone local.azurestack.external#>Param(  [string]$ExternalDNSZone)
+.PARAMETER ExternalDNSZone
+Specify the Extnerl Dns Zone of Azure Stack which was also provided for initial deployment
+
+.EXAMPLE
+import-module setupadfs.psm1 
+register-adfs -externaldnszone local.azurestack.external
+#>
+
+function register-adfs {
+  Param(  
+  [string] $ExternalDNSZone
+  )
+
+
 $currentPath = $PSScriptRoot
 
 #Create Endpoint
@@ -56,3 +69,5 @@ Set-AdfsProperties -IgnoreTokenBinding $true
 }
 }
 }
+}
+Export-ModuleMember -Function * -Alias *
