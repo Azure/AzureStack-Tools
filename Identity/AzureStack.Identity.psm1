@@ -156,44 +156,30 @@ function Get-RefreshToken {
         [ValidateNotNullOrEmpty()]
         [String] $DirectoryTenantName,
 
-        # The identifier of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [Parameter()]
-        [String] $SubscriptionId = $null,
-
-        # The display name of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [Parameter()]
-        [String] $SubscriptionName = $null,
-
         [Parameter()]
         [PSCredential] $AutomationCredential = $null
     )
 
-    $azureAccount = Initialize-AzureRmUserAccount @PSBoundParameters
+    $ErrorActionPreference='Stop'
 
-    # Retrieve the refresh token
-    $tokens = @()
-    $tokens += try { [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() } catch { }
-    $tokens += try { [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() } catch { }
-    $refreshToken = $tokens |
-    Where Resource -EQ $AzureEnvironment.ActiveDirectoryServiceEndpointResourceId |
-    Where IsMultipleResourceRefreshToken -EQ $true |
-    Where DisplayableId -EQ $azureAccount.Context.Account.Id |
-    Sort ExpiresOn |
-    Select -Last 1 -ExpandProperty RefreshToken |
-    ConvertTo-SecureString -AsPlainText -Force
+    $authority = $AzureEnvironment.ActiveDirectoryAuthority.TrimEnd('/') + "/$DirectoryTenantName"
+    $context = [Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext]::new(
+        $authority,
+        ($validateAuthority=$true),
+        [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::new())
 
-    # Workaround due to regression in AzurePowerShell profile module which fails to populate the response object of "Add-AzureRmAccount" cmdlet
-    if (-not $refreshToken) {
-        if ($tokens.Count -eq 1) {
-            Write-Warning "Failed to find target refresh token from Azure PowerShell Cache; attempting to reuse the single cached auth context..."
-            $refreshToken = $tokens[0].RefreshToken | ConvertTo-SecureString -AsPlainText -Force
-        }
-        else {
-            throw "Unable to find refresh token from Azure PowerShell Cache. Please try the command again in a fresh PowerShell instance after running 'Clear-AzureRmContext -Scope CurrentUser -Force -Verbose'."
-        }
+    $result = if($automationCredential){
+        $context.AcquireToken(
+            ($resource=$AzureEnvironment.GraphEndpointResourceId),
+            ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
+            ($userCredential=[Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential]::new($AutomationCredential.UserName, $AutomationCredential.Password)))
+    } else {
+        $context.AcquireToken(
+            ($resource=$AzureEnvironment.GraphEndpointResourceId),
+            ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
+            ($redirectUri='urn:ietf:wg:oauth:2.0:oob'))
     }
-
-    return $refreshToken
+    return ($result.RefreshToken | ConvertTo-SecureString -AsPlainText -Force)
 }
 
 function Resolve-GraphEnvironment {
@@ -213,20 +199,6 @@ function Resolve-GraphEnvironment {
         Default { 'CustomCloud' }
     }
     return $graphEnvironment
-}
-
-function Resolve-AzureEnvironment([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
-    $azureEnvironment = Get-AzureRmEnvironment |
-    Where GraphEndpointResourceId -EQ $azureStackEnvironment.GraphEndpointResourceId |
-    Where Name -In @('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud', 'CustomCloud')
-
-    # Differentiate between AzureCloud and AzureUSGovernment
-    if ($azureEnvironment.Count -ge 2) {
-        $name = if ($azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login-us.microsoftonline.com/' -or $azureStackEnvironment.ActiveDirectoryAuthority -eq 'https://login.microsoftonline.us/') { 'AzureUSGovernment' } else { 'AzureCloud' }
-        $azureEnvironment = $azureEnvironment | Where Name -EQ $name
-    }
-
-    return $azureEnvironment
 }
 
 function Get-ArmAccessToken([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
@@ -667,11 +639,10 @@ function Register-AzsWithMyDirectoryTenant {
         # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
         $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint
-        $azureEnvironment = Resolve-AzureEnvironment $azureStackEnvironment
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
+        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
-        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureEnvironment.ActiveDirectoryAuthority
+        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
         Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
 
         # Initialize the service principal for the Azure Stack Resource Manager application
@@ -962,11 +933,10 @@ function Unregister-AzsWithMyDirectoryTenant {
         # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
         $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint
-        $azureEnvironment = Resolve-AzureEnvironment $azureStackEnvironment
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
+        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
     
         # Initialize the Graph PowerShell module to communicate with the correct graph service
-        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureEnvironment.ActiveDirectoryAuthority
+        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
         Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
     
         # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be removed from the directory tenant
