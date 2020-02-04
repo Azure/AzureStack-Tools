@@ -175,10 +175,7 @@ function Set-AzsRegistration{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = @{'AzureCloud'='westcentralus'; 
-                                            'AzureChinaCloud'='ChinaEast'; 
-                                            'AzureUSGovernment'='usgovvirginia'; 
-                                            'CustomCloud'='westcentralus'}[$AzureContext.Environment.Name],
+        [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureEnvironment $AzureContext.Environment.Name),
         
         [Parameter(Mandatory = $false)]
         [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
@@ -208,6 +205,7 @@ function Set-AzsRegistration{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
 
     try
@@ -288,10 +286,6 @@ Privileged Endpoint VM that performs environment administration actions. Also kn
 
 This is the name of the resource group in Azure where the registration resource has been created. Defaults to "azurestack"
 
-.PARAMETER  ResourceGroupLocation
-
-The location where the resource group has been created. Defaults to "westcentralus"
-
 .PARAMETER RegistrationName
 
 The name of the registration resource that was created in Azure. If you have a unique name you should supply it here for removing registration.
@@ -327,9 +321,6 @@ function Remove-AzsRegistration{
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
-
-        [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
@@ -616,7 +607,7 @@ Function Register-AzsEnvironment{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus'
+        [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureEnvironment $AzureContext.Environment.Name)
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -626,9 +617,9 @@ Function Register-AzsEnvironment{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-    $CustomResourceGroupLocation = Set-ResourceGroupLocation -AzureEnvironment $AzureContext.Environment.name -ResourceGroupLocation $ResourceGroupLocation
-    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $CustomResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
+    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
 
     Log-Output "Your Azure Stack environment is now registered with Azure."
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
@@ -658,10 +649,6 @@ The Azure environment that was used to create registration resource. defaults to
 .PARAMETER ResourceGroupName
 
 The name of the resource group that was created for the registration resource. Defaults to 'azurestack'
-
-.PARAMETER ResourceGroupLocation
-
-The Azure location where the registration resource group was created. Defaults to 'westcentralus'
 
 .EXAMPLE
 
@@ -697,9 +684,6 @@ Function UnRegister-AzsEnvironment{
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
-
-        [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = 'westcentralus',
 
         [Parameter(Mandatory = $false)]
         [String] $CloudId
@@ -1136,6 +1120,7 @@ function New-RegistrationResource{
         [String] $RegistrationToken
     )
 
+    Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     $currentAttempt = 0
     $maxAttempt = 3
     $sleepSeconds = 10 
@@ -1690,58 +1675,36 @@ function Confirm-StampVersion{
 }
 
 <#
-
 .SYNOPSIS
-
-Sets the resource group location based on the current AzureContext Environment name
-
+Get the resource group location based on the AzureEnvironment name
 #>
-function Set-ResourceGroupLocation{
+function Get-DefaultResourceGroupLocation{
 [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$true)]
-        [string] $AzureEnvironment,
-
-        [Parameter(Mandatory=$false)]
-        [string] $ResourceGroupLocation
+        [string] $AzureEnvironment
     )
-
-    if ($AzureEnvironment -eq 'AzureCloud')
-    {
-        if ($ResourceGroupLocation -ne 'westcentralus')
-        {
-            $CustomResourceGroupLocation = $ResourceGroupLocation
-        }
-        else
-        {
-            $CustomResourceGroupLocation = 'westcentralus'
-        }
-    }
-    elseif ($AzureEnvironment -eq 'AzureChinaCloud')
-    {
-        if ($ResourceGroupLocation -ne 'westcentralus')
-        {
-            $CustomResourceGroupLocation = $ResourceGroupLocation
-        }
-        else
-        {
-            $CustomResourceGroupLocation = 'ChinaEast'
-        }
-    }
-    elseif ($AzureEnvironment -eq 'AzureUSGovernment')
-    {
-        if ($ResourceGroupLocation -ne 'westcentralus')
-        {
-            $CustomResourceGroupLocation = $ResourceGroupLocation
-        }
-        else
-        {
-            $CustomResourceGroupLocation = 'usgovvirginia'
-        }
-    }
-
-    return $CustomResourceGroupLocation
+    return @{'AzureCloud'='westcentralus'; 
+            'AzureChinaCloud'='ChinaEast'; 
+            'AzureUSGovernment'='usgovvirginia'; 
+            'CustomCloud'='westcentralus'}[$AzureEnvironment]  
 }
+
+<#
+.SYNOPSIS
+Check if the selected ResourceGroupLocation is available
+#>
+function Validate-ResourceGroupLocation{
+    [CmdletBinding()]
+        Param(
+            [Parameter(Mandatory=$true)]
+            [string] $ResourceGroupLocation
+        )
+        $availableLocations = (Get-AzureRmLocation).Location
+        if (-not $availableLocations.contains($ResourceGroupLocation)){
+            throw "ErrorCode: UnknownResourceGroupLocation.`nErrorReason: Resource group location '$ResourceGroupLocation' is not available. Please call the registration cmdlet along with ResourceGroupLocation parameter.`nAvailable locations: $($availableLocations -join ', ')`n"
+        }
+    }
 
 <#
 
