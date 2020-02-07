@@ -1701,7 +1701,7 @@ function Validate-ResourceGroupLocation{
             [string] $ResourceGroupLocation
         )
         $availableLocations = (Get-AzureRmLocation).Location
-        if (-not $availableLocations.contains($ResourceGroupLocation)){
+        if ($availableLocations -notcontains $ResourceGroupLocation){
             throw "ErrorCode: UnknownResourceGroupLocation.`nErrorReason: Resource group location '$ResourceGroupLocation' is not available. Please call the registration cmdlet along with ResourceGroupLocation parameter.`nAvailable locations: $($availableLocations -join ', ')`n"
         }
     }
