@@ -1586,7 +1586,8 @@ function New-GraphPermissionDescription
                     '$top'    = '500' # Note - there is an issue with this API if you use a large page size and the result set is large as well
                 }
                 $existingOAuth2PermissionGrants = (Invoke-GraphApi -ApiPath oauth2PermissionGrants -QueryParameters $queryParameters).Value
-                $permissionProperties.isConsented = if ($existingOAuth2PermissionGrants) {$true} else {$false}
+		$exists = $existingOAuth2PermissionGrants | Where { "$($_.scope)".Split(' ') -contains $oAuth2Permission.value } | Select -First 1
+                $permissionProperties.isConsented = if ($exists) {$true} else {$false}
             }
         }
     }
