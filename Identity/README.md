@@ -1,10 +1,29 @@
 // Place your settings in this file to overwrite the default settings
 {
     "workbench.colorTheme": "Abyss"
-}nstall-Module -Name 'AzureRm.Bootstrapper' -Scope CurrentUser
-Install-AzureRmProfile -profile '2017-03-09-profile' -Force -Scope CurrentUser
-Install-Module -Name AzureStack -RequiredVersion 1.2.9 -Scope CurrentUser
+}
+
+As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
+
+For Azure Stack 1904 to 1907
+
+Install the AzureRM.BootStrapper module. Select Yes when prompted to install NuGet
+Install-Module -Name AzureRM.BootStrapper
+
+Install and import the API Version Profile required by Azure Stack into the current PowerShell session.
+Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
+Install-Module -Name AzureStack -RequiredVersion 1.7.2
+
+
+
+For Azure stack 1901 to 1903
+
+```powershell
+Install-Module -Name AzureRM -RequiredVersion 2.4.0
+Install-Module -Name AzureStack -RequiredVersion 1.7.1
 ```
+
+For all other azure stack versions, please follow the instructions at https://aka.ms/azspsh for the needed azure powershell
 
 Then make sure the following modules are imported:
 
@@ -24,20 +43,41 @@ $directoryTenantId = Get-AzsDirectoryTenantIdentifier -Authority "<DirectoryTena
 An example of an authority for AAD is `https://login.windows.net/microsoft.onmicrosoft.com`
 and for AD FS is `https://adfs.local.azurestack.external/adfs`.
 
-## Creating a Service Principal in a disconnected (AD FS) topology
+## Updating the Azure Stack AAD Home Directory (after installing updates or new Resource Providers)
 
-You can create a Service Principal by executing the following command after importing the Identity module
+After installing updates or hotfixes to Azure Stack, new features may be introduced which require new permissions to be
+granted to one or more identity applications. Granting these permissions requires administrative access to the
+home directory, so it cannot be done automatically.
+
+### Install PowerShell for Azure Stack
+
+Use the latest PowerShell module for Azure Stack to register with Azure.
+If the latest version is not already installed, see [install PowerShell for Azure Stack](https://docs.microsoft.com/azure-stack/operator/azure-stack-powershell-install).
+
+### Download Azure Stack tools
+
+The Azure Stack tools GitHub repository contains PowerShell modules that support Azure Stack functionality, including updating permissions on Azure AD. During the registration process, you must import and use the **AzureStack.Connect** and **AzureStack.Identity** PowerShell modules, found in the Azure Stack tools repository, to update the permissions on Azure AD for the Azure stack stamp.
+
+To ensure that you are using the latest version, delete any existing versions of the Azure Stack tools, then [download the latest version from GitHub](https://docs.microsoft.com/azure-stack/operator/azure-stack-powershell-download) before proceeding.
+
+### Updating Azure AD tenant permissions
+
+You should now be able to update the permissions which should clear the alert. Run the following commands from the **Azurestack-tools-master/identity** folder:
 
 ```powershell
-$servicePrincipal = New-AzsAdGraphServicePrincipal -DisplayName "myapp12" -AdminCredential $(Get-Credential) -Verbose
-```
-Note: For a Multi node Azure Stack installation you also have to provide the ERCSMachineName parameter to send the request to the Privileged endpoint of your Azure Stack instance.
+Import-Module ..\Connect\AzureStack.Connect.psm1
+Import-Module ..\Identity\AzureStack.Identity.psm1
 
-After the Service Principal is created, you should open your Azure Stack Portal to provide the appropriate level of RBAC to it. You can do this from the Access Control (IAM) tab of any resource. After the RBAC is given, you can login using the service principal as follows:
+$adminResourceManagerEndpoint = "https://adminmanagement.<region>.<domain>"
 
-```powershell
-Add-AzureRmAccount -EnvironmentName "<AzureStackEnvironmentName>" -ServicePrincipal -CertificateThumbprint $servicePrincipal.Thumbprint -ApplicationId $servicePrincipal.ApplicationId -TenantId $directoryTenantId
+# This is the primary tenant Azure Stack is registered to:
+$homeDirectoryTenantName = "<homeDirectoryTenant>.onmicrosoft.com"
+
+Update-AzsHomeDirectoryTenant -AdminResourceManagerEndpoint $adminResourceManagerEndpoint `
+   -DirectoryTenantName $homeDirectoryTenantName -Verbose
 ```
+
+The script prompts you for administrative credentials on the Azure AD tenant, and takes several minutes to run. The alert should clear after you have run the cmdlet.
 
 ## Enabling AAD Multi-Tenancy in Azure Stack
 
@@ -80,4 +120,21 @@ $guestDirectoryTenantName = "<guestDirectoryTenant>.onmicrosoft.com" # this is t
 
 Register-AzsWithMyDirectoryTenant -TenantResourceManagerEndpoint $tenantARMEndpoint `
     -DirectoryTenantName $guestDirectoryTenantName
+```
+
+## Retrieve Azure Stack Identity Health Report 
+
+Execute the following cmdlet as the Azure Stack administrator.
+
+```powershell
+
+$AdminResourceManagerEndpoint = "https://adminmanagement.<region>.<domain>"
+$DirectoryName = "<homeDirectoryTenant>.onmicrosoft.com"
+$healthReport = Get-AzsHealthReport -AdminResourceManagerEndpoint $AdminResourceManagerEndpoint -DirectoryTenantName $DirectoryName
+Write-Host "Healthy directories: "
+$healthReport.directoryTenants | Where status -EQ 'Healthy' | Select -Property tenantName,tenantId,status | ft
+
+
+Write-Host "Unhealthy directories: "
+$healthReport.directoryTenants | Where status -NE 'Healthy' | Select -Property tenantName,tenantId,status | ft
 ```

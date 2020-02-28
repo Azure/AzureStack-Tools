@@ -2,7 +2,7 @@
 # See LICENSE.txt in the project root for license information.
 
 #requires -Version 4.0
-#requires -Modules AzureRM.Profile, VpnClient, AzureRM.AzureStackAdmin
+#requires -Modules AzureRM.Profile, VpnClient
 
 <#
     .SYNOPSIS
@@ -12,7 +12,7 @@
 function Add-AzsVpnConnection {
     param (
         [parameter(HelpMessage = "Azure Stack VPN Connection Name such as 'my-poc'")]
-        [string] $ConnectionName = "azurestack",
+        [string] $ConnectionName = "Azure Stack",
 
         [parameter(mandatory = $true, HelpMessage = "External IP of the Azure Stack NAT VM such as '1.2.3.4'")]
         [string] $ServerAddress,
@@ -34,7 +34,7 @@ function Add-AzsVpnConnection {
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
     $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
-    $connection = Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod MSChapv2 -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
+    $connection = Add-VpnConnection -Name $ConnectionName -ServerAddress $ServerAddress -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod Eap -L2tpPsk $PlainPassword -Force -RememberCredential -PassThru -SplitTunneling 
     
     Write-Verbose "Adding routes to Azure Stack VPN connection named $ConnectionName" -Verbose
     Add-VpnConnectionRoute -ConnectionName $ConnectionName -DestinationPrefix 192.168.102.0/24 -RouteMetric 2 -PassThru | Out-Null
@@ -53,7 +53,7 @@ Export-ModuleMember -Function 'Add-AzsVpnConnection'
 function Connect-AzsVpn {
     param (
         [parameter(HelpMessage = "Azure Stack VPN Connection Name such as 'my-poc'")]
-        [string] $ConnectionName = "azurestack",
+        [string] $ConnectionName = "Azure Stack",
         [parameter(HelpMessage = "Administrator user name of this Azure Stack Instance")]
         [string] $User = "administrator",
         [parameter(mandatory = $true, HelpMessage = "Administrator password used to deploy this Azure Stack instance")]
@@ -68,7 +68,7 @@ function Connect-AzsVpn {
     $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 
     # Connecting using legacy command. Need to use domainless cred. Domain will be assumed on the other end.
-    rasdial $ConnectionName $User $PlainPassword
+    rasphone $ConnectionName
 
     $azshome = "$env:USERPROFILE\Documents\$ConnectionName"
 
