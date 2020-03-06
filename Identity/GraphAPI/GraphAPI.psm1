@@ -46,7 +46,7 @@ function Initialize-GraphEnvironment
         [Parameter(ParameterSetName='Credential_AAD')]
         [Parameter(ParameterSetName='RefreshToken_AAD')]
         [Parameter(ParameterSetName='ServicePrincipal_AAD')]
-        [ValidateSet('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud', 'CustomCloud')]
+        [ValidateSet('AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment', 'AzureGermanCloud', 'CustomCloud', 'ADFS')]
         [string] $Environment = 'AzureCloud',
 
         # The fully-qualified domain name of the ADFS service (e.g. "adfs.azurestack.local").
@@ -66,6 +66,11 @@ function Initialize-GraphEnvironment
         [Parameter(Mandatory=$false, ParameterSetName='ServicePrincipal_AAD')]
         [string] $CustomCloudARMEndpoint
     )
+
+    if ($Environment -eq 'ADFS')
+    {
+        throw 'To initialize this module for use with an ADFS system, specify the "AdfsFqdn" and "GraphFqdn" parameters, and omit the "Environment" parameter.'
+    }
 
     if ($AdfsFqdn)
     {
@@ -230,7 +235,7 @@ function Initialize-GraphEnvironment
 
                 IssuerTemplate = "https://$AdfsFqdn/adfs/{0}/"
 
-                LoginEndpoint = [Uri]"https://$AdfsFqdn/adfs/$DirectoryTenantId"
+                LoginEndpoint = [Uri]"https://$AdfsFqdn/adfs"
                 GraphEndpoint = [Uri]"https://$GraphFqdn/$DirectoryTenantId"
 
                 LoginBaseEndpoint = [Uri]"https://$AdfsFqdn/adfs/"
@@ -314,11 +319,6 @@ function Initialize-GraphEnvironment
             ReadDirectoryData                  = "Directory.Read.All"
             ManageAppsThatThisAppCreatesOrOwns = "Application.ReadWrite.OwnedBy"
         }
-    }
-
-    if ($AdfsFqdn)
-    {
-        $graphEnvironmentTemplate.Applications = [pscustomobject]@{}
     }
 
     $Script:GraphEnvironment = [pscustomobject]$graphEnvironmentTemplate
@@ -572,7 +572,7 @@ function Update-GraphAccessToken
     $response = Get-GraphToken -UseEnvironmentData
 
     $Script:GraphEnvironment.User.AccessToken           = $response.access_token
-    $Script:GraphEnvironment.User.RefreshToken          = if ($response.refresh_token) { ConvertTo-SecureString $response.refresh_token -AsPlainText -Force } else { $null }
+    $Script:GraphEnvironment.User.RefreshToken          = if ($response.refresh_token) { ConvertTo-SecureString $response.refresh_token -AsPlainText -Force } else { $Script:GraphEnvironment.User.RefreshToken }
     $Script:GraphEnvironment.User.AccessTokenUpdateTime = [DateTime]::UtcNow
     $Script:GraphEnvironment.User.AccessTokenExpiresIn  = $response.expires_in
 }
