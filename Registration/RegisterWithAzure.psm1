@@ -214,7 +214,7 @@ function Set-AzsRegistration{
         $stampInfo = Confirm-StampVersion -PSSession $session
 
         # Configure Azure Bridge
-        $refreshToken = (Get-AzToken -FromCache -Verbose).GetRefreshToken()
+        $refreshToken = (Get-AzToken -Context $AzureContext -FromCache -Verbose).GetRefreshToken()
         $servicePrincipal = New-ServicePrincipal -RefreshToken $refreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $AzureContext.Subscription.TenantId -PSSession $session
 
         # Get registration token
