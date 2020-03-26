@@ -32,8 +32,7 @@ function Initialize-UserDataClearEnv
         [string] $UserPrincipalName
     )
 
-    #requires -Version 4.0
-    #requires -Module "AzureRM.Profile"
+    #requires -Module "Az.Accounts"
     #requires -Module "Azs.Subscriptions.Admin"
     #requires -RunAsAdministrator
 
@@ -380,7 +379,7 @@ function Clear-SinglePortalUserData
 
     try
     {
-        $adminSubscriptionId = (Get-AzureRmSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
+        $adminSubscriptionId = (Get-AzSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
         Write-Verbose "Get default Admin subscription id $adminSubscriptionId." -Verbose
 
         $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$adminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
