@@ -169,7 +169,7 @@ function Set-AzsRegistration{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext),
+        [PSObject] $AzureContext = (Get-AzContext),
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -206,7 +206,7 @@ function Set-AzsRegistration{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    Log-AzureAccountInfo -AzureContext $AzureContext
 
     try
     {
@@ -214,7 +214,8 @@ function Set-AzsRegistration{
         $stampInfo = Confirm-StampVersion -PSSession $session
 
         # Configure Azure Bridge
-        $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
+        $refreshToken = (Get-AzToken -Context $AzureContext -FromCache -Verbose).GetRefreshToken()
+        $servicePrincipal = New-ServicePrincipal -RefreshToken $refreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $AzureContext.Subscription.TenantId -PSSession $session
 
         # Get registration token
         $getTokenParams = @{
@@ -324,7 +325,7 @@ function Remove-AzsRegistration{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext)
+        [PSObject] $AzureContext = (Get-AzContext)
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -334,7 +335,7 @@ function Remove-AzsRegistration{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    Log-AzureAccountInfo -AzureContext $AzureContext
     try
     {
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
@@ -345,7 +346,7 @@ function Remove-AzsRegistration{
         $registrationResource = $null
 
         $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        $registrationResource = Get-AzResource -ResourceId $registrationResourceId -ErrorAction Ignore
         if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
         {
             Log-Output "Registration resource found: $($registrationResource.ResourceId)"
@@ -601,7 +602,7 @@ Function Register-AzsEnvironment{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext),
+        [PSObject] $AzureContext = (Get-AzContext),
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -618,7 +619,7 @@ Function Register-AzsEnvironment{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    Log-AzureAccountInfo -AzureContext $AzureContext
     New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
 
     Log-Output "Your Azure Stack environment is now registered with Azure."
@@ -673,7 +674,7 @@ Function UnRegister-AzsEnvironment{
     param(
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext),
+        [PSObject] $AzureContext = (Get-AzContext),
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
@@ -719,7 +720,7 @@ Function UnRegister-AzsEnvironment{
         }
     }
 
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    Log-AzureAccountInfo -AzureContext $AzureContext
 
     # Find registration resource in Azure
     Log-Output "Searching for registration resource in Azure..."
@@ -727,15 +728,15 @@ Function UnRegister-AzsEnvironment{
     if ($RegistrationName)
     {
         $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        $registrationResource = Get-AzResource -ResourceId $registrationResourceId -ErrorAction Ignore
     }
     elseif ($CloudId)
     {
         Log-Output "Parameter 'RegistrationName' not supplied. Searching through all registration resources under current context."
         try
         {
-            Log-Output "Attempting to retrieve resources using command: 'Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName'"
-            $registrationResources = Find-AzureRmResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName
+            Log-Output "Attempting to retrieve resources using command: 'Find-AzResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName'"
+            $registrationResources = Find-AzResource -ResourceType Microsoft.AzureStack/registrations -ResourceGroupNameEquals $ResourceGroupName
         }
         catch
         {
@@ -746,8 +747,8 @@ Function UnRegister-AzsEnvironment{
         {
             try
             {
-                Log-Output "Attempting to retrieve resources using command: 'Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
-                $registrationresources = Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
+                Log-Output "Attempting to retrieve resources using command: 'Get-AzResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
+                $registrationresources = Get-AzResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
             }
             catch
             {
@@ -758,7 +759,7 @@ Function UnRegister-AzsEnvironment{
         Log-Output "Found $($registrationResources.Count) registration resources. Finding a matching CloudId may take some time."
         foreach ($resource in $registrationResources)
         {
-            $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
+            $resourceObject = Get-AzResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
             $resourceCloudId = $resourceObject.Properties.CloudId
             if ($resourceCloudId -eq $stampInfo.CloudId)
             {
@@ -811,7 +812,7 @@ Function Get-AzsActivationKey{
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
-        [PSObject] $AzureContext = (Get-AzureRmContext),
+        [PSObject] $AzureContext = (Get-AzContext),
 
         [Parameter(Mandatory = $false)]
         [String] $ResourceGroupName = 'azurestack',
@@ -833,7 +834,7 @@ Function Get-AzsActivationKey{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    Log-AzureAccountInfo -AzureContext $AzureContext
 
     $currentAttempt = 0
     $maxAttempt = 3
@@ -853,7 +854,7 @@ Function Get-AzsActivationKey{
             }
     
             Log-Output "Getting activation key from $RegistrationName..."
-            $actionResponse = Invoke-AzureRmResourceAction @resourceActionparams -Force
+            $actionResponse = Invoke-AzResourceAction @resourceActionparams -Force
             Log-Output "Activation key successfully retrieved."
 
             if ($KeyOutputFilePath)
@@ -1145,15 +1146,15 @@ function New-RegistrationResource{
                          
             ## Remove any existing locks on the resource group
            
-            $lock = Get-AzureRmResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $RegistrationName -ErrorAction SilentlyContinue
+            $lock = Get-AzResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $RegistrationName -ErrorAction SilentlyContinue
             if ($lock)
             {
                 Write-Verbose "Unlocking Registration resource lock  'RegistrationResourceLock'..." -Verbose
-                Remove-AzureRmResourceLock -LockId $lock.LockId -Force
+                Remove-AzResourceLock -LockId $lock.LockId -Force
             }
 
             Log-Output "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
-            $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
+            $resourceGroup = New-AzResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
 
             break
         }
@@ -1175,7 +1176,7 @@ function New-RegistrationResource{
         try
         {
             Log-Output "Creating registration resource..."
-            $registrationResource = New-AzureRmResource @resourceCreationParams -Force
+            $registrationResource = New-AzResource @resourceCreationParams -Force
             Log-Output "Registration resource created: $(ConvertTo-Json $registrationResource)"
             break
         }
@@ -1196,7 +1197,7 @@ function New-RegistrationResource{
     ## Registration resource is needed for syndication. Placing resource lock to prevent accidental deletion.
     Write-Verbose -Message "Registration resource $RegistrationName is needed for syndication. Placing resource lock to prevent accidental deletion."
     $lockNotes ="Registration resource $RegistrationName is needed for syndication. Placing resource lock to prevent accidental deletion."
-    New-AzureRmResourceLock -LockLevel CanNotDelete `
+    New-AzResourceLock -LockLevel CanNotDelete `
                      -LockNotes $lockNotes `
                      -LockName 'RegistrationResourceLock' `
                      -ResourceName $RegistrationName `
@@ -1284,7 +1285,7 @@ function New-RBACAssignment{
         {
             try
             {
-                $registrationResource = Get-AzureRmResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
+                $registrationResource = Get-AzResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
     
                 $RoleAssigned = $false
                 $RoleName = "Azure Stack Registration Owner"
@@ -1293,7 +1294,7 @@ function New-RBACAssignment{
     
                 # Determine if RBAC role has been assigned
                 $roleAssignmentScope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.Name)"
-                $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
+                $roleAssignments = Get-AzRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
     
                 foreach ($role in $roleAssignments)
                 {
@@ -1305,7 +1306,7 @@ function New-RBACAssignment{
     
                 if (-not $RoleAssigned)
                 {        
-                    New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $RoleName -ObjectId $ServicePrincipal.ObjectId
+                    New-AzRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $RoleName -ObjectId $ServicePrincipal.ObjectId
                 }
                 break
             }
@@ -1402,6 +1403,162 @@ function DeActivate-AzureStack{
     } while ($currentAttempt -lt $maxAttempt)
 }
 
+function Get-AzToken
+{
+    [CmdletBinding(DefaultParameterSetName='default')]
+    param
+    (
+        # The Azure PowerShell context representing the context of a token to be resolved.
+        [Parameter()]
+        [ValidateNotNull()]
+        [Microsoft.Azure.Commands.Common.Authentication.Abstractions.IAzureContext] $Context = (Get-AzContext -ErrorAction Stop),
+
+        # The target resource for which a token should be resolved.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $Resource = ($Context.Environment.ActiveDirectoryServiceEndpointResourceId),
+
+        # The target tenantId in which a token should be resolved.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $TenantId = ($t = if ($Context.Tenant) {$Context.Tenant} else {$Context.Subscription.TenantId}),
+
+        # The account for which a token should be resolved.
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $AccountId = ($Context.Account.Id),
+
+        # Indicates that target token should be resolved from existing cache data (including a refresh token, if one is available).
+        [Parameter(Mandatory=$true, ParameterSetName='FromCache')]
+        [switch] $FromCache,
+
+        # Indicates that all token cache data should be returned.
+        [Parameter(ParameterSetName='FromCache')]
+        [switch] $Raw
+    )
+
+    $originalErrorActionPreference = $ErrorActionPreference
+    try
+    {
+        $ErrorActionPreference = 'Stop'
+
+        Write-Verbose "Attempting to retrieve a token for account '$AccountId' in tenant '$TenantId' for resource '$Resource'..."
+
+        if (-not $FromCache)
+        {
+            $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
+                ($account            = $Context.Account),
+                ($environment        = $Context.Environment),
+                ($tenant             = $TenantId),
+                ($password           = $null),
+                ($promptBehavior     = 'Never'),
+                ($promptAction       = $null),
+                ($tokenCache         = $null),
+                ($resourceIdEndpoint = $Resource))
+
+            return [pscustomobject]@{ AccessToken = ConvertTo-SecureString $token.AccessToken -AsPlainText -Force } |
+                Add-Member -MemberType ScriptMethod -Name 'GetAccessToken' -Value { return [System.Net.NetworkCredential]::new('$tokenType', $this.AccessToken).Password } -PassThru
+        }
+        else
+        {
+            Write-Warning "Attempting to find a refresh token and an access token from the existing token cache data..."
+        }
+
+        #
+        # Resolve token cache data
+        #
+
+        [Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory]$authenticationClientFactory = $null
+        if (-not ([Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TryGetComponent(
+            [Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory]::AuthenticationClientFactoryKey,
+            [ref]$authenticationClientFactory)))
+        {
+            $m = 'Please ensure you have authenticated with Az Accounts module!'
+            $m += ' Unable to resolve authentication client factory from Az Accounts module runtime'
+            $m += ' ([Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory])'
+            Write-Error $m
+            return
+        }
+
+        $client = $authenticationClientFactory.CreatePublicClient()
+
+        $authenticationClientFactory.RegisterCache($client)
+
+        $accounts = $client.GetAccountsAsync().ConfigureAwait($true).GetAwaiter().GetResult()
+
+        $bytes = ([Microsoft.Identity.Client.ITokenCacheSerializer]$client.UserTokenCache).SerializeMsalV3()
+        $json  = [System.Text.Encoding]::UTF8.GetString($bytes)
+        $data  =  ConvertFrom-Json $json
+
+        Write-Debug "MSAL token cache deserialized ($($bytes.Length) bytes); Looking for target tokens..."
+
+        if ($Raw)
+        {
+            Write-Warning "Returning raw token cache data!"
+            Write-Output $data
+            return
+        }
+
+        #
+        # Resolve target account
+        #
+
+        $targetAccount = $accounts | Where Username -EQ $AccountId
+
+        if (-not $targetAccount -or $targetAccount.Count -gt 1)
+        {
+            Write-Error "Unable to resolve acccount for identity '$identityId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
+            return
+        }
+
+        Write-Verbose "Target account resolved to: $(ConvertTo-Json $targetAccount -Compress)"
+
+        #
+        # Resolve target token(s)
+        #
+
+        $resolvedRefreshToken = $data.RefreshToken."$(Get-Member -InputObject $data.RefreshToken -MemberType NoteProperty |
+            Where { "$($_.Name)".StartsWith($targetAccount.HomeAccountId.Identifier, [System.StringComparison]::OrdinalIgnoreCase) } |
+            Select -ExpandProperty Name)".secret
+
+        $resolvedAccessToken = Get-Member -InputObject $data.AccessToken -MemberType NoteProperty |
+            ForEach { $data.AccessToken."$($_.Name)" } | 
+            Where home_account_id -EQ $targetAccount.HomeAccountId.Identifier |
+            Where { (-not $_.realm) -or ($_.realm -eq $TenantId) } |
+            Where target -Like "*$Resource*" |
+            Sort expires_on -Descending |
+            Select -First 1 -ExpandProperty secret
+
+        if (-not $resolvedAccessToken -and -not $resolvedRefreshToken)
+        {
+            Write-Error "Unable to resolve an access token or refresh token for identity '$identityId' with the specified properties..."
+            return
+        }
+        elseif (-not $resolvedAccessToken)
+        {
+            Write-Warning "Unable to resolve an access token for identity '$identityId' with the specified properties..."
+        }
+        elseif (-not $resolvedRefreshToken)
+        {
+            Write-Warning "Unable to resolve a refresh token for identity '$identityId' with the specified properties..."
+        }
+
+        $result = [pscustomobject]@{
+            AccessToken  = if ($resolvedAccessToken)  {ConvertTo-SecureString $resolvedAccessToken  -AsPlainText -Force} else {$null}
+            RefreshToken = if ($resolvedRefreshToken) {ConvertTo-SecureString $resolvedRefreshToken -AsPlainText -Force} else {$null}
+        }
+    
+        return $result |
+            Add-Member -MemberType ScriptMethod -Name 'GetAccessToken' -Value { return [System.Net.NetworkCredential]::new('$tokenType', $this.AccessToken).Password } -PassThru |
+            Add-Member -MemberType ScriptMethod -Name 'GetRefreshToken' -Value { return [System.Net.NetworkCredential]::new('$tokenType', $this.RefreshToken).Password } -PassThru
+    }
+    finally
+    {
+        $ErrorActionPreference = $originalErrorActionPreference
+    }
+}
+
+
 <#
 
 .SYNOPSIS
@@ -1409,91 +1566,26 @@ function DeActivate-AzureStack{
 Gathers required data from current Azure Powershell context
 
 #>
-function Get-AzureAccountInfo{
+function Log-AzureAccountInfo{
 [CmdletBinding()]
     param(
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [PSObject] $AzureContext
     )
-    
     Log-Output "Gathering info from current Azure Powershell context..."
-
     $azureContextDetails = @{
         Account          = $AzureContext.Account
         Environment      = $AzureContext.Environment
         Subscription     = $AzureContext.Subscription
         Tenant           = $AzureContext.Tenant
     }
-
     if (-not($AzureContext.Subscription))
     {
         Log-Output "Current Azure context:`r`n$(ConvertTo-Json $azureContextDetails)"
         Log-Throw -Message "Current Azure context is not currently set. Please call Login-AzureRmAccount to set the Azure context." -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
     }
-
-    $AzureEnvironment = $AzureContext.Environment
-    $AzureSubscription = $AzureContext.Subscription
-
-    $tokens = @()
-    $exceptions = @()
-    try{
-        $tokens += $AzureContext.TokenCache.ReadItems()
-        if ($tokens.Count -eq 0)
-        {
-            throw "No Tokens collected."
-        }
-    }
-    catch{
-        Log-Warning "Tokens not collected using method: `$AzureContext.TokenCache.ReadItems() `r`n$_"
-        $exceptions += $_.Exception
-    }
-
-    try{
-        $tokens += [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems()
-        if ($tokens.Count -eq 0)
-        {
-            throw "No Tokens collected."
-        }
-    }
-    catch{ 
-        Log-Warning "Tokens not collected using method: [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TokenCache.ReadItems() `r`n$_"
-        $exceptions += $_.Exception
-    }
-
-    try{
-        $tokens += [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems()
-        if ($tokens.Count -eq 0)
-        {
-            throw "No Tokens collected."
-        }
-    }
-    catch{
-        Log-Warning "Tokens not collected using method: [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::DefaultShared.ReadItems() `r`n$_"
-        $exceptions += $_.Exception
-    }
-
-    if ($tokens.Count -lt 1)
-    {
-        Log-Throw -Message "Token cache is empty `r`n" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name -ExceptionObject $exceptions
-    }
-
-    $token = $tokens |
-        Where Resource -EQ $AzureEnvironment.ActiveDirectoryServiceEndpointResourceId |
-        Where { $_.TenantId -eq $AzureSubscription.TenantId } |
-        Sort ExpiresOn |
-        Select -Last 1
-
-    if (-not $token)
-    {
-        Log-Throw -Message "Token not found for tenant id $($AzureSubscription.TenantId) and resource $($AzureEnvironment.ActiveDirectoryServiceEndpointResourceId)." -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-    }
-
     Log-Output "Current Azure Context: `r`n $(ConvertTo-Json $azureContextDetails)"
-    return @{
-        TenantId = $AzureSubscription.TenantId
-        Token = $token
-    }
 }
 
 <#
@@ -1565,19 +1657,9 @@ function Register-AzureStackResourceProvider{
         try
         {
             Log-Output "Registering Azure Stack resource provider."
-            [Version]$azurePSVersion = (Get-Module AzureRm.Resources).Version
-            if ($azurePSVersion -ge [Version]"4.3.2")
-            {
-                Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" | Out-Null
-                Log-Output "Resource provider registered."
-                break
-            }
-            else
-            {
-                Register-AzureRmResourceProvider -ProviderNamespace "Microsoft.AzureStack" -Force | Out-Null
-                Log-Output "Resource provider registered."
-                break
-            }
+            Register-AzResourceProvider -ProviderNamespace "Microsoft.AzureStack" | Out-Null
+            Log-Output "Resource provider registered."
+            break
         }
         Catch
         {
@@ -1618,18 +1700,18 @@ function Remove-RegistrationResource{
         try
         {
             ## Remove any existing Resource level lock before deleting the resource
-            $existingRegistrationResource = Get-AzureRmResource -ResourceId $ResourceId
+            $existingRegistrationResource = Get-AzResource -ResourceId $ResourceId
             $resourceName = $existingRegistrationResource.Name
 
             $resourceType = 'Microsoft.Azurestack/registrations'
-            $lock = Get-AzureRmResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $resourceName -ErrorAction SilentlyContinue
+            $lock = Get-AzResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $resourceName -ErrorAction SilentlyContinue
             if ($lock)
             {
                 Write-Verbose "Removing Registration resource lock  'RegistrationResourceLock'..." -Verbose
-                Remove-AzureRmResourceLock -LockId $lock.LockId -Force
+                Remove-AzResourceLock -LockId $lock.LockId -Force
             }
 
-            Remove-AzureRmResource -ResourceId $ResourceId -Force -Verbose
+            Remove-AzResource -ResourceId $ResourceId -Force -Verbose
             break
         }
         catch
@@ -1695,16 +1777,16 @@ function Get-DefaultResourceGroupLocation{
 Check if the selected ResourceGroupLocation is available
 #>
 function Validate-ResourceGroupLocation{
-    [CmdletBinding()]
-        Param(
-            [Parameter(Mandatory=$true)]
-            [string] $ResourceGroupLocation
-        )
-        $availableLocations = (Get-AzureRmLocation).Location
-        if ($availableLocations -notcontains $ResourceGroupLocation){
-            throw "ErrorCode: UnknownResourceGroupLocation.`nErrorReason: Resource group location '$ResourceGroupLocation' is not available. Please call the registration cmdlet along with ResourceGroupLocation parameter.`nAvailable locations: $($availableLocations -join ', ')`n"
-        }
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $ResourceGroupLocation
+    )
+    $availableLocations = (Get-AzLocation).Location
+    if ($availableLocations -notcontains $ResourceGroupLocation){
+        throw "ErrorCode: UnknownResourceGroupLocation.`nErrorReason: Resource group location '$ResourceGroupLocation' is not available. Please call the registration cmdlet along with ResourceGroupLocation parameter.`nAvailable locations: $($availableLocations -join ', ')`n"
     }
+}
 
 <#
 
