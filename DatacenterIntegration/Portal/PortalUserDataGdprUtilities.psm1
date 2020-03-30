@@ -6,22 +6,21 @@
 
 $DefaultAdminSubscriptionName = "Default Provider Subscription"
 
-function Initialize-UserDataClearEnv
-{
+function Initialize-UserDataClearEnv {
     param
     (
         # The directory tenant identifier of Azure Stack.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $AzsDirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [Uri] $AzsArmEndpoint,
 
         # The subscription name
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [string] $SubscriptionName,
 
@@ -32,7 +31,8 @@ function Initialize-UserDataClearEnv
         [string] $UserPrincipalName
     )
 
-    #requires -Module "Az.Accounts"
+    #requires -Version 4.0
+    #requires -Module "AzureRM.Profile"
     #requires -Module "Azs.Subscriptions.Admin"
     #requires -RunAsAdministrator
 
@@ -45,22 +45,20 @@ function Initialize-UserDataClearEnv
     Write-Verbose "Login to Azure Stack ARM..." -Verbose
     $AzsAdminEnvironmentName = New-Guid
     $params = @{
-        ResourceManagerEndpoint     = $AzsArmEndpoint
-        EnvironmentName             = $AzsAdminEnvironmentName
+        ResourceManagerEndpoint = $AzsArmEndpoint
+        EnvironmentName         = $AzsAdminEnvironmentName
     }
-    $adminArmEnv = Initialize-AzureRmEnvironment @params
+    $adminArmEnv = Initialize-AzEnvironment @params
     Write-Verbose "Created admin ARM env as $(ConvertTo-JSON $adminArmEnv)" -Verbose
 
     $params = @{
-        AzureEnvironment    = $adminArmEnv
-        DirectoryTenantId   = $AzsDirectoryTenantId
+        AzureEnvironment  = $adminArmEnv
+        DirectoryTenantId = $AzsDirectoryTenantId
     }
-    if ($SubscriptionName)
-    {
+    if ($SubscriptionName) {
         $params.SubscriptionName = $SubscriptionName
     }
-    if ($AutomationCredential)
-    {
+    if ($AutomationCredential) {
         $params.AutomationCredential = $AutomationCredential
     }
     $refreshToken = Initialize-AzureRmUserRefreshToken @params
@@ -69,8 +67,7 @@ function Initialize-UserDataClearEnv
     $script:initializeGraphEnvParams = @{
         RefreshToken = $refreshToken
     }
-    if ($adminArmEnv.EnableAdfsAuthentication)
-    {
+    if ($adminArmEnv.EnableAdfsAuthentication) {
         $script:initializeGraphEnvParams.AdfsFqdn = (New-Object Uri $adminArmEnv.ActiveDirectoryAuthority).Host
         $script:initializeGraphEnvParams.GraphFqdn = (New-Object Uri $adminArmEnv.GraphUrl).Host
 
@@ -78,8 +75,7 @@ function Initialize-UserDataClearEnv
             '$filter' = "userPrincipalName eq '$($UserPrincipalName.ToLower())'"
         }
     }
-    else
-    {
+    else {
         $graphEnvironment = Resolve-GraphEnvironment -AzureEnvironment $adminArmEnv
         Write-Verbose "Resolve the graph env as '$graphEnvironment '" -Verbose
         $script:initializeGraphEnvParams.Environment = $graphEnvironment
@@ -97,28 +93,27 @@ function Initialize-UserDataClearEnv
 .Synopsis
    Clear the portal user data
 #>
-function Clear-AzsUserDataWithUserPrincipalName
-{
+function Clear-AzsUserDataWithUserPrincipalName {
     param
     (
         # The directory tenant identifier of Azure Stack Administrator.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $AzsAdminDirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [Uri] $AzsAdminArmEndpoint,
 
         # The user principal name of the account whoes user data should be cleared.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $UserPrincipalName,
 
         # Optional: The directory tenant identifier of account whoes user data should be cleared.
         # If it is not specified, it will delete user with principal name under all regitered directory tenants
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantId,
 
@@ -130,9 +125,9 @@ function Clear-AzsUserDataWithUserPrincipalName
     Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
 
     $params = @{
-        AzsAdminDirectoryTenantId   = $AzsAdminDirectoryTenantId
-        AzsAdminArmEndpoint         = $AzsAdminArmEndpoint
-        UserPrincipalName           = $UserPrincipalName
+        AzsAdminDirectoryTenantId = $AzsAdminDirectoryTenantId
+        AzsAdminArmEndpoint       = $AzsAdminArmEndpoint
+        UserPrincipalName         = $UserPrincipalName
     }
 
     if ($DirectoryTenantId) {
@@ -150,28 +145,27 @@ function Clear-AzsUserDataWithUserPrincipalName
 .Synopsis
     Deprecated: Clear the portal user data
 #>
-function Clear-AzsUserData
-{
+function Clear-AzsUserData {
     param
     (
         # The directory tenant identifier of Azure Stack Administrator.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $AzsAdminDirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [Uri] $AzsAdminArmEndpoint,
 
         # The user principal name of the account whoes user data should be cleared.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $UserPrincipalName,
 
         # Optional: The directory tenant identifier of account whoes user data should be cleared.
         # If it is not specified, it will delete user with principal name under all regitered directory tenants
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantId,
 
@@ -184,20 +178,18 @@ function Clear-AzsUserData
     $VerbosePreference = 'Continue'
 
     $params = @{
-        AzsDirectoryTenantId        = $AzsAdminDirectoryTenantId
-        AzsArmEndpoint              = $AzsAdminArmEndpoint
-        AutomationCredential        = $AutomationCredential
-        UserPrincipalName           = $UserPrincipalName
-        SubscriptionName            = $DefaultAdminSubscriptionName
+        AzsDirectoryTenantId = $AzsAdminDirectoryTenantId
+        AzsArmEndpoint       = $AzsAdminArmEndpoint
+        AutomationCredential = $AutomationCredential
+        UserPrincipalName    = $UserPrincipalName
+        SubscriptionName     = $DefaultAdminSubscriptionName
     }
     Initialize-UserDataClearEnv @params
 
-    if ($DirectoryTenantId)
-    {
+    if ($DirectoryTenantId) {
         $directoryTenantIdsArray = [string[]]$DirectoryTenantId
     }
-    else 
-    {
+    else {
         Write-Verbose "Input parameter 'DirectoryTenantId' is empty. Retrieving all the registered tenant directory..." -Verbose
         $directoryTenantIdsArray = (Get-AzsDirectoryTenant -Verbose).TenantId
     }
@@ -206,8 +198,7 @@ function Clear-AzsUserData
 
     $clearUserDataResults = @() # key is directory Id, value is clear response
 
-    foreach ($dirId in $directoryTenantIdsArray)
-    {
+    foreach ($dirId in $directoryTenantIdsArray) {
         Write-Verbose "Intializing graph env..." -Verbose
         Initialize-GraphEnvironment @script:initializeGraphEnvParams -DirectoryTenantId $dirId
         Write-Verbose "Intialized graph env" -Verbose
@@ -218,8 +209,7 @@ function Clear-AzsUserData
 
         $userObjectId = $usersResponse.value.objectId
         Write-Verbose "Retrieved user object Id as $userObjectId" -Verbose
-        if (-not $userObjectId)
-        {
+        if (-not $userObjectId) {
             Write-Warning "There is no user '$UserPrincipalName' under directory tenant Id $dirId."
             $clearUserDataResult += [pscustomobject]@{
                 DirectoryTenantId = $dirId
@@ -228,8 +218,7 @@ function Clear-AzsUserData
             }
             continue
         }
-        elseif (([string[]]$userObjectId).Length -gt 1)
-        {
+        elseif (([string[]]$userObjectId).Length -gt 1) {
             Write-Warning "There is one more users retrieved with '$UserPrincipalName' under directory tenant Id $dirId."
             $clearUserDataResult += [pscustomobject]@{
                 DirectoryTenantId = $dirId
@@ -238,8 +227,7 @@ function Clear-AzsUserData
             }
             continue
         }
-        else
-        {
+        else {
             $params = @{
                 AccessToken         = $script:adminArmAccessToken
                 UserObjectId        = $userObjectId
@@ -258,27 +246,26 @@ function Clear-AzsUserData
 .Synopsis
    Clear the portal user data
 #>
-function Clear-AzsUserDataWithUserObjectId
-{
+function Clear-AzsUserDataWithUserObjectId {
     param
     (
         # The directory tenant identifier of Azure Stack Administrator.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $AzsAdminDirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [Uri] $AzsAdminArmEndpoint,
 
         # The user object Id of the account whoes user data should be cleared.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $UserObjectId,
 
         # The directory tenant identifier of account whoes user data should be cleared.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantId,
 
@@ -293,10 +280,10 @@ function Clear-AzsUserDataWithUserObjectId
     $VerbosePreference = 'Continue'
 
     $params = @{
-        AzsDirectoryTenantId        = $AzsAdminDirectoryTenantId
-        AzsArmEndpoint              = $AzsAdminArmEndpoint
-        AutomationCredential        = $AutomationCredential
-        SubscriptionName            = $DefaultAdminSubscriptionName
+        AzsDirectoryTenantId = $AzsAdminDirectoryTenantId
+        AzsArmEndpoint       = $AzsAdminArmEndpoint
+        AutomationCredential = $AutomationCredential
+        SubscriptionName     = $DefaultAdminSubscriptionName
     }
     Initialize-UserDataClearEnv @params
 
@@ -309,22 +296,21 @@ function Clear-AzsUserDataWithUserObjectId
     Clear-SinglePortalUserData @params
 }
 
-function Get-UserObjectId
-{
+function Get-UserObjectId {
     param
     (
         # The directory tenant identifier of user account
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $DirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [Uri] $AzsArmEndpoint,
 
         # The user principal name of the account whoes user data should be cleared.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string] $UserPrincipalName,
 
@@ -336,10 +322,10 @@ function Get-UserObjectId
     Write-Warning "Please use PortalUserDataUtilities.psm1. This module is deprecated and will be deleted soon."
 
     $params = @{
-        AzsDirectoryTenantId        = $DirectoryTenantId
-        AzsArmEndpoint              = $AzsArmEndpoint
-        AutomationCredential        = $AutomationCredential
-        UserPrincipalName           = $UserPrincipalName
+        AzsDirectoryTenantId = $DirectoryTenantId
+        AzsArmEndpoint       = $AzsArmEndpoint
+        AutomationCredential = $AutomationCredential
+        UserPrincipalName    = $UserPrincipalName
     }
     Initialize-UserDataClearEnv @params
 
@@ -354,41 +340,39 @@ function Get-UserObjectId
     return $usersResponse.value.objectId
 }
 
-function Clear-SinglePortalUserData
-{
+function Clear-SinglePortalUserData {
     param
     (
         # The user credential with which to acquire an access token targeting Graph.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
         [string] $AccessToken,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
         [string] $UserObjectId,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
         [string] $DirectoryTenantId,
 
         # The Azure Stack ARM endpoint URI.
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNull()]
         [Uri] $AzsAdminArmEndpoint
     )
 
-    try
-    {
-        $adminSubscriptionId = (Get-AzSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
+    try {
+        $adminSubscriptionId = (Get-AzureRmSubscription -Verbose | where { $_.Name -ieq $DefaultAdminSubscriptionName }).Id
         Write-Verbose "Get default Admin subscription id $adminSubscriptionId." -Verbose
 
         $clearUserDataEndpoint = "$AzsAdminArmEndpoint/subscriptions/$adminSubscriptionId/providers/Microsoft.PortalExtensionHost.Providers/ClearUserSettings?api-version=2017-09-01-preview"
         $headers = @{ 
-            Authorization   = "Bearer $accessToken" 
-            "Content-Type"  = "application/json"
+            Authorization  = "Bearer $accessToken" 
+            "Content-Type" = "application/json"
         }
         $payload = @{
-            UserObjectId = $UserObjectId
+            UserObjectId      = $UserObjectId
             DirectoryTenantId = $DirectoryTenantId
         }
         $httpPayload = ConvertTo-Json $payload -Depth 10
@@ -401,10 +385,8 @@ function Clear-SinglePortalUserData
             ResponseData      = $clearUserDataResponse
         }
     }
-    catch 
-    {
-        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound -and (ConvertFrom-JSON $_.ErrorDetails.Message).error.code -eq "NoPortalUserData")
-        {
+    catch {
+        if ($_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound -and (ConvertFrom-JSON $_.ErrorDetails.Message).error.code -eq "NoPortalUserData") {
             Write-Warning "No user data with user object Id and directory tenant Id"
             return [pscustomobject]@{
                 DirectoryTenantId = $DirectoryTenantId
@@ -412,8 +394,7 @@ function Clear-SinglePortalUserData
                 ErrorMessage      = "No portal user data"
             }
         }
-        else
-        {
+        else {
             Write-Warning "Exception when clear user data with user object Id and directory tenant Id: $_`r`n$($_.Exception)"
             return [pscustomobject]@{
                 DirectoryTenantId = $DirectoryTenantId
