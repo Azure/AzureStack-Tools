@@ -8,12 +8,12 @@ This tool constrains Azure subscription to the capabilities available in the Azu
 Import-Module .\AzureStack.Policy.psm1
 
 Login-AzureRmAccount
-$s = Select-AzureRmSubscription -SubscriptionName "<sub name>"
+$s = Select-AzSubscription -SubscriptionName "<sub name>"
 $subId = $s.Subscription.SubscriptionId
 
-$policy = New-AzureRmPolicyDefinition -Name AzureStack -Policy (Get-AzsPolicy)
+$policy = New-AzPolicyDefinition -Name AzureStack -Policy (Get-AzsPolicy)
 
-New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subId
+New-AzPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subId
 ```
 
 To constrain only a particular resource group in your Azure subscription to match the capabilities of Azure Stack, specify the resource group in the scope as below when assigning the policy.
@@ -21,13 +21,13 @@ To constrain only a particular resource group in your Azure subscription to matc
 ```powershell
 #Specify the resource group where you would like to apply the policy
 $rgName = 'AzureStack'
-New-AzureRmPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subID/resourceGroups/$rgName
+New-AzPolicyAssignment -Name AzureStack -PolicyDefinition $policy -Scope /subscriptions/$subID/resourceGroups/$rgName
 ```
 
 To remove the Azure Stack policy, run this command with the same scope used when the policy was applied:
 
 ```powershell
 
-Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId/resourceGroups/$rgName
-Remove-AzureRmPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId
+Remove-AzPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId/resourceGroups/$rgName
+Remove-AzPolicyAssignment -Name AzureStack -Scope /subscriptions/$subId
 ```

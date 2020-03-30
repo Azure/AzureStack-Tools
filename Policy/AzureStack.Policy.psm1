@@ -1,8 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
-#requires -Version 5.0
-#requires -Modules AzureRM.Profile
+#requires -Modules Az.Accounts
 
 <#
     .SYNOPSIS

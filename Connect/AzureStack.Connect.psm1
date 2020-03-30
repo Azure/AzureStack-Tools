@@ -1,8 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
-#requires -Version 4.0
-#requires -Modules AzureRM.Profile, VpnClient
+#requires -Modules Az.Accounts, VpnClient
 
 <#
     .SYNOPSIS
@@ -131,9 +130,9 @@ function Get-AzsDirectoryTenantId () {
         [string] $EnvironmentName
     )
     
-    $ADauth = (Get-AzureRmEnvironment -Name $EnvironmentName).ActiveDirectoryAuthority
+    $ADauth = (Get-AzEnvironment -Name $EnvironmentName).ActiveDirectoryAuthority
     if ($ADFS -eq $true) {
-        if (-not (Get-AzureRmEnvironment -Name $EnvironmentName).EnableAdfsAuthentication) {
+        if (-not (Get-AzEnvironment -Name $EnvironmentName).EnableAdfsAuthentication) {
             Write-Error "This environment is not configured to do ADFS authentication." -ErrorAction Stop
         }
         return $(Invoke-RestMethod $("{0}/.well-known/openid-configuration" -f $ADauth.TrimEnd('/'))).issuer.TrimEnd('/').Split('/')[-1]

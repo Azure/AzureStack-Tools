@@ -63,17 +63,17 @@ InModuleScope $script:ModuleName {
 
         It 'Add-AzsEnvironment should successfully add a an administrator environment' {
             Add-AzsEnvironment -ArmEndpoint $armEndpoint -Name $EnvironmentName
-            Get-AzureRmEnvironment -Name $EnvironmentName | Should Not Be $null
+            Get-AzEnvironment -Name $EnvironmentName | Should Not Be $null
         }
 
         It 'User should be able to login to environment successfully created by Add-AzsEnvironment' {
             Write-Verbose "Aad Tenant ID is $global:AadTenantID" -Verbose
             Write-Verbose "Passing credential to Login-AzureRmAccount" -Verbose
-            {Login-AzureRmAccount -EnvironmentName $EnvironmentName -TenantId $global:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
+            {Login-AzAccount -EnvironmentName $EnvironmentName -TenantId $global:AadTenantID -Credential $global:AzureStackLoginCredentials} | Should Not Throw
         }
 
         It 'User should be able to list resource groups successfully in connected Azure Stack' {
-            Get-AzureRmResourceGroup | Should Not Be $null
+            Get-AzResourceGroup | Should Not Be $null
         }
 
         It 'Get-AzsAdminSubTokenheader should retrieve a valid admin token' {
@@ -86,13 +86,13 @@ InModuleScope $script:ModuleName {
 
         It 'Register-AzsProvider should register all resource providers for the current subscription' {
             Register-AzsProvider 
-            $unRegisteredProviders = Get-AzureRmResourceProvider | Where-Object {$_.RegistrationState -ne "Registered"}
+            $unRegisteredProviders = Get-AzResourceProvider | Where-Object {$_.RegistrationState -ne "Registered"}
             $unRegisteredProviders | Should Be $null
         }
 
         It 'Register-AzsProviderOnAllSubscriptions should register all resource providers for all subscriptions' {
             Register-AzsProviderOnAllSubscriptions
-            $unRegisteredProviders = Get-AzureRmResourceProvider | Where-Object {$_.RegistrationState -ne "Registered"}
+            $unRegisteredProviders = Get-AzResourceProvider | Where-Object {$_.RegistrationState -ne "Registered"}
             $unRegisteredProviders | Should Be $null
         }
 
