@@ -1,6 +1,10 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
+Import-Module "$PSScriptRoot\AzureStackIdentity.Common.psm1" -ErrorAction Stop
+Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
+Import-Module 'Az.Accounts' -Verbose:$false 4> $null
+
 <#
 .Synopsis
     Get the Guid of the directory tenant
@@ -66,139 +70,6 @@ function New-AzsAdGraphServicePrincipal {
         -ScriptBlock { New-GraphApplication -Name $using:ApplicationName  -ClientRedirectUris $using:graphRedirectUri -ClientCertificates $using:GraphClientCertificate }
     
     return $application
-}
-
-<#
-   .Synopsis
-      This function is used to initialize an Azure Resource Manager Environment for a given EnvironmentName and its ResourceManagerEndpoint 
-   .DESCRIPTION
-      Add an AzureRmEnvironment with a given EnvironmentName or retrieves an existing one 
-   .EXAMPLE
-      $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName "AzureStack" -ResourceManagerEndpoint "https://adminmanagement.redmond.ext-v.masd.stbtest.microsoft.com"
-#>
-function Initialize-AzureRmEnvironment {
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [String] $EnvironmentName,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [String] $ResourceManagerEndpoint
-    )
-    $azureEnvironment = Add-AzureRmEnvironment -Name $EnvironmentName -ARMEndpoint $ResourceManagerEndpoint -ErrorAction Ignore
-    $azureEnvironment = Get-AzureRmEnvironment -Name $environmentName -ErrorAction Stop
-    return $azureEnvironment
-}
-
-<#
-   .Synopsis
-      This function is used to initialize an Azure Resource Manager Account for a given DirectoryTenant within a given AzureEnvironment
-   .DESCRIPTION
-      Create an Azure Resource Manager Account and select given subscription
-   .EXAMPLE
-      $azureAccount = Initialize-AzureRmUserAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName "azurestacktest.onmicrosoft.com"
-#>
-function Initialize-AzureRmUserAccount {
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNull()]
-        [Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$AzureEnvironment,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [String] $DirectoryTenantName,
-
-        # The identifier of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [Parameter()]
-        [String] $SubscriptionId = $null,
-
-        # The display name of the Administrator Subscription. If not specified, the script will attempt to use the set default subscription.
-        [Parameter()]
-        [String] $SubscriptionName = $null,
-
-        [Parameter()]
-        [PSCredential] $AutomationCredential = $null
-    )
-    # resolve the directory tenant ID from the name
-    $directoryTenantId = (New-Object uri(Invoke-RestMethod "$($AzureEnvironment.ActiveDirectoryAuthority.TrimEnd('/'))/$DirectoryTenantName/.well-known/openid-configuration").token_endpoint).AbsolutePath.Split('/')[1]
-    $params = @{
-        EnvironmentName = $AzureEnvironment.Name
-        TenantId        = $directoryTenantId
-    }
-    if ($AutomationCredential) { $params += @{ Credential = $AutomationCredential } }
-
-    # Prompts the user for interactive login flow if automation credential is not specified
-    $azureAccount = Add-AzureRmAccount @params
-
-    if ($SubscriptionName) {
-        Select-AzureRmSubscription -SubscriptionName $SubscriptionName | Out-Null
-    } elseif ($SubscriptionId) {
-        Select-AzureRmSubscription -SubscriptionId $SubscriptionId | Out-Null
-    }
-
-    return $azureAccount
-}
-
-function Get-RefreshToken {
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNull()]
-        [Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$AzureEnvironment,
-
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [String] $DirectoryTenantName,
-
-        [Parameter()]
-        [PSCredential] $AutomationCredential = $null
-    )
-
-    $ErrorActionPreference='Stop'
-
-    $authority = $AzureEnvironment.ActiveDirectoryAuthority.TrimEnd('/') + "/$DirectoryTenantName"
-    $context = [Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext]::new(
-        $authority,
-        ($validateAuthority=$true),
-        [Microsoft.IdentityModel.Clients.ActiveDirectory.TokenCache]::new())
-
-    $result = if($automationCredential){
-        $context.AcquireToken(
-            ($resource=$AzureEnvironment.GraphEndpointResourceId),
-            ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
-            ($userCredential=[Microsoft.IdentityModel.Clients.ActiveDirectory.UserCredential]::new($AutomationCredential.UserName, $AutomationCredential.Password)))
-    } else {
-        $context.AcquireToken(
-            ($resource=$AzureEnvironment.GraphEndpointResourceId),
-            ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
-            ($redirectUri='urn:ietf:wg:oauth:2.0:oob'))
-    }
-    return ($result.RefreshToken | ConvertTo-SecureString -AsPlainText -Force)
-}
-
-function Resolve-GraphEnvironment {
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [String]$ActiveDirectoryAuthority
-    )
-    $graphEnvironment = switch ($ActiveDirectoryAuthority) {
-        'https://login.microsoftonline.com/' { 'AzureCloud' }
-        'https://login.chinacloudapi.cn/' { 'AzureChinaCloud' }
-        'https://login-us.microsoftonline.com/' { 'AzureUSGovernment' }
-        'https://login.microsoftonline.us/' { 'AzureUSGovernment' }
-        'https://login.microsoftonline.de/' { 'AzureGermanCloud' }
-        Default { 'CustomCloud' }
-    }
-    return $graphEnvironment
 }
 
 function Get-ArmAccessToken([Microsoft.Azure.Commands.Profile.Models.PSAzureEnvironment]$azureStackEnvironment) {
@@ -287,11 +158,9 @@ function Register-AzsGuestDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
-
     # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
-    $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-    $azureAccount = Initialize-AzureRmUserAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
+    $azureEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
+    $azureAccount = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
 
     foreach ($directoryTenantName in $GuestDirectoryTenantName) {
         # Resolve the guest directory tenant ID from the name
@@ -308,12 +177,12 @@ function Register-AzsGuestDirectoryTenant {
         }
         
         # Check if resource group exists, create it if it doesn't
-        $rg = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue
-        if ($rg -eq $null) {
-            New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue | Out-Null
+        $rg = Get-AzResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue
+        if (-not $rg) {
+            New-AzResourceGroup -Name $ResourceGroupName -Location $Location -ErrorAction SilentlyContinue | Out-Null
         }
         
-        $directoryTenant = New-AzureRmResource @params -Force -Verbose -ErrorAction Stop
+        $directoryTenant = New-AzResource @params -Force -Verbose -ErrorAction Stop
         Write-Verbose -Message "Directory Tenant onboarded: $(ConvertTo-Json $directoryTenant)" -Verbose
     }
 }
@@ -348,34 +217,21 @@ function Get-AzsHealthReport {
 
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
-        [ValidateNotNull()]
         [pscredential] $AutomationCredential = $null
     )
 
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    # Install-Module AzureRm
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
-    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
-
     function Invoke-Main {
-        # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
-        $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
-
-        # Initialize the Graph PowerShell module to communicate with the correct graph service
-        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
-        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken -CustomCloudARMEndpoint $AdminResourceManagerEndpoint
-
-        # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be initialized in the onboarding directory tenant
-        Write-Host "Acquiring an access token to communicate with Resource Manager..."
-        $armAccessToken = Get-ArmAccessToken $azureStackEnvironment
+        $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
+        $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName
+        $token = Get-AzToken -FromCache
         
-        $defaultProviderSubscription = Get-AzureRmSubscription -SubscriptionName "Default Provider Subscription"
+        $defaultProviderSubscription = Get-AzSubscription -SubscriptionName "Default Provider Subscription"
         $healthReportUrl = "$($AdminResourceManagerEndpoint.AbsoluteUri)/subscriptions/$($defaultProviderSubscription.SubscriptionId)/providers/Microsoft.Subscriptions.Admin/checkIdentityHealth?api-version=2018-05-01"
-        $headers = @{ "Authorization" = "Bearer $armAccessToken" }
+        $headers = @{ "Authorization" = "Bearer $($token.GetAccessToken())" }
 
         $healthReport = (Invoke-WebRequest -Headers $headers -Uri $healthReportUrl -Method Post -UseBasicParsing -TimeoutSec 40).Content | ConvertFrom-Json
 
@@ -440,18 +296,16 @@ function Update-AzsHomeDirectoryTenant {
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
-    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
-
     function Invoke-Main {
         # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
-        $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
+        $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
+        $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
+        $token = Get-AzToken -FromCache
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
         $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
-        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken -CustomCloudARMEndpoint $AdminResourceManagerEndpoint
+        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $token.RefreshToken -CustomCloudARMEndpoint $AdminResourceManagerEndpoint
 
         # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be initialized in the onboarding directory tenant
         Write-Host "Acquiring an access token to communicate with Resource Manager..."
@@ -473,27 +327,6 @@ function Update-AzsHomeDirectoryTenant {
             $count++
             $applicationServicePrincipal = Initialize-GraphApplicationServicePrincipal -ApplicationId $applicationRegistration.appId
             Write-Host "Installing Application... ($($count) of $($applicationRegistrations.Count)): $($applicationServicePrincipal.appId) '$($applicationServicePrincipal.appDisplayName)'"
-
-            # WORKAROUND - the recent Azure Stack update has a missing permission registration; temporarily "inject" this permission registration into the returned data
-            if ($applicationServicePrincipal.servicePrincipalNames | Where { $_ -like 'https://deploymentprovider.*/*' }) {
-                Write-Verbose "Adding missing permission registrations for application '$($applicationServicePrincipal.appDisplayName)' ($($applicationServicePrincipal.appId))..." -Verbose
-
-                $graph = Get-GraphApplicationServicePrincipal -ApplicationId (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
-
-                $applicationRegistration.appRoleAssignments = @(
-                    [pscustomobject]@{
-                        resource = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
-                        client   = $applicationRegistration.appId
-                        roleId   = $graph.appRoles | Where value -EQ 'Directory.Read.All' | Select -ExpandProperty id
-                    },
-
-                    [pscustomobject]@{
-                        resource = (Get-GraphEnvironmentInfo).Applications.WindowsAzureActiveDirectory.Id
-                        client   = $applicationRegistration.appId
-                        roleId   = $graph.appRoles | Where value -EQ 'Application.ReadWrite.OwnedBy' | Select -ExpandProperty id
-                    }
-                )
-            }
 
             # Initialize the necessary tags for the registered application
             if ($applicationRegistration.tags) {
@@ -626,24 +459,37 @@ function Register-AzsWithMyDirectoryTenant {
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
         [ValidateNotNull()]
-        [pscredential] $AutomationCredential = $null
+        [pscredential] $AutomationCredential = $null,
+
+        # The endpoint of the custom cloud Azure Resource Manager service.
+        [Parameter()]
+        [ValidateNotNull()]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
+        [uri] $CustomCloudAzureResourceManagerEndpoint = $null
     )
 
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
 
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
-    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
-
     function Invoke-Main {
         # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
-        $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
+        $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint
+        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
+        if ($graphEnvironment -eq 'CustomCloud') {
+            if (-not $CustomCloudAzureResourceManagerEndpoint) {
+                throw "Your target Azure Stack environment '$TenantResourceManagerEndpoint' is setup against a custom Azure cloud instance. Please provide an input for the parameter 'CustomCloudAzureResourceManagerEndpoint'."
+            }
+            $azureEnvironment = Initialize-AzEnvironment -EnvironmentName 'CustomCloud' -ResourceManagerEndpoint $CustomCloudAzureResourceManagerEndpoint
+            $account = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
+        }
+        else {
+            $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
+        }
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
-        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
-        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
+        $token = Get-AzToken -FromCache -Resource (Get-AzContext -ErrorAction Stop).Environment.GraphEndpointResourceId
+        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $token.RefreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
 
         # Initialize the service principal for the Azure Stack Resource Manager application
         Write-Host "Installing Resource Manager in your directory ('$DirectoryTenantName')..."
@@ -844,21 +690,19 @@ function Unregister-AzsGuestDirectoryTenant {
 
     $ResourceManagerEndpoint = $AdminResourceManagerEndpoint
 
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
-
     function Invoke-Main {
         Write-DecommissionImplicationsWarning
 
         # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
-        $azureEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-        $azureAccount = Initialize-AzureRmUserAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
+        $azureEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
+        $azureAccount = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantId $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
 
         # Remove the new directory tenant to the Azure Stack deployment
         $params = @{
             ResourceId = "/subscriptions/$($azureAccount.Context.Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.Subscriptions.Admin/directoryTenants/$GuestDirectoryTenantName"
             ApiVersion = '2015-11-01'
         }
-        $output = Remove-AzureRmResource @params -Force -Verbose -ErrorAction Stop
+        $output = Remove-AzResource @params -Force -Verbose -ErrorAction Stop
         Write-Verbose -Message "Directory Tenant decommissioned: $($params.ResourceId)" -Verbose
     }
 
@@ -916,29 +760,40 @@ function Unregister-AzsWithMyDirectoryTenant {
         # Optional: A credential used to authenticate with Azure Stack. Must support a non-interactive authentication flow. If not provided, the script will prompt for user credentials.
         [Parameter()]
         [ValidateNotNull()]
-        [pscredential] $AutomationCredential = $null
+        [pscredential] $AutomationCredential = $null,
+        
+        # The endpoint of the custom cloud Azure Resource Manager service.
+        [Parameter()]
+        [ValidateNotNull()]
+        [ValidateScript( { $_.Scheme -eq [System.Uri]::UriSchemeHttps })]
+        [uri] $CustomCloudAzureResourceManagerEndpoint = $null
     )
 
     $ErrorActionPreference = 'Stop'
     $VerbosePreference = 'Continue'
-
-    $ResourceManagerEndpoint = $TenantResourceManagerEndpoint
-    
-    Import-Module 'AzureRm.Profile' -Verbose:$false 4> $null
-    Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
     
     function Invoke-Main {
         Write-DecommissionImplicationsWarning
-    
+
         # Initialize the Azure PowerShell module to communicate with the Azure Resource Manager in the public cloud corresponding to the Azure Stack Graph Service. Will prompt user for credentials.
         Write-Host "Authenticating user..."
-        $azureStackEnvironment = Initialize-AzureRmEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint
-        $refreshToken = Get-RefreshToken -AzureEnvironment $azureStackEnvironment -DirectoryTenantName $DirectoryTenantName -AutomationCredential $AutomationCredential
-    
-        # Initialize the Graph PowerShell module to communicate with the correct graph service
+        $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStack' -ResourceManagerEndpoint $TenantResourceManagerEndpoint
         $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
-        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $refreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
-    
+        if ($graphEnvironment -eq 'CustomCloud') {
+            if (-not $CustomCloudAzureResourceManagerEndpoint) {
+                throw "Your target Azure Stack environment '$TenantResourceManagerEndpoint' is setup against a custom Azure cloud instance. Please provide an input for the parameter 'CustomCloudAzureResourceManagerEndpoint'."
+            }
+            $azureEnvironment = Initialize-AzEnvironment -EnvironmentName 'CustomCloud' -ResourceManagerEndpoint $CustomCloudAzureResourceManagerEndpoint
+            $account = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
+        }
+        else {
+            $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
+        }
+
+        # Initialize the Graph PowerShell module to communicate with the correct graph service
+        $token = Get-AzToken -FromCache -Resource (Get-AzContext -ErrorAction Stop).Environment.GraphEndpointResourceId
+        Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $token.RefreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
+
         # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be removed from the directory tenant
         Write-Host "Acquiring an access token to communicate with Resource Manager... (if you already decommissioned this directory you may get an error here which you can ignore)"
         $armAccessToken = (Get-GraphToken -Resource $azureStackEnvironment.ActiveDirectoryServiceEndpointResourceId -UseEnvironmentData -ErrorAction Stop).access_token
@@ -947,7 +802,7 @@ function Unregister-AzsWithMyDirectoryTenant {
         $applicationRegistrationParams = @{
             Method  = [Microsoft.PowerShell.Commands.WebRequestMethod]::Get
             Headers = @{ Authorization = "Bearer $armAccessToken" }
-            Uri     = "$($ResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
+            Uri     = "$($TenantResourceManagerEndpoint.ToString().TrimEnd('/'))/applicationRegistrations?api-version=2014-04-01-preview"
         }
         $applicationRegistrations = Invoke-RestMethod @applicationRegistrationParams | Select -ExpandProperty value
     
