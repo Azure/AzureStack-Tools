@@ -214,7 +214,7 @@ function Get-AzToken {
         $targetAccount = $accounts | Where Username -EQ $AccountId
 
         if (-not $targetAccount -or $targetAccount.Count -gt 1) {
-            Write-Error "Unable to resolve acccount for identity '$identityId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
+            Write-Error "Unable to resolve acccount for identity '$AccountId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
             return
         }
 
@@ -237,14 +237,14 @@ function Get-AzToken {
         Select -First 1 -ExpandProperty secret
 
         if (-not $resolvedAccessToken -and -not $resolvedRefreshToken) {
-            Write-Error "Unable to resolve an access token or refresh token for identity '$identityId' with the specified properties..."
+            Write-Error "Unable to resolve an access token or refresh token for identity '$AccountId' with the specified properties..."
             return
         }
         elseif (-not $resolvedAccessToken) {
-            Write-Warning "Unable to resolve an access token for identity '$identityId' with the specified properties..."
+            Write-Warning "Unable to resolve an access token for identity '$AccountId' with the specified properties..."
         }
         elseif (-not $resolvedRefreshToken) {
-            Write-Warning "Unable to resolve a refresh token for identity '$identityId' with the specified properties..."
+            Write-Warning "Unable to resolve a refresh token for identity '$AccountId' with the specified properties..."
         }
 
         $result = [pscustomobject]@{
