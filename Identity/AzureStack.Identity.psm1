@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
-Import-Module "$PSScriptRoot\AzureStackIdentity.Common.psm1" -ErrorAction Stop
+Import-Module "$PSScriptRoot\AzureStack.Identity.Common.psm1" -ErrorAction Stop
 Import-Module "$PSScriptRoot\GraphAPI\GraphAPI.psm1" -Verbose:$false 4> $null
 Import-Module 'Az.Accounts' -Verbose:$false 4> $null
 
@@ -160,7 +160,7 @@ function Register-AzsGuestDirectoryTenant {
 
     # Initialize the Azure PowerShell module to communicate with Azure Stack. Will prompt user for credentials.
     $azureEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-    $azureAccount = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantName $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
+    $azureAccount = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantId $DirectoryTenantName -SubscriptionId $SubscriptionId -SubscriptionName $SubscriptionName -AutomationCredential $AutomationCredential
 
     foreach ($directoryTenantName in $GuestDirectoryTenantName) {
         # Resolve the guest directory tenant ID from the name
@@ -226,7 +226,7 @@ function Get-AzsHealthReport {
     function Invoke-Main {
         Write-Host "Authenticating user..."
         $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
-        $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName
+        $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
         $token = Get-AzToken -FromCache
         
         $defaultProviderSubscription = Get-AzSubscription -SubscriptionName "Default Provider Subscription"
@@ -484,7 +484,8 @@ function Register-AzsWithMyDirectoryTenant {
             $account = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
         }
         else {
-            $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
+            $azureEnvironment = Get-AzEnvironment -Name $graphEnvironment
+            $account = Initialize-AzAccount -AzureEnvironment $azureEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
         }
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
