@@ -175,7 +175,7 @@ function Set-AzsRegistration{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureEnvironment $AzureContext.Environment.Name),
+        [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureContext $AzureContext),
         
         [Parameter(Mandatory = $false)]
         [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
@@ -205,7 +205,9 @@ function Set-AzsRegistration{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-AzureContext -AzureContext $AzureContext
     Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
+    Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
 
     try
@@ -334,6 +336,7 @@ function Remove-AzsRegistration{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-AzureContext -AzureContext $AzureContext
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
     try
     {
@@ -473,6 +476,7 @@ Function Get-AzsRegistrationToken{
 
     New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
 
+    Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
     if(($BillingModel -eq 'Capacity') -and ([String]::IsNullOrEmpty($AgreementNumber)))
     {
         Log-Throw -Message "Agreement number is null or empty when BillingModel is set to Capacity" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
@@ -607,7 +611,7 @@ Function Register-AzsEnvironment{
         [String] $ResourceGroupName = 'azurestack',
 
         [Parameter(Mandatory = $false)]
-        [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureEnvironment $AzureContext.Environment.Name)
+        [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureContext $AzureContext)
     )
 
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -617,6 +621,7 @@ Function Register-AzsEnvironment{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-AzureContext -AzureContext $AzureContext
     Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
     New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
@@ -696,6 +701,7 @@ Function UnRegister-AzsEnvironment{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-AzureContext -AzureContext $AzureContext
     if ((-not $RegistrationToken) -and (-not $CloudId))
     {
         if (-not $RegistrationName)
@@ -833,6 +839,7 @@ Function Get-AzsActivationKey{
 
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
+    Validate-AzureContext -AzureContext $AzureContext
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
 
     $currentAttempt = 0
@@ -1120,7 +1127,6 @@ function New-RegistrationResource{
         [String] $RegistrationToken
     )
 
-    Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     $currentAttempt = 0
     $maxAttempt = 3
     $sleepSeconds = 10 
@@ -1681,9 +1687,11 @@ Get the resource group location based on the AzureEnvironment name
 function Get-DefaultResourceGroupLocation{
 [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)]
-        [string] $AzureEnvironment
+        [Parameter(Mandatory=$false)]
+        [PSObject] $AzureContext
     )
+    Validate-AzureContext -AzureContext $AzureContext
+    $AzureEnvironment = $AzureContext.Environment.Name
     return @{'AzureCloud'='westcentralus'; 
             'AzureChinaCloud'='ChinaEast'; 
             'AzureUSGovernment'='usgovvirginia'; 
@@ -1695,16 +1703,50 @@ function Get-DefaultResourceGroupLocation{
 Check if the selected ResourceGroupLocation is available
 #>
 function Validate-ResourceGroupLocation{
-    [CmdletBinding()]
-        Param(
-            [Parameter(Mandatory=$true)]
-            [string] $ResourceGroupLocation
-        )
-        $availableLocations = (Get-AzureRmLocation).Location
-        if ($availableLocations -notcontains $ResourceGroupLocation){
-            throw "ErrorCode: UnknownResourceGroupLocation.`nErrorReason: Resource group location '$ResourceGroupLocation' is not available. Please call the registration cmdlet along with ResourceGroupLocation parameter.`nAvailable locations: $($availableLocations -join ', ')`n"
-        }
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string] $ResourceGroupLocation
+    )
+    $availableLocations = (Get-AzureRmLocation).Location
+    if ($availableLocations -notcontains $ResourceGroupLocation){
+        throw "ErrorCode: UnknownResourceGroupLocation.`nErrorReason: Resource group location '$ResourceGroupLocation' is not available. Please call the registration cmdlet along with ResourceGroupLocation parameter.`nAvailable locations: $($availableLocations -join ', ')`n"
     }
+}
+
+<#
+.SYNOPSIS
+Validate MsAssetTag parameter for Custom BillingModel
+#>
+function Validate-BillingModel{
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [string] $BillingModel,
+
+        [Parameter(Mandatory=$false)]
+        [string] $MsAssetTag
+    )
+    if ($BillingModel -eq 'Custom' -and [string]::IsNullOrEmpty($MsAssetTag)){
+        throw "ErrorCode: MissingMsAssetTag.`nErrorReason: MsAssetTag is a required parameter when BillingModel is 'Custom'. Please call the registration cmdlet along with MsAssetTag parameter."
+    }
+}
+
+<#
+.SYNOPSIS
+Validate if AzureContext is set
+#>
+function Validate-AzureContext{
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false)]
+        [PSObject] $AzureContext
+    )
+    if ($null -eq $AzureContext){
+        throw "ErrorCode: AzureContextNotSet.`nErrorReason: Azure Powershell context is null. Please log in to correct Azure Powershell context using 'Login-AzureRmAccount' and then call the registration cmdlet."
+    }
+}
 
 <#
 
