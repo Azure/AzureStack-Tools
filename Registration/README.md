@@ -28,7 +28,16 @@ Login-AzureRmAccount -Subscription '<Your Azure Subscription>' -Environment '<Th
 ### Complete registration / activation 
 Then you must run the below command from RegisterWithAzure.psm1:
 ```powershell
-Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
+Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse
+```
+
+### Registration with usage reporting or marketplace syndication disabled
+```powershell
+# usage reporting and marketplace syndication are enabled by default, to disable use the below command
+# with disabled usage reporting
+Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse -UsageReportingEnabled:$false
+# with disabled marketplace syndication
+Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse -MarketplaceSyndicationEnabled:$false
 ```
 
 ## Change or remove registration in a connected environment
@@ -36,7 +45,7 @@ Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
 ### Remove Registration 
 To remove the existing registration resource and disable marketplace syndication and usage data reporting:
 ```powershell
-Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
+Remove-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
 ```
 [!NOTE] You must be logged in to the same Azure Powershell context that you ran Set-AzsRegistration under
 
