@@ -9,6 +9,43 @@ You must also have access to an account / directory that is an owner or contribu
 
 #>
 
+function Initialize-AzureRmEnvironment{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [String] $Name = 'CustomCloud',
+
+        [Parameter(Mandatory=$true, ParameterSetName='CloudManifest')]
+        [String] $CloudManifestFilePath,
+
+        [Parameter(Mandatory=$true, ParameterSetName='CloudARMEndpoint')]
+        [String] $CloudARMEndpoint
+    )
+
+    if ( $PSCmdlet.ParameterSetName -eq 'CloudManifest' ){
+        $cloudJson = Get-Content $CloudManifestFilePath -Raw | ConvertFrom-Json
+        $cloudJsonContent = $cloudJson.DeploymentData
+        $CloudARMEndpoint = $cloudJsonContent.CustomEnvironmentEndpoints.CustomCloudARMEndpoint
+    }
+
+    $fullUri = $CloudARMEndpoint.TrimEnd('/')+"/metadata/endpoints?api-version=2015-01-01"
+    $response = Invoke-RestMethod -Uri $fullUri -ErrorAction Stop -UseBasicParsing -TimeoutSec 30 -Verbose
+    Write-Verbose -Message "Endpoints: $(ConvertTo-Json $response)" -Verbose
+    $endpoints = @{
+        ActiveDirectoryAuthority                 = $response.authentication.loginEndpoint.TrimEnd('/') + "/"
+        ActiveDirectoryServiceEndpointResourceId = $response.authentication.audiences[0]
+        ResourceManagerUrl                       = $CloudARMEndpoint
+        GalleryUrl                               = $response.galleryEndpoint
+        GraphUrl                                 = $response.graphEndpoint
+    }
+    
+    Remove-AzureRMEnvironment -Name $Name -ErrorAction Ignore | Out-Null
+    Add-AzureRmEnvironment -Name $Name @endpoints | Out-Null
+    $azureEnvironment = Get-AzureRmEnvironment -Name $Name -ErrorAction Stop
+    return $azureEnvironment
+
+}
+
 # Generate log file(s)
 function New-RegistrationLogFile
 {
@@ -1836,6 +1873,8 @@ function Log-Throw{
 }
 
 #endregion
+
+Export-ModuleMember Initialize-AzureRmEnvironment
 
 # Disconnected functions
 Export-ModuleMember Get-AzsRegistrationToken
