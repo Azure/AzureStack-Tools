@@ -37,6 +37,8 @@ function Initialize-AzureRmEnvironment{
         ResourceManagerUrl                       = $CloudARMEndpoint
         GalleryUrl                               = $response.galleryEndpoint
         GraphUrl                                 = $response.graphEndpoint
+        GraphEndpointResourceId                  = $response.graphEndpoint
+        EnableAdfsAuthentication                 = $response.authentication.loginEndpoint.TrimEnd("/").EndsWith("/adfs", [System.StringComparison]::OrdinalIgnoreCase)
     }
     
     Remove-AzureRMEnvironment -Name $Name -ErrorAction Ignore | Out-Null
