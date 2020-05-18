@@ -237,67 +237,175 @@ function Set-AzsRegistration{
         [ValidateNotNull()]
         [string] $MsAssetTag
     )
+
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
     $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
-
     New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
-
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
-
-    Validate-AzureContext -AzureContext $AzureContext
-    Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
-    Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
-    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
-
-    try
-    {
-        $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
-        $stampInfo = Confirm-StampVersion -PSSession $session
-
-        # Configure Azure Bridge
-        $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
-
-        # Get registration token
-        $getTokenParams = @{
-            BillingModel                  = $BillingModel
-            MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
-            UsageReportingEnabled         = $UsageReportingEnabled
-            AgreementNumber               = $AgreementNumber
-            MsAssetTag                    = $MsAssetTag
-        }
-        Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
-        if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled))
-        {
-            Log-Warning "Billing model is set to Capacity and Usage Reporting is enabled. This data will be used to guide product improvements and will not be used for billing purposes. If this is not desired please halt this operation and rerun with -UsageReportingEnabled:`$false. Execution will continue in 20 seconds."
-            Start-Sleep -Seconds 20        
-        }
-        $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
     
-        # Register environment with Azure
+    $stampOutput = Invoke-RegistrationStep1AgainstPEP -PrivilegedEndpointCredential $PrivilegedEndpointCredential `
+                                                      -PrivilegedEndpoint $PrivilegedEndpoint `
+                                                      -AzureContext $AzureContext `
+                                                      -BillingModel $BillingModel `
+                                                      -MarketplaceSyndicationEnabled:$MarketplaceSyndicationEnabled `
+                                                      -UsageReportingEnabled:$UsageReportingEnabled `
+                                                      -AgreementNumber $AgreementNumber ` # required for Capacity billing model
+                                                      -MsAssetTag $MsAssetTag # required for Custom billing model
 
-        Log-Output "Creating registration resource at ResourceGroupLocation: $ResourceGroupLocation"
-        New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
+    $azureOutput = Invoke-RegistrationStep2AgainstAzure -AzureContext $AzureContext `
+                                                        -RegistrationName $RegistrationName `
+                                                        -ResourceGroupName $ResourceGroupName `
+                                                        -ResourceGroupLocation $ResourceGroupLocation `
+                                                        -RegistrationToken $stampOutput.RegistrationToken `
+                                                        -ServicePrincipalObjectId $stampOutput.ServicePrincipalObjectId
 
-        # Assign custom RBAC role
-        Log-Output "Assigning custom RBAC role to resource $RegistrationName"
-        New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipal $servicePrincipal
-
-        # Activate AzureStack syndication / usage reporting features
-        $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ConnectedScenario
-        Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
-        Activate-AzureStack -Session $session -ActivationKey $ActivationKey
-    }
-    finally
-    {
-        if ($session)
-        {
-            Log-OutPut "Removing any existing PSSession..."
-            $session | Remove-PSSession
-        }
-    }
+    Invoke-RegistrationStep3AgainstPEP -PrivilegedEndpointCredential $PrivilegedEndpointCredential `
+                                       -PrivilegedEndpoint $PrivilegedEndpoint `
+                                       -ActivationKey $azureOutput
 
     Log-Output "Your environment is now registered and activated using the provided parameters."
     Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n`r`n"
+}
+
+Invoke-RegistrationStep1AgainstPEP{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCredential] $PrivilegedEndpointCredential,
+
+        [Parameter(Mandatory = $true)]
+        [String] $PrivilegedEndpoint,
+
+        [Parameter(Mandatory = $true)]
+        [PSObject] $AzureContext,
+        
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [string] $BillingModel,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $MarketplaceSyndicationEnabled,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $UsageReportingEnabled,
+
+        [Parameter(Mandatory = $false)]
+        [string] $AgreementNumber,
+
+        [Parameter(Mandatory=$false)]
+        [string] $MsAssetTag
+    )
+
+    if([string]::IsNullOrEmpty($Script:registrationLog)){
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+        New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    }
+
+    Validate-AzureContext -AzureContext $AzureContext
+    Validate-BillingModel -BillingModel $BillingModel -UsageReportingEnabled:$UsageReportingEnabled -MsAssetTag $MsAssetTag -AgreementNumber $AgreementNumber
+    $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+    $stampInfo = Confirm-StampVersion -PSSession $session
+
+    # Configure Azure Bridge
+    $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
+
+    # Get registration token
+    $getTokenParams = @{
+        BillingModel                  = $BillingModel
+        MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
+        UsageReportingEnabled         = $UsageReportingEnabled
+        AgreementNumber               = $AgreementNumber
+        MsAssetTag                    = $MsAssetTag
+    }
+    Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
+    $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
+
+    $session | Remove-PSSession
+    return @{
+        ServicePrincipalObjectId = $servicePrincipal.ObjectId
+        RegistrationToken        = $registrationToken
+    }
+
+}
+
+Invoke-RegistrationStep2AgainstAzure{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSObject] $AzureContext,
+
+        [Parameter(Mandatory = $true)]
+        [String] $RegistrationName,
+
+        [Parameter(Mandatory = $true)]
+        [String] $ResourceGroupName,
+
+        [Parameter(Mandatory = $true)]
+        [String] $ResourceGroupLocation,
+
+        [Parameter(Mandatory=$true)]
+        [String] $RegistrationToken,
+
+        [Parameter(Mandatory = $true)]
+        [String] $ServicePrincipalObjectId
+        
+    )
+
+    if([string]::IsNullOrEmpty($Script:registrationLog)){
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+        New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    }
+
+    Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
+
+    # Register environment with Azure
+    Log-Output "Creating registration resource at ResourceGroupLocation: $ResourceGroupLocation"
+    New-RegistrationResource -ResourceGroupName $ResourceGroupName -ResourceGroupLocation $ResourceGroupLocation -RegistrationToken $RegistrationToken -RegistrationName $RegistrationName
+
+    # Assign custom RBAC role
+    Log-Output "Assigning custom RBAC role to resource $RegistrationName"
+    New-RBACAssignment -SubscriptionId $AzureContext.Subscription.SubscriptionId -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ServicePrincipalObjectId $ServicePrincipalObjectId
+
+    # Getting Activation Key from Azure
+    $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ConnectedScenario
+
+    return $activationKey
+    
+}
+
+Invoke-RegistrationStep3AgainstPEP{
+[CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCredential] $PrivilegedEndpointCredential,
+
+        [Parameter(Mandatory = $true)]
+        [String] $PrivilegedEndpoint,
+
+        [Parameter(Mandatory=$true)]
+        [ValidateNotNull()]
+        [String] $ActivationKey
+        
+    )
+
+    if([string]::IsNullOrEmpty($Script:registrationLog)){
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+        New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    }
+
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+    # Activate AzureStack syndication / usage reporting features
+    Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
+    Activate-AzureStack -Session $session -ActivationKey $ActivationKey
+    $session | Remove-PSSession
+
 }
 
 <#
@@ -515,17 +623,7 @@ Function Get-AzsRegistrationToken{
 
     New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
 
-    Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
-    if(($BillingModel -eq 'Capacity') -and ([String]::IsNullOrEmpty($AgreementNumber)))
-    {
-        Log-Throw -Message "Agreement number is null or empty when BillingModel is set to Capacity" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-    }
-
-    if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled))
-    {
-        Log-Warning "Billing model is set to Capacity and Usage Reporting is enabled. This data will be used to guide product improvements and will not be used for billing purposes. If this is not desired please halt this operation and rerun with -UsageReportingEnabled:`$false. Execution will continue in 20 seconds."
-        Start-Sleep -Seconds 20     
-    }
+    Validate-BillingModel -BillingModel $BillingModel -UsageReportingEnabled:$UsageReportingEnabled -MsAssetTag $MsAssetTag -AgreementNumber $AgreementNumber
 
     if ($TokenOutputFilePath -and (-not (Test-Path -Path $TokenOutputFilePath -PathType Leaf)))
     {
@@ -1319,7 +1417,7 @@ function New-RBACAssignment{
             [String] $SubscriptionId,
     
             [Parameter(Mandatory = $true)]
-            [Object] $ServicePrincipal
+            [String] $ServicePrincipalObjectId
         )
     
         $currentAttempt = 0
@@ -1338,7 +1436,7 @@ function New-RBACAssignment{
     
                 # Determine if RBAC role has been assigned
                 $roleAssignmentScope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($RegistrationResource.Name)"
-                $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipal.ObjectId
+                $roleAssignments = Get-AzureRmRoleAssignment -Scope $roleAssignmentScope -ObjectId $ServicePrincipalObjectId
     
                 foreach ($role in $roleAssignments)
                 {
@@ -1350,7 +1448,7 @@ function New-RBACAssignment{
     
                 if (-not $RoleAssigned)
                 {        
-                    New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $RoleName -ObjectId $ServicePrincipal.ObjectId
+                    New-AzureRmRoleAssignment -Scope $roleAssignmentScope -RoleDefinitionName $RoleName -ObjectId $ServicePrincipalObjectId
                 }
                 break
             }
@@ -1764,11 +1862,25 @@ function Validate-BillingModel{
         [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
         [string] $BillingModel,
 
+        [Parameter(Mandatory = $false)]
+        [switch] $UsageReportingEnabled,
+
         [Parameter(Mandatory=$false)]
-        [string] $MsAssetTag
+        [string] $MsAssetTag,
+
+        [Parameter(Mandatory = $false)]
+        [string] $AgreementNumber,      
     )
     if ($BillingModel -eq 'Custom' -and [string]::IsNullOrEmpty($MsAssetTag)){
         throw "ErrorCode: MissingMsAssetTag.`nErrorReason: MsAssetTag is a required parameter when BillingModel is 'Custom'. Please call the registration cmdlet along with MsAssetTag parameter."
+    }
+    if(($BillingModel -eq 'Capacity') -and ([String]::IsNullOrEmpty($AgreementNumber)))
+    {
+        throw "ErrorCode: MissingAgreementNumber.`nErrorReason: Agreement number is a required parameter when BillingModel is 'Capacity'"
+    }
+    if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled)){
+        Log-Warning "Billing model is set to Capacity and Usage Reporting is enabled. This data will be used to guide product improvements and will not be used for billing purposes. If this is not desired please halt this operation and rerun with -UsageReportingEnabled:`$false. Execution will continue in 20 seconds."
+        Start-Sleep -Seconds 20        
     }
 }
 
