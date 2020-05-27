@@ -1480,7 +1480,12 @@ function Get-AzToken
             return
         }
 
-        $client = $authenticationClientFactory.CreatePublicClient()
+        $client = $authenticationClientFactory.CreatePublicClient(
+            ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
+            ($TenantId),
+            ($authority="$($Context.Environment.ActiveDirectoryAuthority.TrimEnd('/'))/$TenantId"),
+            ($redirectUri='urn:ietf:wg:oauth:2.0:oob'),
+            ($useAdfs=$Context.Environment.ActiveDirectoryAuthority -like '*/adfs*'))
 
         $authenticationClientFactory.RegisterCache($client)
 
