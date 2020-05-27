@@ -1512,7 +1512,7 @@ function Get-AzToken
 
         if (-not $targetAccount -or $targetAccount.Count -gt 1)
         {
-            Write-Error "Unable to resolve acccount for identity '$identityId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
+            Write-Error "Unable to resolve acccount for identity '$AccountId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
             return
         }
 
