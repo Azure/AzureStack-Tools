@@ -22,29 +22,37 @@ In a connected environment, to register with Azure, allow the download of market
 
 ### Set the correct Azure Powershell Context
 ```powershell
-Login-AzureRmAccount -Subscription '<Your Azure Subscription>' -Environment '<The Azure Environment where subscription was created>'
+Login-AzAccount -Subscription '<Your Azure Subscription>' -Environment '<The Azure Environment where subscription was created>'
 ```
 
 ### Complete registration / activation 
 Then you must run the below command from RegisterWithAzure.psm1:
 ```powershell
-Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
+Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse
+```
+The process takes between 10 and 15 minutes.
+
+### Registration with usage reporting or marketplace syndication disabled
+```powershell
+# usage reporting and marketplace syndication are enabled by default, to disable use the below command
+# with disabled usage reporting
+Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse -UsageReportingEnabled:$false
+# with disabled marketplace syndication
+Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse -MarketplaceSyndicationEnabled:$false
 ```
 
 ## Change or remove registration in a connected environment
 
 ### Remove Registration 
-To remove the existing registration resource and disable marketplace syndication and usage data reporting:
+To remove the existing registration resource and disable marketplace syndication and usage data reporting. While running **Remove-AzsRegistration**, you must be signed in to the subscription used during the registration and use values of the `RegistrationName` and `ResourceGroupName` parameters as shown in the administrator portal [Find current registration details](https://docs.microsoft.com/en-us/azure-stack/operator/azure-stack-registration?pivots=state-connected#verify-azure-stack-hub-registration):
 ```powershell
-Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
+Remove-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -RegistrationName '<Registration name from portal>' -ResourceGroupName '<Registration resource group from portal>'
 ```
-[!NOTE] You must be logged in to the same Azure Powershell context that you ran Set-AzsRegistration under
+[!NOTE] You must be logged in to the same Azure Powershell context that you ran Set-AzsRegistration under. The process takes between 10 and 15 minutes.
 
 ### Switch registration to a new subscription
-To switch the existing registration to a new subscription or directory:
+To switch the existing registration to a new subscription or directory, first remove the existing registration ([Remove Registration](#remove-registration)) and then run below cmds:
 ```powershell
-# Remove the existing registration
-Remove-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01"
 # Set the Azure Powershell context to the appropriate subscription
 Set-AzureRmContext -SubscriptionId "<new subscription to register>"
 # Register with the new subscription
@@ -72,7 +80,7 @@ You must use the registration token created in the step above and perform the be
 [!NOTE] Remember to download and import the RegisterWithAzure.psm1 module before running the below commands
 ```powershell
 # Log in to the correct Azure Powershell context
-Login-AzureRmAccount -Subscription '<Your Azure Subscription>' -Environment '<The Azure Environment where subscription was created>'
+Login-AzAccount -Subscription '<Your Azure Subscription>' -Environment '<The Azure Environment where subscription was created>'
 # Create a registration resource in Azure
 Register-AzsEnvironment -RegistrationToken "<Registration token text value>"
 ```
