@@ -59,13 +59,13 @@ function Initialize-UserDataClearEnv {
     if ($AutomationCredential) {
         $params.AutomationCredential = $AutomationCredential
     }
-    $azAccount = Initialize-AzAccount @param
+    $azAccount = Initialize-AzAccount @params
     $azContext = Get-AzContext
     $refreshToken = (Get-AzToken -Context $azContext -FromCache -Verbose).GetRefreshToken()
     Write-Verbose "Login into ARM and got the refresh token." -Verbose
 
     $script:initializeGraphEnvParams = @{
-        RefreshToken = $refreshToken
+        RefreshToken = (ConvertTo-SecureString -String $refreshToken -AsPlainText -Force)
     }
     if ($adminArmEnv.EnableAdfsAuthentication) {
         $script:initializeGraphEnvParams.AdfsFqdn = (New-Object Uri $adminArmEnv.ActiveDirectoryAuthority).Host
@@ -76,7 +76,7 @@ function Initialize-UserDataClearEnv {
         }
     }
     else {
-        $graphEnvironment = Resolve-GraphEnvironment -AzureEnvironment $adminArmEnv
+        $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $adminArmEnv.ActiveDirectoryAuthority
         Write-Verbose "Resolve the graph env as '$graphEnvironment '" -Verbose
         $script:initializeGraphEnvParams.Environment = $graphEnvironment
 
