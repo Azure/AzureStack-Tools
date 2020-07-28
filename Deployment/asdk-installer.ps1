@@ -972,7 +972,7 @@ $Xaml = @'
                     <TextBlock x:Name="Control_Header_Tbl_Version" FontSize="11.5" FontFamily="Segoe UI Light" Foreground="#879AAB" Margin="0,3,0,0" />
                 </StackPanel>
                 <TextBlock FontSize="44" FontFamily="Segoe UI Light" Text="Development Kit" />
-                <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Margin="0,50,0,30" Text="Title" Focusable="True" />
+                <TextBlock x:Name="Control_Header_Tbl_Title" FontSize="20" FontFamily="Segoe UI" Margin="0,50,0,30" Text="Title" Focusable="False" />
                 <!--#region Mode-->
                 <StackPanel x:Name="Control_Mode_Stp" Visibility="Visible">
                     <StackPanel Orientation="Horizontal">
@@ -1320,7 +1320,7 @@ $Xaml = @'
                 <StackPanel x:Name="Control_Summary_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="400">
                             <TextBlock x:Name="Control_Summary_Tbl_Header1" TextWrapping="Wrap" FontSize="16" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" />
-                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed"  AutomationProperties.LabeledBy="{Binding ElementName=Control_Summary_Tbl_Header1}" />
+                            <TextBox x:Name="Control_Summary_Tbx_Content1" TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Foreground="#A0A0A0" HorizontalAlignment="Left" Margin="0,0,0,10" Padding="5" Width="550" IsReadOnly="True" Visibility="Collapsed"  AutomationProperties.LabeledBy="{Binding ElementName=Control_Summary_Tbl_Header1}" Focusable="False" />
                         <StackPanel Orientation="Horizontal">
                             <Path x:Name="Control_Summary_Pth_Content1"  SnapsToDevicePixels="False" StrokeThickness="1" Data="M13,10H11V6H13M13,14H11V12H13M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" Fill="Orange" Margin="0,3,10,0" Visibility="Collapsed"/>
                             <TextBlock x:Name="Control_Summary_Tbl_Content1"  TextWrapping="Wrap" FontSize="14" FontFamily="Segoe UI"  HorizontalAlignment="Left" Margin="0,0,0,10" Width="550" />
