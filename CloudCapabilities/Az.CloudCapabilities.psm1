@@ -10,7 +10,7 @@
 
 #>
 
-function Get-AzureRMCloudCapability() {
+function Get-AzCloudCapability() {
     [CmdletBinding()]
     [OutputType([string])]
     Param(
@@ -91,12 +91,12 @@ function Get-AzureRMCloudCapability() {
         Write-Warning "Api profiles jsons not found!"
     }
 
-    $providerNamespaces = (Get-AzureRmResourceProvider -ListAvailable -Location $location -ErrorAction Stop).ProviderNamespace
+    $providerNamespaces = (Get-AzResourceProvider -ListAvailable -Location $location -ErrorAction Stop).ProviderNamespace
     $resources = @()
     foreach ($providerNamespace in $providerNamespaces) {
         Write-Verbose "Working on $providerNamespace provider namespace"
         try {
-            $resourceTypes = (Get-AzureRmResourceProvider -ProviderNamespace $providerNamespace -ErrorAction Stop).ResourceTypes
+            $resourceTypes = (Get-AzResourceProvider -ProviderNamespace $providerNamespace -ErrorAction Stop).ResourceTypes
             foreach ($resourceType in $resourceTypes) {
                 $result = "" | Select-Object ProviderNamespace, ResourceTypeName, Locations, ApiVersions, ApiProfiles
                 $result.ProviderNamespace = $providerNamespace
@@ -126,7 +126,7 @@ function Get-AzureRMCloudCapability() {
     if ($IncludeComputeCapabilities) {
         Write-Verbose "Getting VMSizes for $location"
         try {
-            $vmSizes = (Get-AzureRmVMSize -Location $location -ErrorAction Stop| Where-Object {$_.Name -like "*"}).Name
+            $vmSizes = (Get-AzVMSize -Location $location -ErrorAction Stop| Where-Object {$_.Name -like "*"}).Name
             if ($vmSizes) {
                 $capabilities.Add("VMSizes", $vmSizes)
             }
@@ -140,7 +140,7 @@ function Get-AzureRMCloudCapability() {
 
         Write-Verbose "Getting VMImages and Extensions for location $location"
         try {
-            $publishers = Get-AzureRmVMImagePublisher -Location $location | Where-Object { $_.PublisherName -like "*" }
+            $publishers = Get-AzVMImagePublisher -Location $location | Where-Object { $_.PublisherName -like "*" }
         }
         catch {
             Write-Error "Error occurred processing VMimagePublisher for $location. Exception: " $_.Exception.Message
@@ -150,17 +150,17 @@ function Get-AzureRMCloudCapability() {
             $extensionList = New-Object System.Collections.ArrayList
             foreach ($publisherObj in $publishers) {
                 $publisher = $publisherObj.PublisherName
-                $offers = Get-AzureRmVMImageOffer -Location $location -PublisherName $publisher
+                $offers = Get-AzVMImageOffer -Location $location -PublisherName $publisher
                 if ($offers) {
                     $offerList = New-Object System.Collections.ArrayList
                     foreach ($offerObj in $offers) {
                         $offer = $offerObj.Offer
                         $skuList = New-Object System.Collections.ArrayList
-                        $skus = Get-AzureRmVMImageSku -Location $location -PublisherName $publisher -Offer $offer
+                        $skus = Get-AzVMImageSku -Location $location -PublisherName $publisher -Offer $offer
                         foreach ($skuObj in $skus) {
                             $sku = $skuObj.Skus
                             Write-Verbose "Getting VMImage for publisher:$publisher , Offer:$offer , sku:$sku , location: $location"
-                            $images = Get-AzureRmVMImage -Location $location -PublisherName $publisher -Offer $offer -sku $sku
+                            $images = Get-AzVMImage -Location $location -PublisherName $publisher -Offer $offer -sku $sku
                             $versions = $images.Version
                             if ($versions.Count -le 1) {
                                 $versions = @($versions)
@@ -177,12 +177,12 @@ function Get-AzureRMCloudCapability() {
                     $imageList.Add($publisherDict) | Out-Null
                 }
                 else {
-                    $types = Get-AzureRmVMExtensionImageType  -Location $location -PublisherName $publisher
+                    $types = Get-AzVMExtensionImageType  -Location $location -PublisherName $publisher
                     $typeList = New-Object System.Collections.ArrayList
                     if ($types) {
                         foreach ($type in $types.Type) {
                             Write-Verbose "Getting VMExtension for publisher:$publisher , Type:$type , location: $location"
-                            $extensions = Get-AzureRmVMExtensionImage -Location $location -PublisherName $publisher -Type $type
+                            $extensions = Get-AzVMExtensionImage -Location $location -PublisherName $publisher -Type $type
                             $versions = $extensions.Version
                             if ($versions.Count -le 1) {
                                 $versions = @($versions)
@@ -205,7 +205,7 @@ function Get-AzureRMCloudCapability() {
     if ($IncludeStorageCapabilities) {
         Write-Verbose "Getting Storage Sku supported for $location"
         try {
-            $storageSkus = Get-AzureRmResource -ResourceType "Microsoft.Storage/Skus" -ResourceName "/"
+            $storageSkus = Get-AzResource -ResourceType "Microsoft.Storage/Skus" -ResourceName "/"
             if ($storageSkus) {
                 $skuList = New-Object System.Collections.ArrayList
                 $storageKind = $storageSkus| Select-Object Kind | Get-Unique -AsString
