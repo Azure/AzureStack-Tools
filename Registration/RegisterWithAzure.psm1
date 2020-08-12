@@ -77,6 +77,25 @@ function New-RegistrationLogFile
     $Script:registrationLog = $logFilePath
 }
 
+function Initialize-RegistrationLog {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [String] $RegistrationFunction = 'RegistrationOperation',
+
+        [Parameter(Mandatory=$false)]
+        [switch] $SkipIfExists
+    )
+
+    $Script:ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+    $Script:VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+    if (-not ($SkipIfExists -and $Script:registrationLog)) {
+        New-RegistrationLogFile -RegistrationFunction $RegistrationFunction
+        Log-Output "*********************** Begin log: $RegistrationFunction ***********************`r`n"
+    }
+
+}
+
 ################################################################
 # Core Functions
 ################################################################
@@ -84,6 +103,93 @@ function New-RegistrationLogFile
 #region CoreFunctions
 
 #region ConnectedScenario
+
+function Get-RegistrationDetailsConnected {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [PSCredential] $PrivilegedEndpointCredential,
+
+        [Parameter(Mandatory = $true)]
+        [String] $PrivilegedEndpoint,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullorEmpty()]
+        [PSObject] $AzureContext = (Get-AzureRmContext),
+
+        [Parameter(Mandatory = $false)]
+        [PSCredential] $AzureStackAdminCredential
+    )
+
+    $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+    $stampInfo = Confirm-StampVersion -PSSession $session
+
+    try {
+        $envName = "AzureStackAdminReg"
+        Log-Output "Adding $envName environment using ARMEndpoint: $($stampInfo.AdminExternalEndpoints.AdminResourceManager)"
+        Remove-AzureRmEnvironment -Name $envName -ErrorAction Ignore | Out-Null
+        Add-AzureRmEnvironment -Name $envName -ARMEndpoint $stampInfo.AdminExternalEndpoints.AdminResourceManager | Out-Null
+        $loginParams = @{
+            Environment     = $envName
+            Tenant          = $stampInfo.AADTenantID
+            Subscription    = 'Default Provider Subscription'
+        }
+        if ($AzureStackAdminCredential) { $loginParams += @{ Credential = $AzureStackAdminCredential } }
+        Login-AzureRMAccount @loginParams
+        $subscription = (Get-AzureRmContext).Subscription.Id
+        Log-Output "Getting existing registration properties from AzureStack"
+        $regPropertiesAzureStack = (Get-AzureRmResource -ResourceId "/subscriptions/${subscription}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default").Properties
+        Log-Output "Existing registration properties from AzureStack: $($regPropertiesAzureStack | ConvertTo-Json -Depth 2)"
+        $marketplaceSyndicationEnabled = $regPropertiesAzureStack.marketplaceSyndicationEnabled
+        $usageReportingEnabled = $regPropertiesAzureStack.usageReportingEnabled
+        $azureRegResIden = $regPropertiesAzureStack.azureRegistrationResourceIdentifier
+        $strArr = $azureRegResIden.Split('/')
+        $azureSubscription = $strArr[$strArr.IndexOf('subscriptions')+1]
+    } catch {
+        Log-Throw "Unable to retrieve registration details from AzureStack `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
+    }
+
+    try {
+        $azureContextDetails = @{
+            Account          = $AzureContext.Account
+            Environment      = $AzureContext.Environment
+            Subscription     = $AzureContext.Subscription
+            Tenant           = $AzureContext.Tenant
+        }
+        Log-Output "Setting context back to Azure: $($azureContextDetails | ConvertTo-Json -Depth 2)"
+        Set-AzureRmContext -Context $AzureContext
+        if ($AzureContext.Subscription.Id -ne $azureSubscription) {
+            Log-Output "Trying to switch to correct Azure Subscription $azureSubscription for registration"
+            Set-AzureRmContext -Subscription $azureSubscription
+            Log-Output "Updating AzureContext to use correct subscription $azureSubscription for registration"
+            $AzureContext = (Get-AzureRmContext)
+        }
+        Log-Output "Getting existing registration resource from Azure"
+        $regResourceAzure = Get-AzureRmResource -ResourceId $azureRegResIden
+        Log-Output "Existing registration resource in Azure: $($regResourceAzure | ConvertTo-Json -Depth 2)"
+        $registrationName = $regResourceAzure.Name
+        $resourceGroupName = $regResourceAzure.ResourceGroupName
+        $resourceGroup = Get-AzureRmResourceGroup -Name $resourceGroupName
+        Log-Output "Existing resource group in Azure: $($resourceGroup | ConvertTo-Json -Depth 2)"
+        $resourceGroupLocation = $resourceGroup.Location
+        $billingModel = $regResourceAzure.Properties.billingModel
+    } catch {
+        Log-Throw "Unable to retrieve registration details from Azure `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
+    }
+
+    return @{
+        PrivilegedEndpointSession       = $session
+        StampInfo                       = $stampInfo
+        AzureContext                    = $AzureContext
+        RegistrationName                = $registrationName
+        ResourceGroupName               = $resourceGroupName
+        ResourceGroupLocation           = $resourceGroupLocation
+        BillingModel                    = $billingModel
+        MarketplaceSyndicationEnabled   = $marketplaceSyndicationEnabled
+        UsageReportingEnabled           = $usageReportingEnabled
+    }
+
+}
 
 <#
 
@@ -112,24 +218,24 @@ See documentation for more detail: https://docs.microsoft.com/en-us/azure/azure-
 
 .PARAMETER PrivilegedEndpointCredential
 
-Powershell object that contains credential information i.e. user name and password.The Azure Stack administrator has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+Powershell object that contains credential information i.e. user name and password. The Azure Stack administrator has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
 If not supplied script will request manual input of username and password
 
 .PARAMETER PrivilegedEndpoint
 
 Privileged Endpoint VM that performs environment administration actions. Also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
 
+.PARAMETER RegistrationName
+
+The name of the registration resource to be created in Azure. A unique name is highly encouraged for those registering multiple environments.
+
 .PARAMETER ResourceGroupName
 
 This will be the name of the resource group in Azure where the registration resource is stored. Defaults to "azurestack"
 
-.PARAMETER  ResourceGroupLocation
+.PARAMETER ResourceGroupLocation
 
 The location where the resource group will be created. Defaults to "westcentralus"
-
-.PARAMETER AzureEnvironmentName
-
-The name of the Azure Environment where resources will be created. Defaults to "AzureCloud"
 
 .PARAMETER BillingModel
 
@@ -148,9 +254,17 @@ This is a switch that determines if usage records are reported to Azure. Default
 
 Used when the billing model is set to capacity. You will need to provide a specific agreement number associated with your billing agreement.
 
-.PARAMETER RegistrationName
+.PARAMETER MsAssetTag
 
-The name of the registration resource to be created in Azure. A unique name is highly encouraged for those registering multiple environments.
+Used when the billing model is set to custom. You will need to provide a specific MsAssetTag associated with your billing model.
+
+.PARAMETER AzureStackAdminCredential
+
+Azure Stack admin credential used to access admin portal resources
+
+.PARAMETER Reregister
+
+Switch parameter used for re-registration scenario
 
 .EXAMPLE
 
@@ -182,6 +296,12 @@ This example disables syndication and disables usage reporting to Azure. Note th
 
 Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01" -BillingModel Capacity -MarketplaceSyndicationEnabled:$false -UsageReportingEnabled:$false -AgreementNumber $MyAgreementNumber
 
+.EXAMPLE
+
+This example re-registers your AzureStack environment to Azure using existing registration details
+
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01" -AzureStackAdminCredential $AzureStackAdminCredential -Reregister
+
 .NOTES
 
 If you would like to un-Register with Azure by turning off marketplace syndication, disabling usage reporting, and removing the registration resource from Azure you can run Remove-AzsRegistration.
@@ -195,7 +315,7 @@ It is very important to ensure you are logged in to the correct Azure Account in
 
 #>
 function Set-AzsRegistration{
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName='Register')]
     param(
         [Parameter(Mandatory = $true)]
         [PSCredential] $PrivilegedEndpointCredential,
@@ -203,31 +323,32 @@ function Set-AzsRegistration{
         [Parameter(Mandatory = $true)]
         [String] $PrivilegedEndpoint,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $true, ParameterSetName = "Register")]
         [String] $RegistrationName,
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = "Register")]
         [String] $ResourceGroupName = 'azurestack',
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = "Register")]
         [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureContext $AzureContext),
         
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [Parameter(Mandatory = $false, ParameterSetName = "Register")]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development', 'Custom', 'Ruggedized')]
         [string] $BillingModel = 'Development',
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = "Register")]
         [switch] $MarketplaceSyndicationEnabled = $true,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, ParameterSetName = "Register")]
         [switch] $UsageReportingEnabled = @{'Capacity'=$true; 
                                             'PayAsYouUse'=$true; 
                                             'Development'=$true; 
-                                            'Custom'=$false}[$BillingModel],
+                                            'Custom'=$false;
+                                            'Ruggedized'=$true;}[$BillingModel],
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
@@ -235,27 +356,52 @@ function Set-AzsRegistration{
 
         [Parameter(Mandatory=$false)]
         [ValidateNotNull()]
-        [string] $MsAssetTag
+        [string] $MsAssetTag,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Reregister")]
+        [PSCredential] $AzureStackAdminCredential,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "Reregister")]
+        [switch] $Reregister
     )
-    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
-    $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
-
-    New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
-
-    Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
+    
+    Initialize-RegistrationLog -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
 
     Validate-AzureContext -AzureContext $AzureContext
+    $privilegedEndpointSession = $null
+    $stampInfo = $null
+    if ($Reregister) {
+        $params = Get-RegistrationDetailsConnected -PrivilegedEndpointCredential $PrivilegedEndpointCredential `
+                                                   -PrivilegedEndpoint $PrivilegedEndpoint `
+                                                   -AzureContext $AzureContext `
+                                                   -AzureStackAdminCredential $AzureStackAdminCredential
+        $privilegedEndpointSession = $params.PrivilegedEndpointSession
+        $stampInfo = $params.StampInfo
+        $AzureContext = $params.AzureContext
+        $RegistrationName = $params.RegistrationName
+        $ResourceGroupName = $params.ResourceGroupName
+        $ResourceGroupLocation = $params.ResourceGroupLocation
+        $BillingModel = $params.BillingModel
+        $MarketplaceSyndicationEnabled = $params.MarketplaceSyndicationEnabled
+        $UsageReportingEnabled = $params.UsageReportingEnabled
+        Log-Output "Retrieved registration details: RegistrationName = $RegistrationName, ResourceGroupName = $ResourceGroupName, `
+                    ResourceGroupLocation = $ResourceGroupLocation, BillingModel = $BillingModel, `
+                    MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled, UsageReportingEnabled = $UsageReportingEnabled"
+    }
+
     Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
 
     try
     {
-        $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
-        $stampInfo = Confirm-StampVersion -PSSession $session
+        if (-not $privilegedEndpointSession){
+            $privilegedEndpointSession = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+            $stampInfo = Confirm-StampVersion -PSSession $privilegedEndpointSession
+        }
 
         # Configure Azure Bridge
-        $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $session
+        $servicePrincipal = New-ServicePrincipal -RefreshToken $azureAccountInfo.Token.RefreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $azureAccountInfo.TenantId -PSSession $privilegedEndpointSession
 
         # Get registration token
         $getTokenParams = @{
@@ -271,7 +417,7 @@ function Set-AzsRegistration{
             Log-Warning "Billing model is set to Capacity and Usage Reporting is enabled. This data will be used to guide product improvements and will not be used for billing purposes. If this is not desired please halt this operation and rerun with -UsageReportingEnabled:`$false. Execution will continue in 20 seconds."
             Start-Sleep -Seconds 20        
         }
-        $registrationToken = Get-RegistrationToken @getTokenParams -Session $session -StampInfo $stampInfo
+        $registrationToken = Get-RegistrationToken @getTokenParams -Session $PrivilegedEndpointSession -StampInfo $stampInfo
     
         # Register environment with Azure
 
@@ -285,14 +431,14 @@ function Set-AzsRegistration{
         # Activate AzureStack syndication / usage reporting features
         $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ConnectedScenario
         Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
-        Activate-AzureStack -Session $session -ActivationKey $ActivationKey
+        Activate-AzureStack -Session $PrivilegedEndpointSession -ActivationKey $ActivationKey
     }
     finally
     {
-        if ($session)
+        if ($privilegedEndpointSession)
         {
             Log-OutPut "Removing any existing PSSession..."
-            $session | Remove-PSSession
+            $privilegedEndpointSession | Remove-PSSession
         }
     }
 
@@ -1070,7 +1216,7 @@ Function Get-RegistrationToken{
         [String] $PrivilegedEndpoint,
         
         [Parameter(Mandatory = $false)]
-        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development', 'Custom', 'Ruggedized')]
         [string] $BillingModel = 'Development',
 
         [Parameter(Mandatory = $false)]
@@ -1761,7 +1907,7 @@ function Validate-BillingModel{
 [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('Capacity', 'PayAsYouUse', 'Development','Custom')]
+        [ValidateSet('Capacity', 'PayAsYouUse', 'Development', 'Custom', 'Ruggedized')]
         [string] $BillingModel,
 
         [Parameter(Mandatory=$false)]
