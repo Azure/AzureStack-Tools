@@ -117,7 +117,7 @@ function Get-RegistrationDetailsConnected {
         [ValidateNotNullorEmpty()]
         [PSObject] $AzureContext = (Get-AzureRmContext),
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [PSCredential] $AzureStackAdminCredential
     )
 
@@ -129,13 +129,22 @@ function Get-RegistrationDetailsConnected {
         Log-Output "Adding $envName environment using ARMEndpoint: $($stampInfo.AdminExternalEndpoints.AdminResourceManager)"
         Remove-AzureRmEnvironment -Name $envName -ErrorAction Ignore | Out-Null
         Add-AzureRmEnvironment -Name $envName -ARMEndpoint $stampInfo.AdminExternalEndpoints.AdminResourceManager | Out-Null
-        Login-AzureRMAccount -Environment $envName -Tenant $stampInfo.AADTenantID -Credential $AzureStackAdminCredential -Subscription 'Default Provider Subscription'
+        $loginParams = @{
+            Environment     = $envName
+            Tenant          = $stampInfo.AADTenantID
+            Subscription    = 'Default Provider Subscription'
+        }
+        if ($AzureStackAdminCredential) { $loginParams += @{ Credential = $AzureStackAdminCredential } }
+        Login-AzureRMAccount @loginParams
         $subscription = (Get-AzureRmContext).Subscription.Id
         Log-Output "Getting existing registration properties from AzureStack"
         $regPropertiesAzureStack = (Get-AzureRmResource -ResourceId "/subscriptions/${subscription}/resourceGroups/azurestack-activation/providers/Microsoft.AzureBridge.Admin/activations/default").Properties
         Log-Output "Existing registration properties from AzureStack: $($regPropertiesAzureStack | ConvertTo-Json -Depth 2)"
         $marketplaceSyndicationEnabled = $regPropertiesAzureStack.marketplaceSyndicationEnabled
         $usageReportingEnabled = $regPropertiesAzureStack.usageReportingEnabled
+        $azureRegResIden = $regPropertiesAzureStack.azureRegistrationResourceIdentifier
+        $strArr = $azureRegResIden.Split('/')
+        $azureSubscription = $strArr[$strArr.IndexOf('subscriptions')+1]
     } catch {
         Log-Throw "Unable to retrieve registration details from AzureStack `r`n$($_)" -CallingFunction $($PSCmdlet.MyInvocation.MyCommand.Name)
     }
@@ -149,8 +158,14 @@ function Get-RegistrationDetailsConnected {
         }
         Log-Output "Setting context back to Azure: $($azureContextDetails | ConvertTo-Json -Depth 2)"
         Set-AzureRmContext -Context $AzureContext
+        if ($AzureContext.Subscription.Id -ne $azureSubscription) {
+            Log-Output "Trying to switch to correct Azure Subscription $azureSubscription for registration"
+            Set-AzureRmContext -Subscription $azureSubscription
+            Log-Output "Updating AzureContext to use correct subscription $azureSubscription for registration"
+            $AzureContext = (Get-AzureRmContext)
+        }
         Log-Output "Getting existing registration resource from Azure"
-        $regResourceAzure = Get-AzureRmResource -ResourceId $regPropertiesAzureStack.azureRegistrationResourceIdentifier
+        $regResourceAzure = Get-AzureRmResource -ResourceId $azureRegResIden
         Log-Output "Existing registration resource in Azure: $($regResourceAzure | ConvertTo-Json -Depth 2)"
         $registrationName = $regResourceAzure.Name
         $resourceGroupName = $regResourceAzure.ResourceGroupName
@@ -165,6 +180,7 @@ function Get-RegistrationDetailsConnected {
     return @{
         PrivilegedEndpointSession       = $session
         StampInfo                       = $stampInfo
+        AzureContext                    = $AzureContext
         RegistrationName                = $registrationName
         ResourceGroupName               = $resourceGroupName
         ResourceGroupLocation           = $resourceGroupLocation
@@ -299,7 +315,7 @@ It is very important to ensure you are logged in to the correct Azure Account in
 
 #>
 function Set-AzsRegistration{
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName='Register')]
     param(
         [Parameter(Mandatory = $true)]
         [PSCredential] $PrivilegedEndpointCredential,
@@ -342,7 +358,7 @@ function Set-AzsRegistration{
         [ValidateNotNull()]
         [string] $MsAssetTag,
 
-        [Parameter(Mandatory = $true, ParameterSetName = "Reregister")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Reregister")]
         [PSCredential] $AzureStackAdminCredential,
 
         [Parameter(Mandatory = $true, ParameterSetName = "Reregister")]
@@ -361,6 +377,7 @@ function Set-AzsRegistration{
                                                    -AzureStackAdminCredential $AzureStackAdminCredential
         $privilegedEndpointSession = $params.PrivilegedEndpointSession
         $stampInfo = $params.StampInfo
+        $AzureContext = $params.AzureContext
         $RegistrationName = $params.RegistrationName
         $ResourceGroupName = $params.ResourceGroupName
         $ResourceGroupLocation = $params.ResourceGroupLocation
