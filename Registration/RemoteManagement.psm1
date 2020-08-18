@@ -6,8 +6,6 @@ This module contains functions for creating edge subscription resource for defau
 This is supported only for connected AzureStack scenarios. You must use same Azure credentials that are used for registration.
 #>
 
-Import-Module .\RegisterWithAzure.psm1 -Force -Verbose
-
 <#
 
 .SYNOPSIS
