@@ -500,27 +500,27 @@ function Register-AzureStackResourceProvider{
         if ($null -eq $AzureContext){
             throw "ErrorCode: AzureContextNotSet.`nErrorReason: Azure Powershell context is null. Please log in to correct Azure Powershell context using 'Login-AzureRmAccount' and then call the registration cmdlet."
         }
-    }
-    
+    }        
+
     <#
-    .SYNOPSIS
-    Get the resource group location based on the AzureEnvironment name
-    #>
+.SYNOPSIS
+Get the resource group location based on the AzureEnvironment name
+#>
     function Get-DefaultResourceGroupLocation{
-    [CmdletBinding()]
-        Param(
-            [Parameter(Mandatory=$false)]
-            [PSObject] $AzureContext
-        )
-        Validate-AzureContext -AzureContext $AzureContext
-        $AzureEnvironment = $AzureContext.Environment.Name
-    
-        #ToDo: Confirm to throw not supported for non-AzureClouds
-        return @{'AzureCloud'='eastus'; 
-                'AzureChinaCloud'='ChinaEast';
-                'AzureUSGovernment'='usgovvirginia'; 
-                'CustomCloud'='eastus'}[$AzureEnvironment]  
-    }
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false)]
+        [PSObject] $AzureContext
+    )
+    Validate-AzureContext -AzureContext $AzureContext
+    $AzureEnvironment = $AzureContext.Environment.Name
+
+    #ToDo: Confirm to throw not supported for non-AzureClouds
+    return @{'AzureCloud'='eastus'; 
+            'AzureChinaCloud'='ChinaEast';
+            'AzureUSGovernment'='usgovvirginia'; 
+            'CustomCloud'='eastus'}[$AzureEnvironment]  
+}
     
     function Enable-AzsCloudConnection{
     [CmdletBinding()]

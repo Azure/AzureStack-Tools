@@ -142,11 +142,18 @@ that commands performed on the public Azure connected machine are performed unde
 
 # Remote Management
 The functions in this module allows to enable remote management on Azure Stack which are registered in connected mode. Additional details can be found in [documentation](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register).
+<<<<<<< HEAD
 Note: Remote Management is only supported from AzureStack 2008 release onwards.
 
 ### Prerequisites 
 
 - Azure Stack already be registered with Azure. If its not registered then please follow registration steps described above. 
+=======
+
+### Prerequisites 
+
+- Azure Stack already be registered with Azure. If its not registered then please following registration steps. 
+>>>>>>> 93849e0... Updated function name and readme file
 - Azure Stack is already registered in connected mode
 - You must have access to an Azure subscription with which Azure Stack is registered, and your Azure account must be an Owner/Contributor of that subscription.
 - Open an elevated instance of Powershell ISE (ie: Run as Administrator).
