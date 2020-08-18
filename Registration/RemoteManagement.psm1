@@ -433,7 +433,7 @@ function Get-DefaultResourceGroupLocation{
             'CustomCloud'='eastus'}[$AzureEnvironment]  
 }
 
-function Enable-AzsRemoteManage{
+function Enable-AzsCloudConnection{
 [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
