@@ -138,3 +138,38 @@ UnRegister-AzsEnvironment -RegistrationToken "<original registration token text 
 ### Repeat the process for registering in a disconnected environment
 Once the above steps are complete you must go through the steps for registering in a disconnected environment but you will need to update parameters on the registration token (if necessary) and ensure
 that commands performed on the public Azure connected machine are performed under the new Azure Powershell context.
+
+
+# Remote Management
+The functions in this module allows to enable remote management on Azure Stack which are registered in connected mode. Additional details can be found in [documentation](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register).
+
+### Prerequisites 
+
+- Azure Stack already be registered with Azure. If its not registered then please following registration steps. 
+- Azure Stack is already registered in connected mode
+- You must have access to an Azure subscription with which Azure Stack is registered, and your Azure account must be an Owner/Contributor of that subscription.
+- Open an elevated instance of Powershell ISE (ie: Run as Administrator).
+
+### Import RemoteManagement.psm1
+To import the RemoteManagement.psm1 module, navigate to where the module was downloaded (typically `C:\AzureStack-Tools-master\Registration`) and run the below:
+```powershell
+Import-Module .\RemoteManagement.psm1 -Force -Verbose
+```
+
+## Enable Remote Management
+In a connected environment, to enable remote management you must be logged in to the correct Azure Powershell context
+
+### Set the correct Azure Powershell Context
+```powershell
+Login-AzureRmAccount -Subscription '<Your Azure Subscription>' -Environment '<The Azure Environment where subscription was created>'
+```
+
+### Initiate remote management enable 
+Then you must run the below command from RemoteManagement.psm1. You need to pass EdgeSubcription name - this is the name of resource created on your Azure subscription with which you can view replicated resources.
+- Note: Provide edge subcription name as name of resource you like to link your "Default Provider Subscription" on Azure. Example:"<AzureStackName>-DefaultProvider"
+```powershell
+$name = "RedmondStack-DefaultProvider"
+Enable-AzsCloudConnection -EdgeSubscriptionName $name -PrivilegedEndpoint "<Computer Name>-ERCS01"
+```
+The process takes between 10 and 15 minutes.
+
