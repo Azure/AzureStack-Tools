@@ -410,6 +410,7 @@ function Set-AzsRegistration{
             UsageReportingEnabled         = $UsageReportingEnabled
             AgreementNumber               = $AgreementNumber
             MsAssetTag                    = $MsAssetTag
+            TokenVersion                  = Get-RegistrationTokenVersion -AzureContext $AzureContext
         }
         Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
         if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled))
@@ -1240,7 +1241,11 @@ Function Get-RegistrationToken{
 
         [Parameter(Mandatory=$false)]
         [ValidateNotNull()]
-        [string] $MsAssetTag
+        [string] $MsAssetTag,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet('3.0', '4.0')]
+        [string] $TokenVersion = '3.0'
     )
 
     if (-not $StampInfo)
@@ -1253,6 +1258,20 @@ Function Get-RegistrationToken{
     if( ($StampVersion -lt $CustomBillingModelVersion) -and ($BillingModel -eq 'Custom') ){
         Log-Throw -Message "Custom BillingModel is not supported for StampVersion less than $CustomBillingModelVersion" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
     }
+
+    $regTokenParams = @{
+        BillingModel                    = $BillingModel
+        MarketplaceSyndicationEnabled   = $MarketplaceSyndicationEnabled
+        UsageReportingEnabled           = $UsageReportingEnabled
+        AgreementNumber                 = $AgreementNumber 
+    }
+    if ($StampVersion -ge $CustomBillingModelVersion) {
+        $regTokenParams += @{ MsAssetTag = $MsAssetTag }
+    }
+    $TokenVersionBuild = [Version]"1.2008.0.49"
+    if ($StampVersion -ge $TokenVersionBuild) {
+        $regTokenParams += @{ TokenVersion = $TokenVersion }
+    }
     
     $currentAttempt = 0
     $maxAttempt = 3
@@ -1262,11 +1281,8 @@ Function Get-RegistrationToken{
         try
         {
             Log-Output "Creating registration token. Attempt $currentAttempt of $maxAttempt"
-            if( $StampVersion -ge $CustomBillingModelVersion){
-                $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber -MsAssetTag $using:MsAssetTag }
-            } else{
-                $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken -BillingModel $using:BillingModel -MarketplaceSyndicationEnabled:$using:MarketplaceSyndicationEnabled -UsageReportingEnabled:$using:UsageReportingEnabled -AgreementNumber $using:AgreementNumber }
-            }
+            
+            $registrationToken = Invoke-Command -Session $session -ScriptBlock { New-RegistrationToken @using:regTokenParams }
             if ($TokenOutputFilePath)
             {
                 Log-Output "Registration token will be written to: $TokenOutputFilePath"
@@ -1881,6 +1897,24 @@ function Get-DefaultResourceGroupLocation{
             'AzureChinaCloud'='ChinaEast'; 
             'AzureUSGovernment'='usgovvirginia'; 
             'CustomCloud'='westcentralus'}[$AzureEnvironment]  
+}
+
+<#
+.SYNOPSIS
+Get the registration token version supported by Azure, parameter introduced in 2008 build
+#>
+function Get-RegistrationTokenVersion{
+[CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false)]
+        [PSObject] $AzureContext
+    )
+    Validate-AzureContext -AzureContext $AzureContext
+    $AzureEnvironment = $AzureContext.Environment.Name
+    return @{'AzureCloud'='4.0'; 
+            'AzureChinaCloud'='3.0'; 
+            'AzureUSGovernment'='3.0'; 
+            'CustomCloud'='3.0'}[$AzureEnvironment]  
 }
 
 <#
