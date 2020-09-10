@@ -10,7 +10,7 @@ This tool is used to generate dashboard jsons showing volumes performance used o
 `.\Create-AzSStorageDashboard.ps1 -duration "P7D" -timeGrain "PT1H"`
 - date from 4/1 to 4/8 with 1hr interval  
 `.\Create-AzSStorageDashboard.ps1 -startTime (Get-date("2019-04-01")) -endTime (Get-date("2019-04-08")) -timeGrain "PT1H"`
-- data of object store volumes capacity
+- data of object store volumes capacity  
 `.\Create-AzSStorageDashboard.ps1 -capacityOnly $true -volumeType object`
 - Tip: The latest AzureStack (version 2005) has a dashboard level time range selector at the top left corner of dashboard. So you do not need to specify time interval here.
 
