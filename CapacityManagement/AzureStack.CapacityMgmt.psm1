@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information.
 
 #Prepare volume path
@@ -35,7 +35,7 @@ function PrepareMigrationSource {
 
     if ($VolumeLabel) {
         if ($VolumeLabel -cnotmatch '^ObjStore_([1-9]|1[0-6])$') {
-            throw "ERROR: Source Volume should follow the expression pattern 'ObjStore_X', x is a number ranged from 1 to 16"
+            Write-Error "ERROR: Source Volume should follow the expression pattern 'ObjStore_X', x is a number ranged from 1 to 16"
             return
         }
         else {
@@ -56,7 +56,7 @@ function PrepareMigrationSource {
 function GetUnattchedDisks {
     param (
         [parameter(Mandatory = $false, HelpMessage = "Volume which need to be free space, If this parameter isn't specified, the volume with least available capacity would be selected by default")]
-        [string] $VolumeLabel,
+        [string]$VolumeLabel,
 
         [parameter(Mandatory = $false, HelpMessage = "Group the unattached disks by user subscription")]
         [switch]$GroupBySubscription,
@@ -65,8 +65,13 @@ function GetUnattchedDisks {
         [switch]$ExportToCSV,
 
         [parameter(Mandatory = $false, HelpMessage = "File path to export the unattached disk list. If not specified, all CSVs would be exported to 'UnattachedDisks' folder under current location")]
-        [string]$ExportFolder
+        [string]$ExportFilePath
     )
+
+    if ($ExportToCSV -and !($GroupBySubscription)) {
+        Write-Error "ERROR: Export to CSV file only works when 'GroupBySubscription' option is turned on"
+        return
+    }
     
     $MigrationSource = PrepareMigrationSource -VolumeLabel $VolumeLabel
     $UnattachedDisks = Get-AzsDisk -Status Recommended -SharePath $MigrationSource -Count 1000 | where {$_.DiskType -eq 'Disk'} | select `
@@ -80,11 +85,8 @@ function GetUnattchedDisks {
         $UnattachedDisks = $UnattachedDisks | Group-Object -Property DiskSubscription | select  @{n="Subscription";e={$_.name}}, @{n="DiskCount";e={$_.count}}, @{n="TotalSize";e={($_.Group | Measure-Object -Property ActualSizeGB -Sum).Sum}} | sort TotalSize -Descending
     }
     if ($ExportToCSV) {
-        if (!($GroupBySubscription)) {
-            throw "ERROR: Export to CSV file only works when 'GroupBySubscription' option is turned on"
-        }
-        if ($ExportFolder) {
-            $folderName = $ExportFolder+"\UnattachedDisks"
+        if ($ExportFilePath) {
+            $folderName = $ExportFilePath+"\UnattachedDisks"
         } else {
             $folderName = "UnattachedDisks"
         }
@@ -124,8 +126,13 @@ function GetAttchedDisks {
         [switch]$ExportToCSV,
 
         [parameter(Mandatory = $false, HelpMessage = "File path to export the unattached disk list. If not specified, all CSVs would be exported to 'AttachedDisks' folder under current location")]
-        [string]$ExportFolder
+        [string]$ExportFilePath
     )
+
+    if ($ExportToCSV -and !($GroupBySubscription)) {
+        Write-Error "ERROR: Export to CSV file only works when 'GroupBySubscription' option is turned on"
+        return
+    }
     
     $MigrationSource = PrepareMigrationSource -VolumeLabel $VolumeLabel
     $AttachedDisks = Get-AzsDisk -status all -SharePath $MigrationSource -Count 1000 | where {$_.status -in @("OnlineMigration","Attached","Reserved")} | select `
@@ -144,11 +151,8 @@ function GetAttchedDisks {
         $AttachedDisks = $AttachedDisks | Group-Object -Property OwnerSubscription | select @{n="DiskCount";e={$_.count}}, @{n="TotalSize";e={($_.Group | Measure-Object -Property ActualSizeGB -Sum).Sum}}, @{n="OwnerSubscription";e={$_.name}} | sort TotalSize -Descending
     }
     if ($ExportToCSV) {
-        if (!($GroupBySubscription)) {
-            throw "ERROR: Export to CSV file only works when 'GroupBySubscription' option is turned on"
-        }
-        if ($ExportFolder) {
-            $folderName = $ExportFolder+"\AttachedDisks"
+        if ($ExportFilePath) {
+            $folderName = $ExportFilePath+"\AttachedDisks"
         } else {
             $folderName = "AttachedDisks"
         }
@@ -186,6 +190,11 @@ function ImportDiskMigrationCandidates {
         [string]$MigrationType
     )
 
+    if (!($CSVFilePath) -or !(Test-Path -Path $CSVFilePath)) {
+        Write-Error "ERROR: CSV file doesn't exist. Please specify the correct file path of the disk CSV file"
+        return
+    }
+
     $MigrationCandidateId = Import-Csv -Path $CSVFilePath
     $MigrationCandidateDisk = @()
     $FilterStatus = "all"
@@ -193,7 +202,7 @@ function ImportDiskMigrationCandidates {
         $FilterStatus = "Recommended"
     }
     if ($MigrationCandidateId) {
-        $MigrationCandidateDisk = Get-AzsDisk -Status $FilterStatus -UserSubscriptionId $MigrationCandidateId[0].Subscription -Count 1000 | Where-Object {$_.UserResourceId -in $MigrationCandidateId.UserResourceId}
+        $MigrationCandidateDisk = Get-AzsDisk -Status $FilterStatus -UserSubscriptionId $MigrationCandidateId[0].UserSubscription -Count 1000 | Where-Object {$_.UserResourceId -in $MigrationCandidateId.Id}
     }
     return $MigrationCandidateDisk
 }
