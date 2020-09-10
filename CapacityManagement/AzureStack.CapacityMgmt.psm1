@@ -65,7 +65,7 @@ function PrepareMigrationSource {
     Get unattached managed disks and export to CSVs
 #>
 
-function GetUnattchedDisks {
+function GetUnattachedDisks {
     param (
         [parameter(Mandatory = $false, HelpMessage = "Volume which need to be free space, If this parameter isn't specified, the volume with least available capacity would be selected by default")]
         [string]$VolumeLabel,
@@ -130,7 +130,7 @@ function GetUnattchedDisks {
     Get attached managed disks and export to CSVs
 #>
 
-function GetAttchedDisks {
+function GetAttachedDisks {
     param (
         [parameter(Mandatory = $false, HelpMessage = "Volume which need to be free space, If this parameter isn't specified, the volume with least available capacity would be selected by default")]
         [string] $VolumeLabel,
