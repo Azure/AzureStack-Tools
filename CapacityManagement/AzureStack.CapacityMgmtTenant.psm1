@@ -79,11 +79,8 @@ function GetSnapshotsLinkToDisks {
 
 function GetUnattachedDisks {
     param (
-        [parameter(Mandatory = $false, HelpMessage = "Import disks from CSV extracted by Cloud Operator")]
-        [switch]$ImportDiskCSV,
-
         [parameter(Mandatory = $false, HelpMessage = "File path to the import disk CSV")]
-        [string]$ImportFilePath,
+        [string]$ImportDiskCSV,
 
         [parameter(Mandatory = $false, HelpMessage = "Query standalone unattached disks (which don't have related snapshots) as migration candidates")]
         [switch]$MigrationCandidates,
@@ -95,7 +92,7 @@ function GetUnattachedDisks {
         [string]$ExportFolder
     )
     
-    if ($ImportDiskCSV -and !(Test-Path -Path $ImportFilePath)) {
+    if ($ImportDiskCSV -and !(Test-Path -Path $ImportDiskCSV)) {
         Write-Error "ERROR: Import file doesn't exist. Please specify the correct file path to import disks"
         return
     }
@@ -110,7 +107,7 @@ function GetUnattachedDisks {
 
     $Disks = @()
     if ($ImportDiskCSV) {
-        $ImportDisks = GetDisksFromCSV -CSVFilePath $ImportFilePath
+        $ImportDisks = GetDisksFromCSV -CSVFilePath $ImportDiskCSV
         if ($ImportDisks) {
             $Subscription = $ImportDisks[0].DiskSubscription
             if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
@@ -185,11 +182,8 @@ function GetUnattachedDisks {
 
 function GetAttachedDisks {
     param (
-        [parameter(Mandatory = $false, HelpMessage = "Import disks from CSV extracted by Cloud Operator")]
-        [switch] $ImportDiskCSV,
-
         [parameter(Mandatory = $false, HelpMessage = "File path to the import disk CSV")]
-        [string]$ImportFilePath,
+        [string] $ImportDiskCSV,
 
         [parameter(Mandatory = $false, HelpMessage = "Query standalone attached disks (which don't have related snapshots and were not created from image) which attached to deallocated VMs as migration candidates, and export to CSV")]
         [switch]$MigrationCandidates,
@@ -203,8 +197,8 @@ function GetAttachedDisks {
         [parameter(Mandatory = $false, HelpMessage = "Query owner VM of queried attached disks")]
         [switch]$GroupByVM
     )
-        
-    if ($ImportDiskCSV -and !(Test-Path -Path $ImportFilePath)) {
+    
+    if ($ImportDiskCSV -and !(Test-Path -Path $ImportDiskCSV)) {
         Write-Error "ERROR: Import file doesn't exist. Please specify the correct file path to import disks"
         return
     }
@@ -221,7 +215,7 @@ function GetAttachedDisks {
     $MigrationDisks = @()
     $AttachedVMs = @()
     if ($ImportDiskCSV) {
-        $ImportDisks = GetDisksFromCSV -CSVFilePath $ImportFilePath
+        $ImportDisks = GetDisksFromCSV -CSVFilePath $ImportDiskCSV
         if ($ImportDisks) {
             $Subscription = $ImportDisks[0].DiskSubscription
             if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
