@@ -64,10 +64,14 @@ function GetUnattchedDisks {
         [parameter(Mandatory = $false, HelpMessage = "Export the unattached disk list to CSVs, each user subscription would be exported to a separate CSV file")]
         [switch]$ExportToCSV,
 
-        [parameter(Mandatory = $false, HelpMessage = "File path to export the unattached disk list. If not specified, all CSVs would be exported to 'UnattachedDisks' folder under current location")]
-        [string]$ExportFilePath
+        [parameter(Mandatory = $false, HelpMessage = "Folder to export the unattached disk list. If not specified, all CSVs would be exported to 'UnattachedDisks' folder under current location")]
+        [string]$ExportFolder
     )
 
+    if ($ExportFolder -and !(Test-Path -Path $ExportFolder)) {
+        Write-Error "ERROR: Export folder doesn't exist. Please specify the correct file path to export CSV file"
+        return
+    }
     if ($ExportToCSV -and !($GroupBySubscription)) {
         Write-Error "ERROR: Export to CSV file only works when 'GroupBySubscription' option is turned on"
         return
@@ -85,8 +89,8 @@ function GetUnattchedDisks {
         $UnattachedDisks = $UnattachedDisks | Group-Object -Property DiskSubscription | select  @{n="Subscription";e={$_.name}}, @{n="DiskCount";e={$_.count}}, @{n="TotalSize";e={($_.Group | Measure-Object -Property ActualSizeGB -Sum).Sum}} | sort TotalSize -Descending
     }
     if ($ExportToCSV) {
-        if ($ExportFilePath) {
-            $folderName = $ExportFilePath+"\UnattachedDisks"
+        if ($ExportFolder) {
+            $folderName = $ExportFolder+"\UnattachedDisks"
         } else {
             $folderName = "UnattachedDisks"
         }
@@ -125,10 +129,15 @@ function GetAttchedDisks {
         [parameter(Mandatory = $false, HelpMessage = "Export the unattached disk list to CSVs, each user subscription would be exported to a separate CSV file")]
         [switch]$ExportToCSV,
 
-        [parameter(Mandatory = $false, HelpMessage = "File path to export the unattached disk list. If not specified, all CSVs would be exported to 'AttachedDisks' folder under current location")]
-        [string]$ExportFilePath
+        [parameter(Mandatory = $false, HelpMessage = "Folder to export the unattached disk list. If not specified, all CSVs would be exported to 'AttachedDisks' folder under current location")]
+        [string]$ExportFolder
     )
+    
 
+    if ($ExportFolder -and !(Test-Path -Path $ExportFolder)) {
+        Write-Error "ERROR: Export folder doesn't exist. Please specify the correct file path to export CSV file"
+        return
+    }
     if ($ExportToCSV -and !($GroupBySubscription)) {
         Write-Error "ERROR: Export to CSV file only works when 'GroupBySubscription' option is turned on"
         return
@@ -151,8 +160,8 @@ function GetAttchedDisks {
         $AttachedDisks = $AttachedDisks | Group-Object -Property OwnerSubscription | select @{n="DiskCount";e={$_.count}}, @{n="TotalSize";e={($_.Group | Measure-Object -Property ActualSizeGB -Sum).Sum}}, @{n="OwnerSubscription";e={$_.name}} | sort TotalSize -Descending
     }
     if ($ExportToCSV) {
-        if ($ExportFilePath) {
-            $folderName = $ExportFilePath+"\AttachedDisks"
+        if ($ExportFolder) {
+            $folderName = $ExportFolder+"\AttachedDisks"
         } else {
             $folderName = "AttachedDisks"
         }
