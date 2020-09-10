@@ -24,6 +24,18 @@ function GetMigrationSource {
 
 <#
     .SYNOPSIS
+    Query the volume with most available capacity
+#>
+
+function GetMigrationTarget {
+
+    $Volumes = (Get-AzsVolume -ScaleUnit $ScaleUnit.Name -StorageSubSystem $StorageSubSystem.Name | Where-Object {$_.VolumeLabel -Like "ObjStore_*"})
+    $Volume  = ($Volumes | Sort-Object RemainingCapacityGB -Descending)[0]
+    return $LocationPath+$Volume.VolumeLabel
+}
+
+<#
+    .SYNOPSIS
     Prepare the volume need to be managed for further analytic
 #>
 
