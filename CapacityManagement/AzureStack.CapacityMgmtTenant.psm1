@@ -120,7 +120,7 @@ function GetUnattachedDisks {
     )
 
     if ($ExportFolder -and !(Test-Path -Path $ExportFolder)) {
-        Write-Error "ERROR: File path doesn't exist. Please specify the correct file path to export CSV file"
+        Write-Error "ERROR: Export folder doesn't exist. Please specify the correct file path to export CSV file"
         return
     }
     if ($MigrationCandidates -and !($ImportDiskCSV)) {
@@ -225,7 +225,7 @@ function GetAttachedDisks {
     )
 
     if ($ExportFolder -and !(Test-Path -Path $ExportFolder)) {
-        Write-Error "ERROR: File path doesn't exist. Please specify the correct file path to export CSV file"
+        Write-Error "ERROR: Export folder doesn't exist. Please specify the correct file path to export CSV file"
         return
     }
     if ($MigrationCandidates -and !($ImportDiskCSV)) {
