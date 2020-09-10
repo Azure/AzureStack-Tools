@@ -24,16 +24,16 @@ If you are a tenant owner, use Tenant Capacity Management module:
 Import-Module ".\AzureStack.CapacityMgmtTenant.psm1"
 ```
 
->[!TIP]  
-> The [role] information before each step indicates whether cloud operator or tenant owner should perform the action of this step
+[!TIP]  
+The [role] information before each step indicates whether cloud operator or tenant owner should perform the action of this step
 
 ### Delete/migrate unattached managed disks
-1. [Cloud operator] Identify the volume of which capacity need to be freed up, and specify the volume label (with the format as 'ObjStore_X') as the migration source. You can aslo use *GetMigrationSource* to get the most used volume.
+1. **[Cloud operator]** Identify the volume of which capacity need to be freed up, and specify the volume label (with the format as 'ObjStore_X') as the migration source. You can aslo use **GetMigrationSource** to get the most used volume.
 
 ```powershell
 $VolumeLabel = GetMigrationSource
 ```
-2. [Cloud operator] List all unattached managed disks stored on volume X grouped by user subscription, and export the list to CSV files. The CSV files would be stored within "UnattachedDisks" folder under the file path provided with *-ExportFolder* parameter (if not specified, "UnattachedDisks" folder would be generated under current location). And each user subscription would have a corresponding CSV file named as "Unattached_({DiskCount}){SubscriptionId}.csv".
+2. **[Cloud operator]** List all unattached managed disks stored on volume X grouped by user subscription, and export the list to CSV files. The CSV files would be stored within "UnattachedDisks" folder under the file path provided with *-ExportFolder* parameter (if not specified, "UnattachedDisks" folder would be generated under current location). And each user subscription would have a corresponding CSV file named as "Unattached_({DiskCount}){SubscriptionId}.csv".
 
 ```powershell
 GetUnattachedDisks -VolumeLabel $VolumeLabel -GroupBySubscription -ExportToCSV -ExportFolder "D:\CapacityManagement"
@@ -41,7 +41,7 @@ GetUnattachedDisks -VolumeLabel $VolumeLabel -GroupBySubscription -ExportToCSV -
 
 Once the unattached disk list CSVs are exported, the cloud operator should contact the tenant owner of each impacted user subscription and pass the corresponding generated CSV file to do the disk cleaning. To get the contact information of a specific user subscription, please use [get-azsusersubscription](https://docs.microsoft.com/en-us/powershell/module/azs.subscriptions.admin/get-azsusersubscription).
 
-3. [Tenant owner] Query all managed snapshots created from unattached managed disks provided by the cloud operator, and export the result list to CSV file named as "SnapshotsLinkToDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
+3. **[Tenant owner]** Query all managed snapshots created from unattached managed disks provided by the cloud operator, and export the result list to CSV file named as "SnapshotsLinkToDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
 
 ```powershell
 GetSnapshotsLinkToDisks -CSVFilePath 'D:\CapacityManagement\UnattachedDisks\Unattached_({DiskCount}){SubscriptionId}.csv' -ExportToCSV -ExportFolder D:\CapacityManagement
@@ -49,16 +49,16 @@ GetSnapshotsLinkToDisks -CSVFilePath 'D:\CapacityManagement\UnattachedDisks\Unat
 
 Once the CSV file is exported, tenant owner should review the list, and remove all snapshots which still need to be kept in Azure Stack Hub from the list in CSV file.
 
->[!TIP]  
-> To avoid misoperation, you can save the CSV file as "DeleteSnapshots.CSV", and make sure it only contains the snapshots need to be deleted.
+[!TIP]  
+To avoid misoperation, you can save the CSV file as "DeleteSnapshots.CSV", and make sure it only contains the snapshots need to be deleted.
 
-4. [Tenant owner] Clean the unnecessary managed snapshots from Azure Stack Hub with the "DeleteSnapshots.CSV" edited in step 3.
+4. **[Tenant owner]** Clean the unnecessary managed snapshots from Azure Stack Hub with the "DeleteSnapshots.CSV" edited in step 3.
 
 ```powershell
 RemoveSnapshotsInCSV -CSVFilePath D:\CapacityManagement\DeleteSnapshots.CSV
 ```
 
-5. [Tenant owner] Query unattached managed disks based on list CSV provided by cloud operator, and export the result list to CSV file named as "UnattachedDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
+5. **[Tenant owner]** Query unattached managed disks based on list CSV provided by cloud operator, and export the result list to CSV file named as "UnattachedDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
 
 ```powershell
 GetUnattachedDisks -ImportDiskCSV 'D:\CapacityManagement\UnattachedDisks\Unattached_({DiskCount}){SubscriptionId}.csv' -ExportToCSV -ExportFolder D:\CapacityManagement
@@ -69,13 +69,13 @@ Once the CSV file is exported, tenant owner should review the list, and remove a
 >[!TIP]  
 > To avoid misoperation, you can save the CSV file as "DeleteDisks.CSV", and make sure it only contains the managed disks need to be deleted.
 
-6. [Tenant owner] Clean the unnecessary managed disks from Azure Stack Hub with the "DeleteDisks.CSV" edited in step 5.
+6. **[Tenant owner]** Clean the unnecessary managed disks from Azure Stack Hub with the "DeleteDisks.CSV" edited in step 5.
 
 ```powershell
 RemoveDisksInCSV -CSVFilePath D:\CapacityManagement\DeleteDisks.CSV
 ```
 
-7. [Tenant ower] Query all standalone unattached managed disks (which don't have related managed snapshots) on volume X as the migration candidates, and export the result list to CSV file named as "UnattachedMigrationCandidates_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
+7. **[Tenant owner]** Query all standalone unattached managed disks (which don't have related managed snapshots) on volume X as the migration candidates, and export the result list to CSV file named as "UnattachedMigrationCandidates_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
 
 ```powershell
 GetUnattachedDisks -ImportDiskCSV 'D:\CapacityManagement\UnattachedDisks\Unattached_({DiskCount}){SubscriptionId}.csv' -MigrationCandidates -ExportToCSV -ExportFolder D:\CapacityManagement
@@ -83,7 +83,7 @@ GetUnattachedDisks -ImportDiskCSV 'D:\CapacityManagement\UnattachedDisks\Unattac
 
 Once the migration candidates CSV is exported, provide the CSV to cloud operator.
 
-8. [Cloud operator] Import the managed disk list generated by tenant owner in step 7 as disk migration candidates, and run managed disk offline migration.
+8. **[Cloud operator]** Import the managed disk list generated by tenant owner in step 7 as disk migration candidates, and run managed disk offline migration.
 
 ```powershell
 $MigrationDisk = ImportDiskMigrationCandidates -MigrationType Unattached -CSVFilePath D:\CapacityManagement\UnattachedMigrationCandidates_{SubscriptionId}.CSV
@@ -95,7 +95,7 @@ Start-AzsDiskMigrationJob -Disks $MigrationDisk -TargetShare $MigrationTarget -N
 For more detail about disk offline migration, please see [Migrate a managed disk between volumes](https://docs.microsoft.com/en-us/azure-stack/operator/azure-stack-manage-storage-shares#migrate-a-managed-disk-between-volumes)
 
 ### Migrate attached managed disks.
-1. [Cloud operator] List all attached managed disks stored on volume X grouped by user subscription, and export the list to CSV files. The CSV files would be stored within "AttachedDisks" folder under the file path provided with *-ExportFolder* parameter (if not specified, "AttachedDisks" folder would be generated under current location). And each user subscription would have a corresponding CSV file named as "Attached_({DiskCount}){SubscriptionId}.csv".
+1. **[Cloud operator]** List all attached managed disks stored on volume X grouped by user subscription, and export the list to CSV files. The CSV files would be stored within "AttachedDisks" folder under the file path provided with *-ExportFolder* parameter (if not specified, "AttachedDisks" folder would be generated under current location). And each user subscription would have a corresponding CSV file named as "Attached_({DiskCount}){SubscriptionId}.csv".
 
 ```powershell
 GetAttachedDisks -VolumeLabel $VolumeLabel -GroupBySubscription -ExportToCSV -ExportFolder "D:\CapacityManagement"
@@ -103,7 +103,7 @@ GetAttachedDisks -VolumeLabel $VolumeLabel -GroupBySubscription -ExportToCSV -Ex
 
 Once the attached disk list CSVs are exported, the cloud operator should contact the tenant owner of each impacted user subscription and pass the corresponding generated CSV file to do the disk migration preparation. To get the contact information of a specific user subscription, please use [get-azsusersubscription](https://docs.microsoft.com/en-us/powershell/module/azs.subscriptions.admin/get-azsusersubscription).
 
-2. [Tenant owner] Query all managed snapshots created from attached managed disks provided by the cloud operator, and export the result list to CSV file named as "SnapshotsLinkToDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
+2. **[Tenant owner]** Query all managed snapshots created from attached managed disks provided by the cloud operator, and export the result list to CSV file named as "SnapshotsLinkToDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
 
 ```powershell
 GetSnapshotsLinkToDisks -CSVFilePath 'D:\CapacityManagement\AttachedDisks\Attached_({DiskCount}){SubscriptionId}.csv' -ExportToCSV -ExportFolder D:\CapacityManagement
@@ -114,13 +114,13 @@ Once the CSV file is exported, tenant owner should review the list, and remove a
 >[!TIP]  
 > To avoid misoperation, you can save the CSV file as "DeleteSnapshots.CSV", and make sure it only contains the snapshots need to be deleted.
 
-3. [Tenant owner] Clean the unnecessary managed snapshots from Azure Stack Hub with the "DeleteSnapshots.CSV" edited in step 2.
+3. **[Tenant owner]** Clean the unnecessary managed snapshots from Azure Stack Hub with the "DeleteSnapshots.CSV" edited in step 2.
 
 ```powershell
 RemoveSnapshotsInCSV -CSVFilePath D:\CapacityManagement\DeleteSnapshots.CSV
 ```
 
-4. [Tenant owner] Query the VMs who own the attached managed disks based on list CSV provided by cloud operator, and export the result list to CSV file named as "OwnerVMOfAttachedDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
+4. **[Tenant owner]** Query the VMs who own the attached managed disks based on list CSV provided by cloud operator, and export the result list to CSV file named as "OwnerVMOfAttachedDisks_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
 
 ```powershell
 GetAttachedDisks -ImportDiskCSV 'D:\CapacityManagement\AttachedDisks\Attached_({DiskCount}){SubscriptionId}.csv' -GroupByVM -ExportToCSV -ExportFolder D:\CapacityManagement
@@ -131,13 +131,13 @@ Once the CSV file is exported, tenant owner should review the list to check whet
 >[!TIP]  
 > To avoid misoperation, you can save the CSV file as "StopVM.CSV", and make sure it only contains the VMs need to be deallocated.
 
-5. [Tenant owner] Deallocate VMs for offline migration with the "StopVM.CSV" edited in step 4.
+5. **[Tenant owner]** Deallocate VMs for offline migration with the "StopVM.CSV" edited in step 4.
 
 ```powershell
 DeallocateVMsInCSV -CSVFilePath D:\CapacityManagement\StopVM.CSV
 ```
 
-6. [Tenant ower] Query all standalone reserved managed disks (which weren't created from image or existing snapshot, and don't have related managed snapshots) on volume X as the migration candidates, and export the result list to CSV file named as "AttachedMigrationCandidates_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
+6. **[Tenant owner]** Query all standalone reserved managed disks (which weren't created from image or existing snapshot, and don't have related managed snapshots) on volume X as the migration candidates, and export the result list to CSV file named as "AttachedMigrationCandidates_{SubscriptionId}.CSV" under the file path provided with *-ExportFolder* parameter (if not specified, result CSV file would be placed under current location).
 
 ```powershell
 GetAttachedDisks -ImportDiskCSV 'D:\CapacityManagement\AttachedDisks\Attached_({DiskCount}){SubscriptionId}.csv' -MigrationCandidates -ExportToCSV -ExportFolder D:\CapacityManagement
@@ -145,7 +145,7 @@ GetAttachedDisks -ImportDiskCSV 'D:\CapacityManagement\AttachedDisks\Attached_({
 
 Once the migration candidates CSV is exported, provide the CSV to cloud operator.
 
-7. [Cloud operator] Import the managed disk list generated by tenant owner in step 6 as disk migration candidates, and run managed disk offline migration.
+7. **[Cloud operator]** Import the managed disk list generated by tenant owner in step 6 as disk migration candidates, and run managed disk offline migration.
 
 ```powershell
 $MigrationDisk = ImportDiskMigrationCandidates -MigrationType Attached -CSVFilePath D:\CapacityManagement\AttachedMigrationCandidates_df1b02be-0841-4d55-8f7b-cbe45ef4b5b9.CSV
