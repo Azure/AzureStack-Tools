@@ -74,30 +74,6 @@ function GetSnapshotsLinkToDisks {
 
 <#
     .SYNOPSIS
-    Import a CSV and remove all snapshots listed in the CSV
-#>
-
-function RemoveSnapshotsInCSV {
-    param (
-        [parameter(Mandatory = $true, HelpMessage = "File path to the snapshots CSV")]
-        [string]$CSVFilePath
-    )
-
-    $ImportSnapshots = GetDisksFromCSV -CSVFilePath $CSVFilePath
-    if ($ImportSnapshots) {
-        $Subscription = $ImportSnapshots[0].UserSubscription
-        if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
-            Select-AzureRmSubscription -Subscription $Subscription
-        }
-        foreach ($snapshot in $ImportSnapshots) {
-            Remove-AzureRmSnapshot -ResourceGroupName $snapshot.SnapshotResourceGroup -SnapshotName $snapshot.SnapshotName -Verbose
-        }
-        Write-Host "Removed all snapshots in $CSVFilePath"
-    }
-}
-
-<#
-    .SYNOPSIS
     Get unattached disks
 #>
 
@@ -118,7 +94,11 @@ function GetUnattachedDisks {
         [parameter(Mandatory = $false, HelpMessage = "Folder to export unattached disks as CSV. If not specified, the candidates would be exported to 'UnattachedDisks_{subscription ID}.CSV' or 'UnattachedMigrationCandidates_{subscription ID}.CSV' (if -MigrationCandidates setting turned on) under current location")]
         [string]$ExportFolder
     )
-
+    
+    if ($ImportDiskCSV -and !(Test-Path -Path $ImportFilePath)) {
+        Write-Error "ERROR: Import file doesn't exist. Please specify the correct file path to import disks"
+        return
+    }
     if ($ExportFolder -and !(Test-Path -Path $ExportFolder)) {
         Write-Error "ERROR: Export folder doesn't exist. Please specify the correct file path to export CSV file"
         return
@@ -223,7 +203,11 @@ function GetAttachedDisks {
         [parameter(Mandatory = $false, HelpMessage = "Query owner VM of queried attached disks")]
         [switch]$GroupByVM
     )
-
+        
+    if ($ImportDiskCSV -and !(Test-Path -Path $ImportFilePath)) {
+        Write-Error "ERROR: Import file doesn't exist. Please specify the correct file path to import disks"
+        return
+    }
     if ($ExportFolder -and !(Test-Path -Path $ExportFolder)) {
         Write-Error "ERROR: Export folder doesn't exist. Please specify the correct file path to export CSV file"
         return
@@ -372,6 +356,34 @@ function GetAttachedDisks {
     }
 }
 
+<#
+    .SYNOPSIS
+    Import a CSV and remove all snapshots listed in the CSV
+#>
+
+function RemoveSnapshotsInCSV {
+    param (
+        [parameter(Mandatory = $true, HelpMessage = "File path to the snapshots CSV")]
+        [string]$CSVFilePath
+    )
+      
+    if (!($CSVFilePath) -or !(Test-Path -Path $CSVFilePath)) {
+        Write-Error "ERROR: File doesn't exist. Please specify the correct file path to import snapshots"
+        return
+    }
+    $ImportSnapshots = GetDisksFromCSV -CSVFilePath $CSVFilePath
+    if ($ImportSnapshots) {
+        $Subscription = $ImportSnapshots[0].UserSubscription
+        if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
+            Select-AzureRmSubscription -Subscription $Subscription
+        }
+        foreach ($snapshot in $ImportSnapshots) {
+            Remove-AzureRmSnapshot -ResourceGroupName $snapshot.SnapshotResourceGroup -SnapshotName $snapshot.SnapshotName -Verbose
+        }
+        Write-Host "Removed all snapshots in $CSVFilePath"
+    }
+}
+
 
 <#
     .SYNOPSIS
@@ -383,7 +395,11 @@ function RemoveDisksInCSV {
         [parameter(Mandatory = $true, HelpMessage = "File path to the disks CSV")]
         [string]$CSVFilePath
     )
-
+      
+    if (!($CSVFilePath) -or !(Test-Path -Path $CSVFilePath)) {
+        Write-Error "ERROR: File doesn't exist. Please specify the correct file path to import disks"
+        return
+    }
     $ImportDisks = GetDisksFromCSV -CSVFilePath $CSVFilePath
     if ($ImportDisks) {
         $Subscription = $ImportDisks[0].UserSubscription
@@ -405,10 +421,14 @@ function RemoveDisksInCSV {
 
 function DeallocateVMsInCSV {
     param (
-        [parameter(Mandatory = $true, HelpMessage = "File path to the disks CSV")]
+        [parameter(Mandatory = $true, HelpMessage = "File path to the VM CSV")]
         [string]$CSVFilePath
     )
-
+      
+    if (!($CSVFilePath) -or !(Test-Path -Path $CSVFilePath)) {
+        Write-Error "ERROR: File doesn't exist. Please specify the correct file path to import VMs"
+        return
+    }
     $ImportVMs = GetDisksFromCSV -CSVFilePath $CSVFilePath
     if ($ImportVMs) {
         $Subscription = $ImportVMs[0].VMSubscription
