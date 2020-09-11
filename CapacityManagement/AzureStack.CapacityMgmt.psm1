@@ -36,6 +36,30 @@ function GetMigrationTarget {
 
 <#
     .SYNOPSIS
+    Check managed disk used capacity of a specific volume
+#>
+
+function GetManagedDiskCapacityOnVolume {
+    param (
+        [parameter(Mandatory = $false, HelpMessage = "Volume to query the total managed disk/snapshot used capacity, If this parameter isn't specified, the volume with least available capacity would be selected by default")]
+        [string] $VolumeLabel
+    )
+
+    $QueryVolume = PrepareMigrationSource -VolumeLabel $VolumeLabel
+    $Volume = (Get-AzsVolume -ScaleUnit $ScaleUnit.Name -StorageSubSystem $StorageSubSystem.Name | Where-Object {($LocationPath+$_.VolumeLabel) -eq $QueryVolume})
+    $UsedCapacity = Get-AzsDisk -status all -SharePath $QueryVolume -Count 2000 | Measure-Object -Property ActualSizeGB, ProvisionSizeGb  -Sum
+    
+    $ReturnObj = $Volume | select `
+        @{Name="VolumeTotalCapacityGB";Expression={ $_.TotalCapacityGB}},`
+        @{Name="VolumeRemainingCapacityGB";Expression={ $_.RemainingCapacityGB}},`
+        @{Name="ManagedDiskUsedCapacityGB";Expression={ ($UsedCapacity | Where-Object {$_.Property -eq 'ActualSizeGb'}).Sum}},`
+        @{Name="ManagedDiskProvisionedCapacityGB";Expression={ ($UsedCapacity | Where-Object {$_.Property -eq 'ProvisionSizeGb'}).Sum}},`
+        @{Name="ManagedObjectCount";Expression={ $UsedCapacity[0].Count}}
+    return $ReturnObj
+}
+
+<#
+    .SYNOPSIS
     Prepare the volume need to be managed for further analytic
 #>
 
