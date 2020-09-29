@@ -372,7 +372,7 @@ function RemoveSnapshotsInCSV {
             Select-AzureRmSubscription -Subscription $Subscription
         }
         foreach ($snapshot in $ImportSnapshots) {
-            Remove-AzureRmSnapshot -ResourceGroupName $snapshot.SnapshotResourceGroup -SnapshotName $snapshot.SnapshotName -Verbose
+            Remove-AzureRmSnapshot -ResourceGroupName $snapshot.SnapshotResourceGroup -SnapshotName $snapshot.SnapshotName -Verbose -Confirm:$false -Force
         }
         Write-Host "Removed all snapshots in $CSVFilePath"
     }
@@ -401,7 +401,7 @@ function RemoveDisksInCSV {
             Select-AzureRmSubscription -Subscription $Subscription
         }
         foreach ($disk in $ImportDisks) {
-            Remove-AzureRmDisk -ResourceGroupName $disk.ResourceGroupName -DiskName $disk.DiskName -Verbose
+            Remove-AzureRmDisk -ResourceGroupName $disk.ResourceGroupName -DiskName $disk.DiskName -Verbose -Confirm:$false -Force
         }
         Write-Host "Removed all disks in $CSVFilePath"
     }
@@ -430,7 +430,7 @@ function DeallocateVMsInCSV {
             Select-AzureRmSubscription -Subscription $Subscription
         }
         foreach ($vm in $ImportVMs) {
-            Stop-AzureRmVM -ResourceGroupName $vm.VMResourceGroup -Name $vm.VMName -Verbose
+            Stop-AzureRmVM -ResourceGroupName $vm.VMResourceGroup -Name $vm.VMName -Verbose -Confirm:$false -Force
         }
         Write-Host "Deallocated all VMs in $CSVFilePath"
     }
