@@ -145,7 +145,7 @@ The functions in this module allows to enable remote management on Azure Stack w
 
 ### Prerequisites 
 
-- Azure Stack already be registered with Azure. If its not registered then please following registration steps. 
+- Azure Stack already be registered with Azure. If its not registered then please follow registration steps described above. 
 - Azure Stack is already registered in connected mode
 - You must have access to an Azure subscription with which Azure Stack is registered, and your Azure account must be an Owner/Contributor of that subscription.
 - Open an elevated instance of Powershell ISE (ie: Run as Administrator).
@@ -165,11 +165,11 @@ Login-AzureRmAccount -Subscription '<Your Azure Subscription>' -Environment '<Th
 ```
 
 ### Initiate remote management enable 
-Then you must run the below command from RemoteManagement.psm1. You need to pass EdgeSubcription name - this is the name of resource created on your Azure subscription with which you can view replicated resources.
-- Note: Provide edge subcription name as name of resource you like to link your "Default Provider Subscription" on Azure. Example:"<AzureStackName>-DefaultProvider"
+Then you must run the below command from RemoteManagement.psm1. You need to pass LinkedSubscription name - this is the name of resource created on your Azure subscription with which you can view replicated resources.
+- Note: Provide linked subcription name as name of resource you like to link your "Default Provider Subscription" on Azure. Example:"<AzureStackName>-DefaultProvider"
 ```powershell
 $name = "RedmondStack-DefaultProvider"
-Enable-AzsCloudConnection -EdgeSubscriptionName $name -PrivilegedEndpoint "<Computer Name>-ERCS01"
+Enable-AzsCloudConnection -LinkedSubscriptionName $name -PrivilegedEndpoint "<Computer Name>-ERCS01" -ResourceGroupName "<Name-Of-ResourceGroup>"
 ```
 The process takes between 10 and 15 minutes.
 
