@@ -142,6 +142,7 @@ that commands performed on the public Azure connected machine are performed unde
 
 # Remote Management
 The functions in this module allows to enable remote management on Azure Stack which are registered in connected mode. Additional details can be found in [documentation](https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-register).
+Note: Remote Management is only supported from AzureStack 2008 release onwards.
 
 ### Prerequisites 
 
