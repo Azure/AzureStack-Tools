@@ -236,6 +236,56 @@ function Register-AzureStackResourceProvider{
         Log-Output "*** End WARNING ***"
     }
     
+    function Get-LinkedSubscriptionInformation{
+    [CmdletBinding()]
+        param(
+            [Parameter(Mandatory = $true)]
+            [String] $azureSubscriptionId,
+    
+            [Parameter(Mandatory = $true)]
+            [String] $LinkedSubscriptionId,
+    
+            [Parameter(Mandatory = $false)]
+            [String] $azureResourceGroupName
+        )
+    
+        $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+        $VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
+    
+        New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    
+        if([string]::IsNullOrEmpty($azureResourceGroupName))
+        {
+          $resourceUri = "/subscriptions/$azureSubscriptionId/providers/Microsoft.AzureStack/linkedSubscriptions"
+        }
+        else
+        {
+           $resourceUri = "/subscriptions/$azureSubscriptionId/providers/resourceGroups/$azureResourceGroupName/Microsoft.AzureStack/linkedSubscriptions"
+        }
+    
+        Log-Output "Checking linked subscriptions for $resourceUri"
+        $linkedSubscriptions = Get-AzureRmResource -ResourceId $resourceUri -ApiVersion 2020-06-01-preview
+    
+        if($null -eq $linkedSubscriptions)
+        {
+           Log-Warning "No linked subscription resource found"
+        }
+        else
+        {
+            Log-Output "Total $($linkedSubscriptions.Count) Linked subscriptions found."
+            $existingResource = $linkedSubscriptions | Where { $_.Properties.LinkedSubscriptionId -eq $LinkedSubscriptionId}
+    
+            if($null -eq $linkedSubscriptions)
+            {
+               Log-Output "No matching resource found with LinkedSubscriptionId:$LinkedSubscriptionId"
+               return
+            }
+    
+            Log-Output "Following linked subscription found matching with LinkedSubscriptionId $LinkedSubscriptionId. $($existingResource | ConvertTo-Json -Depth 5)"
+            return $existingResource.ResourceId
+        }    
+    }
+
     <#
     .SYNOPSIS
     Uses information from Get-InfoForEdgeSubscription to create linked subscription resource group and resource in Azure
