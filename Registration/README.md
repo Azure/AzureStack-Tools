@@ -41,6 +41,23 @@ Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel P
 Set-AzsRegistration -PrivilegedEndpoint "<Computer Name>-ERCS01" -BillingModel PayAsYouUse -MarketplaceSyndicationEnabled:$false
 ```
 
+## Re-Register in a connected environment
+In a connected environment, to re-register with Azure using the existing registration details, set the correct Azure PowerShell context using the subscription used during the existing registration. 
+
+### Set the correct Azure Powershell Context
+```powershell
+Login-AzAccount -Subscription '<Your Azure Subscription used during existing registration>' -Environment '<The Azure Environment where subscription was created>'
+```
+
+### Re-Registration
+Then you must run the below command from RegisterWithAzure.psm1:
+```powershell
+# $PrivilegedEndpointCredential - credential to access PrivilegedEndpoint
+# $AzureStackAdminCredential - Azure Stack admin credential used to access admin portal resources
+Set-AzsRegistration -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "<Computer Name>-ERCS01" -AzureStackAdminCredential $AzureStackAdminCredential -Reregister
+```
+The process takes between 10 and 15 minutes.
+
 ## Change or remove registration in a connected environment
 
 ### Remove Registration 
