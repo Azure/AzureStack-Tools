@@ -1359,8 +1359,11 @@ function New-RegistrationResource{
                 Remove-AzureRmResourceLock -LockId $lock.LockId -Force
             }
 
-            Log-Output "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
-            $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
+            Log-Output "Checking for resource group '$ResourceGroupName' in location $ResourceGroupLocation."
+            if (-not ($resourceGroup = Get-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation)){
+                Log-Output "Creating resource group '$ResourceGroupName' in location $ResourceGroupLocation."
+                $resourceGroup = New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Force
+            }
 
             break
         }
