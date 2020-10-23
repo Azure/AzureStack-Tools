@@ -11,7 +11,18 @@ Configures existing AD FS for Azure Stack
  
 It will create a relying Party Trust to Azure Stack's AD FS with the necessary rules. It will also turn on form based authentication and Enable as setting to support Edge
  
-.PARAMETER ExternalDNSZoneSpecify the Extnerl Dns Zone of Azure Stack which was also provided for initial deployment.EXAMPLE .\setupadfs.ps1 -externaldnszone local.azurestack.external#>Param(  [string]$ExternalDNSZone)
+.PARAMETER ExternalDNSZone
+Specify the Extnerl Dns Zone of Azure Stack which was also provided for initial deployment
+
+.EXAMPLE 
+.\setupadfs.ps1 -externaldnszone local.azurestack.external
+#>
+
+
+
+Param(
+  [string]$ExternalDNSZone
+)
 $currentPath = $PSScriptRoot
 
 #Create Endpoint
@@ -30,7 +41,7 @@ $MetadataURL= "https://$VIP/FederationMetadata/2007-06/FederationMetadata.xml"
 
 #Verify Metadata URL
 Write-Host "Validate AD FS Metadata URL"
-$Validator2=Invoke-WebRequest $MetadataURL
+$Validator2=Invoke-WebRequest $MetadataURL -usebasicparsing
 If ($Validator2.StatusCode -ne 200){
 Write-Host "Metadata URL could not be retrived Error "$Validator2.StatusCode""
 Exit}
