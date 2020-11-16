@@ -151,6 +151,13 @@ Note: Remote Management is only supported from AzureStack 2008 release onwards.
 - You must have access to an Azure subscription with which Azure Stack is registered, and your Azure account must be an Owner/Contributor of that subscription.
 - Open an elevated instance of Powershell ISE (ie: Run as Administrator).
 
+### Consent
+
+- By running PowerShell command to enable the connection to the cloud you consent to the following:
+  - Replication of Azure Stack Hub resource metadata for the purposes of managing Azure Stack Hub from Azure. For more details about the replicated data go here [documentation](http://aka.ms/ashdatatoazure).
+  - Permission to allow only your approved operators the ability to control Azure Stack resources from the Azure portal.
+  - Permission for Microsoft support to issue Support commands only during active support incidents, subject to an additional approval from you, to diagnose and resolve issues within your Azure Stack Hub infrastructure.
+
 ### Import RemoteManagement.psm1
 To import the RemoteManagement.psm1 module, navigate to where the module was downloaded (typically `C:\AzureStack-Tools-master\Registration`) and run the below:
 ```powershell
