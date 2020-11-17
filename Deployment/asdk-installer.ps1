@@ -2295,7 +2295,7 @@ Function F_Install {
     #endregion wrapper
 
     #region disable non selected NICs
-    if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -gt 1)) {
+    if ($synchash.Control_NetInterface_Lvw_Nics.SelectedItem -and ($synchash.Control_NetInterface_Lvw_Nics.Items.count -ge 1)) {
         Write-Host "Disabling non selected NICs" -ForegroundColor Cyan
         $disable_nics = $synchash.Control_NetInterface_Lvw_Nics.Items | Where-Object {$_ -ne $synchash.Control_NetInterface_Lvw_Nics.SelectedItem}
         $disable_nics | ForEach-Object {
