@@ -7,11 +7,8 @@ This is supported only for connected AzureStack scenarios. You must use same Azu
 #>
 
 <#
-
 .SYNOPSIS
-
 Registers the AzureStack resource provider in this environment
-
 #>
 function Register-AzureStackResourceProvider{
     [CmdletBinding()]
@@ -520,6 +517,16 @@ function Register-AzureStackResourceProvider{
                 'CustomCloud'='eastus'}[$AzureEnvironment]  
     }
     
+    function Get-ConsentText
+    {
+       $text = "By running PowerShell command to enable the connection to the cloud you consent to the following:
+       • Replication of Azure Stack Hub resource metadata for the purposes of managing Azure Stack Hub from Azure. For more details about the replicated data go here http://aka.ms/ashdatatoazure
+       • Permission to allow only your approved operators the ability to control Azure Stack resources from the Azure portal
+       • Permission for Microsoft support to issue Support commands only during active support incidents, subject to an additional approval from you, to diagnose and resolve issues within your Azure Stack Hub infrastructure."
+
+       return $text
+    }
+
     function Enable-AzsCloudConnection{
     [CmdletBinding()]
         param(
@@ -540,7 +547,10 @@ function Register-AzureStackResourceProvider{
             [String] $ResourceGroupName = 'rgEdgeSub',
     
             [Parameter(Mandatory = $false)]
-            [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureContext $AzureContext)
+            [String] $ResourceGroupLocation = (Get-DefaultResourceGroupLocation -AzureContext $AzureContext),
+
+            [Parameter(Mandatory = $false)]
+            [Switch] $AgreeToRemoteManagementConsent
         )
     
         $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
@@ -550,6 +560,33 @@ function Register-AzureStackResourceProvider{
         
         Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
     
+        $text = Get-ConsentText
+
+        Write-Host $text
+        Write-Host ""
+
+        $userName = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+
+        if(-not $AgreeToRemoteManagementConsent.IsPresent)
+        {
+           $isConsentProvided = Read-Host -Prompt "If you agree to above consent statement then type 'Yes' to continue else 'No' to exit"        
+           if($isConsentProvided -ne "Yes")
+           {
+              Log-Warning "Cannot proceed as required consent is not provided."
+              return
+           }
+        }
+        else
+        {
+           Log-Output "AgreeToRemoteManagementConsent flag is set"
+           $isConsentProvided = "With-Parameter-AgreeToRemoteManagementConsent"           
+        }
+        
+        Log-Output "User '$userName' provided consent to following by typing '$isConsentProvided' at $((get-date).ToUniversalTime().ToString())"
+        Log-Output "========================================================================================================================="
+        Log-Output "$text"
+        Log-Output "========================================================================================================================="
+        
         Validate-AzureContext -AzureContext $AzureContext
         Validate-ResourceGroupLocation -ResourceGroupLocation $ResourceGroupLocation
     
