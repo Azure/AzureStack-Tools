@@ -378,7 +378,7 @@ function Log-AzureAccountInfo{
     if (-not($AzureContext.Subscription))
     {
         Log-Output "Current Azure context:`r`n$(ConvertTo-Json $azureContextDetails)"
-        Log-Throw -Message "Current Azure context is not currently set. Please call Login-AzureRmAccount to set the Azure context." -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
+        Log-Throw -Message "Current Azure context is not currently set. Please call Login-AzAccount to set the Azure context." -CallingFunction  $PSCmdlet.MyInvocation.MyCommand.Name
     }
     Log-Output "Current Azure Context: `r`n $(ConvertTo-Json $azureContextDetails)"
 }
@@ -499,7 +499,7 @@ function Validate-AzureContext{
         [PSObject] $AzureContext
     )
     if ($null -eq $AzureContext){
-        throw "ErrorCode: AzureContextNotSet.`nErrorReason: Azure Powershell context is null. Please log in to correct Azure Powershell context using 'Login-AzureRmAccount' and then call the registration cmdlet."
+        throw "ErrorCode: AzureContextNotSet.`nErrorReason: Azure Powershell context is null. Please log in to correct Azure Powershell context using 'Login-AzAccount' and then call the registration cmdlet."
     }
 }
 
