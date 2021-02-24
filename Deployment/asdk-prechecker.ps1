@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 Short description
 This prechecker script validates the hardware and software requirements of your host to prepare for the deployment of the Azure Stack Development Kit
@@ -270,22 +270,25 @@ function CheckNICSupport {
 
     $FoundNIC = $false
     Get-NetAdapter -IncludeHidden | ForEach-Object {
-    $PnPDevice = Get-PnpDevice -InstanceId $_.PnPDeviceID
-    If ((Get-PnpDeviceProperty -InputObject $PnPDevice -KeyName DEVPKEY_Device_DriverInfPath).Data -eq "netbxnda.inf"){
-        $FoundNIC = $true
-        }
-   }
-
-   If ($FoundNIC)
+        $pnpDevoceId = $_.PnPDeviceID
+        if($pnpDevoceId -eq $null) { return }
+        $PnPDevice = Get-PnpDevice -InstanceId $pnpDevoceId
+        If ((Get-PnpDeviceProperty -InputObject $PnPDevice -KeyName DEVPKEY_Device_DriverInfPath).Data -eq "netbxnda.inf")
         {
+            $FoundNIC = $true
+        }
+    }
+
+    If ($FoundNIC)
+    {
         write-host -ForegroundColor darkyellow "["(date -format "HH:mm:ss")"]" " -- Please make sure to leverage the ASDK Installer for deployment, per the documentation. This installer will apply an update to this host prior to deployment."
         $Global:ChecksSuccess++
-        }
-      else
-        {        
+    }
+    else
+    {        
         write-host -ForegroundColor green "["(date -format "HH:mm:ss")"]" " -- Network cards requirements are met."
         $Global:ChecksSuccess++
-        }
+    }
 
 }
 
