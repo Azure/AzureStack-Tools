@@ -6,6 +6,8 @@ This prechecker script validates the hardware and software requirements of your 
 .DESCRIPTION
 The script provides a way to confirm the host meets the hardware and software requirements, before downloading the larger package for the Azure Stack Development Kit.
 
+For more information on ASDK requirements and considerations, see https://docs.microsoft.com/azure-stack/asdk/asdk-deploy-considerations.
+
 .EXAMPLE
 .\asdk-prechecker.ps1
 
@@ -72,9 +74,9 @@ function CheckSystemDisk {
     write-host -ForegroundColor yellow "["(date -format "HH:mm:ss")"]" "Checking system disk capacity..."
 
     $systemDisk = Get-Disk | ? {$_.IsSystem -eq $true}
-    If ($systemDisk.Size -lt 180 * 1024 * 1024 * 1024)
+    If ($systemDisk.Size -lt 200 * 1024 * 1024 * 1024)
         {
-            write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- Check system disk failed - Size should be 180 GB minimum."
+            write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- Check system disk failed - Size should be 200 GB minimum."
             $Global:ChecksFailure++
         }
         else
@@ -117,7 +119,7 @@ function CheckFreeSpaceForExtraction {
         Write-Host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- Free space check failed. No volumes are available."
         $Global:ChecksFailure++
     }
-    if ($volumes[0].SizeRemaining -lt 120 * 1024 * 1024 * 1024) {
+    if ($volumes[0].SizeRemaining -lt 130 * 1024 * 1024 * 1024) {
         write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- Free space check failed. ASDK requires 130 GB for the expanded Cloudbuilder.vhdx file. An additional 40 GB may be needed if you want to keep the ZIP and self extractor files."
         $Global:ChecksFailure++
     }
@@ -134,8 +136,8 @@ function CheckRam {
     $mem = Get-WmiObject -Class Win32_ComputerSystem
     $totalMemoryInGB = [Math]::Round($mem.TotalPhysicalMemory / (1024 * 1024 * 1024))
     write-host -ForegroundColor gray "["(date -format "HH:mm:ss")"]" " -- Memory on this server = $totalMemoryInGB"
-    if ($totalMemoryInGB -lt 96) {
-        write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- Check system memory requirement failed. At least 96GB physical memory is required."
+    if ($totalMemoryInGB -lt 192) {
+        write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- Check system memory requirement failed. At least 192 GB physical memory is required (256 GB recommended)."
         $Global:ChecksFailure++
     }
     else
@@ -251,8 +253,8 @@ function CheckCPU {
     write-host -ForegroundColor gray "["(date -format "HH:mm:ss")"]" " -- Number of CPU sockets = $CPUCount"
     write-host -ForegroundColor gray "["(date -format "HH:mm:ss")"]" " -- Number of physical cores =  $CoreCount"
 
-    If (($CPUCount -lt 2) -or ($CoreCount -lt 12)){
-    write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- CPU count must be 2 or higher, Core count must be 12 or higher (16 cores recommended)."
+    If (($CPUCount -lt 2) -or ($CoreCount -lt 16)){
+    write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- CPU count must be 2 or higher, Core count must be 16 or higher (20 cores recommended)."
     $Global:ChecksFailure++
   }
   else
