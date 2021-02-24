@@ -142,7 +142,7 @@ function CheckRam {
     }
     else
     {
-        write-host -ForegroundColor green "["(date -format "HH:mm:ss")"]" " -- System memory check passed successfully. ASDK requires a minimum of 96 GB of RAM, with 128 GB recommended."
+        write-host -ForegroundColor green "["(date -format "HH:mm:ss")"]" " -- System memory check passed successfully. ASDK requires a minimum of 192 GB of RAM, with 256 GB recommended."
         $Global:ChecksSuccess++
     }
 }
@@ -259,7 +259,7 @@ function CheckCPU {
   }
   else
   {
-    write-host -ForegroundColor green "["(date -format "HH:mm:ss")"]" " -- CPU socket count (2) and core count (12) meet the minimum requirements for ASDK."
+    write-host -ForegroundColor green "["(date -format "HH:mm:ss")"]" " -- CPU socket count ($CPUCount) and core count ($CoreCount) meet the minimum requirements for ASDK."
     $Global:ChecksSuccess++
   }
 }
