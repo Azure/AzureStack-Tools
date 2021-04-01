@@ -1620,11 +1620,6 @@ function Export-AzRefreshToken
         [ValidateNotNull()]
         [Microsoft.Azure.Commands.Common.Authentication.Abstractions.IAzureContext] $Context = (Get-AzContext -ErrorAction Stop),
 
-        # The target resource for which a token should be resolved.
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string] $Resource = ($Context.Environment.ActiveDirectoryServiceEndpointResourceId),
-
         # The target tenantId in which a token should be resolved.
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -1645,7 +1640,7 @@ function Export-AzRefreshToken
     {
         $ErrorActionPreference = 'Stop'
 
-        Write-Verbose "Attempting to retrieve a token for account '$AccountId' in tenant '$TenantId' for resource '$Resource'..."
+        Write-Verbose "Attempting to retrieve refresh token for account '$AccountId' in tenant '$TenantId'"
 
         #
         # Resolve token cache data
@@ -1681,6 +1676,11 @@ function Export-AzRefreshToken
             $provider = [Microsoft.Azure.Commands.Common.Authentication.SharedTokenCacheProvider]::new()
             $accounts = $provider.ListAccounts()
             $bytes = $provider.ReadTokenData()
+        }
+        if (-not $bytes)
+        {
+            Write-Error "Unable to resolve refresh token from empty context. Ensure you enable context autosave for the process (using Enable-AzContextAutosave -Scope Process) and then login before calling this method."
+            return
         }
         $json  = [System.Text.Encoding]::UTF8.GetString($bytes)
         $data  =  ConvertFrom-Json $json
