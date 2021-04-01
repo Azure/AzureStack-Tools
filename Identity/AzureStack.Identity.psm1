@@ -227,7 +227,7 @@ function Get-AzsHealthReport {
         Write-Host "Authenticating user..."
         $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
         $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
-        $token = Get-AzToken -FromCache
+        $token = Export-AzTokenFromCache
         
         $defaultProviderSubscription = Get-AzSubscription -SubscriptionName "Default Provider Subscription"
         $healthReportUrl = "$($AdminResourceManagerEndpoint.AbsoluteUri)/subscriptions/$($defaultProviderSubscription.SubscriptionId)/providers/Microsoft.Subscriptions.Admin/checkIdentityHealth?api-version=2018-05-01"
@@ -301,7 +301,7 @@ function Update-AzsHomeDirectoryTenant {
         Write-Host "Authenticating user..."
         $azureStackEnvironment = Initialize-AzEnvironment -EnvironmentName 'AzureStackAdmin' -ResourceManagerEndpoint $AdminResourceManagerEndpoint
         $account = Initialize-AzAccount -AzureEnvironment $azureStackEnvironment -DirectoryTenantId $DirectoryTenantName -AutomationCredential $AutomationCredential
-        $token = Get-AzToken -FromCache
+        $token = Export-AzTokenFromCache
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
         $graphEnvironment = Resolve-GraphEnvironment -ActiveDirectoryAuthority $azureStackEnvironment.ActiveDirectoryAuthority
@@ -489,7 +489,7 @@ function Register-AzsWithMyDirectoryTenant {
         }
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
-        $token = Get-AzToken -FromCache -Resource (Get-AzContext -ErrorAction Stop).Environment.GraphEndpointResourceId
+        $token = Export-AzTokenFromCache -Resource (Get-AzContext -ErrorAction Stop).Environment.GraphEndpointResourceId
         Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $token.RefreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
 
         # Initialize the service principal for the Azure Stack Resource Manager application
@@ -792,7 +792,7 @@ function Unregister-AzsWithMyDirectoryTenant {
         }
 
         # Initialize the Graph PowerShell module to communicate with the correct graph service
-        $token = Get-AzToken -FromCache -Resource (Get-AzContext -ErrorAction Stop).Environment.GraphEndpointResourceId
+        $token = Export-AzTokenFromCache -Resource (Get-AzContext -ErrorAction Stop).Environment.GraphEndpointResourceId
         Initialize-GraphEnvironment -Environment $graphEnvironment -DirectoryTenantId $DirectoryTenantName -RefreshToken $token.RefreshToken -CustomCloudARMEndpoint $TenantResourceManagerEndpoint
 
         # Call Azure Stack Resource Manager to retrieve the list of registered applications which need to be removed from the directory tenant
