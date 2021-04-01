@@ -4,8 +4,8 @@ The functions in this module allow you to perform the steps of registering your 
 
 ### Prerequisites 
 
-- You must install the correct version of Azure Powershell, and download the Azure Stack tools
-  - For Integrated Systems, see [Install Powershell for Azure Stack](https://docs.microsoft.com/azure-stack/operator/azure-stack-powershell-install). To download the Azure Stack tools, either clone this repository or [use the repository zip file](https://github.com/Azure/AzureStack-Tools/archive/master.zip).
+- You must install Azure Stack compatible Az PowerShell module, and download the Azure Stack tools
+  - For Integrated Systems, see [Install Az Powershell for Azure Stack](https://docs.microsoft.com/en-us/azure-stack/operator/powershell-install-az-module). To download the Azure Stack tools, either clone this repository or [use the repository zip file](https://github.com/Azure/AzureStack-Tools/archive/az.zip).
   - For ASDK: see [post-deployment configuration](https://docs.microsoft.com/azure-stack/asdk/asdk-post-deploy), which covers both the PowerShell for Azure Stack installation and downloading of the Azure Stack tools.
 - The registration functions must be run on a machine that has access to the Privileged Endpoint. 
 - You must have access to an Azure subscription, and your Azure account must be an Owner of the subscription.
