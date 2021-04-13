@@ -3,27 +3,14 @@
     "workbench.colorTheme": "Abyss"
 }
 
-As a prerequisite, make sure that you installed the correct PowerShell modules and versions:
+# Azure Stack
 
-For Azure Stack 1904 to 1907
+These tools are meant for use with **Azure Stack Development Kit** and Integrated Systems running build 2002 and up. For prior builds use AzureRM module supported version here: https://github.com/Azure/AzureStack-Tools/tree/master
 
-Install the AzureRM.BootStrapper module. Select Yes when prompted to install NuGet
-Install-Module -Name AzureRM.BootStrapper
+## Dependency
 
-Install and import the API Version Profile required by Azure Stack into the current PowerShell session.
-Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
-Install-Module -Name AzureStack -RequiredVersion 1.7.2
-
-
-
-For Azure stack 1901 to 1903
-
-```powershell
-Install-Module -Name AzureRM -RequiredVersion 2.4.0
-Install-Module -Name AzureStack -RequiredVersion 1.7.1
-```
-
-For all other azure stack versions, please follow the instructions at https://aka.ms/azspsh for the needed azure powershell
+To use these tools, obtain Azure Stack compatible Az PowerShell module.
+Az module - refer for installation related instructions https://docs.microsoft.com/en-us/azure-stack/operator/powershell-install-az-module
 
 Then make sure the following modules are imported:
 
@@ -62,7 +49,7 @@ To ensure that you are using the latest version, delete any existing versions of
 
 ### Updating Azure AD tenant permissions
 
-You should now be able to update the permissions which should clear the alert. Run the following commands from the **Azurestack-tools-master/identity** folder:
+You should now be able to update the permissions which should clear the alert. Run the following commands from the **Azurestack-tools-az/identity** folder:
 
 ```powershell
 Import-Module ..\Connect\AzureStack.Connect.psm1
