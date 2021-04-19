@@ -899,10 +899,10 @@ $Xaml = @'
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsSelected" Value="true">
-                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
+                                        <Setter TargetName="Border" Property="Background" Value="#0C9087"/>
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="true">
-                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
+                                        <Setter TargetName="Border" Property="Background" Value="#0C9087"/>
                                         <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
@@ -1088,13 +1088,13 @@ $Xaml = @'
                 <!--#region NetworkInterface-->
                 <StackPanel x:Name="Control_NetInterface_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Select a network adapter" Margin="0,0,0,10"/>
+                        <TextBlock Name="Control_Grid_Net_Text" FontSize="16" FontFamily="Segoe UI"  Text="Select a network adapter" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <ListView x:Name="Control_NetInterface_Lvw_Nics" MinHeight="100" MaxHeight="200" Width="550" SelectionMode="Single">
+                                <ListView AutomationProperties.LabeledBy="{Binding ElementName=Control_Grid_Net_Text}" x:Name="Control_NetInterface_Lvw_Nics" MinHeight="100" MaxHeight="200" Width="550" SelectionMode="Single">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="Name" Width="100" DisplayMemberBinding ="{Binding 'Name'}" />
@@ -1110,7 +1110,7 @@ $Xaml = @'
                                             <Setter Property="OverridesDefaultStyle" Value="true"/>                                       
                                             <Setter Property="AutomationProperties.Name">
                                                 <Setter.Value>
-                                                    <MultiBinding StringFormat="{}Name:{0};Status:{1};IPv4Address:{2};Gateway:{3};DHCP:{4}">
+                                                    <MultiBinding StringFormat="{}{0} {1} {2} {3} {4}">
                                                         <Binding Path="Name"/>
                                                         <Binding Path="ConnectionState"/>
                                                         <Binding Path="Ipv4Address"/>
@@ -1130,10 +1130,10 @@ $Xaml = @'
                                                                 </Border>
                                                                 <ControlTemplate.Triggers>
                                                                     <Trigger Property="IsSelected" Value="true">
-                                                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
+                                                                        <Setter TargetName="Border" Property="Background" Value="#0C9087"/>
                                                                     </Trigger>
                                                                     <Trigger Property="IsMouseOver" Value="true">
-                                                                        <Setter TargetName="Border" Property="Background" Value="#337096"/>
+                                                                        <Setter TargetName="Border" Property="Background" Value="#0C9087"/>
                                                                         <Setter TargetName="Border" Property="Cursor" Value="Hand"/>
                                                                     </Trigger>
                                                                 </ControlTemplate.Triggers>
@@ -1335,18 +1335,15 @@ $Xaml = @'
                 <!--#region Reboot-->
                 <StackPanel x:Name="Control_Reboot_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="280">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Select a onetime boot option" Margin="0,0,0,10"/>
+                        <TextBlock Name="Control_Grid_Boot_Text" FontSize="16" FontFamily="Segoe UI"  Text="Select a onetime boot option" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <ListView x:Name="Control_Reboot_Lvw_Options" Height="100" Width="550" SelectionMode="Single" >
+                            <ListView AutomationProperties.LabeledBy="{Binding ElementName=Control_Grid_Boot_Text}" x:Name="Control_Reboot_Lvw_Options" Height="100" Width="550" SelectionMode="Single" >
                                 <ListView.View>
                                     <GridView>
                                         <GridViewColumn Header="Name" Width="540" DisplayMemberBinding ="{Binding 'Description'}" />
                                     </GridView>
                                 </ListView.View>
                             </ListView>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock FontSize="14" FontFamily="Segoe UI"  TextWrapping="Wrap" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -1481,6 +1478,7 @@ $S_PrepareVHDX = {
         $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Inlines.Add("Error: Insufficient disk space")},"Normal")
         $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Inlines.Add((New-Object System.Windows.Documents.LineBreak))},"Normal")
         $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Inlines.Add($Prepare_details)},"Normal")
+        $synchash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Details.Visibility='Visible'},"Normal")
         Break
         }
     #endregion
@@ -1785,6 +1783,7 @@ $S_Netbxnda = {
     $syncHash.Control_Job_Pgb_Progress.Dispatcher.Invoke([action]{$syncHash.Control_Job_Pgb_Progress.Value='100'},"Normal")
     $synchash.Control_Job_Tbl_Current.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Current.Text='Completed'},"Normal")
     $syncHash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$syncHash.Control_Job_Tbl_Details.Clear()},"Normal")
+    $synchash.Control_Job_Tbl_Details.Dispatcher.Invoke([action]{$synchash.Control_Job_Tbl_Details.Visibility='Collapsed'},"Normal")
     $syncHash.Control_Job_Btn_Next.Dispatcher.Invoke([action]{$syncHash.Control_Job_Btn_Next.IsEnabled=$true},"Normal")
     #endregion
     
