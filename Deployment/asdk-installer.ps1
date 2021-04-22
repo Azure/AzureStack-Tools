@@ -1003,11 +1003,12 @@ $Xaml = @'
                 <!--#region Prepare-->
                 <StackPanel x:Name="Control_Prepare_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI" Text="Cloudbuilder.vhdx" Margin="0,0,0,10" />
+                        <TextBlock x:Name="vhdx_Title" FontSize="16" FontFamily="Segoe UI" Text="Cloudbuilder.vhdx" Margin="0,0,0,10" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBox x:Name="Control_Prepare_Tbx_Vhdx" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="440" />
+                            <TextBox AutomationProperties.LabeledBy="{Binding ElementName=vhdx_Title}" x:Name="Control_Prepare_Tbx_Vhdx" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="440" />
                             <Button x:Name="Control_Prepare_Btn_Vhdx" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
                         </StackPanel>
+						<TextBlock x:Name="Control_Prepare_Tbx_Detail" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,0,0,0" />
                         <CheckBox x:Name="Control_Prepare_Chb_Drivers" VerticalAlignment="Center" Content="Add drivers" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Prepare_Stp_Drivers" Orientation="Horizontal" Margin="25,0,0,10" Visibility="Collapsed">
                             <TextBox x:Name="Control_Prepare_Tbx_Drivers" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="415" />
@@ -1216,6 +1217,7 @@ $Xaml = @'
                             <TextBlock x:Name="Control_NetConfig_Tbl_TimeServer" FontSize="14" FontFamily="Segoe UI"  Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_TimeServer}" />
                         </StackPanel>
+						<TextBlock x:Name="Control_NetConfig_Tbl_TimeServer_Detail" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" />
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -2480,6 +2482,8 @@ $syncHash.Control_Prepare_Btn_Vhdx.Add_Click({
     if ($Script:F_Browse_obj.FileName) {
         $syncHash.Control_Prepare_Tbx_Vhdx.Text = $Script:F_Browse_obj.FileName
         if ((Get-DiskImage -ImagePath $syncHash.Control_Prepare_Tbx_Vhdx.Text).Attached) {
+			$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Visible"
+            $syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_IsMounted
             F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -nocondition -message $Text_SafeOS.Prepare_VHDX_IsMounted
             $syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
         }
@@ -2779,11 +2783,35 @@ $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
 })
 
 $syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
+	$fiedlValue = $syncHash.Control_NetConfig_Tbx_TimeServer.Text
+    $regexpre = $Regex.IpAddress
+    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Text = $Text_Generic.Regex_IpAddress
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_TimeServer' -field_value $syncHash.Control_NetConfig_Tbx_TimeServer.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_DnsForwarder.Add_TextChanged({
+	$fiedlValue = $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text
+    $regexpre = $Regex.IpAddress
+    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Text = $Text_Generic.Regex_IpAddress
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_DnsForwarder' -field_value $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
