@@ -1224,6 +1224,7 @@ $Xaml = @'
                                 <TextBlock x:Name="Control_NetConfig_Tbl_DnsForwarder" FontSize="14" FontFamily="Segoe UI"  Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DnsForwarder}"/>
                             </StackPanel>
+							<TextBlock x:Name="Control_NetConfig_Tbx_DnsForwarder_Detail" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" />
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
