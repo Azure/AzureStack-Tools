@@ -2657,9 +2657,9 @@ $syncHash.Control_Unattend_Chb_Computername.Add_Click({
 })
 
 $syncHash.Control_Unattend_Tbx_Computername.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_Unattend_Tbx_Computername.Text
+	$fieldValue = $syncHash.Control_Unattend_Tbx_Computername.Text
     $regexpre = $Regex.Computername
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_Unattend_Tbx_Computername_Details.Visibility = "Visible"
         $syncHash.Control_Unattend_Tbx_Computername_Details.Text = $Text_Generic.Regex_Computername
@@ -2727,9 +2727,9 @@ $syncHash.Control_Creds_Cbx_Idp.Add_SelectionChanged({
 })
 
 $syncHash.Control_Creds_Tbx_AADTenant.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_Creds_Tbx_AADTenant.Text
+	$fieldValue = $syncHash.Control_Creds_Tbx_AADTenant.Text
     $regexpre = $Regex.Fqdn
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_Creds_Tbx_AADTenant_Details.Visibility = "Visible"
         $syncHash.Control_Creds_Tbx_AADTenant_Details.Text = $Text_Generic.Regex_Fqdn
@@ -2823,9 +2823,9 @@ $syncHash.Control_NetConfig_Btn_Next.Add_Click({
 })
 
 $syncHash.Control_NetConfig_Tbx_IpAddress.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
     $regexpre = $Regex.IpAddressCidr
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_NetConfig_Tbx_IpAddress_Details.Visibility = "Visible"
         $syncHash.Control_NetConfig_Tbx_IpAddress_Details.Text = $Text_Generic.Regex_IpAddressCidr
@@ -2840,9 +2840,9 @@ $syncHash.Control_NetConfig_Tbx_IpAddress.Add_TextChanged({
 })
 
 $syncHash.Control_NetConfig_Tbx_Gateway.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_NetConfig_Tbx_Gateway.Text
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_Gateway.Text
     $regexpre = $Regex.IpAddress
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_NetConfig_Tbx_Gateway_Details.Visibility = "Visible"
         $syncHash.Control_NetConfig_Tbx_Gateway_Details.Text = $Text_Generic.Regex_IpAddress
@@ -2857,9 +2857,9 @@ $syncHash.Control_NetConfig_Tbx_Gateway.Add_TextChanged({
 })
 
 $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_NetConfig_Tbx_Dns.Text
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_Dns.Text
     $regexpre = $Regex.IpAddress
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_NetConfig_Tbx_Dns_Details.Visibility = "Visible"
         $syncHash.Control_NetConfig_Tbx_Dns_Details.Text = $Text_Generic.Regex_IpAddress
@@ -2874,9 +2874,9 @@ $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
 })
 
 $syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_NetConfig_Tbx_TimeServer.Text
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_TimeServer.Text
     $regexpre = $Regex.IpAddress
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Visibility = "Visible"
         $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Text = $Text_Generic.Regex_IpAddress
@@ -2891,9 +2891,9 @@ $syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
 })
 
 $syncHash.Control_NetConfig_Tbx_DnsForwarder.Add_TextChanged({
-	$fiedlValue = $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text
     $regexpre = $Regex.IpAddress
-    if (($fiedlValue.Length -gt 0) -and ($fiedlValue -notmatch "^($regexpre)$"))
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
     {
         $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Visibility = "Visible"
         $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Text = $Text_Generic.Regex_IpAddress
