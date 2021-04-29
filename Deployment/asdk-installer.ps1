@@ -2060,7 +2060,7 @@ Function F_Verify_LocalAdminCreds {
          $syncHash.Control_Creds_Tbl_ErrorMessage.Visibility='Visible'
          $syncHash.Control_Creds_Tbl_ErrorMessage.Focus()
 
-         #F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
+         F_Regex -field 'Control_Creds_Pwb_LocalPassword' -field_value $syncHash.Control_Creds_Pwb_LocalPassword.Password -nocondition -message $Text_Generic.Regex_LocalAdmin
     }
 }
 
@@ -2493,7 +2493,7 @@ $syncHash.Control_Prepare_Btn_Vhdx.Add_Click({
         if ((Get-DiskImage -ImagePath $syncHash.Control_Prepare_Tbx_Vhdx.Text).Attached) {
 			$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Visible"
             $syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_IsMounted
-            #F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -nocondition -message $Text_SafeOS.Prepare_VHDX_IsMounted
+            F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -nocondition -message $Text_SafeOS.Prepare_VHDX_IsMounted
             $syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
         }
         else {
@@ -2542,7 +2542,7 @@ $syncHash.Control_Prepare_Tbx_Drivers.Add_TextChanged({
 			$syncHash.Control_Prepare_Tbx_Drivers_Details.Visibility = "Collapsed"
 		}
 		
-        #F_Regex -field 'Control_Prepare_Tbx_Drivers'-field_value $syncHash.Control_Prepare_Tbx_Drivers.Text -validpath -message $Text_SafeOS.Prepare_Drivers_InvalidPath
+        F_Regex -field 'Control_Prepare_Tbx_Drivers'-field_value $syncHash.Control_Prepare_Tbx_Drivers.Text -validpath -message $Text_SafeOS.Prepare_Drivers_InvalidPath
         if (!($script:validation_error)){F_VerifyFields_Prepare}
         else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
     }
@@ -2612,7 +2612,7 @@ $syncHash.Control_Unattend_Pwb_LocalPassword.Add_PasswordChanged({
         If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -cne $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password) {
 			$syncHash.Control_Unattend_Pwb_LocalPassword_Details.Visibility = "Visible"
 			$syncHash.Control_Unattend_Pwb_LocalPassword_Details.Text = $Text_Generic.Password_NotMatch
-            #F_Regex -field 'Control_Unattend_Pwb_LocalPassword'-nocondition -message $Text_Generic.Password_NotMatch
+            F_Regex -field 'Control_Unattend_Pwb_LocalPassword'-nocondition -message $Text_Generic.Password_NotMatch
             $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
         }
         Else {
@@ -2631,7 +2631,7 @@ $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Add_PasswordChanged({
         If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password -cne $syncHash.Control_Unattend_Pwb_LocalPassword.Password) {
 			$syncHash.Control_Unattend_Pwb_LocalPasswordConfirm_Details.Visibility = "Visible"
 			$syncHash.Control_Unattend_Pwb_LocalPasswordConfirm_Details.Text = $Text_Generic.Password_NotMatch
-            #F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
+            F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
             $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
         }
         Else {
@@ -2669,7 +2669,7 @@ $syncHash.Control_Unattend_Tbx_Computername.Add_TextChanged({
         $syncHash.Control_Unattend_Tbx_Computername_Details.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
+    F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
     F_VerifyFields_Unattend
 })
 #endregion Events Unattend
@@ -2739,7 +2739,7 @@ $syncHash.Control_Creds_Tbx_AADTenant.Add_TextChanged({
         $syncHash.Control_Creds_Tbx_AADTenant_Details.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_Creds_Tbx_AADTenant' -field_value $syncHash.Control_Creds_Tbx_AADTenant.Text -regex $Regex.Fqdn -message $Text_Generic.Regex_Fqdn
+    F_Regex -field 'Control_Creds_Tbx_AADTenant' -field_value $syncHash.Control_Creds_Tbx_AADTenant.Text -regex $Regex.Fqdn -message $Text_Generic.Regex_Fqdn
     F_VerifyFields_Creds
 })
 
@@ -2835,7 +2835,7 @@ $syncHash.Control_NetConfig_Tbx_IpAddress.Add_TextChanged({
         $syncHash.Control_NetConfig_Tbx_IpAddress_Details.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_NetConfig_Tbx_IpAddress' -field_value $syncHash.Control_NetConfig_Tbx_IpAddress.Text -regex $Regex.IpAddressCidr -message $Text_Generic.Regex_IpAddressCidr
+    F_Regex -field 'Control_NetConfig_Tbx_IpAddress' -field_value $syncHash.Control_NetConfig_Tbx_IpAddress.Text -regex $Regex.IpAddressCidr -message $Text_Generic.Regex_IpAddressCidr
     F_VerifyFields_NetConfig
 })
 
@@ -2852,7 +2852,7 @@ $syncHash.Control_NetConfig_Tbx_Gateway.Add_TextChanged({
         $syncHash.Control_NetConfig_Tbx_Gateway_Details.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_NetConfig_Tbx_Gateway' -field_value $syncHash.Control_NetConfig_Tbx_Gateway.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_Regex -field 'Control_NetConfig_Tbx_Gateway' -field_value $syncHash.Control_NetConfig_Tbx_Gateway.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
@@ -2869,7 +2869,7 @@ $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
         $syncHash.Control_NetConfig_Tbx_Dns_Details.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_NetConfig_Tbx_Dns' -field_value $syncHash.Control_NetConfig_Tbx_Dns.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_Regex -field 'Control_NetConfig_Tbx_Dns' -field_value $syncHash.Control_NetConfig_Tbx_Dns.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
@@ -2886,7 +2886,7 @@ $syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
         $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_NetConfig_Tbx_TimeServer' -field_value $syncHash.Control_NetConfig_Tbx_TimeServer.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_Regex -field 'Control_NetConfig_Tbx_TimeServer' -field_value $syncHash.Control_NetConfig_Tbx_TimeServer.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
@@ -2903,7 +2903,7 @@ $syncHash.Control_NetConfig_Tbx_DnsForwarder.Add_TextChanged({
         $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Visibility = "Collapsed"
     }
 	
-    #F_Regex -field 'Control_NetConfig_Tbx_DnsForwarder' -field_value $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
+    F_Regex -field 'Control_NetConfig_Tbx_DnsForwarder' -field_value $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
