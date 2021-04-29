@@ -1003,16 +1003,18 @@ $Xaml = @'
                 <!--#region Prepare-->
                 <StackPanel x:Name="Control_Prepare_Stp" HorizontalAlignment="Left" Visibility="Collapsed">
                     <StackPanel Height="320">
-                        <TextBlock FontSize="16" FontFamily="Segoe UI" Text="Cloudbuilder.vhdx" Margin="0,0,0,10" />
+                        <TextBlock x:Name="vhdx_Title" FontSize="16" FontFamily="Segoe UI" Text="Cloudbuilder.vhdx" Margin="0,0,0,10" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBox x:Name="Control_Prepare_Tbx_Vhdx" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="440" />
+                            <TextBox AutomationProperties.LabeledBy="{Binding ElementName=vhdx_Title}" x:Name="Control_Prepare_Tbx_Vhdx" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="440" />
                             <Button x:Name="Control_Prepare_Btn_Vhdx" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
                         </StackPanel>
+						<TextBlock x:Name="Control_Prepare_Tbx_Detail" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,0,0,0" Focusable="True" />
                         <CheckBox x:Name="Control_Prepare_Chb_Drivers" VerticalAlignment="Center" Content="Add drivers" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Prepare_Stp_Drivers" Orientation="Horizontal" Margin="25,0,0,10" Visibility="Collapsed">
                             <TextBox x:Name="Control_Prepare_Tbx_Drivers" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="415" />
                             <Button x:Name="Control_Prepare_Btn_Drivers" Content="Browse" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0" />
                         </StackPanel>
+						<TextBlock x:Name="Control_Prepare_Tbx_Drivers_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="Control_Prepare_Btn_Previous" Content="Previous" Height="23.5" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -1033,15 +1035,18 @@ $Xaml = @'
                                 <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Password:" Width="120" HorizontalAlignment="Left"/>
                                 <PasswordBox x:Name="Control_Unattend_Pwb_LocalPassword" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" />
                             </StackPanel>
+							<TextBlock x:Name="Control_Unattend_Pwb_LocalPassword_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True" />
                             <StackPanel Orientation="Horizontal" Margin="25,0,0,10">
                                 <TextBlock FontSize="14" FontFamily="Segoe UI"  Text="Confirm Password:" Width="120" HorizontalAlignment="Left"/>
                                 <PasswordBox x:Name="Control_Unattend_Pwb_LocalPasswordConfirm" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" IsEnabled="False" />
                             </StackPanel>
+							<TextBlock x:Name="Control_Unattend_Pwb_LocalPasswordConfirm_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True" />
                         </StackPanel>
                         <CheckBox x:Name="Control_Unattend_Chb_Computername" VerticalAlignment="Center" Content="Computername" Margin="0,0,0,10" />
                         <StackPanel x:Name="Control_Unattend_Stp_Computername" Visibility="Collapsed">
                             <TextBox x:Name="Control_Unattend_Tbx_Computername" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="405" Text="" HorizontalAlignment="Right"/>
                         </StackPanel>
+						<TextBlock x:Name="Control_Unattend_Tbx_Computername_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="0,0,0,0" Focusable="True" />
                         <CheckBox x:Name="Control_Unattend_Chb_StaticIP" VerticalAlignment="Center" Content="Static IP configuration" Margin="0,0,0,10" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -1066,6 +1071,7 @@ $Xaml = @'
                                 <TextBlock x:Name="Control_Creds_Tbl_AADTenant" FontSize="14" FontFamily="Segoe UI"  Text="AAD Directory:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_Creds_Tbx_AADTenant" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_Creds_Tbl_AADTenant}" />
                             </StackPanel>
+							<TextBlock x:Name="Control_Creds_Tbx_AADTenant_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                         </StackPanel>
                         <StackPanel x:Name="Control_Creds_Stp_LocalPassword" Visibility="Visible">
                             <TextBlock x:Name="Control_Creds_Tbl_LocalAdminPassword"  FontSize="16" FontFamily="Segoe UI"  Text="Local Administrator Password" Margin="0,0,0,10"/>
@@ -1204,24 +1210,29 @@ $Xaml = @'
                             <TextBlock x:Name="Control_NetConfig_Tbl_IpAddress" FontSize="14" FontFamily="Segoe UI"  Text="Ip Address:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_IpAddress" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_IpAddress}"/>
                         </StackPanel>
+						<TextBlock x:Name="Control_NetConfig_Tbx_IpAddress_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_Gateway">
                             <TextBlock x:Name="Control_NetConfig_Tbl_Gateway" FontSize="14" FontFamily="Segoe UI"  Text="Gateway:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_Gateway" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"  Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_Gateway}"/>
                         </StackPanel>
+						<TextBlock x:Name="Control_NetConfig_Tbx_Gateway_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10" x:Name="Control_NetConfig_Stp_DNS">
                             <TextBlock x:Name="Control_NetConfig_Tbl_DNS" FontSize="14" FontFamily="Segoe UI"  Text="DNS:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_DNS" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" IsEnabled="False" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DNS}" />
                         </StackPanel>
+						<TextBlock x:Name="Control_NetConfig_Tbx_DNS_Details" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <TextBlock x:Name="Control_NetConfig_Tbl_TimeServer" FontSize="14" FontFamily="Segoe UI"  Text="Time Server IP:" Width="120" HorizontalAlignment="Left"/>
                             <TextBox x:Name="Control_NetConfig_Tbx_TimeServer" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_TimeServer}" />
                         </StackPanel>
+						<TextBlock x:Name="Control_NetConfig_Tbl_TimeServer_Detail" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                         <StackPanel x:Name="Control_NetConfig_Stp_Optional">
                             <TextBlock FontSize="16" FontFamily="Segoe UI"  Text="Optional Configuration" Margin="0,0,0,10"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <TextBlock x:Name="Control_NetConfig_Tbl_DnsForwarder" FontSize="14" FontFamily="Segoe UI"  Text="DNS Forwarder IP:" Width="120" HorizontalAlignment="Left"/>
                                 <TextBox x:Name="Control_NetConfig_Tbx_DnsForwarder" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Width="430" AutomationProperties.LabeledBy="{Binding ElementName=Control_NetConfig_Tbl_DnsForwarder}"/>
                             </StackPanel>
+							<TextBlock x:Name="Control_NetConfig_Tbx_DnsForwarder_Detail" FontSize="12" FontFamily="Segoe UI" Foreground="Red" Text="" TextWrapping="Wrap" HorizontalAlignment="Left" Visibility="Collapsed" Margin="120,0,0,0" Focusable="True"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -2480,6 +2491,8 @@ $syncHash.Control_Prepare_Btn_Vhdx.Add_Click({
     if ($Script:F_Browse_obj.FileName) {
         $syncHash.Control_Prepare_Tbx_Vhdx.Text = $Script:F_Browse_obj.FileName
         if ((Get-DiskImage -ImagePath $syncHash.Control_Prepare_Tbx_Vhdx.Text).Attached) {
+			$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Visible"
+            $syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_IsMounted
             F_Regex -field 'Control_Prepare_Tbx_Vhdx' -field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -nocondition -message $Text_SafeOS.Prepare_VHDX_IsMounted
             $syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
         }
@@ -2519,9 +2532,23 @@ $syncHash.Control_Prepare_Btn_Drivers.Add_Click({
 
 $syncHash.Control_Prepare_Tbx_Drivers.Add_TextChanged({
     if ($syncHash.Control_Prepare_Tbx_Drivers.Text.Length -gt 0) {
+		if (!(test-path $syncHash.Control_Prepare_Tbx_Drivers.Text)) 
+		{
+			$syncHash.Control_Prepare_Tbx_Drivers_Details.Visibility = "Visible"
+			$syncHash.Control_Prepare_Tbx_Drivers_Details.Text = $Text_SafeOS.Prepare_Drivers_InvalidPath
+		}
+		else
+		{
+			$syncHash.Control_Prepare_Tbx_Drivers_Details.Visibility = "Collapsed"
+		}
+		
         F_Regex -field 'Control_Prepare_Tbx_Drivers'-field_value $syncHash.Control_Prepare_Tbx_Drivers.Text -validpath -message $Text_SafeOS.Prepare_Drivers_InvalidPath
         if (!($script:validation_error)){F_VerifyFields_Prepare}
         else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    }
+	else
+    {
+        $syncHash.Control_Prepare_Tbx_Drivers_Details.Visibility = "Collapsed"
     }
 })
 #endregion Events Prepare
@@ -2583,10 +2610,14 @@ $syncHash.Control_Unattend_Pwb_LocalPassword.Add_PasswordChanged({
     #Match the password with the confirmation field (only if it contains a value) while typing
     If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password) {
         If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password -cne $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password) {
+			$syncHash.Control_Unattend_Pwb_LocalPassword_Details.Visibility = "Visible"
+			$syncHash.Control_Unattend_Pwb_LocalPassword_Details.Text = $Text_Generic.Password_NotMatch
             F_Regex -field 'Control_Unattend_Pwb_LocalPassword'-nocondition -message $Text_Generic.Password_NotMatch
             $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
         }
         Else {
+			$syncHash.Control_Unattend_Pwb_LocalPassword_Details.Visibility = "Collapsed"
+            $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm_Details.Visibility = "Collapsed"
             F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
             F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'
             F_VerifyFields_Unattend
@@ -2598,10 +2629,14 @@ $syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Add_PasswordChanged({
     #Match the password with the confirmation field (only if it contains a value) while typing
     If ($syncHash.Control_Unattend_Pwb_LocalPassword.Password) {
         If ($syncHash.Control_Unattend_Pwb_LocalPasswordConfirm.Password -cne $syncHash.Control_Unattend_Pwb_LocalPassword.Password) {
+			$syncHash.Control_Unattend_Pwb_LocalPasswordConfirm_Details.Visibility = "Visible"
+			$syncHash.Control_Unattend_Pwb_LocalPasswordConfirm_Details.Text = $Text_Generic.Password_NotMatch
             F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'-nocondition -message $Text_Generic.Password_NotMatch
             $syncHash.Control_Unattend_Btn_Next.IsEnabled = $false
         }
         Else {
+			$syncHash.Control_Unattend_Pwb_LocalPasswordConfirm_Details.Visibility = "Collapsed"
+            $syncHash.Control_Unattend_Pwb_LocalPassword_Details.Visibility = "Collapsed"
             F_Regex -field 'Control_Unattend_Pwb_LocalPasswordConfirm'
             F_Regex -field 'Control_Unattend_Pwb_LocalPassword'
             F_VerifyFields_Unattend
@@ -2622,6 +2657,18 @@ $syncHash.Control_Unattend_Chb_Computername.Add_Click({
 })
 
 $syncHash.Control_Unattend_Tbx_Computername.Add_TextChanged({
+	$fieldValue = $syncHash.Control_Unattend_Tbx_Computername.Text
+    $regexpre = $Regex.Computername
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_Unattend_Tbx_Computername_Details.Visibility = "Visible"
+        $syncHash.Control_Unattend_Tbx_Computername_Details.Text = $Text_Generic.Regex_Computername
+    }
+    else
+    {
+        $syncHash.Control_Unattend_Tbx_Computername_Details.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_Unattend_Tbx_Computername' -field_value $syncHash.Control_Unattend_Tbx_Computername.Text -regex $Regex.Computername -message $Text_Generic.Regex_Computername
     F_VerifyFields_Unattend
 })
@@ -2680,6 +2727,18 @@ $syncHash.Control_Creds_Cbx_Idp.Add_SelectionChanged({
 })
 
 $syncHash.Control_Creds_Tbx_AADTenant.Add_TextChanged({
+	$fieldValue = $syncHash.Control_Creds_Tbx_AADTenant.Text
+    $regexpre = $Regex.Fqdn
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_Creds_Tbx_AADTenant_Details.Visibility = "Visible"
+        $syncHash.Control_Creds_Tbx_AADTenant_Details.Text = $Text_Generic.Regex_Fqdn
+    }
+    else
+    {
+        $syncHash.Control_Creds_Tbx_AADTenant_Details.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_Creds_Tbx_AADTenant' -field_value $syncHash.Control_Creds_Tbx_AADTenant.Text -regex $Regex.Fqdn -message $Text_Generic.Regex_Fqdn
     F_VerifyFields_Creds
 })
@@ -2764,26 +2823,86 @@ $syncHash.Control_NetConfig_Btn_Next.Add_Click({
 })
 
 $syncHash.Control_NetConfig_Tbx_IpAddress.Add_TextChanged({
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_IpAddress.Text
+    $regexpre = $Regex.IpAddressCidr
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbx_IpAddress_Details.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbx_IpAddress_Details.Text = $Text_Generic.Regex_IpAddressCidr
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbx_IpAddress_Details.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_IpAddress' -field_value $syncHash.Control_NetConfig_Tbx_IpAddress.Text -regex $Regex.IpAddressCidr -message $Text_Generic.Regex_IpAddressCidr
     F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_Gateway.Add_TextChanged({
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_Gateway.Text
+    $regexpre = $Regex.IpAddress
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbx_Gateway_Details.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbx_Gateway_Details.Text = $Text_Generic.Regex_IpAddress
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbx_Gateway_Details.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_Gateway' -field_value $syncHash.Control_NetConfig_Tbx_Gateway.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_Dns.Add_TextChanged({
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_Dns.Text
+    $regexpre = $Regex.IpAddress
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbx_Dns_Details.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbx_Dns_Details.Text = $Text_Generic.Regex_IpAddress
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbx_Dns_Details.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_Dns' -field_value $syncHash.Control_NetConfig_Tbx_Dns.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_TimeServer.Add_TextChanged({
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_TimeServer.Text
+    $regexpre = $Regex.IpAddress
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Text = $Text_Generic.Regex_IpAddress
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbl_TimeServer_Detail.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_TimeServer' -field_value $syncHash.Control_NetConfig_Tbx_TimeServer.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
 
 $syncHash.Control_NetConfig_Tbx_DnsForwarder.Add_TextChanged({
+	$fieldValue = $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text
+    $regexpre = $Regex.IpAddress
+    if (($fieldValue.Length -gt 0) -and ($fieldValue -notmatch "^($regexpre)$"))
+    {
+        $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Visibility = "Visible"
+        $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Text = $Text_Generic.Regex_IpAddress
+    }
+    else
+    {
+        $syncHash.Control_NetConfig_Tbx_DnsForwarder_Detail.Visibility = "Collapsed"
+    }
+	
     F_Regex -field 'Control_NetConfig_Tbx_DnsForwarder' -field_value $syncHash.Control_NetConfig_Tbx_DnsForwarder.Text -regex $Regex.IpAddress -message $Text_Generic.Regex_IpAddress
     F_VerifyFields_NetConfig
 })
