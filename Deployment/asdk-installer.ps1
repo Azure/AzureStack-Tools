@@ -2125,17 +2125,31 @@ Function F_VerifyFields_NetConfig {
 }
 
 Function F_VerifyFields_Prepare {
-    $EnableButton=$false
+    $isButtonEnable = $false
+	$vhdxLocation = $syncHash.Control_Prepare_Tbx_Vhdx.Text
+    if ($vhdxLocation -and (Test-Path $vhdxLocation) -and ([IO.Path]::GetExtension($vhdxLocation) -eq ".vhdx"))
+	{
+		if(!(Get-DiskImage -ImagePath $vhdxLocation).Attached)
+		{
+			$isButtonEnable = $true
+		}
+		else
+		{
+			$syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_IsMounted
+		}
+	}
 
-    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text){$EnableButton=$true}
-
-    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text -and $syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
-        if ($syncHash.Control_Prepare_Tbx_Drivers.Text){$EnableButton=$true}
-        else {$EnableButton=$false}
+    if ($vhdxLocation -and $syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
+        if ($syncHash.Control_Prepare_Tbx_Drivers.Text){$isButtonEnable=$true}
+        else {$isButtonEnable=$false}
     }
 
-    if ($EnableButton){$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true}
-    Else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    if ($isButtonEnable)
+	{
+		$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Collapsed"
+		$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true
+	}
+    else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
 }
 
 Function F_VerifyFields_Unattend {
@@ -2507,7 +2521,11 @@ $syncHash.Control_Prepare_Tbx_Vhdx.Add_TextChanged({
     if ($syncHash.Control_Prepare_Tbx_Vhdx.Text.Length -gt 0) {
         F_Regex -field 'Control_Prepare_Tbx_Vhdx'-field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -validpath -message $Text_SafeOS.Prepare_VHDX_InvalidPath
         if (!($script:validation_error)){F_VerifyFields_Prepare}
-        else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+        else 
+		{
+			$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
+			$syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_InvalidPath
+		}
     }
 })
 
