@@ -2126,7 +2126,7 @@ Function F_VerifyFields_NetConfig {
 
 Function F_VerifyFields_Prepare {
     $vhdxVerified = $false
-	$driverVerified = $true
+	$driverVerified = $false
 	$vhdxPath = $syncHash.Control_Prepare_Tbx_Vhdx.Text
 	$driverPath = $syncHash.Control_Prepare_Tbx_Drivers.Text
     if ($vhdxPath -and (Test-Path $vhdxPath) -and ([IO.Path]::GetExtension($vhdxPath) -eq ".vhdx"))
@@ -2144,13 +2144,17 @@ Function F_VerifyFields_Prepare {
     if ($syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
         if ($driverPath -and (Test-Path $driverPath))
 		{
-			$driverVerified=$true
+			$driverVerified = $true
 		}
         else 
 		{
-			$driverVerified=$false
+			$driverVerified = $false
 		}
     }
+	else
+	{
+		$driverVerified = $true
+	}
 
     if ($vhdxVerified -and $driverVerified)
 	{
