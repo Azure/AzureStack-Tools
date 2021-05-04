@@ -2125,13 +2125,15 @@ Function F_VerifyFields_NetConfig {
 }
 
 Function F_VerifyFields_Prepare {
-    $isButtonEnable = $false
-	$vhdxLocation = $syncHash.Control_Prepare_Tbx_Vhdx.Text
-    if ($vhdxLocation -and (Test-Path $vhdxLocation) -and ([IO.Path]::GetExtension($vhdxLocation) -eq ".vhdx"))
+    $vhdxVerified = $false
+	$driverVerified = $true
+	$vhdxPath = $syncHash.Control_Prepare_Tbx_Vhdx.Text
+	$driverPath = $syncHash.Control_Prepare_Tbx_Drivers.Text
+    if ($vhdxPath -and (Test-Path $vhdxPath) -and ([IO.Path]::GetExtension($vhdxPath) -eq ".vhdx"))
 	{
-		if(!(Get-DiskImage -ImagePath $vhdxLocation).Attached)
+		if(!(Get-DiskImage -ImagePath $vhdxPath).Attached)
 		{
-			$isButtonEnable = $true
+			$vhdxVerified = $true
 		}
 		else
 		{
@@ -2139,17 +2141,26 @@ Function F_VerifyFields_Prepare {
 		}
 	}
 
-    if ($vhdxLocation -and $syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
-        if ($syncHash.Control_Prepare_Tbx_Drivers.Text){$isButtonEnable=$true}
-        else {$isButtonEnable=$false}
+    if ($syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
+        if ($driverPath -and (Test-Path $driverPath))
+		{
+			$driverVerified=$true
+		}
+        else 
+		{
+			$driverVerified=$false
+		}
     }
 
-    if ($isButtonEnable)
+    if ($vhdxVerified -and $driverVerified)
 	{
 		$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Collapsed"
 		$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true
 	}
-    else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    else 
+	{
+		$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
+	}
 }
 
 Function F_VerifyFields_Unattend {
