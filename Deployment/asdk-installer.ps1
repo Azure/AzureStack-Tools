@@ -2125,17 +2125,46 @@ Function F_VerifyFields_NetConfig {
 }
 
 Function F_VerifyFields_Prepare {
-    $EnableButton=$false
+    $vhdxVerified = $false
+	$driverVerified = $false
+	$vhdxPath = $syncHash.Control_Prepare_Tbx_Vhdx.Text
+	$driverPath = $syncHash.Control_Prepare_Tbx_Drivers.Text
+    if ($vhdxPath -and (Test-Path $vhdxPath) -and ([IO.Path]::GetExtension($vhdxPath) -eq ".vhdx"))
+	{
+		if(!(Get-DiskImage -ImagePath $vhdxPath).Attached)
+		{
+			$vhdxVerified = $true
+		}
+		else
+		{
+			$syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_IsMounted
+		}
+	}
 
-    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text){$EnableButton=$true}
-
-    if ($syncHash.Control_Prepare_Tbx_Vhdx.Text -and $syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
-        if ($syncHash.Control_Prepare_Tbx_Drivers.Text){$EnableButton=$true}
-        else {$EnableButton=$false}
+    if ($syncHash.Control_Prepare_Chb_Drivers.IsChecked) {
+        if ($driverPath -and (Test-Path $driverPath))
+		{
+			$driverVerified = $true
+		}
+        else 
+		{
+			$driverVerified = $false
+		}
     }
+	else
+	{
+		$driverVerified = $true
+	}
 
-    if ($EnableButton){$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true}
-    Else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+    if ($vhdxVerified -and $driverVerified)
+	{
+		$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Collapsed"
+		$syncHash.Control_Prepare_Btn_Next.IsEnabled = $true
+	}
+    else 
+	{
+		$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
+	}
 }
 
 Function F_VerifyFields_Unattend {
@@ -2507,7 +2536,11 @@ $syncHash.Control_Prepare_Tbx_Vhdx.Add_TextChanged({
     if ($syncHash.Control_Prepare_Tbx_Vhdx.Text.Length -gt 0) {
         F_Regex -field 'Control_Prepare_Tbx_Vhdx'-field_value $syncHash.Control_Prepare_Tbx_Vhdx.Text -validpath -message $Text_SafeOS.Prepare_VHDX_InvalidPath
         if (!($script:validation_error)){F_VerifyFields_Prepare}
-        else {$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false}
+        else 
+		{
+			$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
+			$syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_InvalidPath
+		}
     }
 })
 
