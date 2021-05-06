@@ -2539,6 +2539,7 @@ $syncHash.Control_Prepare_Tbx_Vhdx.Add_TextChanged({
         else 
 		{
 			$syncHash.Control_Prepare_Btn_Next.IsEnabled = $false
+			$syncHash.Control_Prepare_Tbx_Detail.Visibility = "Visible"
 			$syncHash.Control_Prepare_Tbx_Detail.Text = $Text_SafeOS.Prepare_VHDX_InvalidPath
 		}
     }
