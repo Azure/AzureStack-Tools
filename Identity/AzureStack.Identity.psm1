@@ -59,12 +59,18 @@ function New-AzsAdGraphServicePrincipal {
     $computerName = $ERCSMachineName
     $cloudAdminCredential = $AdminCredential
     $domainAdminSession = New-PSSession -ComputerName $computerName  -Credential $cloudAdminCredential -configurationname privilegedendpoint  -Verbose
-    $GraphClientCertificate = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=$ApplicationGroupName" -KeySpec KeyExchange
-    $graphRedirectUri = "https://localhost/".ToLowerInvariant()
-    $ApplicationName = $ApplicationGroupName
-    $application = Invoke-Command -Session $domainAdminSession -Verbose -ErrorAction Stop  `
-        -ScriptBlock { New-GraphApplication -Name $using:ApplicationName  -ClientRedirectUris $using:graphRedirectUri -ClientCertificates $using:GraphClientCertificate }
-    
+    try
+    {
+        $GraphClientCertificate = New-SelfSignedCertificate -CertStoreLocation "cert:\CurrentUser\My" -Subject "CN=$ApplicationGroupName" -KeySpec KeyExchange
+        $graphRedirectUri = "https://localhost/".ToLowerInvariant()
+        $ApplicationName = $ApplicationGroupName
+        $application = Invoke-Command -Session $domainAdminSession -Verbose -ErrorAction Stop  `
+            -ScriptBlock { New-GraphApplication -Name $using:ApplicationName  -ClientRedirectUris $using:graphRedirectUri -ClientCertificates $using:GraphClientCertificate }
+    }
+    finally
+    {
+        $domainAdminSession | Remove-PSSession
+    }
     return $application
 }
 
