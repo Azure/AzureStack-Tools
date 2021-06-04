@@ -61,7 +61,7 @@ function Initialize-UserDataClearEnv {
     }
     $azAccount = Initialize-AzAccount @params
     $azContext = Get-AzContext
-    $refreshToken = (Get-AzToken -Context $azContext -FromCache -Verbose).GetRefreshToken()
+    $refreshToken = (Export-AzTokenFromCache -Context $azContext -Verbose).GetRefreshToken()
     Write-Verbose "Login into ARM and got the refresh token." -Verbose
 
     $script:initializeGraphEnvParams = @{

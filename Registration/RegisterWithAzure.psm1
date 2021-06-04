@@ -401,7 +401,7 @@ function Set-AzsRegistration{
         }
 
         # Configure Azure Bridge
-        $refreshToken = (Get-AzToken -Context $AzureContext -FromCache -Verbose).GetRefreshToken()
+        $refreshToken = (Export-AzRefreshToken -Context $AzureContext -Verbose).GetRefreshToken()
         $servicePrincipal = New-ServicePrincipal -RefreshToken $refreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $AzureContext.Subscription.TenantId -PSSession $privilegedEndpointSession
 
         # Get registration token
@@ -1610,20 +1610,15 @@ function DeActivate-AzureStack{
     } while ($currentAttempt -lt $maxAttempt)
 }
 
-function Get-AzToken
+function Export-AzRefreshToken
 {
-    [CmdletBinding(DefaultParameterSetName='default')]
+    [CmdletBinding()]
     param
     (
         # The Azure PowerShell context representing the context of a token to be resolved.
         [Parameter()]
         [ValidateNotNull()]
         [Microsoft.Azure.Commands.Common.Authentication.Abstractions.IAzureContext] $Context = (Get-AzContext -ErrorAction Stop),
-
-        # The target resource for which a token should be resolved.
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string] $Resource = ($Context.Environment.ActiveDirectoryServiceEndpointResourceId),
 
         # The target tenantId in which a token should be resolved.
         [Parameter()]
@@ -1635,12 +1630,8 @@ function Get-AzToken
         [ValidateNotNullOrEmpty()]
         [string] $AccountId = ($Context.Account.Id),
 
-        # Indicates that target token should be resolved from existing cache data (including a refresh token, if one is available).
-        [Parameter(Mandatory=$true, ParameterSetName='FromCache')]
-        [switch] $FromCache,
-
         # Indicates that all token cache data should be returned.
-        [Parameter(ParameterSetName='FromCache')]
+        [Parameter()]
         [switch] $Raw
     )
 
@@ -1649,56 +1640,48 @@ function Get-AzToken
     {
         $ErrorActionPreference = 'Stop'
 
-        Write-Verbose "Attempting to retrieve a token for account '$AccountId' in tenant '$TenantId' for resource '$Resource'..."
-
-        if (-not $FromCache)
-        {
-            $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate(
-                ($account            = $Context.Account),
-                ($environment        = $Context.Environment),
-                ($tenant             = $TenantId),
-                ($password           = $null),
-                ($promptBehavior     = 'Never'),
-                ($promptAction       = $null),
-                ($tokenCache         = $null),
-                ($resourceIdEndpoint = $Resource))
-
-            return [pscustomobject]@{ AccessToken = ConvertTo-SecureString $token.AccessToken -AsPlainText -Force } |
-                Add-Member -MemberType ScriptMethod -Name 'GetAccessToken' -Value { return [System.Net.NetworkCredential]::new('$tokenType', $this.AccessToken).Password } -PassThru
-        }
-        else
-        {
-            Write-Warning "Attempting to find a refresh token and an access token from the existing token cache data..."
-        }
+        Write-Verbose "Attempting to retrieve refresh token for account '$AccountId' in tenant '$TenantId'"
 
         #
         # Resolve token cache data
         #
-
-        [Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory]$authenticationClientFactory = $null
-        if (-not ([Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TryGetComponent(
-            [Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory]::AuthenticationClientFactoryKey,
-            [ref]$authenticationClientFactory)))
+        $accounts = $null
+        if ((Get-Module -Name "Az.Accounts").Version -le [Version]"2.0.1")
         {
-            $m = 'Please ensure you have authenticated with Az Accounts module!'
-            $m += ' Unable to resolve authentication client factory from Az Accounts module runtime'
-            $m += ' ([Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory])'
-            Write-Error $m
+            [Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory]$authenticationClientFactory = $null
+            if (-not ([Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.TryGetComponent(
+                [Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory]::AuthenticationClientFactoryKey,
+                [ref]$authenticationClientFactory)))
+            {
+                $m = 'Please ensure you have authenticated with Az Accounts module!'
+                $m += ' Unable to resolve authentication client factory from Az Accounts module runtime'
+                $m += ' ([Microsoft.Azure.Commands.Common.Authentication.Authentication.Clients.AuthenticationClientFactory])'
+                Write-Error $m
+                return
+            }
+
+            $client = $authenticationClientFactory.CreatePublicClient(
+                ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
+                ($TenantId),
+                ($authority="$($Context.Environment.ActiveDirectoryAuthority.TrimEnd('/'))/$TenantId"),
+                ($redirectUri='urn:ietf:wg:oauth:2.0:oob'),
+                ($useAdfs=$Context.Environment.ActiveDirectoryAuthority -like '*/adfs*'))
+
+            $authenticationClientFactory.RegisterCache($client)
+            $accounts = $client.GetAccountsAsync().ConfigureAwait($true).GetAwaiter().GetResult()
+            $bytes = ([Microsoft.Identity.Client.ITokenCacheSerializer]$client.UserTokenCache).SerializeMsalV3()
+        }
+        else
+        {
+            $provider = [Microsoft.Azure.Commands.Common.Authentication.SharedTokenCacheProvider]::new()
+            $accounts = $provider.ListAccounts()
+            $bytes = $provider.ReadTokenData()
+        }
+        if (-not $bytes)
+        {
+            Write-Error "Unable to resolve refresh token from empty context. Ensure you enable context autosave for the process (using Enable-AzContextAutosave -Scope Process) and then login before calling this method."
             return
         }
-
-        $client = $authenticationClientFactory.CreatePublicClient(
-            ($clientId='1950a258-227b-4e31-a9cf-717495945fc2'),
-            ($TenantId),
-            ($authority="$($Context.Environment.ActiveDirectoryAuthority.TrimEnd('/'))/$TenantId"),
-            ($redirectUri='urn:ietf:wg:oauth:2.0:oob'),
-            ($useAdfs=$Context.Environment.ActiveDirectoryAuthority -like '*/adfs*'))
-
-        $authenticationClientFactory.RegisterCache($client)
-
-        $accounts = $client.GetAccountsAsync().ConfigureAwait($true).GetAwaiter().GetResult()
-
-        $bytes = ([Microsoft.Identity.Client.ITokenCacheSerializer]$client.UserTokenCache).SerializeMsalV3()
         $json  = [System.Text.Encoding]::UTF8.GetString($bytes)
         $data  =  ConvertFrom-Json $json
 
@@ -1733,35 +1716,17 @@ function Get-AzToken
             Where { "$($_.Name)".StartsWith($targetAccount.HomeAccountId.Identifier, [System.StringComparison]::OrdinalIgnoreCase) } |
             Select -ExpandProperty Name)".secret
 
-        $resolvedAccessToken = Get-Member -InputObject $data.AccessToken -MemberType NoteProperty |
-            ForEach { $data.AccessToken."$($_.Name)" } | 
-            Where home_account_id -EQ $targetAccount.HomeAccountId.Identifier |
-            Where { (-not $_.realm) -or ($_.realm -eq $TenantId) } |
-            Where target -Like "*$Resource*" |
-            Sort expires_on -Descending |
-            Select -First 1 -ExpandProperty secret
-
-        if (-not $resolvedAccessToken -and -not $resolvedRefreshToken)
+        if (-not $resolvedRefreshToken)
         {
-            Write-Error "Unable to resolve an access token or refresh token for identity '$identityId' with the specified properties..."
+            Write-Error "Unable to resolve a refresh token for identity '$identityId' with the specified properties..."
             return
-        }
-        elseif (-not $resolvedAccessToken)
-        {
-            Write-Warning "Unable to resolve an access token for identity '$identityId' with the specified properties..."
-        }
-        elseif (-not $resolvedRefreshToken)
-        {
-            Write-Warning "Unable to resolve a refresh token for identity '$identityId' with the specified properties..."
         }
 
         $result = [pscustomobject]@{
-            AccessToken  = if ($resolvedAccessToken)  {ConvertTo-SecureString $resolvedAccessToken  -AsPlainText -Force} else {$null}
             RefreshToken = if ($resolvedRefreshToken) {ConvertTo-SecureString $resolvedRefreshToken -AsPlainText -Force} else {$null}
         }
     
         return $result |
-            Add-Member -MemberType ScriptMethod -Name 'GetAccessToken' -Value { return [System.Net.NetworkCredential]::new('$tokenType', $this.AccessToken).Password } -PassThru |
             Add-Member -MemberType ScriptMethod -Name 'GetRefreshToken' -Value { return [System.Net.NetworkCredential]::new('$tokenType', $this.RefreshToken).Password } -PassThru
     }
     finally
