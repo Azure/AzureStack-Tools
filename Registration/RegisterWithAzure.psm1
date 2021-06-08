@@ -9,6 +9,8 @@ You must also have access to an account / directory that is an owner or contribu
 
 #>
 
+[String]$azureResourceApiVersion = "2017-06-01"
+
 function Initialize-AzureRmEnvironment{
     [CmdletBinding()]
     param(
@@ -165,7 +167,7 @@ function Get-RegistrationDetailsConnected {
             $AzureContext = (Get-AzureRmContext)
         }
         Log-Output "Getting existing registration resource from Azure"
-        $regResourceAzure = Get-AzureRmResource -ResourceId $azureRegResIden
+        $regResourceAzure = Get-AzureRmResource -ResourceId $azureRegResIden -ApiVersion $azureResourceApiVersion
         Log-Output "Existing registration resource in Azure: $($regResourceAzure | ConvertTo-Json -Depth 2)"
         $registrationName = $regResourceAzure.Name
         $resourceGroupName = $regResourceAzure.ResourceGroupName
@@ -534,7 +536,7 @@ function Remove-AzsRegistration{
         $registrationResource = $null
 
         $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ApiVersion $azureResourceApiVersion -ErrorAction Ignore
         if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
         {
             Log-Output "Registration resource found: $($registrationResource.ResourceId)"
@@ -919,7 +921,7 @@ Function UnRegister-AzsEnvironment{
     if ($RegistrationName)
     {
         $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        $registrationResource = Get-AzureRmResource -ResourceId $registrationResourceId -ApiVersion $azureResourceApiVersion -ErrorAction Ignore
     }
     elseif ($CloudId)
     {
@@ -939,7 +941,7 @@ Function UnRegister-AzsEnvironment{
             try
             {
                 Log-Output "Attempting to retrieve resources using command: 'Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
-                $registrationresources = Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
+                $registrationresources = Get-AzureRmResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName -ApiVersion $azureResourceApiVersion
             }
             catch
             {
@@ -950,7 +952,7 @@ Function UnRegister-AzsEnvironment{
         Log-Output "Found $($registrationResources.Count) registration resources. Finding a matching CloudId may take some time."
         foreach ($resource in $registrationResources)
         {
-            $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
+            $resourceObject = Get-AzureRmResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)" -ApiVersion $azureResourceApiVersion
             $resourceCloudId = $resourceObject.Properties.CloudId
             if ($resourceCloudId -eq $stampInfo.CloudId)
             {
@@ -1339,7 +1341,7 @@ function New-RegistrationResource{
         Location          = 'Global'
         ResourceName      = $RegistrationName
         ResourceType      = "Microsoft.AzureStack/registrations"
-        ApiVersion        = "2017-06-01" 
+        ApiVersion        = $azureResourceApiVersion 
         Properties        = @{ registrationToken = "$registrationToken" }
     }
 
@@ -1491,7 +1493,7 @@ function New-RBACAssignment{
         {
             try
             {
-                $registrationResource = Get-AzureRmResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
+                $registrationResource = Get-AzureRmResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName" -ApiVersion $azureResourceApiVersion
     
                 $RoleAssigned = $false
                 $RoleName = "Azure Stack Registration Owner"
@@ -1825,7 +1827,7 @@ function Remove-RegistrationResource{
         try
         {
             ## Remove any existing Resource level lock before deleting the resource
-            $existingRegistrationResource = Get-AzureRmResource -ResourceId $ResourceId
+            $existingRegistrationResource = Get-AzureRmResource -ResourceId $ResourceId -ApiVersion $azureResourceApiVersion
             $resourceName = $existingRegistrationResource.Name
 
             $resourceType = 'Microsoft.Azurestack/registrations'
@@ -1836,7 +1838,7 @@ function Remove-RegistrationResource{
                 Remove-AzureRmResourceLock -LockId $lock.LockId -Force
             }
 
-            Remove-AzureRmResource -ResourceId $ResourceId -Force -Verbose
+            Remove-AzureRmResource -ResourceId $ResourceId -ApiVersion $azureResourceApiVersion -Force -Verbose
             break
         }
         catch
