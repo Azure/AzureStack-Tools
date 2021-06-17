@@ -1,19 +1,25 @@
 
-# Azure Stack
+# Azure Stack Hub tools
 
-These tools are meant for use with **Azure Stack Development Kit** and Integrated Systems
+These tools are meant for use with [Azure Stack Hub Integrated Systems](https://docs.microsoft.com/azure-stack/operator/), and the [Azure Stack Development Kit](https://docs.microsoft.com/azure-stack/asdk/).
 
-## AzureStack-Tools Release/Tags Notification(s)
+## Releases
 
-Please follow the below instructions to make sure you are using the right version of AzureStack-Tools repo:
-- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1901 can be found here
-    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1901
-    
-- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1811 can be found here
-    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1811
+The current version of Azure Stack Hub tools can be downloaded by cloning this repository:
+```commandline
+git clone https://github.com/Azure/AzureStack-Tools.git --recursive
+cd AzureStack-Tools
+```
+Alternatively, you can download the 'master' branch archive file: https://github.com/Azure/AzureStack-Tools/archive/master.zip.
 
-- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1804 can be found here
-    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1804
+**If you're not running the latest version**, be sure to consult the table below. You need to make sure you install the correct version of the Azure Stack Hub tools, to match the build you're running:
+
+| Build number | Download for matching release |
+| -------------| ------------------------------|
+| Prior to 1910 | https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1910 |
+| Prior to 1901 | https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1901 |
+| Prior to 1811 | https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1811 |
+| Prior to 1804 | https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1804 |
 
 ## Tools for using Azure and Azure Stack
 
