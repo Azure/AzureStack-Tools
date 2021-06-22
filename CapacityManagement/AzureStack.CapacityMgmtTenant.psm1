@@ -6,7 +6,7 @@
     Import disks from CSV
 #>
 
-function GetDisksFromCSV {
+function Get-DisksFromCSV {
     param (
         [parameter(Mandatory = $true, HelpMessage = "File path to the disk CSV")]
         [string]$CSVFilePath
@@ -26,7 +26,7 @@ function GetDisksFromCSV {
     Get snapshots linked to input disks
 #>
 
-function GetSnapshotsLinkToDisks {
+function Get-SnapshotsLinkToDisks {
     param (
         [parameter(Mandatory = $true, HelpMessage = "File path to the disk CSV")]
         [string]$CSVFilePath,
@@ -44,7 +44,7 @@ function GetSnapshotsLinkToDisks {
     }
 
     $Snapshots = @()
-    $ImportDisks = GetDisksFromCSV -CSVFilePath $CSVFilePath
+    $ImportDisks = Get-DisksFromCSV -CSVFilePath $CSVFilePath
     if ($ImportDisks) {
         $Subscription = $ImportDisks[0].DiskSubscription
         if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
@@ -77,7 +77,7 @@ function GetSnapshotsLinkToDisks {
     Get unattached disks
 #>
 
-function GetUnattachedDisks {
+function Get-UnattachedDisks {
     param (
         [parameter(Mandatory = $false, HelpMessage = "File path to the import disk CSV")]
         [string]$ImportDiskCSV,
@@ -107,7 +107,7 @@ function GetUnattachedDisks {
 
     $Disks = @()
     if ($ImportDiskCSV) {
-        $ImportDisks = GetDisksFromCSV -CSVFilePath $ImportDiskCSV
+        $ImportDisks = Get-DisksFromCSV -CSVFilePath $ImportDiskCSV
         if ($ImportDisks) {
             $Subscription = $ImportDisks[0].DiskSubscription
             if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
@@ -180,7 +180,7 @@ function GetUnattachedDisks {
     Get attached disks
 #>
 
-function GetAttachedDisks {
+function Get-AttachedDisks {
     param (
         [parameter(Mandatory = $false, HelpMessage = "File path to the import disk CSV")]
         [string] $ImportDiskCSV,
@@ -215,7 +215,7 @@ function GetAttachedDisks {
     $MigrationDisks = @()
     $AttachedVMs = @()
     if ($ImportDiskCSV) {
-        $ImportDisks = GetDisksFromCSV -CSVFilePath $ImportDiskCSV
+        $ImportDisks = Get-DisksFromCSV -CSVFilePath $ImportDiskCSV
         if ($ImportDisks) {
             $Subscription = $ImportDisks[0].DiskSubscription
             if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
@@ -355,7 +355,7 @@ function GetAttachedDisks {
     Import a CSV and remove all snapshots listed in the CSV
 #>
 
-function RemoveSnapshotsInCSV {
+function Remove-SnapshotsInCSV {
     param (
         [parameter(Mandatory = $true, HelpMessage = "File path to the snapshots CSV")]
         [string]$CSVFilePath
@@ -365,7 +365,7 @@ function RemoveSnapshotsInCSV {
         Write-Error "ERROR: File doesn't exist. Please specify the correct file path to import snapshots"
         return
     }
-    $ImportSnapshots = GetDisksFromCSV -CSVFilePath $CSVFilePath
+    $ImportSnapshots = Get-DisksFromCSV -CSVFilePath $CSVFilePath
     if ($ImportSnapshots) {
         $Subscription = $ImportSnapshots[0].UserSubscription
         if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
@@ -384,7 +384,7 @@ function RemoveSnapshotsInCSV {
     Import a CSV and remove all managed disks listed in the CSV
 #>
 
-function RemoveDisksInCSV {
+function Remove-DisksInCSV {
     param (
         [parameter(Mandatory = $true, HelpMessage = "File path to the disks CSV")]
         [string]$CSVFilePath
@@ -394,7 +394,7 @@ function RemoveDisksInCSV {
         Write-Error "ERROR: File doesn't exist. Please specify the correct file path to import disks"
         return
     }
-    $ImportDisks = GetDisksFromCSV -CSVFilePath $CSVFilePath
+    $ImportDisks = Get-DisksFromCSV -CSVFilePath $CSVFilePath
     if ($ImportDisks) {
         $Subscription = $ImportDisks[0].UserSubscription
         if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
@@ -413,7 +413,7 @@ function RemoveDisksInCSV {
     Import a CSV and deallocate all VMs listed in the CSV
 #>
 
-function DeallocateVMsInCSV {
+function Deallocate-VMsInCSV {
     param (
         [parameter(Mandatory = $true, HelpMessage = "File path to the VM CSV")]
         [string]$CSVFilePath
@@ -423,7 +423,7 @@ function DeallocateVMsInCSV {
         Write-Error "ERROR: File doesn't exist. Please specify the correct file path to import VMs"
         return
     }
-    $ImportVMs = GetDisksFromCSV -CSVFilePath $CSVFilePath
+    $ImportVMs = Get-DisksFromCSV -CSVFilePath $CSVFilePath
     if ($ImportVMs) {
         $Subscription = $ImportVMs[0].VMSubscription
         if ((Get-AzureRmContext).Subscription.Id -ne $Subscription) {
