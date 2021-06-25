@@ -10,7 +10,6 @@ Az module - refer for installation related instructions https://docs.microsoft.c
 Obtain the tools by cloning the git repository.
 
 ```commandline
-# For Azure Stack builds/releases 1811 and later:
 git clone https://github.com/Azure/AzureStack-Tools.git --recursive
 cd AzureStack-Tools
 git checkout az
