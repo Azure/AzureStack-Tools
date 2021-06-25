@@ -1,76 +1,22 @@
 
 # Azure Stack
 
-These tools are meant for use with **Azure Stack Development Kit** and Integrated Systems
+These tools are meant for use with **Azure Stack Hub** and Integrated Systems
 
-## AzureStack-Tools Release/Tags Notification(s)
-
-Please follow the below instructions to make sure you are using the right version of AzureStack-Tools repo:
-- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1901 can be found here
-    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1901
-    
-- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1811 can be found here
-    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1811
-
-- Tools for Azure Stack - ASDK or Integrated Systems running a build prior to 1804 can be found here
-    https://github.com/Azure/AzureStack-Tools/releases/tag/PRE-1804
+master branch contains the tools compatible with AzureRm version of azure powershell.
+az branch contains the tools compatible with AzureRm version of azure powershell.
+We are not changing the default branch master to support Az considering that this would be a breaking change
 
 ## Tools for using Azure and Azure Stack
 
 To use these tools, obtain Azure Stack compatible Azure PowerShell module. Unless you've installed from other sources, one way to do it is to obtain from public package repositories as follows. Note that both of these could still be used to operate against Azure as well as Azure Stack, but may lack some of the latest Azure features.
 
-For PowerShell, install the following:
+To install supported version of azure powershell, please follow the instructions at https://aka.ms/azspsh 
 
-For Azure Stack 1904 to 1907
+Obtain the tools by cloning the git repository. Switch to az branch for Az powershell, master is compatible with AzureRM powershell
 
-Install the AzureRM.BootStrapper module. Select Yes when prompted to install NuGet
-Install-Module -Name AzureRM.BootStrapper
+Or download the tools with the instructions from the documentaion page https://docs.microsoft.com/en-us/azure-stack/operator/azure-stack-powershell-download
 
-Install and import the API Version Profile required by Azure Stack into the current PowerShell session.
-Use-AzureRmProfile -Profile 2019-03-01-hybrid -Force
-Install-Module -Name AzureStack -RequiredVersion 1.7.2
-
-For Azure stack 1901 to 1903
-
-```powershell
-Install-Module -Name AzureRM -RequiredVersion 2.4.0
-Install-Module -Name AzureStack -RequiredVersion 1.7.1
-```
-
-For all other azure stack versions, please follow the instructions at https://aka.ms/azspsh for the needed azure powershell
-
-
-Obtain the tools by cloning the git repository.
-
-```commandline
-# For Azure Stack builds/releases 1811 and later:
-git clone https://github.com/Azure/AzureStack-Tools.git --recursive
-cd AzureStack-Tools
-```
-
-```commandline
-# For Azure Stack builds/releases prior to 1811:
-git clone --branch PRE-1811 https://github.com/Azure/AzureStack-Tools --recursive
-cd AzureStack-Tools
-```
-
-Otherwise download the tools as follows:
-
-```powershell
-# For Azure Stack builds/releases 1811 and later:
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/master.zip -OutFile master.zip
-expand-archive master.zip -DestinationPath . -Force
-cd AzureStack-Tools-master
-```
-
-```powershell
-# For Azure Stack builds/releases prior to 1811:
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-invoke-webrequest https://github.com/Azure/AzureStack-Tools/archive/PRE-1811.zip -OutFile PRE-1811.zip
-expand-archive PRE-1811.zip -DestinationPath . -Force
-cd AzureStack-Tools-PRE-1811
-```
 
 Instructions below are relative to the root of the repo.
 
