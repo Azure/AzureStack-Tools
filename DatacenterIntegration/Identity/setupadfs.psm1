@@ -1,28 +1,58 @@
-﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+﻿ # Copyright (c) Microsoft Corporation. All rights reserved.
 # See LICENSE.txt in the project root for license information. 
 
 <#
- 
-.SYNOPSIS 
- 
+ 
+.SYNOPSIS 
+ 
 Configures existing AD FS for Azure Stack
- 
-.DESCRIPTION 
- 
+ 
+.DESCRIPTION 
+ 
 It will create a relying Party Trust to Azure Stack's AD FS with the necessary rules. It will also turn on form based authentication and Enable as setting to support Edge
- 
-.PARAMETER ExternalDNSZone
+ 
+.PARAMETER ExternalDNSZone
 Specify the Extnerl Dns Zone of Azure Stack which was also provided for initial deployment
-
 .EXAMPLE
-import-module setupadfs.psm1 
+import-module setupadfs.psm1 
 register-adfs -externaldnszone local.azurestack.external
 #>
+ 
+Function Test-RegistryValue {
+  param(
+      [Alias("PSPath")]
+      [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+      [String]$Path
+      ,
+      [Parameter(Position = 1, Mandatory = $true)]
+      [String]$Name
+      ,
+      [Switch]$PassThru
+  ) 
+
+  process {
+      if (Test-Path $Path) {
+          $Key = Get-Item -LiteralPath $Path
+          if ($Key.GetValue($Name, $null) -ne $null) {
+              if ($PassThru) {
+                  Get-ItemProperty $Path $Name
+              } else {
+                  $true
+              }
+          } else {
+              $false
+          }
+      } else {
+          $false
+      }
+  }
+}
+
 
 function register-adfs {
-  Param(  
-  [string] $ExternalDNSZone
-  )
+Param(  
+[string] $ExternalDNSZone
+)
 
 
 $currentPath = $PSScriptRoot
@@ -50,6 +80,31 @@ Exit}
 else{
 Write-Host "Status "$Validator2.StatusCode""
 
+
+#Validate if TLS1.2 is enabled
+
+$Key1=Test-RegistryValue -path HKLM:\SOFTWARE\Microsoft\.NETFramework\v2.0.50727 -Name "SchUseStrongCrypto"
+$Key2=Test-RegistryValue -path HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319 -Name "SchUseStrongCrypto"
+$Key3=Test-RegistryValue -path HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319 -Name "SchUseStrongCrypto"
+$Key4=Test-RegistryValue -path HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v2.0.50727 -Name "SchUseStrongCrypto"
+
+If ($Key1 -eq "false"){
+  Write-Host "TLS1.2 is not enabled please see https://docs.microsoft.com/en-US/troubleshoot/windows-server/identity/disable-and-replace-tls-1dot0"
+Exit}
+
+elseif ($Key2 -eq "false") {
+  Write-Host "TLS1.2 is not enabled please see https://docs.microsoft.com/en-US/troubleshoot/windows-server/identity/disable-and-replace-tls-1dot0"
+Exit}
+
+elseif ($Key3 -eq "false") {
+  Write-Host "TLS1.2 is not enabled please see https://docs.microsoft.com/en-US/troubleshoot/windows-server/identity/disable-and-replace-tls-1dot0"
+Exit}
+
+elseif ($Key4 -eq "false") {
+  Write-Host "TLS1.2 is not enabled please see https://docs.microsoft.com/en-US/troubleshoot/windows-server/identity/disable-and-replace-tls-1dot0"
+Exit}
+
+
 #Determine Windows Version
 $WindowsVersion= [environment]::OSVersion.Version
 
@@ -60,7 +115,7 @@ If ($WindowsVersion.Build -lt 14393) {
 Add-ADFSRelyingPartyTrust -Name AzureStack -MetadataUrl $MetadataURL -IssuanceTransformRulesFile ($currentPath + '\claimrules.txt') -AutoUpdateEnabled:$true -MonitoringEnabled:$true -enabled:$true -TokenLifeTime 1440
 }
 else{
-#Must be 2016
+#Must be 2016 or 2019
 Add-ADFSRelyingPartyTrust -Name AzureStack -MetadataUrl $MetadataURL -IssuanceTransformRulesFile ($currentPath + '\claimrules.txt') -AutoUpdateEnabled:$true -MonitoringEnabled:$true -enabled:$true -AccessControlPolicyName “Permit everyone” -TokenLifeTime 1440
 
 #Enable Supprt for Edge Browser
