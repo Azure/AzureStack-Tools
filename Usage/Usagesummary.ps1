@@ -27,6 +27,9 @@ Param
 
 #Initialise meter hashtable
 $meters = @{
+    '578ae51d-4ef9-42f9-85ae-42b52d3d83ac' = 'ActualPremiumSnapshotSize Unit: GB*month'
+    '108fa95b-be0d-4cd9-96e8-5b0d59505df1' = 'ActualStandardSnapshotSize Unit: GB*month'
+    'Custom Worker Tiers' = 'Custom Worker Tiers Unit: Hours'
     'F271A8A388C44D93956A063E1D2FA80B'     = 'Static IP Address Usage'
     '9E2739BA86744796B465F64674B822BA'     = 'Dynamic IP Address Usage'
     'B4438D5D-453B-4EE1-B42A-DC72E377F1E4' = 'TableCapacity'
@@ -111,46 +114,51 @@ $meters = @{
 }
 
 #Build a subscription hashtable
-$subtable = @{}
+$subtable = New-Object System.Collections.ArrayList
 $subs = Get-AzsUserSubscription
-$subs | ForEach-Object {$subtable.Add($_.SubscriptionId, $_.Owner)}
-
-#Output Files
-if (Test-Path -Path $CsvFile -ErrorAction SilentlyContinue) {
-    if ($Force) {
-        Remove-Item -Path $CsvFile -Force
+foreach ($subentry in $subs) {
+    [void]($subtable.Add([pscustomobject] @{
+        SubscriptionId = $subentry.SubscriptionId
+        Owner = $subentry.Owner
+        DisplayName = $subentry.DisplayName
     }
-    else {
-        Write-Host "$CsvFile alreday exists use -Force to overwrite"
-        return
-    }
+   )
+  )
 }
 
-$result = Get-AzsSubscriberUsage -ReportedStartTime ("{0:yyyy-MM-ddT00:00:00.00Z}" -f $StartTime)  -ReportedEndTime ("{0:yyyy-MM-ddT00:00:00.00Z}" -f $EndTime) -AggregationGranularity $Granularity
+$usageSummary  = New-Object System.Collections.ArrayList
 
-$usageSummary = @()
-$result  | ForEach-Object {
-    $record = New-Object -TypeName System.Object
-    $resourceInfo = ($_.InstanceData | ConvertFrom-Json).'Microsoft.Resources'
-    $resourceText = $resourceInfo.resourceUri
-    $subscription = $resourceText.Split('/')[2]
-    $resourceType = $resourceText.Split('/')[7]
-    $resourceGroup = $resourceText.Split('/')[4]
-    $resourceName = $resourceText.Split('/')[8]
-    $record | Add-Member -Name UsageStartTime -MemberType NoteProperty -Value $_.UsageStartTime
-    $record | Add-Member -Name UsageEndTime -MemberType NoteProperty -Value $_.UsageEndTime
-    $record | Add-Member -Name MeterName -MemberType NoteProperty -Value $meters[$_.MeterId]
-    $record | Add-Member -Name Quantity -MemberType NoteProperty -Value $_.Quantity
-    $record | Add-Member -Name resourceType -MemberType NoteProperty -Value $resourceType
-    $record | Add-Member -Name location -MemberType NoteProperty -Value $resourceInfo.location
-    $record | Add-Member -Name resourceGroup -MemberType NoteProperty -Value $resourceGroup
-    $record | Add-Member -Name resourceName -MemberType NoteProperty -Value $resourceName
-    $record | Add-Member -Name subowner -MemberType NoteProperty -Value $subtable[$subscription]
-    $record | Add-Member -Name tags -MemberType NoteProperty -Value $resourceInfo.tags
-    $record | Add-Member -Name MeterId -MemberType NoteProperty -Value $_.MeterId
-    $record | Add-Member -Name additionalInfo -MemberType NoteProperty -Value $resourceInfo.additionalInfo
-    $record | Add-Member -Name subscription -MemberType NoteProperty -Value $subscription
-    $record | Add-Member -Name resourceUri -MemberType NoteProperty -Value $resourceText
-    $usageSummary += $record
+foreach ($subID in $subtable) {
+    Write-Host "Retrieving SubscriptionID $($subID.SubscriptionId)" -ForegroundColor Yellow    
+    $result = Get-AzsSubscriberUsage -SubscriberId $subID.SubscriptionId -ReportedStartTime ("{0:yyyy-MM-ddT00:00:00.00Z}" -f $StartTime)  -ReportedEndTime ("{0:yyyy-MM-ddT00:00:00.00Z}" -f $EndTime) -AggregationGranularity $Granularity
+
+    foreach ($entry in $result) {
+        $resourceInfo = ($entry.InstanceData | ConvertFrom-Json).'Microsoft.Resources'
+        $resourceText = $resourceInfo.resourceUri
+        $subscription = $resourceText.Split('/')[2]
+        $resourceType = $resourceText.Split('/')[7]
+        $resourceGroup = $resourceText.Split('/')[4]
+        $resourceName = $resourceText.Split('/')[8]
+
+        [void]($usageSummary.Add([pscustomobject] @{
+            UsageStartTime = $entry.UsageStartTime
+            UsageEndTime = $entry.UsageEndTime
+            MeterName = $meters[$entry.MeterId]
+            Quantity = $entry.Quantity
+            resourceType = $resourceType
+            location = $resourceInfo.location
+            resourceGroup = $resourceGroup
+            resourceName = $resourceName
+            subowner = $subID.Owner
+            tags = $resourceInfo.tags
+            MeterId = $entry.MeterId
+            additionalInfo = $resourceInfo.additionalInfo
+            subscription = $subscription
+            resourceUri = $resourceText
+        }
+       )
+      )
+    }
 }
 $usageSummary | Export-Csv -Path $CsvFile  -NoTypeInformation 
+
