@@ -9,6 +9,8 @@ You must also have access to an account / directory that is an owner or contribu
 
 #>
 
+[String]$azureResourceApiVersion = "2017-06-01"
+
 function Initialize-AzEnvironment{
     [CmdletBinding()]
     param(
@@ -165,7 +167,7 @@ function Get-RegistrationDetailsConnected {
             $AzureContext = (Get-AzContext)
         }
         Log-Output "Getting existing registration resource from Azure"
-        $regResourceAzure = Get-AzResource -ResourceId $azureRegResIden
+        $regResourceAzure = Get-AzResource -ResourceId $azureRegResIden -ApiVersion $azureResourceApiVersion
         Log-Output "Existing registration resource in Azure: $($regResourceAzure | ConvertTo-Json -Depth 2)"
         $registrationName = $regResourceAzure.Name
         $resourceGroupName = $regResourceAzure.ResourceGroupName
@@ -535,7 +537,7 @@ function Remove-AzsRegistration{
         $registrationResource = $null
 
         $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        $registrationResource = Get-AzResource -ResourceId $registrationResourceId -ApiVersion $azureResourceApiVersion -ErrorAction Ignore
         if ($registrationResource.Properties.cloudId -eq $stampInfo.CloudId)
         {
             Log-Output "Registration resource found: $($registrationResource.ResourceId)"
@@ -920,7 +922,7 @@ Function UnRegister-AzsEnvironment{
     if ($RegistrationName)
     {
         $registrationResourceId = "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$registrationName"
-        $registrationResource = Get-AzResource -ResourceId $registrationResourceId -ErrorAction Ignore
+        $registrationResource = Get-AzResource -ResourceId $registrationResourceId -ApiVersion $azureResourceApiVersion -ErrorAction Ignore
     }
     elseif ($CloudId)
     {
@@ -940,7 +942,7 @@ Function UnRegister-AzsEnvironment{
             try
             {
                 Log-Output "Attempting to retrieve resources using command: 'Get-AzResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName'"
-                $registrationresources = Get-AzResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName
+                $registrationresources = Get-AzResource -ResourceType microsoft.azurestack/registrations -ResourceGroupName $ResourceGroupName -ApiVersion $azureResourceApiVersion
             }
             catch
             {
@@ -951,7 +953,7 @@ Function UnRegister-AzsEnvironment{
         Log-Output "Found $($registrationResources.Count) registration resources. Finding a matching CloudId may take some time."
         foreach ($resource in $registrationResources)
         {
-            $resourceObject = Get-AzResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)"
+            $resourceObject = Get-AzResource -ResourceId "/subscriptions/$($AzureContext.Subscription.SubscriptionId)/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$($resource.name)" -ApiVersion $azureResourceApiVersion
             $resourceCloudId = $resourceObject.Properties.CloudId
             if ($resourceCloudId -eq $stampInfo.CloudId)
             {
@@ -1340,7 +1342,7 @@ function New-RegistrationResource{
         Location          = 'Global'
         ResourceName      = $RegistrationName
         ResourceType      = "Microsoft.AzureStack/registrations"
-        ApiVersion        = "2017-06-01" 
+        ApiVersion        = $azureResourceApiVersion
         Properties        = @{ registrationToken = "$registrationToken" }
     }
 
@@ -1492,7 +1494,7 @@ function New-RBACAssignment{
         {
             try
             {
-                $registrationResource = Get-AzResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName"
+                $registrationResource = Get-AzResource -ResourceId "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.AzureStack/registrations/$RegistrationName" -ApiVersion $azureResourceApiVersion
     
                 $RoleAssigned = $false
                 $RoleName = "Azure Stack Registration Owner"
@@ -1698,27 +1700,33 @@ function Export-AzRefreshToken
         # Resolve target account
         #
 
-        $targetAccount = $accounts | Where Username -EQ $AccountId
+        $targetAccountIdentifier = $accounts | Where Username -EQ $AccountId | ForEach { $_.HomeAccountId.Identifier } | Select -Unique
 
-        if (-not $targetAccount -or $targetAccount.Count -gt 1)
+        if (-not $targetAccountIdentifier -and $data.Account)
+        {
+            # Fallback to resolve account identifier from data
+            $targetAccountIdentifier = ($data.Account | Get-Member -MemberType NoteProperty).Name | ForEach { $data.Account."$_" } | Where Username -EQ $AccountId | Select -ExpandProperty home_account_id -Unique
+        }
+
+        if (-not $targetAccountIdentifier -or $targetAccountIdentifier.Count -gt 1)
         {
             Write-Error "Unable to resolve acccount for identity '$AccountId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
             return
         }
 
-        Write-Verbose "Target account resolved to: $(ConvertTo-Json $targetAccount -Compress)"
+        Write-Verbose "Target account resolved to: $targetAccountIdentifier"
 
         #
         # Resolve target token(s)
         #
 
         $resolvedRefreshToken = $data.RefreshToken."$(Get-Member -InputObject $data.RefreshToken -MemberType NoteProperty |
-            Where { "$($_.Name)".StartsWith($targetAccount.HomeAccountId.Identifier, [System.StringComparison]::OrdinalIgnoreCase) } |
-            Select -ExpandProperty Name)".secret
+            Where { "$($_.Name)".StartsWith($targetAccountIdentifier, [System.StringComparison]::OrdinalIgnoreCase) } |
+            Select -ExpandProperty Name)".secret 
 
         if (-not $resolvedRefreshToken)
         {
-            Write-Error "Unable to resolve a refresh token for identity '$identityId' with the specified properties..."
+            Write-Error "Unable to resolve a refresh token for identity '$AccountId' with the specified properties..."
             return
         }
 
@@ -1877,7 +1885,7 @@ function Remove-RegistrationResource{
         try
         {
             ## Remove any existing Resource level lock before deleting the resource
-            $existingRegistrationResource = Get-AzResource -ResourceId $ResourceId
+            $existingRegistrationResource = Get-AzResource -ResourceId $ResourceId -ApiVersion $azureResourceApiVersion
             $resourceName = $existingRegistrationResource.Name
 
             $resourceType = 'Microsoft.Azurestack/registrations'
@@ -1888,7 +1896,7 @@ function Remove-RegistrationResource{
                 Remove-AzResourceLock -LockId $lock.LockId -Force
             }
 
-            Remove-AzResource -ResourceId $ResourceId -Force -Verbose
+            Remove-AzResource -ResourceId $ResourceId -ApiVersion $azureResourceApiVersion -Force -Verbose
             break
         }
         catch

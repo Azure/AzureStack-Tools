@@ -201,26 +201,33 @@ function Export-AzTokenFromCache {
         # Resolve target account
         #
 
-        $targetAccount = $accounts | Where Username -EQ $AccountId
+        $targetAccountIdentifier = $accounts | Where Username -EQ $AccountId | ForEach { $_.HomeAccountId.Identifier } | Select -Unique
 
-        if (-not $targetAccount -or $targetAccount.Count -gt 1) {
+        if (-not $targetAccountIdentifier -and $data.Account)
+        {
+            # Fallback to resolve account identifier from data
+            $targetAccountIdentifier = ($data.Account | Get-Member -MemberType NoteProperty).Name | ForEach { $data.Account."$_" } | Where Username -EQ $AccountId | Select -ExpandProperty home_account_id -Unique
+        }
+
+        if (-not $targetAccountIdentifier -or $targetAccountIdentifier.Count -gt 1)
+        {
             Write-Error "Unable to resolve acccount for identity '$AccountId'; available accounts: $(ConvertTo-Json $accounts.Username -Compress)"
             return
         }
 
-        Write-Verbose "Target account resolved to: $(ConvertTo-Json $targetAccount -Compress)"
+        Write-Verbose "Target account resolved to: $targetAccountIdentifier"
 
         #
         # Resolve target token(s)
         #
 
         $resolvedRefreshToken = $data.RefreshToken."$(Get-Member -InputObject $data.RefreshToken -MemberType NoteProperty |
-            Where { "$($_.Name)".StartsWith($targetAccount.HomeAccountId.Identifier, [System.StringComparison]::OrdinalIgnoreCase) } |
+            Where { "$($_.Name)".StartsWith($targetAccountIdentifier, [System.StringComparison]::OrdinalIgnoreCase) } |
             Select -ExpandProperty Name)".secret
 
         $resolvedAccessToken = Get-Member -InputObject $data.AccessToken -MemberType NoteProperty |
         ForEach { $data.AccessToken."$($_.Name)" } | 
-        Where home_account_id -EQ $targetAccount.HomeAccountId.Identifier |
+        Where home_account_id -EQ $targetAccountIdentifier |
         Where { (-not $_.realm) -or ($_.realm -eq $TenantId) } |
         Where target -Like "*$Resource*" |
         Sort expires_on -Descending |
