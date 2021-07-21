@@ -1,0 +1,52 @@
+{
+	"properties": {
+		"lenses": {
+			"0": {
+				"order": 0,
+				"parts": {
+					"0": {
+						"position": {
+							"x": 0,
+							"y": 0,
+							"colSpan": 6,
+							"rowSpan": 2
+						},
+						"metadata": {
+							"inputs": [],
+							"type": "Extension/HubsExtension/PartType/MarkdownPart",
+							"settings": {
+								"content": {
+									"settings": {
+										"content": "This dasboard shows ",
+										"title": "Performance of volumes",
+										"subtitle": "Made by Microsoft"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"metadata": {
+			"model": {
+				"timeRange": {
+					"value": {
+						"relative": {
+							"duration": 24,
+							"timeUnit": 1
+						}
+					},
+					"type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+				}
+			}
+		}
+	},
+	"name": "VolumesPerformance",
+	"type": "Microsoft.Portal/dashboards",
+	"location": "INSERT LOCATION",
+	"tags": {
+		"hidden-title": "VolumesPerformance"
+	},
+	"apiVersion": "2015-08-01-preview"
+}

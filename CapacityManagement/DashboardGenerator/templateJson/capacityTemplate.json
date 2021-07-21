@@ -1,0 +1,205 @@
+{
+    "position": {
+        "x": 24,
+        "y": 0,
+        "colSpan": 6,
+        "rowSpan": 4
+    },
+    "metadata": {
+        "inputs": [
+            {
+                "name": "options",
+                "value": {
+                    "charts": [
+                        {
+                            "metrics": [
+                                {
+                                    "name": "VolumeTotalCapacity",
+                                    "resourceMetadata": {
+                                        "resourceId": "<resourceIdToBeReplaced>"
+                                    },
+                                    "aggregationType": 4
+                                },
+                                {
+                                    "name": "VolumeRemainingCapacity",
+                                    "resourceMetadata": {
+                                        "resourceId": "<resourceIdToBeReplaced>"
+                                    },
+                                    "aggregationType": 4
+                                },
+                                {
+                                    "name": "VolumeVMDiskUsedCapacity",
+                                    "resourceMetadata": {
+                                        "resourceId": "<resourceIdToBeReplaced>"
+                                    },
+                                    "aggregationType": 4
+                                },
+                                {
+                                    "name": "VolumeOtherUsedCapacity",
+                                    "resourceMetadata": {
+                                        "resourceId": "<resourceIdToBeReplaced>"
+                                    },
+                                    "aggregationType": 4
+                                },
+                                {
+                                    "name": "VolumeVMDiskProvisionedCapacity",
+                                    "resourceMetadata": {
+                                        "resourceId": "<resourceIdToBeReplaced>"
+                                    },
+                                    "aggregationType": 4
+                                }
+                            ],
+                            "title": "Avg Volume Total Capacity (Preview), Avg Volume Remaining Capacity (Preview), and 3 other metrics",
+                            "timeContext": {
+                                "options": {
+                                    "grain": 1,
+                                    "appliedISOGrain": "PT1H"
+                                },
+                                "relative": {
+                                    "duration": 86400000
+                                }
+                            },
+                            "itemDataModel": {
+                                "id": "B047DC81-A8C4-4DC9-A578-84CFB4461E6F",
+                                "chartHeight": 1,
+                                "metrics": [
+                                    {
+                                        "id": {
+                                            "resourceDefinition": {
+                                                "id": "<resourceIdToBeReplaced>"
+                                            },
+                                            "name": {
+                                                "id": "VolumeTotalCapacity",
+                                                "displayName": "Volume Total Capacity (Preview)"
+                                            },
+                                            "dataSource": 1,
+                                            "namespace": {
+                                                "name": "microsoft.fabric.admin/fabriclocations"
+                                            }
+                                        },
+                                        "metricAggregation": 1,
+                                        "color": "#47BDF5"
+                                    },
+                                    {
+                                        "id": {
+                                            "resourceDefinition": {
+                                                "id": "<resourceIdToBeReplaced>"
+                                            },
+                                            "name": {
+                                                "id": "VolumeRemainingCapacity",
+                                                "displayName": "Volume Remaining Capacity (Preview)"
+                                            },
+                                            "dataSource": 1,
+                                            "namespace": {
+                                                "name": "microsoft.fabric.admin/fabriclocations"
+                                            }
+                                        },
+                                        "metricAggregation": 1,
+                                        "color": "#FF1010"
+                                    },
+                                    {
+                                        "id": {
+                                            "resourceDefinition": {
+                                                "id": "<resourceIdToBeReplaced>"
+                                            },
+                                            "name": {
+                                                "id": "VolumeVMDiskUsedCapacity",
+                                                "displayName": "Volume VM Disk Used Capacity (Preview)"
+                                            },
+                                            "dataSource": 1,
+                                            "namespace": {
+                                                "name": "microsoft.fabric.admin/fabriclocations"
+                                            }
+                                        },
+                                        "metricAggregation": 1,
+                                        "color": "#7E58FF"
+                                    },
+                                    {
+                                        "id": {
+                                            "resourceDefinition": {
+                                                "id": "<resourceIdToBeReplaced>"
+                                            },
+                                            "name": {
+                                                "id": "VolumeOtherUsedCapacity",
+                                                "displayName": "Volume Other Used Capacity (Preview)"
+                                            },
+                                            "dataSource": 1,
+                                            "namespace": {
+                                                "name": "microsoft.fabric.admin/fabriclocations"
+                                            }
+                                        },
+                                        "metricAggregation": 1,
+                                        "color": "#44F1C8"
+                                    },
+                                    {
+                                        "id": {
+                                            "resourceDefinition": {
+                                                "id": "<resourceIdToBeReplaced>"
+                                            },
+                                            "name": {
+                                                "id": "VolumeVMDiskProvisionedCapacity",
+                                                "displayName": "Volume VM Disk Provisioned Capacity (Preview)"
+                                            },
+                                            "dataSource": 1,
+                                            "namespace": {
+                                                "name": "microsoft.fabric.admin/fabriclocations"
+                                            }
+                                        },
+                                        "metricAggregation": 1,
+                                        "color": "#EB9371"
+                                    }
+                                ],
+                                "priorPeriod": false,
+                                "horizontalBars": true,
+                                "showOther": false,
+                                "aggregation": 1,
+                                "palette": "multiColor",
+                                "jsonDefinitionId": "C95676C2-E53C-4CCA-85CB-BE05EAF6E461",
+                                "version": {
+                                    "major": 1,
+                                    "minor": 0,
+                                    "build": 0
+                                },
+                                "filters": {
+									"filterType": 0,
+									"id": "C7E4E7CE-FC5F-4F04-AD46-544AA33DAECA",
+									"OperandFilters": [
+										{
+											"id": "8235FD1B-359D-4944-92DF-E1DAA6AF9972",
+											"filterType": 1,
+											"ComparisonOperator": 0,
+											"OperandSelectedKey": {
+												"dimensionName": {
+													"id": "VolumeLabel",
+													"displayName": "Volume Label"
+												}
+											},
+											"OperandSelectedValues": [
+												"ObjStore_2"
+											]
+										}
+									],
+									"LogicalOperator": 0
+								},
+                                "yAxisOptions": {
+                                    "options": 1
+                                },
+                                "title": "Avg Volume Total Capacity (Preview), Avg Volume Remaining Capacity (Preview), and 3 other metrics",
+                                "titleKind": "Auto",
+                                "appliedISOGrain": "PT1H"
+                            }
+                        }
+                    ],
+                    "v2charts": true
+                },
+                "isOptional": true
+            },
+            {
+                "name": "sharedTimeRange",
+                "isOptional": true
+            }
+        ],
+        "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+        "settings": {}
+    }
+}
