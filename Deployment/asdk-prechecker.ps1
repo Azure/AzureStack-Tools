@@ -253,7 +253,7 @@ function CheckCPU {
     write-host -ForegroundColor gray "["(date -format "HH:mm:ss")"]" " -- Number of physical cores =  $CoreCount"
 
     If (($CPUCount -lt 2) -or ($CoreCount -lt 16)){
-	write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- CPU count must be 2 or higher, Core count must be 16 or higher (20 cores recommended)."
+    write-host -ForegroundColor red "["(date -format "HH:mm:ss")"]" " -- CPU count must be 2 or higher, Core count must be 16 or higher (20 cores recommended)."
     $Global:ChecksFailure++
   }
   else
