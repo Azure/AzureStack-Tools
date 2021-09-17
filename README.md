@@ -59,27 +59,27 @@ Validate Azure ARM Template Capabilities
 
 ## Tenant Log collection tool
 
-FileName	  | Brief Description
-------------- | -------------
-Windows\Panther\FastCleanup\setupact.log	  | Primary log file for most errors that occur during the Windows installation process. There are several instances of the Setupact.log file, depending on what point in the installation process the failure occurs. It is important to know which version of the Setupact.log file to look at, based on the phase you are in.
-Windows\Panther\UnattendGC\setupact.log	  | High-level list of errors that occurred during the specialize phase of Setup. The Setuperr.log file does not provide any specific details.
-Windows\Panther\WaSetup.log  | Windows Setup includes the ability to review the Windows Setup performance events in the Windows Event Log viewer. This enables you to more easily review the actions that occurred during Windows Setup and to review the performance statistics for different parts of Windows Setup
-Windows\Panther\WaSetup.xml  | Windows Provisioning Agent log
-Windows\Panther\setupact.log  | Primary log file for most errors that occur during the Windows installation process. There are several instances of the Setupact.log file, depending on what point in the installation process the failure occurs. It is important to know which version of the Setupact.log file to look at, based on the phase you are in.
-Windows\Panther\setuperr.log  | High-level list of errors that occurred during the specialize phase of Setup. The Setuperr.log file does not provide any specific details
-Windows\Panther\unattend.xml  | Windows Provisioning Agent log
-WindowsAzure\Logs\MonitoringAgent.log  | Windows Guest Agent Monitoring log
-WindowsAzure\Logs\Telemetry.log  | Windows Guest Agent Telemetry service log
-WindowsAzure\Logs\TransparentInstaller.log | Windows Guest Agent installation log. Windows Installer records errors and events in its own error log and in the Event log. The diagnostic information that the installer writes to these logs can help users and administrators understand the cause of a failed installation.
-WindowsAzure\Logs\WaAppAgent.log  | Windows Guest Agent log. To see when an update to the extension occurred can review the agent logs on the VM. Azure virtual machine (VM) extensions are small applications that provide post-deployment configuration and automation tasks on Azure VMs. For example, if a virtual machine requires software installation, anti-virus protection, or to run a script inside of it, a VM extension can be used
-WindowsAzure\Logs\AgentRuntime.log  | Windows Guest Agent Runtime log
-WindowsAzure\Logs\TransparentInstaller.000.log  | Windows Guest Agent installation log (rollover)
-WindowsAzure\Config\myvm0.1.ExtensionConfig.xml  | XML file containing part of VM’s extension configuration
-\var\lib\waagent\ovf-env.xml  | During provisioning, The Azure platform provides initial data to an instance via an attached CD formatted in UDF. That CD contains a ‘ovf-env.xml’ file that provides configuration/deployment information. 
-\var\lib\waagent\provisioned  | This file is just a marker that indicates a VHD has been provisioned (specialized).  The absence of this file indicates that the VHD is an image (generalized)
-\var\log\dmesg* | Log file(s) that contain messages from the kernel or device drivers
-\var\log\syslog  | Standardized text-based log file(s) containing logging and event information.  
-\var\log\messages | Standardized text-based log file(s) containing logging and event information.  
-\var\log\waagent.log	  | Log file for the Azure Linux agent
+GuestOS | FileName	  | Brief Description
+------------- | ------------- | -------------
+Windows | Windows\Panther\FastCleanup\setupact.log	  | Primary log file for most errors that Windows | occur during the Windows installation process. There are several instances of the Setupact.log Windows | file, depending on what point in the installation process the failure occurs. It is important to Windows | know which version of the Setupact.log file to look at, based on the phase you are in.
+Windows | Windows\Panther\UnattendGC\setupact.log	  | High-level list of errors that occurred during the Windows | specialize phase of Setup. The Setuperr.log file does not provide any specific details.
+Windows | Windows\Panther\WaSetup.log  | Windows Setup includes the ability to review the Windows Setup Windows | performance events in the Windows Event Log viewer. This enables you to more easily review the Windows | actions that occurred during Windows Setup and to review the performance statistics for different Windows | parts of Windows Setup
+Windows | Windows\Panther\WaSetup.xml  | Windows Provisioning Agent log
+Windows | Windows\Panther\setupact.log  | Primary log file for most errors that occur during the Windows Windows | installation process. There are several instances of the Setupact.log file, depending on what Windows | point in the installation process the failure occurs. It is important to know which version of Windows | the Setupact.log file to look at, based on the phase you are in.
+Windows | Windows\Panther\setuperr.log  | High-level list of errors that occurred during the specialize Windows | phase of Setup. The Setuperr.log file does not provide any specific details
+Windows | Windows\Panther\unattend.xml  | Windows Provisioning Agent log
+Windows | WindowsAzure\Logs\MonitoringAgent.log  | Windows Guest Agent Monitoring log
+Windows | WindowsAzure\Logs\Telemetry.log  | Windows Guest Agent Telemetry service log
+Windows | WindowsAzure\Logs\TransparentInstaller.log | Windows Guest Agent installation log. Windows Windows | Installer records errors and events in its own error log and in the Event log. The diagnostic Windows | information that the installer writes to these logs can help users and administrators understand Windows | the cause of a failed installation.
+Windows | WindowsAzure\Logs\WaAppAgent.log  | Windows Guest Agent log. To see when an update to the Windows | extension occurred can review the agent logs on the VM. Azure virtual machine (VM) extensions are Windows | small applications that provide post-deployment configuration and automation tasks on Azure VMs. Windows | For example, if a virtual machine requires software installation, anti-virus protection, or to Windows | run a script inside of it, a VM extension can be used
+Windows | WindowsAzure\Logs\AgentRuntime.log  | Windows Guest Agent Runtime log
+Windows | WindowsAzure\Logs\TransparentInstaller.000.log  | Windows Guest Agent installation log (rollover)
+Windows | WindowsAzure\Config\myvm0.1.ExtensionConfig.xml  | XML file containing part of VM’s extension configuration
+Linux | /var/lib/waagent/ovf-env.xml  | During provisioning, The Azure platform provides initial data to an instance via an attached CD formatted in UDF. That CD contains a ‘ovf-env.xml’ file that provides configuration/deployment information.
+Linux | /var/lib/waagent/provisioned  | This file is just a marker that indicates a VHD has been Linux | provisioned (specialized).  The absence of this file indicates that the VHD is an image Linux | (generalized)
+Linux | /var/log/dmesg* | Log file(s) that contain messages from the kernel or device drivers
+Linux | /var/log/syslog | Standardized text-based log file(s) containing logging and event information.  
+Linux | /var/log/messages | Standardized text-based log file(s) containing logging and event Linux | information.  
+Linux | /var/log/waagent.log | Log file for the Azure Linux agent
 ---
 _This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments._
