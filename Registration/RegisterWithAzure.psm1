@@ -346,7 +346,7 @@ function Set-AzsRegistration{
         [switch] $MarketplaceSyndicationEnabled = $true,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Register")]
-        [switch] $UsageReportingEnabled = @{'Capacity'=$true; 
+        [switch] $UsageReportingEnabled = @{'Capacity'=$false; 
                                             'PayAsYouUse'=$true; 
                                             'Development'=$true; 
                                             'Custom'=$false;
@@ -395,9 +395,8 @@ function Set-AzsRegistration{
     Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
     $azureAccountInfo = Get-AzureAccountInfo -AzureContext $AzureContext
 
-    try
-    {
-        if (-not $privilegedEndpointSession){
+    try {
+        if (-not $privilegedEndpointSession) {
             $privilegedEndpointSession = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
             $stampInfo = Confirm-StampVersion -PSSession $privilegedEndpointSession
         }
@@ -415,11 +414,6 @@ function Set-AzsRegistration{
             TokenVersion                  = Get-RegistrationTokenVersion -AzureContext $AzureContext
         }
         Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
-        if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled))
-        {
-            Log-Warning "Billing model is set to Capacity and Usage Reporting is enabled. This data will be used to guide product improvements and will not be used for billing purposes. If this is not desired please halt this operation and rerun with -UsageReportingEnabled:`$false. Execution will continue in 20 seconds."
-            Start-Sleep -Seconds 20        
-        }
         $registrationToken = Get-RegistrationToken @getTokenParams -Session $PrivilegedEndpointSession -StampInfo $stampInfo
     
         # Register environment with Azure
@@ -435,11 +429,8 @@ function Set-AzsRegistration{
         $activationKey = Get-AzsActivationkey -ResourceGroupName $ResourceGroupName -RegistrationName $RegistrationName -ConnectedScenario
         Log-Output "Activating Azure Stack (this may take up to 10 minutes to complete)."
         Activate-AzureStack -Session $PrivilegedEndpointSession -ActivationKey $ActivationKey
-    }
-    finally
-    {
-        if ($privilegedEndpointSession)
-        {
+    } finally {
+        if ($privilegedEndpointSession) {
             Log-OutPut "Removing any existing PSSession..."
             $privilegedEndpointSession | Remove-PSSession
         }
@@ -645,12 +636,6 @@ Function Get-AzsRegistrationToken{
         [String] $TokenOutputFilePath,
 
         [Parameter(Mandatory = $false)]
-        [Switch] $UsageReportingEnabled = $false,
-
-        [Parameter(Mandatory = $false)]
-        [Switch] $MarketplaceSyndicationEnabled = $false,
-
-        [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
         [string] $AgreementNumber,
 
@@ -665,16 +650,6 @@ Function Get-AzsRegistrationToken{
     New-RegistrationLogFile -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
 
     Validate-BillingModel -BillingModel $BillingModel -MsAssetTag $MsAssetTag
-    if(($BillingModel -eq 'Capacity') -and ([String]::IsNullOrEmpty($AgreementNumber)))
-    {
-        Log-Throw -Message "Agreement number is null or empty when BillingModel is set to Capacity" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
-    }
-
-    if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled))
-    {
-        Log-Warning "Billing model is set to Capacity and Usage Reporting is enabled. This data will be used to guide product improvements and will not be used for billing purposes. If this is not desired please halt this operation and rerun with -UsageReportingEnabled:`$false. Execution will continue in 20 seconds."
-        Start-Sleep -Seconds 20     
-    }
 
     if ($TokenOutputFilePath -and (-not (Test-Path -Path $TokenOutputFilePath -PathType Leaf)))
     {
@@ -696,8 +671,8 @@ Function Get-AzsRegistrationToken{
         PrivilegedEndpointCredential  = $PrivilegedEndpointCredential
         PrivilegedEndpoint            = $PrivilegedEndpoint
         BillingModel                  = $BillingModel
-        MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
-        UsageReportingEnabled         = $UsageReportingEnabled
+        MarketplaceSyndicationEnabled = $false
+        UsageReportingEnabled         = $false
         AgreementNumber               = $AgreementNumber
         TokenOutputFilePath           = $TokenOutputFilePath
         MsAssetTag                    = $MsAssetTag
@@ -1250,15 +1225,23 @@ Function Get-RegistrationToken{
         [string] $TokenVersion = '3.0'
     )
 
-    if (-not $StampInfo)
-    {
+    if (-not $StampInfo) {
         $StampInfo = Confirm-StampVersion -PSSession $session
     }
 
     $StampVersion = $StampInfo.StampVersion
     $CustomBillingModelVersion = [Version]"1.1912.0.19"
-    if( ($StampVersion -lt $CustomBillingModelVersion) -and ($BillingModel -eq 'Custom') ){
+    if (($StampVersion -lt $CustomBillingModelVersion) -and ($BillingModel -eq 'Custom')) {
         Log-Throw -Message "Custom BillingModel is not supported for StampVersion less than $CustomBillingModelVersion" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
+
+    if (($BillingModel -eq 'Capacity') -and ([String]::IsNullOrEmpty($AgreementNumber))) {
+        Log-Throw -Message "Agreement number is null or empty when BillingModel is set to Capacity" -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    }
+
+    if (($BillingModel -eq 'Capacity') -and ($UsageReportingEnabled)) {
+        Log-Warning "Disabling Usage Reporting as it is not supported for Capacity billing model."
+        $UsageReportingEnabled = $false     
     }
 
     $regTokenParams = @{
