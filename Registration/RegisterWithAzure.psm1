@@ -1867,7 +1867,7 @@ function Remove-RegistrationResource{
     
     $currentAttempt = 0
     $maxAttempt = 3
-    $sleepSeconds = 10 
+    $sleepSeconds = 30 
     do
     {
         try
@@ -1878,13 +1878,17 @@ function Remove-RegistrationResource{
 
             $resourceType = 'Microsoft.Azurestack/registrations'
             $lock = Get-AzResourceLock -LockName 'RegistrationResourceLock' -ResourceGroupName $ResourceGroupName -ResourceType $resourceType -ResourceName $resourceName -ErrorAction SilentlyContinue
-            if ($lock)
-            {
+            if ($lock) {
                 Write-Verbose "Removing Registration resource lock  'RegistrationResourceLock'..." -Verbose
                 Remove-AzResourceLock -LockId $lock.LockId -Force
             }
 
             Remove-AzResource -ResourceId $ResourceId -ApiVersion $azureResourceApiVersion -Force -Verbose
+            ## check if the remove registration resource is successful
+            Write-Verbose "Validating if registration resource removal succeeded." -Verbose
+            if (Get-AzResource -ResourceId $ResourceId -ApiVersion $azureResourceApiVersion -ErrorAction SilentlyContinue) {
+                throw "Removal of registration resource failed."
+            }
             break
         }
         catch
