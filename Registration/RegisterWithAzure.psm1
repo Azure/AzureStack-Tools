@@ -636,6 +636,12 @@ Function Get-AzsRegistrationToken{
         [String] $TokenOutputFilePath,
 
         [Parameter(Mandatory = $false)]
+        [Switch] $UsageReportingEnabled = $false,
+
+        [Parameter(Mandatory = $false)]
+        [Switch] $MarketplaceSyndicationEnabled = $false,
+
+        [Parameter(Mandatory = $false)]
         [ValidateNotNull()]
         [string] $AgreementNumber,
 
@@ -671,8 +677,8 @@ Function Get-AzsRegistrationToken{
         PrivilegedEndpointCredential  = $PrivilegedEndpointCredential
         PrivilegedEndpoint            = $PrivilegedEndpoint
         BillingModel                  = $BillingModel
-        MarketplaceSyndicationEnabled = $false
-        UsageReportingEnabled         = $false
+        MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
+        UsageReportingEnabled         = $UsageReportingEnabled
         AgreementNumber               = $AgreementNumber
         TokenOutputFilePath           = $TokenOutputFilePath
         MsAssetTag                    = $MsAssetTag
