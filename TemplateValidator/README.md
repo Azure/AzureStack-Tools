@@ -1,3 +1,5 @@
+> **_NOTE:_**  The tool validates the ARM template for supported resource types and api versions in AzureStack. However it does not validate the properties supported for each resource type. 
+
 # Validate Azure ARM Template Capabilities
 
 Generate the Cloud capabilities json by Get-AzureRMCloudCapability cmdlet under module .\CloudCapabilities\AzureRM.CloudCapabilities.psm1 based on your environment. You are required to deploy SQL RP, MYSQL RP or AppServices in order to use the respective resources.
