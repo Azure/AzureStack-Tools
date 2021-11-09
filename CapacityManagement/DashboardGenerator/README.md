@@ -1,5 +1,5 @@
 # AzureStack-VolumesPerformanceDashboard-Generator
-This tool is used to generate dashboard jsons showing volumes performance used on Azure Stack Admin portal.
+This tool is used to generate dashboard jsons showing volumes performance used on Azure Stack Hub Admin portal.
 
 <img src="document/demo.png" />
 
@@ -18,11 +18,11 @@ This tool is used to generate dashboard jsons showing volumes performance used o
 - Generate multiple json files representing different volume types.
 
 ### Prerequisite
-- Log in AzureRm account using Azure Stack Admin user. 
+- Login to the Azure Stack Hub Admin ARM Endpoint using either AzureRM or Az module. 
 
 ### Usage   
 1. Execute Create-AzSStorageDashboard.ps1 with needed parameters. 
-2. Upload json generated on dashboard.  
+2. Upload json generated on Admin Portal dashboard, this has to be done on a per user basis.  
 
 ### Add new metrics
 Change ps1 file. Adapt function Initialize-TilePsCustomObject and Get-TilePsCustomObject, then register in initialized variable metricTypes. 
