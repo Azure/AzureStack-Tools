@@ -79,6 +79,40 @@ function Save-AzureStackVolumesPerformanceDashboardJson {
         [string]$outputLocation = '.'
     )
 
+    # check if AzureRM Module is present
+    $AzureRMModule = Get-command -Name Get-AzureRmContext -ErrorAction SilentlyContinue
+    if($AzureRMModule){
+        # do nothing, cmdlets should work natively.
+
+    } else {
+        # check if Az Module is present
+        $AzModule = Get-command -Name Get-AzContext -ErrorAction SilentlyContinue
+        if($AzModule){
+            $answer = Read-Host "`n'Az' module detected, script requires 'Enable-AzureRmAlias' to be enabled for this session.`n`nType 'Y' to Enable or Press Enter for Exit`n"
+            switch($answer){
+                Y {
+                    try {
+                        Write-Host "`nExecuting 'Enable-AzureRmAlias -Scope Local' to created Aliases, this will not persist outside of this session.`n"
+                        Enable-AzureRmAlias -Scope Local
+                    } catch {
+                        Write-Host -ForegroundColor Red "Error: $($error[0].Exception.Message)" 
+                        throw "Error executing 'Enable-AzureRmAlias'"
+                    }
+                }
+                $null {
+                    Write-Host "Script exiting..."
+                    Return
+                }
+                default {
+                    Write-Host "Script exiting..."
+                    Return
+                }
+            }
+        } else {
+            throw "Error: This script requires either the 'AzureRM' or 'Az' PowerShell Module to be installed."
+        }
+    }
+
     # If user do not input DefaultProfile
     if ($null -eq $DefaultProfile) {
         $script:context = Get-AzureRmContext
@@ -89,7 +123,7 @@ function Save-AzureStackVolumesPerformanceDashboardJson {
     
     # if user hadn't added and login to AzureRmEnvironment, exit
     if ($null -eq $script:context.Account) {
-        throw "Please login in AzureRm account first."
+        throw "Please login in AzureRm or Az account first."
     }
 
     if ((Test-Path -Path $outputLocation) -eq $false) {
@@ -164,7 +198,7 @@ function Get-AzureStackResourceId {
     }
     catch {
         Write-Error $_
-        throw "Please login in AzureRm account. If still happens, check your environment settings in psm1 file."
+        throw "Please login in AzureRm or Az account. If still happens, check your environment settings in psm1 file."
     }
     "subscriptions/$($adminSubscription.Id)/resourceGroups/System.$($location.location)/providers/Microsoft.Fabric.Admin/fabricLocations/$($location.location)"
 }
