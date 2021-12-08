@@ -1,0 +1,133 @@
+{
+	"position": {
+		"x": 0,
+		"y": 2,
+		"colSpan": 6,
+		"rowSpan": 4
+	},
+	"metadata": {
+		"inputs": [
+			{
+				"name": "options",
+				"value": {
+					"charts": [
+						{
+							"metrics": [
+								{
+									"name": "VolumeOperationsWrite",
+									"resourceMetadata": {
+										"resourceId": "<resourceIdToBeReplaced>"
+									},
+									"aggregationType": 4
+								},
+								{
+									"name": "VolumeOperationsThroughputRead",
+									"resourceMetadata": {
+										"resourceId": "<resourceIdToBeReplaced>"
+									},
+									"aggregationType": 4
+								}
+							],
+							"title": "Total",
+							"timeContext": {
+								"options": {
+									"grain": 1,
+									"appliedISOGrain": "PT5M"
+								},
+								"relative": {
+									"duration": 86400000
+								}
+							},
+							"itemDataModel": {
+								"_comment_id": "2703D70A-92D7-46BE-9395-DE30917EC82B",
+								"chartHeight": 1,
+								"metrics": [
+									{
+										"id": {
+											"resourceDefinition": {
+												"id": "<resourceIdToBeReplaced>"
+											},
+											"name": {
+												"id": "VolumeOperationsWrite",
+												"displayName": "Volume Operations Write (Preview)"
+											},
+											"dataSource": 1,
+											"namespace": {
+												"name": "microsoft.fabric.admin/fabriclocations"
+											}
+										},
+										"metricAggregation": 1,
+										"color": "#47BDF5"
+									},
+									{
+										"id": {
+											"resourceDefinition": {
+												"id": "<resourceIdToBeReplaced>"
+											},
+											"name": {
+												"id": "VolumeOperationsThroughputRead",
+												"displayName": "Volume Operations Throughput Read (Preview)"
+											},
+											"dataSource": 1,
+											"namespace": {
+												"name": "microsoft.fabric.admin/fabriclocations"
+											}
+										},
+										"metricAggregation": 1,
+										"color": "#7E58FF"
+									}
+								],
+								"priorPeriod": false,
+								"horizontalBars": true,
+								"showOther": false,
+								"aggregation": 1,
+								"palette": "multiColor",
+								"jsonDefinitionId": "700398D6-C408-4EBF-8E65-E05DC5F4031E",
+								"version": {
+									"major": 1,
+									"minor": 0,
+									"build": 0
+								},
+								"filters": {
+									"filterType": 0,
+									"id": "62B109D6-9CD5-442A-9E35-3281D15DAFE7",
+									"OperandFilters": [
+										{
+											"id": "1E1D3ABA-FEF7-40C5-B355-370F3F44C02F",
+											"filterType": 1,
+											"ComparisonOperator": 0,
+											"OperandSelectedKey": {
+												"dimensionName": {
+													"id": "VolumeName",
+													"displayName": "Volume Name"
+												}
+											},
+											"OperandSelectedValues": [
+												"Volume3"
+											]
+										}
+									],
+									"LogicalOperator": 0
+								},
+								"yAxisOptions": {
+									"options": 1
+								},
+								"title": "Total",
+								"titleKind": "Auto",
+								"appliedISOGrain": "PT5M"
+							}
+						}
+					],
+					"v2charts": true
+				},
+				"isOptional": true
+			},
+			{
+				"name": "sharedTimeRange",
+				"isOptional": true
+			}
+		],
+		"type": "Extension/HubsExtension/PartType/MonitorChartPart",
+		"settings": {}
+	}
+}
