@@ -19,7 +19,7 @@ The Azure Stack Development Kit Pre-Checker script is a PowerShell script publis
 https://github.com/Azure/AzureStack-Tools
 #>
 
-#requires –runasadministrator
+#requires -runasadministrator
 
 function CheckNestedVirtualization {
 
@@ -243,13 +243,12 @@ function CheckServerName {
   }
 }
 
-
 function CheckCPU {
 
     write-host -ForegroundColor yellow "["(date -format "HH:mm:ss")"]" "Checking processor information..."
 
-    $CPUCount = (Get-WmiObject -class win32_processor –computername localhost).count
-    $CoreCount =  ((Get-WmiObject -class win32_processor –computername localhost -Property "numberOfCores")[0].numberOfCores)*$CPUCount
+    $CPUCount = (Get-WmiObject -class win32_processor -computername localhost).count
+    $CoreCount =  ((Get-WmiObject -class win32_processor -computername localhost -Property "numberOfCores")[0].numberOfCores)*$CPUCount
     write-host -ForegroundColor gray "["(date -format "HH:mm:ss")"]" " -- Number of CPU sockets = $CPUCount"
     write-host -ForegroundColor gray "["(date -format "HH:mm:ss")"]" " -- Number of physical cores =  $CoreCount"
 
