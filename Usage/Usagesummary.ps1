@@ -29,7 +29,7 @@ Param
 $meters = @{
     '578ae51d-4ef9-42f9-85ae-42b52d3d83ac' = 'ActualPremiumSnapshotSize Unit: GB*month'
     '108fa95b-be0d-4cd9-96e8-5b0d59505df1' = 'ActualStandardSnapshotSize Unit: GB*month'
-    'Custom Worker Tiers' = 'Custom Worker Tiers Unit: Hours'
+    'Custom Worker Tiers'                  = 'Custom Worker Tiers Unit: Hours'
     'F271A8A388C44D93956A063E1D2FA80B'     = 'Static IP Address Usage'
     '9E2739BA86744796B465F64674B822BA'     = 'Dynamic IP Address Usage'
     'B4438D5D-453B-4EE1-B42A-DC72E377F1E4' = 'TableCapacity'
@@ -118,15 +118,15 @@ $subtable = New-Object System.Collections.ArrayList
 $subs = Get-AzsUserSubscription
 foreach ($subentry in $subs) {
     [void]($subtable.Add([pscustomobject] @{
-        SubscriptionId = $subentry.SubscriptionId
-        Owner = $subentry.Owner
-        DisplayName = $subentry.DisplayName
-    }
-   )
-  )
+                SubscriptionId = $subentry.SubscriptionId
+                Owner          = $subentry.Owner
+                DisplayName    = $subentry.DisplayName
+            }
+        )
+    )
 }
 
-$usageSummary  = New-Object System.Collections.ArrayList
+$usageSummary = New-Object System.Collections.ArrayList
 
 foreach ($subID in $subtable) {
     Write-Host "Retrieving SubscriptionID $($subID.SubscriptionId)" -ForegroundColor Yellow    
@@ -141,24 +141,23 @@ foreach ($subID in $subtable) {
         $resourceName = $resourceText.Split('/')[8]
 
         [void]($usageSummary.Add([pscustomobject] @{
-            UsageStartTime = $entry.UsageStartTime
-            UsageEndTime = $entry.UsageEndTime
-            MeterName = $meters[$entry.MeterId]
-            Quantity = $entry.Quantity
-            resourceType = $resourceType
-            location = $resourceInfo.location
-            resourceGroup = $resourceGroup
-            resourceName = $resourceName
-            subowner = $subID.Owner
-            tags = $resourceInfo.tags
-            MeterId = $entry.MeterId
-            additionalInfo = $resourceInfo.additionalInfo
-            subscription = $subscription
-            resourceUri = $resourceText
-        }
-       )
-      )
+                    UsageStartTime = $entry.UsageStartTime
+                    UsageEndTime   = $entry.UsageEndTime
+                    MeterName      = $meters[$entry.MeterId]
+                    Quantity       = $entry.Quantity
+                    resourceType   = $resourceType
+                    location       = $resourceInfo.location
+                    resourceGroup  = $resourceGroup
+                    resourceName   = $resourceName
+                    subowner       = $subID.Owner
+                    tags           = $resourceInfo.tags
+                    MeterId        = $entry.MeterId
+                    additionalInfo = $resourceInfo.additionalInfo
+                    subscription   = $subscription
+                    resourceUri    = $resourceText
+                }
+            )
+        )
     }
 }
 $usageSummary | Export-Csv -Path $CsvFile  -NoTypeInformation 
-
