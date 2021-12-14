@@ -79,51 +79,25 @@ function Save-AzureStackVolumesPerformanceDashboardJson {
         [string]$outputLocation = '.'
     )
 
-    # check if AzureRM Module is present
-    $AzureRMModule = Get-command -Name Get-AzureRmContext -ErrorAction SilentlyContinue
-    if($AzureRMModule){
+    # check if Az Module is present
+    $AzModule = Get-command -Name Get-AzContext -ErrorAction SilentlyContinue
+    if($AzModule){
         # do nothing, cmdlets should work natively.
-
     } else {
-        # check if Az Module is present
-        $AzModule = Get-command -Name Get-AzContext -ErrorAction SilentlyContinue
-        if($AzModule){
-            $answer = Read-Host "`n'Az' module detected, script requires 'Enable-AzureRmAlias' to be enabled for this session.`n`nType 'Y' to Enable or Press Enter for Exit`n"
-            switch($answer){
-                Y {
-                    try {
-                        Write-Host "`nExecuting 'Enable-AzureRmAlias -Scope Local' to created Aliases, this will not persist outside of this session.`n"
-                        Enable-AzureRmAlias -Scope Local
-                    } catch {
-                        Write-Host -ForegroundColor Red "Error: $($error[0].Exception.Message)" 
-                        throw "Error executing 'Enable-AzureRmAlias'"
-                    }
-                }
-                $null {
-                    Write-Host "Script exiting..."
-                    Return
-                }
-                default {
-                    Write-Host "Script exiting..."
-                    Return
-                }
-            }
-        } else {
-            throw "Error: This script requires either the 'AzureRM' or 'Az' PowerShell Module to be installed."
-        }
+        throw "Error: This script requires 'Az' PowerShell Module to be installed."
     }
 
     # If user do not input DefaultProfile
     if ($null -eq $DefaultProfile) {
-        $script:context = Get-AzureRmContext
+        $script:context = Get-AzContext
     }
     else {
         $script:context = $DefaultProfile.Context
     }
     
-    # if user hadn't added and login to AzureRmEnvironment, exit
+    # if user hadn't added and login to AzEnvironment, exit
     if ($null -eq $script:context.Account) {
-        throw "Please login in AzureRm or Az account first."
+        throw "Please login in Az account first."
     }
 
     if ((Test-Path -Path $outputLocation) -eq $false) {
@@ -192,13 +166,13 @@ function Get-AzureStackResourceId {
     param (
     )
     try {
-        Write-Host "Getting resource Id from AzureRmSubscription."
+        Write-Host "Getting resource Id from AzSubscription."
         $adminSubscription = $script:context.Subscription
-        $location = Get-AzureRmLocation -DefaultProfile $script:context -ErrorAction Stop -Verbose
+        $location = Get-AzLocation -DefaultProfile $script:context -ErrorAction Stop -Verbose
     }
     catch {
         Write-Error $_
-        throw "Please login in AzureRm or Az account. If still happens, check your environment settings in psm1 file."
+        throw "Please login in Az account. If still happens, check your environment settings in psm1 file."
     }
     "subscriptions/$($adminSubscription.Id)/resourceGroups/System.$($location.location)/providers/Microsoft.Fabric.Admin/fabricLocations/$($location.location)"
 }
@@ -210,11 +184,11 @@ function Get-AzureStackVolumes {
     try {
         Write-Host "Getting volumes data from ARM."
 
-        $location = Get-AzureRmLocation -DefaultProfile $script:context -ErrorAction Stop -Verbose
+        $location = Get-AzLocation -DefaultProfile $script:context -ErrorAction Stop -Verbose
         $location = $location.Location
-        $scaleUnits = Get-AzureRmResource -DefaultProfile $script:context -ResourceName $location -ResourceType Microsoft.Fabric.Admin/fabricLocations/scaleunits -ResourceGroupName "System.$($location)" -ApiVersion "2016-05-01"
-        $sotrageSubSystems = Get-AzureRmResource -DefaultProfile $script:context -ResourceName $scaleUnits.Name -ResourceType Microsoft.Fabric.Admin/fabricLocations/scaleunits/storageSubSystems -ResourceGroupName "System.$($location)" -ApiVersion "2018-10-01"
-        $volumes = Get-AzureRmResource -DefaultProfile $script:context -ResourceName $sotrageSubSystems.Name -ResourceType Microsoft.Fabric.Admin/fabricLocations/scaleunits/storageSubSystems/volumes -ResourceGroupName "System.$($location)" -ApiVersion "2018-10-01"
+        $scaleUnits = Get-AzResource -DefaultProfile $script:context -ResourceName $location -ResourceType Microsoft.Fabric.Admin/fabricLocations/scaleunits -ResourceGroupName "System.$($location)" -ApiVersion "2016-05-01"
+        $sotrageSubSystems = Get-AzResource -DefaultProfile $script:context -ResourceName $scaleUnits.Name -ResourceType Microsoft.Fabric.Admin/fabricLocations/scaleunits/storageSubSystems -ResourceGroupName "System.$($location)" -ApiVersion "2018-10-01"
+        $volumes = Get-AzResource -DefaultProfile $script:context -ResourceName $sotrageSubSystems.Name -ResourceType Microsoft.Fabric.Admin/fabricLocations/scaleunits/storageSubSystems/volumes -ResourceGroupName "System.$($location)" -ApiVersion "2018-10-01"
     }
     catch {
         Write-Error $_.ToString()
