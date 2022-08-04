@@ -1,5 +1,3 @@
-#$SubscriptionID = "53a7c7d6-f9c8-4ce0-84a4-9c35b3154801"
-
 <#
     .Synopsis
     Exports Tenant Subscriptions Quotas
@@ -21,7 +19,7 @@ $allOffers = [System.Collections.ArrayList]::new()
 # Get DPS subscriptionID
 write-host "Getting SubscriptionID for Default Provider Subscription" -ForegroundColor cyan
 $defaultProviderSubscription = (get-azssubscription | Where-Object { $_.DisplayName -like "Default Provider Subscription" } | Select-Object SubscriptionId).subscriptionId
-write-host "Default Provider Subscription SubscriptionID : $defaultProviderSubscription " -foreground cyan
+write-host "Default Provider Subscription SubscriptionID : $defaultProviderSubscription " -ForegroundColor cyan
 
 # To add timestamp to generated files
 $datetime = Get-Date -Format "yyyy.MM.dd_HH-mm-ss"
@@ -29,15 +27,15 @@ $datetime = Get-Date -Format "yyyy.MM.dd_HH-mm-ss"
 
 #get apiverison for resource providers
 $PlanAPI = (Get-AzResourceProvider  | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*acquiredPlans" }).apiversions[0]
-$OfferAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Subscriptions.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*offers" }).apiversions[0]
-$StorageQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Storage.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-$ComputeQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Compute.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-$NetworkQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Network.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-$ContainerServiceQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.ContainerService.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-$WebQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Web.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-$MySQLAdapterQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.MySQLAdapter.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-$SQLAdapterQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.SQLAdapter.Admin | select ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
-write-host "Retrieving apiversion for Resource Providers" -foreground cyan
+$OfferAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Subscriptions.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*offers" }).apiversions[0]
+$StorageQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Storage.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+$ComputeQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Compute.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+$NetworkQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Network.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+$ContainerServiceQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.ContainerService.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+$WebQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.Web.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+$MySQLAdapterQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.MySQLAdapter.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+$SQLAdapterQuotaAPI = (Get-AzResourceProvider -ProviderNamespace Microsoft.SQLAdapter.Admin | Select-Object ResourceTypes -expand ResourceTypes | Where-Object { $_.ResourceTypeName -like "*quotas" }).apiversions[0]
+write-host "Retrieving apiversion for Resource Providers" -ForegroundColor cyan
 
 # Retrive token for API calls
 $token = Get-AzAccessToken
@@ -52,7 +50,7 @@ $listOffers = (Invoke-RestMethod -Method Get -Uri $urlOffers  -Headers $headers)
 $file_name = "ListofQuotas" + $datetime + ".csv";
 $file_path = "./" + $file_name;
 
-$newcsv = {} | Select "OfferName", "Status", "SubscriptionsCount", "BasePlans", "BasePlansRG", "AddOnPlans", "AddOnPlansRG" | Export-Csv $file_path
+$newcsv = {} | Select-Object "OfferName", "Status", "SubscriptionsCount", "BasePlans", "BasePlansRG", "AddOnPlans", "AddOnPlansRG" | Export-Csv $file_path
 $csvfile = Import-Csv $file_path
 
 foreach ($offer in $listOffers) {
