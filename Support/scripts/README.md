@@ -5,3 +5,7 @@ The script scripts will contain information on relevancy for both build and depl
 
 ##  Available Support Scripts: ##
 -  Start-ResourceSynchronization.ps1 (applies to both Integraded System and ASDK; relevant build(s): 1802)
+
+- Get-OfferQuota.ps1
+  - Get-OfferQuota.ps1 -AdminARMEndpoint "https://adminmanagement.Region.FQDN" -SubscriptionID "1111111-2222-33333-4444-555555555" (To get Resource Providers aggregated quota for specific subscription in CSV format)
+  - Get-OfferQuota.ps1 -AdminARMEndpoint "https://adminmanagement.Region.FQDN" (To get Resource Providers aggregated quota for all tenant subscriptions in CSV format)
