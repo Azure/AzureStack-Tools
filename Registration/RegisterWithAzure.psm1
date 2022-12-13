@@ -402,6 +402,9 @@ function Set-AzsRegistration{
             $stampInfo = Confirm-StampVersion -PSSession $privilegedEndpointSession
         }
 
+        # Set registration key pair if build is greater than 1.2209.0.23
+        Set-RegistrationKeyPair -Session $privilegedEndpointSession -StampVersion $stampInfo.StampVersion | Out-Null
+
         # Configure Azure Bridge
         $refreshToken = (Export-AzRefreshToken -Context $AzureContext -Verbose).GetRefreshToken()
         $servicePrincipal = New-ServicePrincipal -RefreshToken $refreshToken -AzureEnvironmentName $AzureContext.Environment.Name -TenantId $AzureContext.Subscription.TenantId -PSSession $privilegedEndpointSession
@@ -679,8 +682,6 @@ Function Get-AzsRegistrationToken{
     Log-Output "*********************** Begin log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 
     $params = @{
-        PrivilegedEndpointCredential  = $PrivilegedEndpointCredential
-        PrivilegedEndpoint            = $PrivilegedEndpoint
         BillingModel                  = $BillingModel
         MarketplaceSyndicationEnabled = $MarketplaceSyndicationEnabled
         UsageReportingEnabled         = $UsageReportingEnabled
@@ -694,7 +695,10 @@ Function Get-AzsRegistrationToken{
     try
     {
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
-        $registrationToken = Get-RegistrationToken @params -Session $session
+        $stampInfo = Confirm-StampVersion -PSSession $session
+        # Set registration key pair if build is greater than 1.2209.0.23
+        Set-RegistrationKeyPair -Session $session -StampVersion $stampInfo.StampVersion | Out-Null
+        $registrationToken = Get-RegistrationToken @params -Session $session -StampInfo $stampInfo
     }
     finally
     {
@@ -1198,12 +1202,6 @@ Returns an object, RegistrationDetails, that contains a RegisrationToken and Reg
 Function Get-RegistrationToken{
 [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $false)]
-        [PSCredential] $PrivilegedEndpointCredential,
-
-        [Parameter(Mandatory = $false)]
-        [String] $PrivilegedEndpoint,
-        
         [Parameter(Mandatory = $false)]
         [ValidateSet('Capacity', 'PayAsYouUse', 'Development', 'Custom', 'Ruggedized')]
         [string] $BillingModel = 'Development',
@@ -2026,6 +2024,153 @@ function Validate-AzureContext{
 }
 
 <#
+.SYNOPSIS
+Set Registration key pair
+
+.PARAMETER PrivilegedEndpointCredential
+Powershell object that contains credential information i.e. user name and password. The Azure Stack administrator has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+If not supplied script will request manual input of username and password
+
+.PARAMETER PrivilegedEndpoint
+Privileged Endpoint VM that performs environment administration actions. Also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
+
+.EXAMPLE
+Set-RegistrationKeyPair -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01"
+#>
+function Set-RegistrationKeyPair {
+[CmdletBinding(DefaultParametersetName="PrivilegedEndpoint")]
+    param(
+        [Parameter(Mandatory = $true, ParameterSetName = "PrivilegedEndpoint")]
+        [PSCredential] $PrivilegedEndpointCredential,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "PrivilegedEndpoint")]
+        [String] $PrivilegedEndpoint,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "Session")]
+        [System.Management.Automation.Runspaces.PSSession] $Session,
+
+        [Parameter(Mandatory = $false)]
+        [Version] $StampVersion
+    )
+    Initialize-RegistrationLog -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10
+    $registrationKeyInfo = $null
+    do {
+        try {
+            if ($PsCmdlet.ParameterSetName -eq "PrivilegedEndpoint") {
+                $Session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+            }
+            if (-not $StampVersion) {
+                $stampInfo = Confirm-StampVersion -PSSession $Session
+                $StampVersion = $StampInfo.StampVersion
+            }
+            $HCISetupBuild = [Version]"1.2209.0.23"
+            if ($StampVersion -gt $HCISetupBuild) {
+                Log-Output "Setting Registration key pair"
+                $registrationKeyInfo = Invoke-Command -Session $Session -ScriptBlock { Set-RegistrationKeyPair }
+                Log-Output "Result $($registrationKeyInfo | ConvertTo-Json -Depth 2)"
+            } else {
+                Log-Output "Set-RegistrationKeyPair PEP is not available for older than 2210 builds. Current build version $StampVersion."
+            }
+            break
+        } catch {
+            Log-Warning "Error while invoking Set-RegistrationKeyPair:`r`n$($_)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt) {
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            } 
+        } finally {
+            if ($PsCmdlet.ParameterSetName -eq "PrivilegedEndpoint") {
+                Log-Output "Removing PrivilegedEndpoint session"
+                $Session | Remove-PSSession
+            }
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+    return $registrationKeyInfo
+}
+
+<#
+.SYNOPSIS
+Save HCI License
+
+.PARAMETER PrivilegedEndpointCredential
+Powershell object that contains credential information i.e. user name and password. The Azure Stack administrator has access to the Privileged Endpoint VM (also known as Emergency Console) to call whitelisted cmdlets and scripts.
+If not supplied script will request manual input of username and password
+
+.PARAMETER PrivilegedEndpoint
+Privileged Endpoint VM that performs environment administration actions. Also known as Emergency Console VM.(Example: AzS-ERCS01 for the ASDK)
+
+.PARAMETER License
+HCI license string obtained through ACIS action (contact CSS to get HCI license)
+
+.EXAMPLE
+Save-HCILicense -PrivilegedEndpointCredential $PrivilegedEndpointCredential -PrivilegedEndpoint "Azs-ERCS01" -License $license
+#>
+function Save-HCILicense {
+[CmdletBinding(DefaultParametersetName="PrivilegedEndpoint")]
+    param(
+        [Parameter(Mandatory = $true, ParameterSetName = "PrivilegedEndpoint")]
+        [PSCredential] $PrivilegedEndpointCredential,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "PrivilegedEndpoint")]
+        [String] $PrivilegedEndpoint,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "Session")]
+        [System.Management.Automation.Runspaces.PSSession] $Session,
+
+        [Parameter(Mandatory = $false)]
+        [Version] $StampVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string] $License
+    )
+    Initialize-RegistrationLog -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+
+    $currentAttempt = 0
+    $maxAttempt = 3
+    $sleepSeconds = 10
+    do {
+        try {
+            if ($PsCmdlet.ParameterSetName -eq "PrivilegedEndpoint") {
+                $Session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
+            }
+            if (-not $StampVersion) {
+                $stampInfo = Confirm-StampVersion -PSSession $session
+                $StampVersion = $StampInfo.StampVersion
+            }
+            $HCISetupBuild = [Version]"1.2209.0.23"
+            if ($StampVersion -gt $HCISetupBuild) {
+                Log-Output "Saving HCI license"
+                Invoke-Command -Session $Session -ScriptBlock { Save-HCILicense -License $using:License }
+                Log-Output "Saved HCI license successfully"
+            } else {
+                Log-Output "Save-HCILicense PEP is not available for older than 2210 builds. Current build version $StampVersion."
+            }
+            break
+        } catch {
+            Log-Warning "Error while invoking Save-HCILicense:`r`n$($_)"
+            Log-Output "Waiting $sleepSeconds seconds and trying again..."
+            $currentAttempt++
+            Start-Sleep -Seconds $sleepSeconds
+            if ($currentAttempt -ge $maxAttempt) {
+                Log-Throw -Message $_ -CallingFunction $PSCmdlet.MyInvocation.MyCommand.Name
+            } 
+        } finally {
+            if ($PsCmdlet.ParameterSetName -eq "PrivilegedEndpoint") {
+                Log-Output "Removing PrivilegedEndpoint session"
+                $Session | Remove-PSSession
+            }
+        }
+    } while ($currentAttempt -lt $maxAttempt)
+    return $registrationKeyInfo
+}
+
+<#
 
 .SYNOPSIS
 
@@ -2127,3 +2272,7 @@ Export-ModuleMember Remove-AzsActivationResource
 # Connected functions
 Export-ModuleMember Set-AzsRegistration
 Export-ModuleMember Remove-AzsRegistration
+
+# HCI setup helper functions
+Export-ModuleMember Set-RegistrationKeyPair
+Export-ModuleMember Save-HCILicense
