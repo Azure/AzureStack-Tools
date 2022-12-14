@@ -93,8 +93,8 @@ function Initialize-RegistrationLog {
     $Script:VerbosePreference = [System.Management.Automation.ActionPreference]::Continue
     if (-not ($SkipIfExists -and $Script:registrationLog)) {
         New-RegistrationLogFile -RegistrationFunction $RegistrationFunction
-        Log-Output "*********************** Begin log: $RegistrationFunction ***********************`r`n"
     }
+    Log-Output "*********************** Begin log: $RegistrationFunction ***********************`r`n"
 
 }
 
@@ -403,7 +403,7 @@ function Set-AzsRegistration{
         }
 
         # Set registration key pair if build is greater than 1.2209.0.23
-        Set-RegistrationKeyPair -Session $privilegedEndpointSession -StampVersion $stampInfo.StampVersion | Out-Null
+        Set-RegistrationKeyPair -Session $privilegedEndpointSession -StampInfo $stampInfo | Out-Null
 
         # Configure Azure Bridge
         $refreshToken = (Export-AzRefreshToken -Context $AzureContext -Verbose).GetRefreshToken()
@@ -697,7 +697,7 @@ Function Get-AzsRegistrationToken{
         $session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
         $stampInfo = Confirm-StampVersion -PSSession $session
         # Set registration key pair if build is greater than 1.2209.0.23
-        Set-RegistrationKeyPair -Session $session -StampVersion $stampInfo.StampVersion | Out-Null
+        Set-RegistrationKeyPair -Session $session -StampInfo $stampInfo | Out-Null
         $registrationToken = Get-RegistrationToken @params -Session $session -StampInfo $stampInfo
     }
     finally
@@ -2050,9 +2050,9 @@ function Set-RegistrationKeyPair {
         [System.Management.Automation.Runspaces.PSSession] $Session,
 
         [Parameter(Mandatory = $false)]
-        [Version] $StampVersion
+        [PSObject] $StampInfo
     )
-    Initialize-RegistrationLog -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name
+    Initialize-RegistrationLog -RegistrationFunction $PSCmdlet.MyInvocation.MyCommand.Name -SkipIfExists
 
     $currentAttempt = 0
     $maxAttempt = 3
@@ -2063,17 +2063,20 @@ function Set-RegistrationKeyPair {
             if ($PsCmdlet.ParameterSetName -eq "PrivilegedEndpoint") {
                 $Session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
             }
-            if (-not $StampVersion) {
-                $stampInfo = Confirm-StampVersion -PSSession $Session
-                $StampVersion = $StampInfo.StampVersion
+            if (-not $StampInfo) {
+                $StampInfo = Confirm-StampVersion -PSSession $Session
             }
             $HCISetupBuild = [Version]"1.2209.0.23"
-            if ($StampVersion -gt $HCISetupBuild) {
-                Log-Output "Setting Registration key pair"
-                $registrationKeyInfo = Invoke-Command -Session $Session -ScriptBlock { Set-RegistrationKeyPair }
-                Log-Output "Result $($registrationKeyInfo | ConvertTo-Json -Depth 2)"
+            if ($StampInfo.StampVersion -gt $HCISetupBuild) {
+                if ($StampInfo.NumberOfNodes -gt 1) { # HCI setup not supported for onenode
+                    Log-Output "Setting Registration key pair"
+                    $registrationKeyInfo = Invoke-Command -Session $Session -ScriptBlock { Set-RegistrationKeyPair }
+                    Log-Output "Result $($registrationKeyInfo | ConvertTo-Json -Depth 2)"
+                } else {
+                    Log-Output "Set-RegistrationKeyPair PEP is not supported for onenode, skipping"
+                } 
             } else {
-                Log-Output "Set-RegistrationKeyPair PEP is not available for older than 2210 builds. Current build version $StampVersion."
+                Log-Output "Set-RegistrationKeyPair PEP is not supported for build version $($StampInfo.StampVersion), skipping"
             }
             break
         } catch {
@@ -2091,6 +2094,8 @@ function Set-RegistrationKeyPair {
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
+
+    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
     return $registrationKeyInfo
 }
 
@@ -2124,7 +2129,7 @@ function Save-HCILicense {
         [System.Management.Automation.Runspaces.PSSession] $Session,
 
         [Parameter(Mandatory = $false)]
-        [Version] $StampVersion,
+        [PSObject] $StampInfo,
 
         [Parameter(Mandatory = $true)]
         [string] $License
@@ -2139,17 +2144,20 @@ function Save-HCILicense {
             if ($PsCmdlet.ParameterSetName -eq "PrivilegedEndpoint") {
                 $Session = Initialize-PrivilegedEndpointSession -PrivilegedEndpoint $PrivilegedEndpoint -PrivilegedEndpointCredential $PrivilegedEndpointCredential -Verbose
             }
-            if (-not $StampVersion) {
-                $stampInfo = Confirm-StampVersion -PSSession $session
-                $StampVersion = $StampInfo.StampVersion
+            if (-not $StampInfo) {
+                $StampInfo = Confirm-StampVersion -PSSession $Session
             }
             $HCISetupBuild = [Version]"1.2209.0.23"
-            if ($StampVersion -gt $HCISetupBuild) {
-                Log-Output "Saving HCI license"
-                Invoke-Command -Session $Session -ScriptBlock { Save-HCILicense -License $using:License }
-                Log-Output "Saved HCI license successfully"
+            if ($StampInfo.StampVersion -gt $HCISetupBuild) { 
+                if ($StampInfo.NumberOfNodes -gt 1) { # HCI setup not supported for onenode
+                    Log-Output "Saving HCI license"
+                    Invoke-Command -Session $Session -ScriptBlock { Save-HCILicense -License $using:License }
+                    Log-Output "Saved HCI license successfully"
+                } else {
+                    Log-Output "Save-HCILicense PEP is not supported for onenode, skipping"
+                }  
             } else {
-                Log-Output "Save-HCILicense PEP is not available for older than 2210 builds. Current build version $StampVersion."
+                Log-Output "Save-HCILicense PEP is not supported for build version $($StampInfo.StampVersion), skipping"
             }
             break
         } catch {
@@ -2167,7 +2175,8 @@ function Save-HCILicense {
             }
         }
     } while ($currentAttempt -lt $maxAttempt)
-    return $registrationKeyInfo
+    
+    Log-Output "*********************** End log: $($PSCmdlet.MyInvocation.MyCommand.Name) ***********************`r`n"
 }
 
 <#
