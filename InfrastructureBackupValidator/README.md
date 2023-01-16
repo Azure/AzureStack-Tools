@@ -3,6 +3,11 @@
 
 The purpose of this new backup validator tool is to remove the ASDK dependency and provide customers a standalone tool which they can use to validate Azure Stack Hub infrastructure backup content (offers, plans, quotas, user subscriptions, storage accounts).
 
+### Prerequisites
+1. A local SQL server pre-installed (for example, SQL Express)
+
+2. Available connection to the backup share
+
 ### Syntax
 Validate-AszBackup
 
