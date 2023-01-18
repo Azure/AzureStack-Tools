@@ -8,6 +8,8 @@ The purpose of this new backup validator tool is to remove the ASDK dependency a
 
 2. Available connection to the backup share
 
+3. Download and install NuGet package "Microsoft.AzureStack.Fabric.Backup.IBCAdapterClient"
+
 ### Syntax
 Validate-AszBackup
 
@@ -36,15 +38,13 @@ Values: Arrays of corresponding resources.
 ### Example
 ```powershell
 # 1. Import module Unprotect-AzsBackup to do backup decryption
-Import-module $path_to_the_module\Unprotect-AzsBackup.psm1 -Force
+Import-module $path_to_the_tool\Unprotect-AzsBackup.psm1 -Force
 # 2. Import IBC client cmdlets for getting backup chain
-$IbcClientNugetPath = Get-ASArtifactPath -NugetName "Microsoft.AzureStack.Fabric.Backup.IBCAdapterClient"
-$ibcClientCmdlet = Join-Path $IbcClientNugetPath "content\IBCAdapterClientPkg\Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.psd1"
-Import-Module -Name $ibcClientCmdlet
+Import-Module -Name $path_to_the_installed_package\content\IBCAdapterClientPkg\Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.psd1
 # 3. Import module Validate-AszBackup
-Import-module $path_to_the_module\Validate-AszBackup.psm1 -Force
+Import-module $path_to_the_tool\BackupValidationTool.psm1 -Force
 # 4. Validate Backup
 $results = Validate-AszBackup -BackupStorePath \\server\backupshare -BackupStoreCredential $ShareCredential -BackupID $BackupID `
   -DecryptionCertPath $DecryptionCertPath -DecryptionCertPassword $DecryptionCertPasswdSecureString `
-  -SQLServerInstanceName $SQLServerInstanceName -SQLCredential $SQLCredential -TempFolder "D:\validtool\testfolder"
+  -SQLServerInstanceName $SQLServerInstanceName -SQLCredential $SQLCredential -TempFolder $TempFolder
 ```
