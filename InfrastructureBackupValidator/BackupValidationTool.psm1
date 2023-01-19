@@ -31,7 +31,7 @@ ConvertFrom-StringData @'
     ErrorFailToConnectBackupStore = Failed to connect to the backup store '{0}' with provided credential. Exception: {1}
     ErrorFailToConnectSqlServerDefault = Failed to connect to the SQL server '{0}' with Windows Authentication. Exception: {1}
     ErrorFailToConnectSqlServerProvided = Failed to connect to the SQL server '{0}' with provided credential. Exception: {1}
-    ErrorFailToFindBackupSnapshots = Failed to find backup repositories: {0}
+    ErrorFailToFindBackupSnapshots = Failed to find backup snapshots with BackupID {0}
     ErrorFindMoreThanOneSnapshot = Found more than one snapshots for repository: {0}
     ErrorFailToFindBackupChain = Failed to find backup chain for {0}
     ErrorFailToDecryptSnapshot = Backup decryption failed for snapshot: '{0}'. Exception: {1}
@@ -202,7 +202,7 @@ function Validate-AszBackup
         throw ($Strings.ErrorFailToConnectBackupStore -f $BackupStorePath, $_)
     }
 
-    Install-Module -Name SqlServer
+    Install-Module -Name SqlServer -AllowClobber
     Import-Module SqlServer -DisableNameChecking
     $sqlCommonParams = @{
         ServerInstance = $SQLServerInstanceName
@@ -246,49 +246,56 @@ function Validate-AszBackup
     Write-Verbose ($Strings.ProgressGetBackupSnapshots -f $BackupID) -Verbose
     $backupRoot = Join-Path $BackupStorePath "MASBackup\progressivebackup"
     $backupFiles = (Get-ChildItem -Path $backupRoot -Recurse | ? { $_.Name -match $BackupID -and $_.Name -match ".zip" }).FullName
-    $backupRepos = @($BackupRepoNames.Values.GetEnumerator()) | ? { $_ -ne $BackupRepoNames.Subscription }
-    $backupFiles = $backupFiles | ? { $backupRepos.Contains(($_ -Split "\\")[-2]) }
+    $backupRepos = @($BackupRepoNames.Values.GetEnumerator())
     if ($null -eq $backupFiles -or $backupFiles.Count -eq 0)
     {
-        throw ($Strings.ErrorFailToFindBackupSnapshots -f ($backupRepos -join ","))
-    }
-
-    $diff = Compare-Object -ReferenceObject $backupRepos -DifferenceObject ($backupFiles | % { ($_ -Split "\\")[-2] })
-    $missingRepos = ($diff | ? { $_.SideIndicator -eq "<=" }).InputObject
-    if ($null -ne $missingRepos -and $missingRepos.Count -gt 0)
-    {
-        throw ($Strings.ErrorFailToFindBackupSnapshots -f ($missingRepos -join ","))
-    }
-
-    $duplicateRepos = ($diff | ? { $_.SideIndicator -eq "=>" }).InputObject
-    if ($null -ne $duplicateRepos -and $duplicateRepos.Count -gt 0)
-    {
-        throw ($Strings.ErrorFindMoreThanOneSnapshot -f ($duplicateRepos -join ","))
+        throw ($Strings.ErrorFailToFindBackupSnapshots -f $BackupID)
     }
 
     # It's progressive backup for Subscription, get the backup chain
+    # A backup file FullName is like: "$BackupStorePath\MASBackup\progressivebackup\1.2209.0.53\NRP;Microsoft.Network.Admin;-;Quota\202301171931_fa396b1d-1814-4c75-9ddc-fef71cf2ecd1_Full_C.zip"
+    # ($_ -Split "\")[-1] would be "202301171931_fa396b1d-1814-4c75-9ddc-fef71cf2ecd1_Full_C.zip" containing the backup ID.
+    # ($_ -Split "\")[-2] would be "NRP;Microsoft.Network.Admin;-;Quota" which is the name of the repo.
+    # ($_ -Split "\")[-3] would be "1.2209.0.53" which is the name of the backup store, also the stamp version.
     $backupStoreName = ($backupFiles[0] -Split "\\")[-3]
-    $subscriptionBackupChain = Get-RepositoryBackupChain -ExternalShare $BackupStorePath `
-        -ExternalShareCredential $BackupStoreCredential -ProgressiveBackupStoreName $backupStoreName `
-        -RepositoryName $BackupRepoNames.Subscription -BackupId $BackupID
+    $backupFiles = @()
     $subscriptionBackups = @()
-    foreach ($backup in $subscriptionBackupChain)
+    foreach ($backupRepo in $backupRepos)
     {
-        $subscriptionBackups += $backup.DataFileName
-        if ($backup.DataFileName -match $BackupID)
+        $backupChain = Get-RepositoryBackupChain -ExternalShare $BackupStorePath `
+            -ExternalShareCredential $BackupStoreCredential -ProgressiveBackupStoreName $backupStoreName `
+            -RepositoryName $backupRepo -BackupId $BackupID
+        $backups = @()
+        foreach ($backup in $backupChain)
         {
-            break
+            $backups += $backup.DataFileName
+            if ($backup.DataFileName -match $BackupID)
+            {
+                break
+            }
         }
-    }
 
-    if (!$subscriptionBackups)
-    {
-        throw ($Strings.ErrorFailToFindBackupChain -f ($BackupRepoNames.Subscription))
+        if (!$backups)
+        {
+            throw ($Strings.ErrorFailToFindBackupChain -f ($backupRepo))
+        }
+
+        if ($backupRepo -ne $BackupRepoNames.Subscription -and $backups.Count -gt 1)
+        {
+            throw ($Strings.ErrorFindMoreThanOneSnapshot -f ($backupRepo))
+        }
+
+        if ($backupRepo -eq $BackupRepoNames.Subscription)
+        {
+            $subscriptionBackups = $backups
+        }
+
+        $backupFiles += $backups
     }
+    
 
     # STEP 5: Decrypt all required snapshots to the tmpDir
     $start = Get-Date
-    $backupFiles += $subscriptionBackups
     foreach ($backupFile in $backupFiles)
     {
         Decrypt-BackupSnapshot -SnapshotFullName $backupFile `
@@ -561,6 +568,9 @@ function Validate-AszBackup
     }
     finally
     {
+        # Remove temp folder
+        $null = Remove-Item $tmpDir -Force -Recurse -ErrorAction Ignore | Out-Null
+        
         # Drop subscription DB        
         $disconnectScript = @"
 DECLARE @DatabaseName nvarchar(50)
