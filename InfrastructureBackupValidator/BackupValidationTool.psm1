@@ -141,7 +141,7 @@ function Decrypt-BackupSnapshot
 
  .Example
   $resources = Validate-AszBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -TempFolder $tempFolder
-  $resources = Validate-AszBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -SQLServerInstanceName $sqlServerInstanceName -SQLCredential $sqlCredential
+  $resources = Validate-AszBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -SQLServerInstanceName $sqlServerInstanceName -SQLCredential $sqlCredential -TempFolder $tempFolder
 #>
 function Validate-AszBackup
 {
@@ -183,10 +183,10 @@ function Validate-AszBackup
         [PSCredential]
         $SQLCredential,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $true)]
         [ValidateScript({$_ | Test-Path -PathType Container})]
         [String]
-        $TempFolder = $env:TEMP
+        $TempFolder
     )
 
     $ErrorActionPreference = "Stop"
