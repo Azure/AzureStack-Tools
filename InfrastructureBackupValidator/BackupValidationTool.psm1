@@ -208,6 +208,10 @@ function Validate-AszBackup
         ServerInstance = $SQLServerInstanceName
     }
 
+    $sqlRestoreCommonParams = @{
+        ServerInstance = $SQLServerInstanceName
+    }
+
     if (!$SQLCredential)
     {
         # STEP 2: Connect to the SQL server with Windows Authentication
@@ -228,7 +232,8 @@ function Validate-AszBackup
         try
         {
             $sqlInstance = Get-SqlInstance -ServerInstance $SQLServerInstanceName -Credential $SQLCredential
-            $sqlCommonParams.SQLCredential = $SQLCredential
+            $sqlRestoreCommonParams.SQLCredential = $SQLCredential
+	        $sqlCommonParams.Credential = $SQLCredential
         }
         catch
         {
@@ -351,10 +356,10 @@ function Validate-AszBackup
             Write-Verbose ($Strings.ProgressRestoreSubscriptionDb -f $decryptedFolder) -Verbose
             Restore-SqlDatabase -Database $SubscriptionSqlDbName `
                 -BackupFile (Join-Path $decryptedFolder $SubscriptionSqlBackupFileNames.BackupFile) `
-                -AutoRelocateFile -NoRecovery -ReplaceDatabase:$isFirstSnapshot @sqlCommonParams
+                -AutoRelocateFile -NoRecovery -ReplaceDatabase:$isFirstSnapshot @sqlRestoreCommonParams
             Restore-SqlDatabase -Database $SubscriptionSqlDbName `
                 -BackupFile (Join-Path $decryptedFolder $SubscriptionSqlBackupFileNames.LogFile) `
-                -RestoreAction Log -AutoRelocateFile -NoRecovery:$hasMoreSnapshotsToRestore @sqlCommonParams
+                -RestoreAction Log -AutoRelocateFile -NoRecovery:$hasMoreSnapshotsToRestore @sqlRestoreCommonParams
         }
 
         # STEP 11: Retrieve offers
