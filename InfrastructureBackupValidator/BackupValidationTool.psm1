@@ -27,6 +27,9 @@ ConvertFrom-StringData @'
     ProgressCompletedDecryptionJobs = Decryption took {0} to complete
     ProgressRestoreSubscriptionDb = Restoring subscription DB with {0}
 
+    # warning
+    WarningDecryptedBackupDataNotFound = Decrypted backup data for {0}: '{1}' is not found, skip listing those resources
+
     # error
     ErrorFailToConnectBackupStore = Failed to connect to the backup store '{0}' with provided credential. Exception: {1}
     ErrorFailToConnectSqlServerDefault = Failed to connect to the SQL server '{0}' with Windows Authentication. Exception: {1}
@@ -35,6 +38,8 @@ ConvertFrom-StringData @'
     ErrorFindMoreThanOneSnapshot = Found more than one snapshots for repository: {0}
     ErrorFailToFindBackupChain = Failed to find backup chain for {0}
     ErrorFailToDecryptSnapshot = Backup decryption failed for snapshot: '{0}'. Exception: {1}
+    ErrorFailToFindSqlBackupFile = Failed to find SQL backup file: '{0}'. Cannot restore the database.
+    ErrorDatabaseMissingItem = Failed to retrieve {0} as {1} with [{2}] value '{3}' is missing in the database.
 '@
 }
 
@@ -315,34 +320,92 @@ function Validate-AszBackup
     # STEP 6: Retrieve CRP quotas
     $decryptedFolder = Join-Path $tmpDir $BackupRepoNames.ComputeQuota
     $crpQuotaJsonFile = (Get-ChildItem -Path $decryptedFolder -Recurse | ? { $_.Name -match $JsonFileNames.ComputeQuota }).FullName
-    $crpQuotas = Get-Content $crpQuotaJsonFile | Out-String | ConvertFrom-Json
-    Write-Verbose $Strings.MsgComputeQuota -Verbose
-    Write-Host $($crpQuotas | Out-String)
+    if (!$crpQuotaJsonFile)
+    {
+        Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $BackupRepoNames.ComputeQuota, $JsonFileNames.ComputeQuota)
+    }
+    else
+    {
+        $crpQuotas = Get-Content $crpQuotaJsonFile | Out-String | ConvertFrom-Json
+        Write-Verbose $Strings.MsgComputeQuota -Verbose
+        Write-Host $($crpQuotas | Out-String)
+    }
 
     # STEP 7: Retrieve NRP quotas
     $decryptedFolder = Join-Path $tmpDir $BackupRepoNames.NetworkQuota
     $nrpQuotaJsonFile = (Get-ChildItem -Path $decryptedFolder -Recurse | ? { $_.Name -match $JsonFileNames.NetworkQuota }).FullName
-    $nrpQuotas = Get-Content $nrpQuotaJsonFile | Out-String | ConvertFrom-Json
-    Write-Verbose $Strings.MsgNetworkQuota -Verbose
-    Write-Host $($nrpQuotas | Out-String)
+    if (!$nrpQuotaJsonFile)
+    {
+        Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $BackupRepoNames.NetworkQuota, $JsonFileNames.NetworkQuota)
+    }
+    else
+    {
+        $nrpQuotas = Get-Content $nrpQuotaJsonFile | Out-String | ConvertFrom-Json
+        Write-Verbose $Strings.MsgNetworkQuota -Verbose
+        Write-Host $($nrpQuotas | Out-String)
+    }
 
     # STEP 8: Retrieve SRP quotas
     $decryptedFolder = Join-Path $tmpDir $BackupRepoNames.Storage
     $srpQuotaFolder = (Get-ChildItem -Path $decryptedFolder -Recurse | ? { $_.Name -match $StorageBackupSubRepoNames.Quota }).FullName
-    Expand-Archive -Path (Get-ChildItem -Path $srpQuotaFolder | ? { $_.Name -match ".zip" }).FullName -DestinationPath $srpQuotaFolder
-    $srpQuotaJsonFile = (Get-ChildItem -Path $srpQuotaFolder -Recurse | ? { $_.Name -match $JsonFileNames.StorageQuota }).FullName
-    $srpQuotas = Get-Content $srpQuotaJsonFile | Out-String | ConvertFrom-Json
-    Write-Verbose $Strings.MsgStorageQuota -Verbose
-    Write-Host $($srpQuotas | Out-String)
+    if (!$srpQuotaFolder)
+    {
+        Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $BackupRepoNames.Storage, $StorageBackupSubRepoNames.Quota)
+    }
+    else
+    {
+        $srpZipFile = (Get-ChildItem -Path $srpQuotaFolder | ? { $_.Name -match ".zip" }).FullName
+        if (!$srpZipFile)
+        {
+            Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $StorageBackupSubRepoNames.Quota, "snapshot zip file")
+        }
+        else
+        {
+            Expand-Archive -Path $srpZipFile -DestinationPath $srpQuotaFolder
+            $srpQuotaJsonFile = (Get-ChildItem -Path $srpQuotaFolder -Recurse | ? { $_.Name -match $JsonFileNames.StorageQuota }).FullName
+            if (!$srpQuotaJsonFile)
+            {
+                Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $StorageBackupSubRepoNames.Quota, $JsonFileNames.StorageQuota)
+            }
+            else
+            {
+                $srpQuotas = Get-Content $srpQuotaJsonFile | Out-String | ConvertFrom-Json
+                Write-Verbose $Strings.MsgStorageQuota -Verbose
+                Write-Host $($srpQuotas | Out-String)
+            }
+        }
+    }
 
     # STEP 9: Retrieve storage accounts
     $decryptedFolder = Join-Path $tmpDir $BackupRepoNames.Storage
     $srpAccountFolder = (Get-ChildItem -Path $decryptedFolder -Recurse | ? { $_.Name -match $StorageBackupSubRepoNames.StorageAccount }).FullName
-    Expand-Archive -Path (Get-ChildItem -Path $srpAccountFolder | ? { $_.Name -match ".zip" }).FullName -DestinationPath $srpAccountFolder
-    $srpAccountJsonFile = (Get-ChildItem -Path $srpAccountFolder -Recurse | ? { $_.Name -match $JsonFileNames.StorageAccount }).FullName
-    $srpAccounts = Get-Content $srpAccountJsonFile | Out-String | ConvertFrom-Json
-    Write-Verbose $Strings.MsgStorageAccount -Verbose
-    Write-Host $($srpAccounts | Out-String)
+    if (!$srpAccountFolder)
+    {
+        Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $BackupRepoNames.Storage, $StorageBackupSubRepoNames.StorageAccount)
+    }
+    else
+    {
+        $srpZipFile = (Get-ChildItem -Path $srpAccountFolder | ? { $_.Name -match ".zip" }).FullName
+        if (!$srpZipFile)
+        {
+            Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $StorageBackupSubRepoNames.StorageAccount, "snapshot zip file")
+        }
+        else
+        {
+            Expand-Archive -Path $srpZipFile -DestinationPath $srpAccountFolder
+            $srpAccountJsonFile = (Get-ChildItem -Path $srpAccountFolder -Recurse | ? { $_.Name -match $JsonFileNames.StorageAccount }).FullName
+            if (!$srpAccountJsonFile)
+            {
+                Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $StorageBackupSubRepoNames.StorageAccount, $JsonFileNames.StorageAccount)
+            }
+            else
+            {
+                $srpAccounts = Get-Content $srpAccountJsonFile | Out-String | ConvertFrom-Json
+                Write-Verbose $Strings.MsgStorageAccount -Verbose
+                Write-Host $($srpAccounts | Out-String)
+            }
+        }
+    }
 
     try
     {
@@ -354,11 +417,20 @@ function Validate-AszBackup
             $decryptedFolder = Join-Path $tmpDir $BackupRepoNames.Subscription
             $decryptedFolder = Join-Path $decryptedFolder ($snapshot -Split "\\")[-1]
             Write-Verbose ($Strings.ProgressRestoreSubscriptionDb -f $decryptedFolder) -Verbose
-            Restore-SqlDatabase -Database $SubscriptionSqlDbName `
-                -BackupFile (Join-Path $decryptedFolder $SubscriptionSqlBackupFileNames.BackupFile) `
+            $subBackupFile = Join-Path $decryptedFolder $SubscriptionSqlBackupFileNames.BackupFile
+            $subLogFile = Join-Path $decryptedFolder $SubscriptionSqlBackupFileNames.LogFile
+            if (!(Test-Path -Path $subBackupFile -PathType Leaf))
+            {
+                throw ($Strings.ErrorFailToFindSqlBackupFile -f $subBackupFile)
+            }
+            elseif (!(Test-Path -Path $subLogFile -PathType Leaf))
+            {
+                throw ($Strings.ErrorFailToFindSqlBackupFile -f $subLogFile)
+            }
+
+            Restore-SqlDatabase -Database $SubscriptionSqlDbName -BackupFile $subBackupFile `
                 -AutoRelocateFile -NoRecovery -ReplaceDatabase:$isFirstSnapshot @sqlRestoreCommonParams
-            Restore-SqlDatabase -Database $SubscriptionSqlDbName `
-                -BackupFile (Join-Path $decryptedFolder $SubscriptionSqlBackupFileNames.LogFile) `
+            Restore-SqlDatabase -Database $SubscriptionSqlDbName -BackupFile $subLogFile `
                 -RestoreAction Log -AutoRelocateFile -NoRecovery:$hasMoreSnapshotsToRestore @sqlRestoreCommonParams
         }
 
@@ -366,139 +438,199 @@ function Validate-AszBackup
         $SQLCmd = "SELECT [Id],[SubscriptionId] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ResellerSubscriptions]"
         $resellerSubTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $resellerSubcriptions = @{}
-        $resellerSubTable.Tables[0].Rows | % { $resellerSubcriptions.Add($_.Id.ToString(), $_.SubscriptionId.ToString()) }
+        if ($resellerSubTable.Tables.Count -gt 0 -and $null -ne $resellerSubTable.Tables[0].Rows)
+        {
+            $resellerSubTable.Tables[0].Rows | % { $resellerSubcriptions.Add($_.Id.ToString(), $_.SubscriptionId.ToString()) }
+        }
 
         $SQLCmd = "SELECT [ProvisioningState],[ProvisioningStateName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ProvisioningStates]"
         $provisionStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $provisioningStates = @{}
-        $provisionStateTable.Tables[0].Rows | % { $provisioningStates.Add($_.ProvisioningState.ToString(), $_.ProvisioningStateName.ToString()) }
+        if ($provisionStateTable.Tables.Count -gt 0 -and $null -ne $provisionStateTable.Tables[0].Rows)
+        {
+            $provisionStateTable.Tables[0].Rows | % { $provisioningStates.Add($_.ProvisioningState.ToString(), $_.ProvisioningStateName.ToString()) }
+        }
 
         $SQLCmd = "SELECT [ResourceManagerType],[ResourceManagerTypeName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ResourceManagerTypes]"
         $resourceMgrTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $resourceManagerTypes = @{}
-        $resourceMgrTable.Tables[0].Rows | % { $resourceManagerTypes.Add($_.ResourceManagerType.ToString(), $_.ResourceManagerTypeName.ToString()) }
+        if ($resourceMgrTable.Tables.Count -gt 0 -and $null -ne $resourceMgrTable.Tables[0].Rows)
+        {
+            $resourceMgrTable.Tables[0].Rows | % { $resourceManagerTypes.Add($_.ResourceManagerType.ToString(), $_.ResourceManagerTypeName.ToString()) }
+        }
 
         $SQLCmd = "SELECT [Id],[ResellerSubscriptionId],[ResourceGroupName],[ResourceLocation],[Tags],[Name],[DisplayName],[Description],[MaxSubscriptionsPerAccount]
             ,[ProvisioningState],[RoutingResourceManagerType] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Offers]"
         $offerTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $offers = @{}
-        $offerColumnNames = $offerTable.Tables[0].Columns.ColumnName
-        foreach ($row in $offerTable.Tables[0].Rows)
+        if ($offerTable.Tables.Count -gt 0 -and $null -ne $offerTable.Tables[0].Rows)
         {
-            $offerId = ""
-            $offer = [ordered] @{}
-            foreach ($column in $offerColumnNames)
+            $offerColumnNames = $offerTable.Tables[0].Columns.ColumnName
+            foreach ($row in $offerTable.Tables[0].Rows)
             {
-                $value = $row[$column].ToString()
-                if ($column -eq "ResellerSubscriptionId")
+                $offerId = ""
+                $offer = [ordered] @{}
+                foreach ($column in $offerColumnNames)
                 {
-                    $offer[$column] = $resellerSubcriptions[$value]
+                    $value = $row[$column].ToString()
+                    if ($column -eq "ResellerSubscriptionId")
+                    {
+                        if (!$resellerSubcriptions.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "offers", "reseller subcription", "Id", $value)
+                        }
+
+                        $offer[$column] = $resellerSubcriptions[$value]
+                    }
+                    elseif ($column -eq "ProvisioningState")
+                    {
+                        if (!$provisioningStates.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "offers", "provisioning state", "ProvisioningState", $value)
+                        }
+                        
+                        $offer[$column] = $provisioningStates[$value]
+                    }
+                    elseif ($column -eq "RoutingResourceManagerType")
+                    {
+                        if (!$resourceManagerTypes.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "offers", "resource manager type", "ResourceManagerType", $value)
+                        }
+                        
+                        $offer[$column] = $resourceManagerTypes[$value]
+                    }
+                    elseif ($column -eq "Id")
+                    {
+                        $offerId = $value
+                    }
+                    else
+                    {
+                        $offer[$column] = $value
+                    }
                 }
-                elseif ($column -eq "ProvisioningState")
-                {
-                    $offer[$column] = $provisioningStates[$value]
-                }
-                elseif ($column -eq "RoutingResourceManagerType")
-                {
-                    $offer[$column] = $resourceManagerTypes[$value]
-                }
-                elseif ($column -eq "Id")
-                {
-                    $offerId = $value
-                }
-                else
-                {
-                    $offer[$column] = $value
-                }
+
+                $offer["Id"] = "/subscriptions/$($offer["ResellerSubscriptionId"])/resourceGroups/$($offer["ResourceGroupName"])/providers/Microsoft.Subscriptions.Admin/offers/$($offer["Name"])"
+                $offers.Add($offerId, $offer)
             }
 
-            $offer["Id"] = "/subscriptions/$($offer["ResellerSubscriptionId"])/resourceGroups/$($offer["ResourceGroupName"])/providers/Microsoft.Subscriptions.Admin/offers/$($offer["Name"])"
-            $offers.Add($offerId, $offer)
-        }
-
-        Write-Verbose $Strings.MsgOffer -Verbose
-        foreach ($offer in $offers.Values)
-        {
-            Write-Host ($offer | Out-String)
-            Write-Host "`n"
+            Write-Verbose $Strings.MsgOffer -Verbose
+            foreach ($offer in $offers.Values)
+            {
+                Write-Host ($offer | Out-String)
+                Write-Host "`n"
+            }
         }
 
         # STEP 12: Retrieve subscriptions
         $SQLCmd = "SELECT [SubscriptionState],[SubscriptionStateName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[SubscriptionStates]"
         $subStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $subscriptionStates = @{}
-        $subStateTable.Tables[0].Rows | % { $subscriptionStates.Add($_.SubscriptionState.ToString(), $_.SubscriptionStateName.ToString()) }
+        if ($subStateTable.Tables.Count -gt 0 -and $null -ne $subStateTable.Tables[0].Rows)
+        {
+            $subStateTable.Tables[0].Rows | % { $subscriptionStates.Add($_.SubscriptionState.ToString(), $_.SubscriptionStateName.ToString()) }
+        }
 
         $SQLCmd = "SELECT [Id],[ResellerSubscriptionId],[SubscriptionId],[DisplayName],[OfferId],[Owner],[TenantId],[RoutingResourceManagerType],[State],[Tags] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Subscriptions]"
         $subTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $subscriptions = @{}
-        $subscriptionColumnNames = $subTable.Tables[0].Columns.ColumnName
-        foreach ($row in $subTable.Tables[0].Rows)
+        if ($subTable.Tables.Count -gt 0 -and $null -ne $subTable.Tables[0].Rows)
         {
-            $subscriptionId = ""
-            $subscription = [ordered] @{}
-            foreach ($column in $subscriptionColumnNames)
+            $subscriptionColumnNames = $subTable.Tables[0].Columns.ColumnName
+            foreach ($row in $subTable.Tables[0].Rows)
             {
-                $value = $row[$column].ToString()
-                if ($column -eq "ResellerSubscriptionId")
+                $subscriptionId = ""
+                $subscription = [ordered] @{}
+                foreach ($column in $subscriptionColumnNames)
                 {
-                    $subscription[$column] = $resellerSubcriptions[$value]
+                    $value = $row[$column].ToString()
+                    if ($column -eq "ResellerSubscriptionId")
+                    {
+                        if (!$resellerSubcriptions.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "subscriptions", "reseller subcription", "Id", $value)
+                        }
+                        
+                        $subscription[$column] = $resellerSubcriptions[$value]
+                    }
+                    elseif ($column -eq "State")
+                    {
+                        if (!$subscriptionStates.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "subscriptions", "subscription state", "SubscriptionState", $value)
+                        }
+                        
+                        $subscription[$column] = $subscriptionStates[$value]
+                    }
+                    elseif ($column -eq "RoutingResourceManagerType")
+                    {
+                        if (!$resourceManagerTypes.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "subscriptions", "resource manager type", "ResourceManagerType", $value)
+                        }
+                        
+                        $subscription[$column] = $resourceManagerTypes[$value]
+                    }
+                    elseif ($column -eq "OfferId")
+                    {
+                        if (!$offers.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "subscriptions", "offer", "Id", $value)
+                        }
+                        
+                        $subscription[$column] = $offers[$value].Id
+                    }
+                    elseif ($column -eq "Id")
+                    {
+                        $subscriptionId = $value
+                    }
+                    else
+                    {
+                        $subscription[$column] = $value
+                    }
                 }
-                elseif ($column -eq "State")
-                {
-                    $subscription[$column] = $subscriptionStates[$value]
-                }
-                elseif ($column -eq "RoutingResourceManagerType")
-                {
-                    $subscription[$column] = $resourceManagerTypes[$value]
-                }
-                elseif ($column -eq "OfferId")
-                {
-                    $subscription[$column] = $offers[$value].Id
-                }
-                elseif ($column -eq "Id")
-                {
-                    $subscriptionId = $value
-                }
-                else
-                {
-                    $subscription[$column] = $value
-                }
+
+                $subscription["Id"] = "/subscriptions/$($subscription["ResellerSubscriptionId"])/providers/Microsoft.Subscriptions.Admin/subscriptions/$($subscription["SubscriptionId"])"
+                $subscriptions.Add($subscriptionId, $subscription)
             }
 
-            $subscription["Id"] = "/subscriptions/$($subscription["ResellerSubscriptionId"])/providers/Microsoft.Subscriptions.Admin/subscriptions/$($subscription["SubscriptionId"])"
-            $subscriptions.Add($subscriptionId, $subscription)
-        }
-
-        Write-Verbose $Strings.MsgSubscription -Verbose
-        foreach ($subscription in $subscriptions.Values)
-        {
-            Write-Host ($subscription | Out-String)
-            Write-Host "`n"
+            Write-Verbose $Strings.MsgSubscription -Verbose
+            foreach ($subscription in $subscriptions.Values)
+            {
+                Write-Host ($subscription | Out-String)
+                Write-Host "`n"
+            }
         }
 
         # STEP 13: Retrieve plans
         $SQLCmd = "SELECT [PlanId],[ResourceId] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Quotas]"
         $quotaTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $plan2quota = @{}
-        foreach ($row in $quotaTable.Tables[0].Rows)
+        if ($quotaTable.Tables.Count -gt 0 -and $null -ne $quotaTable.Tables[0].Rows)
         {
-            $planId = $row.PlanId.ToString()
-            $resourceId = $row.ResourceId.ToString()
-            if ($plan2quota.ContainsKey(($planId)))
+            foreach ($row in $quotaTable.Tables[0].Rows)
             {
-                $plan2quota[$planId] += $resourceId
-            }
-            else
-            {
-                $plan2quota[$planId] = @($resourceId)
+                $planId = $row.PlanId.ToString()
+                $resourceId = $row.ResourceId.ToString()
+                if ($plan2quota.ContainsKey(($planId)))
+                {
+                    $plan2quota[$planId] += $resourceId
+                }
+                else
+                {
+                    $plan2quota[$planId] = @($resourceId)
+                }
             }
         }
 
         $SQLCmd = "SELECT [PlanLinkType],[PlanLinkTypeName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[PlanLinkTypes]"
         $planLinkTypeTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $planLinkTypes = @{}
-        $planLinkTypeTable.Tables[0].Rows | % { $planLinkTypes.Add($_.PlanLinkType.ToString(), $_.PlanLinkTypeName.ToString()) }
+        if ($planLinkTypeTable.Tables.Count -gt 0 -and $null -ne $planLinkTypeTable.Tables[0].Rows)
+        {
+            $planLinkTypeTable.Tables[0].Rows | % { $planLinkTypes.Add($_.PlanLinkType.ToString(), $_.PlanLinkTypeName.ToString()) }
+        }
+
         $emptyType2Offer = @{}
         @($planLinkTypes.Values.GetEnumerator()) | % {
             $emptyType2Offer[$_] = @()
@@ -507,19 +639,32 @@ function Validate-AszBackup
         $SQLCmd = "SELECT [OfferId],[PlanId],[PlanLinkType] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[PlanLinks]"
         $planLinkTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $plan2offer = @{}
-        foreach ($row in $planLinkTable.Tables[0].Rows)
+        if ($planLinkTable.Tables.Count -gt 0 -and $null -ne $planLinkTable.Tables[0].Rows)
         {
-            $planId = $row.PlanId.ToString()
-            $offerId = $offers[$row.OfferId.ToString()].Id
-            $planLinkType = $planLinkTypes[$row.PlanLinkType.ToString()]
-            if ($plan2offer.ContainsKey(($planId)))
+            foreach ($row in $planLinkTable.Tables[0].Rows)
             {
-                $plan2offer[$planId][$planLinkType] += $offerId
-            }
-            else
-            {
-                $plan2offer[$planId] = $emptyType2Offer
-                $plan2offer[$planId][$planLinkType] += $offerId
+                $planId = $row.PlanId.ToString()
+                if (!$offers.ContainsKey($row.OfferId.ToString()))
+                {
+                    throw ($Strings.ErrorDatabaseMissingItem -f "plans", "offer", "Id", $row.OfferId.ToString())
+                }
+
+                $offerId = $offers[$row.OfferId.ToString()].Id
+                if (!$planLinkTypes.ContainsKey($row.PlanLinkType.ToString()))
+                {
+                    throw ($Strings.ErrorDatabaseMissingItem -f "plans", "plan link type", "PlanLinkType", $row.PlanLinkType.ToString())
+                }
+
+                $planLinkType = $planLinkTypes[$row.PlanLinkType.ToString()]
+                if ($plan2offer.ContainsKey(($planId)))
+                {
+                    $plan2offer[$planId][$planLinkType] += $offerId
+                }
+                else
+                {
+                    $plan2offer[$planId] = $emptyType2Offer
+                    $plan2offer[$planId][$planLinkType] += $offerId
+                }
             }
         }
 
@@ -528,47 +673,65 @@ function Validate-AszBackup
             FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Plans]"
         $planTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $plans = @{}
-        $planColumnNames = $planTable.Tables[0].Columns.ColumnName
-        foreach ($row in $planTable.Tables[0].Rows)
+        if ($planTable.Tables.Count -gt 0 -and $null -ne $planTable.Tables[0].Rows)
         {
-            $planId = ""
-            $plan = [ordered] @{}
-            foreach ($column in $planColumnNames)
+            $planColumnNames = $planTable.Tables[0].Columns.ColumnName
+            foreach ($row in $planTable.Tables[0].Rows)
             {
-                $value = $row[$column].ToString()
-                if ($column -eq "ResellerSubscriptionId")
+                $planId = ""
+                $plan = [ordered] @{}
+                foreach ($column in $planColumnNames)
                 {
-                    $plan[$column] = $resellerSubcriptions[$value]
+                    $value = $row[$column].ToString()
+                    if ($column -eq "ResellerSubscriptionId")
+                    {
+                        if (!$resellerSubcriptions.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "plans", "reseller subcription", "Id", $value)
+                        }
+                        
+                        $plan[$column] = $resellerSubcriptions[$value]
+                    }
+                    elseif ($column -eq "ProvisioningState")
+                    {
+                        if (!$provisioningStates.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "plans", "provisioning state", "ProvisioningState", $value)
+                        }
+                        
+                        $plan[$column] = $provisioningStates[$value]
+                    }
+                    elseif ($column -eq "RoutingResourceManagerType")
+                    {
+                        if (!$resourceManagerTypes.ContainsKey($value))
+                        {
+                            throw ($Strings.ErrorDatabaseMissingItem -f "plans", "resource manager type", "ResourceManagerType", $value)
+                        }
+                        
+                        $plan[$column] = $resourceManagerTypes[$value]
+                    }
+                    elseif ($column -eq "Id")
+                    {
+                        $planId = $value
+                    }
+                    else
+                    {
+                        $plan[$column] = $value
+                    }
                 }
-                elseif ($column -eq "ProvisioningState")
-                {
-                    $plan[$column] = $provisioningStates[$value]
-                }
-                elseif ($column -eq "RoutingResourceManagerType")
-                {
-                    $plan[$column] = $resourceManagerTypes[$value]
-                }
-                elseif ($column -eq "Id")
-                {
-                    $planId = $value
-                }
-                else
-                {
-                    $plan[$column] = $value
-                }
+
+                $plan["Id"] = "/subscriptions/$($plan["ResellerSubscriptionId"])/resourceGroups/$($plan["ResourceGroupName"])/providers/Microsoft.Subscriptions.Admin/plans/$($plan["Name"])"
+                $plan["QuotaIds"] = $plan2quota[$planId]
+                $plan["Offers"] = $plan2offer[$planId]
+                $plans.Add($planId, $plan)
             }
 
-            $plan["Id"] = "/subscriptions/$($plan["ResellerSubscriptionId"])/resourceGroups/$($plan["ResourceGroupName"])/providers/Microsoft.Subscriptions.Admin/plans/$($plan["Name"])"
-            $plan["QuotaIds"] = $plan2quota[$planId]
-            $plan["Offers"] = $plan2offer[$planId]
-            $plans.Add($planId, $plan)
-        }
-
-        Write-Verbose $Strings.MsgPlan -Verbose
-        foreach ($plan in $plans.Values)
-        {
-            Write-Host ($plan | Out-String)
-            Write-Host "`n"
+            Write-Verbose $Strings.MsgPlan -Verbose
+            foreach ($plan in $plans.Values)
+            {
+                Write-Host ($plan | Out-String)
+                Write-Host "`n"
+            }
         }
     }
     finally
