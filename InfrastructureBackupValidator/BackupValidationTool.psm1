@@ -12,7 +12,6 @@ ConvertFrom-StringData @'
     MsgComputeQuota = BackupType: ComputeQuota
     MsgNetworkQuota = BackupType: NetworkQuota
     MsgStorageQuota = BackupType: StorageQuota
-    MsgStorageAccount = BackupType: StorageAccount
     MsgOffer = BackupType: Offer
     MsgSubscription = BackupType: UserSubscription
     MsgPlan = BackupType: Plan
@@ -376,40 +375,9 @@ function Validate-AszBackup
         }
     }
 
-    # STEP 9: Retrieve storage accounts
-    $decryptedFolder = Join-Path $tmpDir $BackupRepoNames.Storage
-    $srpAccountFolder = (Get-ChildItem -Path $decryptedFolder -Recurse | ? { $_.Name -match $StorageBackupSubRepoNames.StorageAccount }).FullName
-    if (!$srpAccountFolder)
-    {
-        Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $BackupRepoNames.Storage, $StorageBackupSubRepoNames.StorageAccount)
-    }
-    else
-    {
-        $srpZipFile = (Get-ChildItem -Path $srpAccountFolder | ? { $_.Name -match ".zip" }).FullName
-        if (!$srpZipFile)
-        {
-            Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $StorageBackupSubRepoNames.StorageAccount, "snapshot zip file")
-        }
-        else
-        {
-            Expand-Archive -Path $srpZipFile -DestinationPath $srpAccountFolder
-            $srpAccountJsonFile = (Get-ChildItem -Path $srpAccountFolder -Recurse | ? { $_.Name -match $JsonFileNames.StorageAccount }).FullName
-            if (!$srpAccountJsonFile)
-            {
-                Write-Warning ($Strings.WarningDecryptedBackupDataNotFound -f $StorageBackupSubRepoNames.StorageAccount, $JsonFileNames.StorageAccount)
-            }
-            else
-            {
-                $srpAccounts = Get-Content $srpAccountJsonFile | Out-String | ConvertFrom-Json
-                Write-Verbose $Strings.MsgStorageAccount -Verbose
-                Write-Host $($srpAccounts | Out-String)
-            }
-        }
-    }
-
     try
     {
-        # STEP 10: Restore subscription DB
+        # STEP 9: Restore subscription DB
         foreach ($snapshot in $subscriptionBackups)
         {
             $isFirstSnapshot = $snapshot -eq $subscriptionBackups[0]
@@ -434,7 +402,7 @@ function Validate-AszBackup
                 -RestoreAction Log -AutoRelocateFile -NoRecovery:$hasMoreSnapshotsToRestore @sqlRestoreCommonParams
         }
 
-        # STEP 11: Retrieve offers
+        # STEP 10: Retrieve offers
         $SQLCmd = "SELECT [Id],[SubscriptionId] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ResellerSubscriptions]"
         $resellerSubTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $resellerSubcriptions = @{}
@@ -522,7 +490,7 @@ function Validate-AszBackup
             }
         }
 
-        # STEP 12: Retrieve subscriptions
+        # STEP 11: Retrieve subscriptions
         $SQLCmd = "SELECT [SubscriptionState],[SubscriptionStateName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[SubscriptionStates]"
         $subStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $subscriptionStates = @{}
@@ -602,7 +570,7 @@ function Validate-AszBackup
             }
         }
 
-        # STEP 13: Retrieve plans
+        # STEP 12: Retrieve plans
         $SQLCmd = "SELECT [PlanId],[ResourceId] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Quotas]"
         $quotaTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $plan2quota = @{}
@@ -759,7 +727,6 @@ EXEC(@SQL)
         ComputeQuota = $crpQuotas
         NetworkQuota = $nrpQuotas
         StorageQuota = $srpQuotas
-        StorageAccount = $srpAccounts
         Offer = @($offers.Values.GetEnumerator())
         Subscription = @($subscriptions.Values.GetEnumerator())
         Plan = @($plans.Values.GetEnumerator())
