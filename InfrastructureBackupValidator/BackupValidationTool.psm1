@@ -622,11 +622,6 @@ function Validate-AszBackup
             $planLinkTypeTable.Tables[0].Rows | % { $planLinkTypes.Add($_.PlanLinkType.ToString(), $_.PlanLinkTypeName.ToString()) }
         }
 
-        $emptyType2Offer = @{}
-        @($planLinkTypes.Values.GetEnumerator()) | % {
-            $emptyType2Offer[$_] = @()
-        }
-
         $SQLCmd = "SELECT [OfferId],[PlanId],[PlanLinkType] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[PlanLinks]"
         $planLinkTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
         $plan2offer = @{}
@@ -653,6 +648,11 @@ function Validate-AszBackup
                 }
                 else
                 {
+                    $emptyType2Offer = @{}
+                    @($planLinkTypes.Values.GetEnumerator()) | % {
+                        $emptyType2Offer[$_] = @()
+                    }
+
                     $plan2offer[$planId] = $emptyType2Offer
                     $plan2offer[$planId][$planLinkType] += $offerId
                 }
