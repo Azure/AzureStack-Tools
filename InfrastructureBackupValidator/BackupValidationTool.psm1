@@ -51,6 +51,8 @@ Import-LocalizedData Strings -FileName BackupValidationTool.Strings.psd1 -ErrorA
 $BackupStoreDriveName = "BackupStore"
 $SubscriptionSqlDbName = "Microsoft.AzureStack.Subscriptions"
 $SubTmpFolderName = "BackupValidationTmp"
+$OutputReportFile = "BackupValidation.htm"
+
 $BackupRepoNames = @{
     ComputeQuota = "CRP;Microsoft.Compute.Admin;-;Quota"
     NetworkQuota = "NRP;Microsoft.Network.Admin;-;Quota"
@@ -130,6 +132,27 @@ function Decrypt-BackupSnapshot
     catch
     {
         throw ($Strings.ErrorFailToDecryptSnapshot -f $SnapshotFullName, $_)
+    }
+}
+
+function ConvertDictionariesToCustomObjects
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $Dictionaries
+    )
+
+    $ErrorActionPreference = "Stop"
+
+    return @($Dictionaries.Values.GetEnumerator()) | ForEach-Object {
+        $props = @{}
+        $_.GetEnumerator() | ForEach-Object {
+            $props[$_.Key] = $_.Value
+        }
+    
+        [PSCustomObject]$props
     }
 }
 
@@ -723,13 +746,21 @@ EXEC(@SQL)
         Invoke-Sqlcmd -Query ('Drop database "{0}"' -f $SubscriptionSqlDbName) @sqlCommonParams -ErrorAction Continue
     }
 
+    # Convert offer, subscription and plan into PSCustomObject
+    $offersObj = ConvertDictionariesToCustomObjects -Dictionaries $offers
+    $subscriptionsObj = ConvertDictionariesToCustomObjects -Dictionaries $subscriptions
+    $plansObj = ConvertDictionariesToCustomObjects -Dictionaries $plans
+
+    # Output results in HTML format to TempFolder
+
+
     return @{
         ComputeQuota = $crpQuotas
         NetworkQuota = $nrpQuotas
         StorageQuota = $srpQuotas
-        Offer = @($offers.Values.GetEnumerator())
-        Subscription = @($subscriptions.Values.GetEnumerator())
-        Plan = @($plans.Values.GetEnumerator())
+        Offer = $offersObj
+        Subscription = $subscriptionsObj
+        Plan = $plansObj
     }
 }
 
