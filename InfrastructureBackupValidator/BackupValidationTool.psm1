@@ -39,6 +39,17 @@ ConvertFrom-StringData @'
     ErrorFailToDecryptSnapshot = Backup decryption failed for snapshot: '{0}'. Exception: {1}
     ErrorFailToFindSqlBackupFile = Failed to find SQL backup file: '{0}'. Cannot restore the database.
     ErrorDatabaseMissingItem = Failed to retrieve {0} as {1} with [{2}] value '{3}' is missing in the database.
+
+    # html
+    HtmlTitle = Backup Validation Report
+    HtmlCrpQuotaHeader = BackupType: ComputeQuota
+    HtmlNrpQuotaHeader = BackupType: NetworkQuota
+    HtmlSrpQuotaHeader = BackupType: StorageQuota
+    HtmlOfferHeader = BackupType: Offer
+    HtmlSubscriptionHeader = BackupType: Subscription
+    HtmlPlanHeader = BackupType: Plan
+    HtmlResourceCount = Count: 
+
 '@
 }
 
@@ -51,7 +62,7 @@ Import-LocalizedData Strings -FileName BackupValidationTool.Strings.psd1 -ErrorA
 $BackupStoreDriveName = "BackupStore"
 $SubscriptionSqlDbName = "Microsoft.AzureStack.Subscriptions"
 $SubTmpFolderName = "BackupValidationTmp"
-$OutputReportFile = "BackupValidation.htm"
+$OutputReportFile = "BackupValidationReport.htm"
 
 $BackupRepoNames = @{
     ComputeQuota = "CRP;Microsoft.Compute.Admin;-;Quota"
@@ -140,7 +151,7 @@ function ConvertDictionariesToCustomObjects
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [String]
+        [HashTable]
         $Dictionaries
     )
 
@@ -752,7 +763,21 @@ EXEC(@SQL)
     $plansObj = ConvertDictionariesToCustomObjects -Dictionaries $plans
 
     # Output results in HTML format to TempFolder
-
+    $crpQuotaHtml = $crpQuotas | ConvertTo-HTML -As List
+    $nrpQuotaHtml = $nrpQuotas | ConvertTo-HTML -As List
+    $srpQuotaHtml = $srpQuotas | ConvertTo-HTML -As List
+    $offerHtml = $offersObj
+    $subscriptionHtml = $subscriptionsObj
+    $planHtml = $plansObj | ConvertTo-HTML -As List -Property Id, ResellerSubscriptionId, ResourceGroupName, Tags, Name, DisplayName, `
+        Description, ProvisioningState, RoutingResourceManagerType, @{Expression = {$_.QuotaIds -join ";   "}}, `
+        @{Expression = {$_.Offers.Base -join ";   "}}, @{Expression = {$_.Offers.None -join ";   "}}, @{Expression = {$_.Offers.Addon -join ";   "}}
+    ConvertTo-HTML -Body "<h3>$($Strings.HtmlCrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($crpQuotas.Count)</h3> $crpQuotaHtml `
+        <h3>$($Strings.HtmlNrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($nrpQuotas.Count)</h3> $nrpQuotaHtml `
+        <h3>$($Strings.HtmlSrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($srpQuotas.Count)</h3> $srpQuotaHtml `
+        <h3>$($Strings.HtmlOfferHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($offersObj.Count)</h3> $offerHtml `
+        <h3>$($Strings.HtmlSubscriptionHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($subscriptionsObj.Count)</h3> $subscriptionHtml `
+        <h3>$($Strings.HtmlPlanHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($plansObj.Count)</h3> $planHtml" `
+        -Title $Strings.HtmlTitle |  Out-File -FilePath $(Join-Path $TempFolder $OutputReportFile)
 
     return @{
         ComputeQuota = $crpQuotas

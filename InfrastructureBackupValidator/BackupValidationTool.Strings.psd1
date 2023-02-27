@@ -4,7 +4,6 @@ ConvertFrom-StringData @'
     MsgComputeQuota = BackupType: ComputeQuota
     MsgNetworkQuota = BackupType: NetworkQuota
     MsgStorageQuota = BackupType: StorageQuota
-    MsgStorageAccount = BackupType: StorageAccount
     MsgOffer = BackupType: Offer
     MsgSubscription = BackupType: UserSubscription
     MsgPlan = BackupType: Plan
@@ -32,4 +31,14 @@ ConvertFrom-StringData @'
     ErrorFailToDecryptSnapshot = Backup decryption failed for snapshot: '{0}'. Exception: {1}
     ErrorFailToFindSqlBackupFile = Failed to find SQL backup file: '{0}'. Cannot restore the database.
     ErrorDatabaseMissingItem = Failed to retrieve {0} as {1} with [{2}] value '{3}' is missing in the database.
+
+    # html
+    HtmlTitle = Backup Validation Report
+    HtmlCrpQuotaHeader = BackupType: ComputeQuota
+    HtmlNrpQuotaHeader = BackupType: NetworkQuota
+    HtmlSrpQuotaHeader = BackupType: StorageQuota
+    HtmlOfferHeader = BackupType: Offer
+    HtmlSubscriptionHeader = BackupType: Subscription
+    HtmlPlanHeader = BackupType: Plan
+    HtmlResourceCount = Count: 
 '@
