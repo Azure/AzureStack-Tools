@@ -766,8 +766,8 @@ EXEC(@SQL)
     $crpQuotaHtml = $crpQuotas | ConvertTo-HTML -As List
     $nrpQuotaHtml = $nrpQuotas | ConvertTo-HTML -As List
     $srpQuotaHtml = $srpQuotas | ConvertTo-HTML -As List
-    $offerHtml = $offersObj
-    $subscriptionHtml = $subscriptionsObj
+    $offerHtml = $offersObj | ConvertTo-HTML -As List
+    $subscriptionHtml = $subscriptionsObj | ConvertTo-HTML -As List
     $planHtml = $plansObj | ConvertTo-HTML -As List -Property Id, ResellerSubscriptionId, ResourceGroupName, Tags, Name, DisplayName, `
         Description, ProvisioningState, RoutingResourceManagerType, @{Expression = {$_.QuotaIds -join ";   "}}, `
         @{Expression = {$_.Offers.Base -join ";   "}}, @{Expression = {$_.Offers.None -join ";   "}}, @{Expression = {$_.Offers.Addon -join ";   "}}
