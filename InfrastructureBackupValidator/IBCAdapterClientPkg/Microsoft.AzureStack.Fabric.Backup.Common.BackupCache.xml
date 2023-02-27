@@ -1,0 +1,218 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupCache</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupCache.GetOldLegacyBackups(System.DateTime,System.Collections.Generic.HashSet{System.Guid})">
+            <summary>
+            Return legacy backups older than the recovery point
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache">
+            <summary>
+            file share store to keep backups
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.backupId2BackupSnapshot">
+            <summary>
+            Map backup ID to backup snapshot
+            each backup ID contains multiple backup snapshots
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.backupId2BackupInfo">
+            <summary>
+            Map backup ID to backup info
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.timeStamp2BackupId">
+            <summary>
+            Map timestamp to backup ID
+            The DateTime here refers to the timestamp for folder in the actual depot, not the timestamp
+            when the snapshot is taken.  But they should be close to each other.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.Reset(System.Nullable{System.Guid})">
+            <summary>
+            reset cache
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.GetBackupSnapshot(System.Guid,System.String)">
+            <summary>
+            get backup snapshot based on backup ID and optionally full repository name
+            </summary>
+            <param name="backupId">backup ID</param>
+            <param name="fullRepositoryName">full repository name</param>
+            <returns>backup snapshot location</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.GetBackupSnapshot(System.Guid,System.String[])">
+            <summary>
+            get backup snapshot based on backup ID and repository name chain
+            </summary>
+            <param name="backupId">backup ID</param>
+            <param name="repoNameChain">repository name chain</param>
+            <returns>backup snapshot location</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.AddBackupSnapshots(System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation})">
+            <summary>
+            add list of backup snapshots
+            </summary>
+            <param name="snapshots">list of snapshots</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.AddBackupSnapshot(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation)">
+            <summary>
+            add single backup snapshot
+            </summary>
+            <param name="snapshot">the snapshot</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.AddBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation)">
+            <summary>
+            Add backup info
+            </summary>
+            <param name="backupInfoLocation">backup information</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.GetBackupInfo(System.Guid)">
+            <summary>
+            Get backup info
+            </summary>
+            <param name="backupId">backup ID</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.LegacyBackupCache.GetBackup(System.Nullable{System.Guid})">
+            <summary>
+            Returns backup info with given backup ID
+            If backupID is not provided, return all backups.
+            </summary>
+            <param name="backupID">backup ID</param>
+            <returns>list of backup info</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache">
+            <summary>
+            A backup store is organized as follows:
+            BackupRoot
+                |_  MASBackup
+                        |_  194910011001                    Legacy backup dirs prior to the progressive backup
+                        |_  202108080808                    Completely failed progressive backup without any snapshots
+                        |_  ProgressiveBackup
+                                |_ RestoreTempFolder        Restore temp folder
+                                |_ 1.2012.0.1               Current backup stamp version, all current backups go here
+                                |       |_  Repo1           Backup dir for repo 1
+                                |       |   |_  Backup 1, Backup 2, Backup 3
+                                |       |
+                                |       |_  Repo2           Backup dir for repo 2
+                                |       |   |_  Backup 1, Backup 2
+                                |       |
+                                |       |_  Repo3           Backup dir for repo 2
+                                |           |_  Backup 1, Backup 2
+                                |
+                                |_ 1.2005.0.1               Previous backup stamp version.
+                                        |_  Repo1           Backup dir for repo 1
+                                            |_  Backup 1, Backup 2
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.progressiveBackupCache">
+            <summary>
+            Progressive backup cache
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.SelectRepositoryRegistration(System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Collections.Concurrent.ConcurrentDictionary{System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration}})">
+            <summary>
+            Try to get the serialized repository registration list from the backup store, or fall back to the provided
+            in-proc registration list.
+            </summary>
+            <param name="storeName">Progressive store name. Return the in-proc reg list if not specified</param>
+            <param name="inprocRegistrationList">The in-proc registration list</param>
+            <param name="serializedRegistrationList">Dictionary of cached serialized reg list</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.AddProgressiveBackupsToCache(System.String,System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation})">
+            <summary>
+            Non-thread safe internal method to add a list of arranged synthetic backups to the empty cache entry of a
+            repository
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.RebuildCacheInternal(System.String,System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+            <summary>
+            Non-thread safe internal method to rebuild cache for a single repo
+            </summary>
+            <param name="repoName">Repository name</param>
+            <param name="storeName">Progressive store name</param>
+            <param name="snapshots">Snapshots under the repo dir</param>
+            <param name="registrations">Backup repository registrations</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.ResetInternal(System.String)">
+            <summary>
+            Non-thread safe internal method to reset cache of a particular store
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.IsCacheDirty(System.String)">
+            <summary>
+            Return if the cache is dirty for the specific store
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.SetStoreDirty(System.String)">
+            <summary>
+            Set progressive store cache dirty bit
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.ClearStoreDirty(System.String)">
+            <summary>
+            Clear progressive store cache dirty bit(s)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.ClearNonExistingStores(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Clear stores not contained in the expected stores
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.Reset(System.String)">
+            <summary>
+            Reset cache of a particular progressive store
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.RebuildCache(System.String,System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Collections.Concurrent.ConcurrentDictionary{System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration}})">
+            <summary>
+            Thread-safe public method to rebuild cache
+            </summary>
+            <param name="repoName">Repo name</param>
+            <param name="storeName">Progressive backup store name</param>
+            <param name="snapshots">Backup snapshots to add to the cache</param>
+            <param name="inprocRegistrations">In-proc backup repository registrations</param>
+            <param name="serializedRegistrations">Serialized backup repo registrations</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.GetSnapshotCount(System.String,System.String)">
+            <summary>
+            Get the total number of backup snapshots of the current stamp version if roleName is null, or just the
+            number of snapshots from the role
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.GetBackupSnapshotsToDeleteByContemporaneousBackup(System.DateTime,System.Collections.Generic.HashSet{System.Guid},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Collections.Concurrent.ConcurrentDictionary{System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration}})">
+            <summary>
+            Return snapshot names that can be removed to ensure restoring to a certain recovery point by the
+            contemporaneous backup rule
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.GetBackupSnapshotsToDeleteByRepo(System.DateTime,System.String)">
+            <summary>
+            Return snapshot names that can be removed to ensure restoring to a certain recovery point by the
+            repository backup rule
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.GetBackupSnapshots(System.String,System.Nullable{System.Guid})">
+            <summary>
+            Search for a snapshot in the cache
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.GetBackupInfo(System.String,System.Guid,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+            <summary>
+            Get backup info
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveBackupCache.GetSyntheticFullBackupChain(System.String,System.String,System.Guid)">
+            <summary>
+            Get the backup chain of a synthetic full backup containing the specified backup snapshot
+            </summary>
+            <param name="storeName">The progressive </param>
+            <param name="repoName">Repository name</param>
+            <param name="backupId">The backup Id that is part of the resulting SFB </param>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,392 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.IsOneNodeAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is ASDK
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>whether the environment is ASDK</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.IsOneNodeRestoreAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is restored to OneNode
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>restore status</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.GetStampInfoAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets stamp info
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Task that returns StampInformation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.CreateEceClient(System.Threading.CancellationToken)">
+            <summary>
+            Creates ECE client
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>ECE client</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.IsStampDeployedWithRestoreAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is deployed in restore mode
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Whether the environment is deployed in restore mode</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.GetRunningExclusiveActionsAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Threading.CancellationToken)">
+            <summary>
+            Gets running exclusive actions
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Running exclusive actions</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.GetFailedExclusiveActionsAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Threading.CancellationToken)">
+            <summary>
+            Gets failed exclusive actions
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Failed exclusive actions</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.GetEceActionName(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance)">
+            <summary>
+            Gets name of action plan instance
+            </summary>
+            <param name="action">action plan instance</param>
+            <returns>action plan instance name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.GetEceActionNameWithInstanceId(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance)">
+            <summary>
+            Gets name and ID of action plan instance
+            </summary>
+            <param name="action">action plan instance</param>
+            <returns>action plan instance name with ID</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.IsExclusiveLockConflictException(Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException)">
+            <summary>
+            Checks whether the exception is due to ECE exclusive lock conflict
+            </summary>
+            <param name="e">exception</param>
+            <returns>whether exception is due to ECE exclusive lock conflict</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.IsInstanceCancellationException(Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException)">
+            <summary>
+            Checks whether the exception is due to action plan instance cancellation
+            </summary>
+            <param name="e">exception</param>
+            <returns>whether exception is due to ECE action plan instance cancellation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.GetTrimmedActionPlanInstances(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets action plan instances according to role path and action type name
+            </summary>
+            <param name="rolePath">Role path</param>
+            <param name="actionTypeName">Action type name</param>
+            <param name="actionPlanName">Action plan name</param>
+            <param name="cancellationToken">cancellation token</param>
+            <returns>Action plan instances</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.CancelActionPlanAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance,System.Threading.CancellationToken)">
+            <summary>
+            Cancels the specified action plan
+            </summary>
+            <param name="actionPlan">action plan instance</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.CancelActionPlansAndWaitForCompletionAsync(System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance},System.DateTime,System.Threading.CancellationToken)">
+            <summary>
+            Cancels specified action plan instances and waits for the cancellation
+            </summary>
+            <param name="actionPlans">Action plans to cancel</param>
+            <param name="timeoutDatetime">Timeout date time</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.CancelExistingActionPlansAsync(System.String,System.String,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Cancels all instances of a specified action type and waits for the cancellation
+            </summary>
+            <param name="rolePath">Role path</param>
+            <param name="actionTypeName">Action type name</param>
+            <param name="timeout">Timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpers.WaitForActionPlanInfraStepToCompleteAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Guid,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Waits for the action plan instance completion
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="actionPlanInstanceId">Action plan instance ID</param>
+            <param name="timeout">Timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Instance of the completed action plan</returns>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.Adfs">
+            <summary>
+            ADFS name
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.IsOneNodeAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is ASDK
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>whether the environment is ASDK</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.IsOneNodeRestoreAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is restored to OneNode
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>restore status</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.GetStampInfoAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets stamp info
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Task that returns StampInformation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.CreateEceClient(System.Threading.CancellationToken)">
+            <summary>
+            Creates ECE client
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>ECE client</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.IsStampDeployedWithRestoreAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is deployed in restore mode
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Whether the environment is deployed in restore mode</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.GetRunningExclusiveActionsAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Threading.CancellationToken)">
+            <summary>
+            Gets running exclusive actions
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Running exclusive actions</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.GetFailedExclusiveActionsAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Threading.CancellationToken)">
+            <summary>
+            Gets failed exclusive actions
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Failed exclusive actions</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.GetEceActionName(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance)">
+            <summary>
+            Gets name of action plan instance
+            </summary>
+            <param name="action">action plan instance</param>
+            <returns>action plan instance name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.GetEceActionNameWithInstanceId(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance)">
+            <summary>
+            Gets name and ID of action plan instance
+            </summary>
+            <param name="action">action plan instance</param>
+            <returns>action plan instance name with ID</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.IsExclusiveLockConflictException(Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException)">
+            <summary>
+            Checks whether the exception is due to ECE exclusive lock conflict
+            </summary>
+            <param name="e">exception</param>
+            <returns>whether exception is due to ECE exclusive lock conflict</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.IsInstanceCancellationException(Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException)">
+            <summary>
+            Checks whether the exception is due to action plan instance cancellation
+            </summary>
+            <param name="e">exception</param>
+            <returns>whether exception is due to ECE action plan instance cancellation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.CancelActionPlanAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance,System.Threading.CancellationToken)">
+            <summary>
+            Cancels the specified action plan
+            </summary>
+            <param name="actionPlan">action plan instance</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.GetTrimmedActionPlanInstances(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets trimmed action plan instances according to role path and action type name
+            </summary>
+            <param name="rolePath">Role path</param>
+            <param name="actionTypeName">Action type name</param>
+            <param name="actionPlanName">Action plan name</param>
+            <param name="cancellationToken">cancellation token</param>
+            <returns>Action plan instances</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.CancelActionPlansAndWaitForCompletionAsync(System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance},System.DateTime,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.CancelExistingActionPlansAsync(System.String,System.String,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Cancels all instances of a specified action type and waits for the cancellation
+            </summary>
+            <param name="rolePath">Role path</param>
+            <param name="actionTypeName">Action type name</param>
+            <param name="timeout">Timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImpBase.WaitForActionPlanInfraStepToCompleteAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Guid,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Waits for the action plan instance completion
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="actionPlanInstanceId">Action plan instance ID</param>
+            <param name="timeout">Timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Instance of the completed action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.EceHelpersImp.CreateEceClient(System.Threading.CancellationToken)">
+            <summary>
+            Creates ECE client
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>ECE client</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.IsOneNodeAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is ASDK
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>whether the environment is ASDK</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.IsOneNodeRestoreAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is restored to OneNode
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>restore status</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.GetStampInfoAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets stamp info
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Task that returns StampInformation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.CreateEceClient(System.Threading.CancellationToken)">
+            <summary>
+            Creates ECE client
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>ECE client</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.IsStampDeployedWithRestoreAsync(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the environment is deployed in restore mode
+            </summary>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Whether the environment is deployed in restore mode</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.GetRunningExclusiveActionsAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Threading.CancellationToken)">
+            <summary>
+            Gets running exclusive actions
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Running exclusive actions</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.GetFailedExclusiveActionsAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Threading.CancellationToken)">
+            <summary>
+            Gets failed exclusive actions
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Failed exclusive actions</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.GetEceActionName(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance)">
+            <summary>
+            Gets name of action plan instance
+            </summary>
+            <param name="action">action plan instance</param>
+            <returns>action plan instance name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.GetEceActionNameWithInstanceId(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance)">
+            <summary>
+            Gets name and ID of action plan instance
+            </summary>
+            <param name="action">action plan instance</param>
+            <returns>action plan instance name with ID</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.IsExclusiveLockConflictException(Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException)">
+            <summary>
+            Checks whether the exception is due to ECE exclusive lock conflict
+            </summary>
+            <param name="e">exception</param>
+            <returns>whether exception is due to ECE exclusive lock conflict</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.IsInstanceCancellationException(Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException)">
+            <summary>
+            Checks whether the exception is due to action plan instance cancellation
+            </summary>
+            <param name="e">exception</param>
+            <returns>whether exception is due to ECE action plan instance cancellation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.GetTrimmedActionPlanInstances(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets action plan instances according to role path and action type name
+            </summary>
+            <param name="rolePath">Role path</param>
+            <param name="actionTypeName">Action type name</param>
+            <param name="actionPlanName">Action plan name</param>
+            <param name="cancellationToken">cancellation token</param>
+            <returns>Action plan instances</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.CancelActionPlanAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance,System.Threading.CancellationToken)">
+            <summary>
+            Cancels the specified action plan
+            </summary>
+            <param name="actionPlan">action plan instance</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.CancelActionPlansAndWaitForCompletionAsync(System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanInstance},System.DateTime,System.Threading.CancellationToken)">
+            <summary>
+            Cancels specified action plan instances and waits for the cancellation
+            </summary>
+            <param name="actionPlans">Action plans to cancel</param>
+            <param name="timeoutDatetime">Timeout date time</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.CancelExistingActionPlansAsync(System.String,System.String,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Cancels all instances of a specified action type and waits for the cancellation
+            </summary>
+            <param name="rolePath">Role path</param>
+            <param name="actionTypeName">Action type name</param>
+            <param name="timeout">Timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Task of cancelling action plan</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.EceHelpers.IEceHelpersImp.WaitForActionPlanInfraStepToCompleteAsync(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Client.Contract.IEnterpriseCloudEngineClient,System.Guid,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>
+            Waits for the action plan instance completion
+            </summary>
+            <param name="client">ECE client</param>
+            <param name="actionPlanInstanceId">Action plan instance ID</param>
+            <param name="timeout">Timeout</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Instance of the completed action plan</returns>
+        </member>
+    </members>
+</doc>

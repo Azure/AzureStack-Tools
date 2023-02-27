@@ -1,0 +1,371 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupStore</name>
+    </assembly>
+    <members>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.TimestampFormat">
+            <summary>
+            timestamp format for folder name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.serializedRegistrationList">
+            <summary>
+            The cache of serialized registration lists from each progressive store
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.rootContainerPath">
+            <summary>
+            Root folder that the customer, e.g., \\someShare\someDir
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.baseContainerPath">
+            <summary>
+            Base directory
+            For file share store, use full path: \\someShare\someDir\MASBackup 
+            For BTS stsore, use the relative path: masbackup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.ProgressiveBackupRoot">
+            <summary>
+            Base directory
+            \\someShare\someDir\MASBackup\ProgressiveBackup
+            For BTS stsore, use the relative path: masbackup\progressivebackup
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.ExtractTimeStampStringFromFileName(System.String)">
+            <summary>
+            Extract timestamp string from full file name
+            </summary>
+            <param name="fullFileName">full folder name</param>
+            <returns>timestamp part of the folder name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.ExtractTimeStampStringFromSnapshotDir(System.String)">
+            <summary>
+            Extract timestamp string from full folder name
+            </summary>
+            <param name="fullFileName">full folder name</param>
+            <returns>timestamp part of the folder name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.ExtractTimeStampStringFromDir(System.String)">
+            <summary>
+            Extract timestamp string from full directory name
+            </summary>
+            <param name="dirFullFileName">full directory name</param>
+            <returns>timestamp part of the folder name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteProgressiveBackups(System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.List{System.String})">
+            <summary>
+            Delete progressive backup
+            </summary>
+            <param name="progressiveStoreFileNamesToRemove">File names to remove</param>
+            <param name="pathsFailedToDelete">If not null, list of paths that failed to be deleted</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteExpiredFailedProgressiveBackup(System.DateTime,System.Collections.Generic.List{System.String})">
+            <summary>
+            Delete expired failed progressive backup
+            </summary>
+            <param name="recoveryPoint">Recovery point</param>
+            <param name="pathsFailedToDelete">If not null, list of paths that failed to be deleted</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackupSnapshotsInternal(System.String,System.Boolean,System.String)">
+            <summary>
+            Helper to get all backup snapshots within the given directory
+            </summary>
+            <param name="dir">the directory</param>
+            <param name="parseTimestamp">need to parse timestamp or not</param>
+            <param name="fullRepositoryName">For lega</param>
+            <returns>backup snapshot location</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.TryGetSerializedBackupInfoRemoteItemFromProgressiveStore(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackupInfo(System.String,System.Guid,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackup(System.Nullable{System.Guid},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetContemporaneousSyntheticFullBackup(System.String,System.Guid,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetFolderNameFromTimestamp(System.DateTime)">
+            <summary>
+            Creates directory for the given backup ID and timestamp
+            </summary>
+            <param name="ts">the timestamp</param>
+            <returns>folder name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.TryGetTimestampFromFolderName(System.String,System.DateTime@)">
+            <summary>
+            Gets timestamp from folder name
+            </summary>
+            <param name="folderName">folder name</param>
+            <param name="ts">converted timestamp</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.EnumerateTopLevelItemFullNamesInContainer(System.String,System.String,Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.RemoteItemType)">
+            <summary>
+            Enumerate top level items with the search pattern under the path
+            </summary>
+            <param name="path">Item path</param>
+            <param name="searchPattern">Search pattern</param>
+            <param name="itemType">Item type</param>
+            <returns>Full names of top level items</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.ReadItemToStream(System.String,System.IO.MemoryStream)">
+            <summary>
+            Open an item and read the content to stream
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.ItemExists(System.String)">
+            <summary>
+            Checks if the item exists
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.IsContainer(System.String)">
+            <summary>
+            Checks if the item is a existing container
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteItem(System.String)">
+            <summary>
+            Delete an item
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.RebuildCachePrerequisites">
+            <summary>
+            Return true if rebuild cache prerequisites pass
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation)">
+            <summary>
+            Delete backup info file
+            </summary>
+            <param name="backupInfoLocation">backup information location</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetLegacyBackupInfo(System.String)">
+            <summary>
+            Helper to get the legacy backup info from the given directory
+            </summary>
+            <param name="dir">the directory</param>
+            <returns>backup info</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteBackupByContemporaneousBackups(System.DateTime,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteBackupByRepositoryBackups(System.DateTime,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.PruneProgressiveBackupStore(System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteLegacyBackupDirectory(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation,System.Boolean)">
+            <summary>
+            Deletes the directory with the given backup information
+            </summary>
+            <param name="backupInfoLocation">backup information location</param>
+            <param name="recursive">recursively delete the directory</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.RebuildCache(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Rebuilds cache from the data stored on backup store
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteLegacyBackups(System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation},System.Tuple{System.Collections.Generic.List{System.Guid},System.Collections.Generic.List{System.String}})">
+            <summary>
+            Delete legacy backups
+            </summary>
+            <param name="oldLegacyBackups">The backups to delete</param>
+            <param name="backupsFailedToDelete">If specified, add paths that failed to be deleted.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.UploadBackupPackageAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
+            <summary>
+            Upload backup package
+            </summary>
+            <param name="storeName">Stamp version</param>
+            <param name="snapshot">the snapshot metadata</param>
+            <param name="fromFile">backup data file</param>
+            <param name="encryptor">The encryptor</param>
+            <param name="cancellationToken">The cancellation token</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DownloadBackupPackageAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
+            <summary>
+            Download backup package
+            </summary>
+            <param name="snapshotLocation">backup snapshot location</param>
+            <param name="toDir">The dest dir</param>
+            <param name="decryptor">the decryptor</param>
+            <param name="cancellationToken">The cancellation token</param>
+            <returns>decryption task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.TestAccessibility(System.Threading.CancellationToken)">
+            <summary>
+            Test if external store is accessible
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.UploadRegistrationJson(System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.TryGetSerializedBackupInfoFromProgressiveStore(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase">
+            <summary>
+            Backup store provider based on SMB file share
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.StoreType">
+            <summary>
+            Gets the external store type
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.CreateSymmetricFileEncryptionProviderInternal(System.String)">
+            <summary>
+            Helper to create symmetric file encryption provider.
+            </summary>
+            <returns>The encryption provider</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.RebuildCache(System.String,System.Boolean,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Rebuild cache
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.EncryptionCertBase64">
+            <summary>
+            Gets or sets the encryption cert
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.EncryptionCertThumbprint">
+            <summary>
+            Gets or sets the encryption cert thumbprint
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.LastUpdatedDateTime">
+            <summary>
+            Gets or sets the last update date time of the store provider
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.IsFreeSizeLessThanExpected(System.UInt64,System.Int32,System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Backup})">
+            <summary>
+            Checks whether the share free size is less than expected free size based on our exsting backups
+            </summary>
+            <param name="freeBytes">free bytes on share</param>
+            <param name="backupsToRetain">number of backups we need to retain on share</param>
+            <param name="existingBackups">existing backups</param>
+            <returns>whether share free size is less than expected free size</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.IsFileShareAlmostFull(System.Int32)">
+            <summary>
+            Checks whether share is almost full
+            </summary>
+            <returns>whether share is almost full</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.ThrowIfBackupLargerThanFreeSpace(System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot})">
+            <summary>
+            Throws exception if backup is greater than share free space
+            </summary>
+            <param name="snapshots">backup snapshots to be copied to share</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.CreateSymmetricFileEncryptionProvider(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.Security.Cryptography.X509Certificates.X509Certificate2,System.Security.SecureString)">
+            <summary>
+            Helper to create symmetric file encryption provider.
+            </summary>
+            <param name="snapshot">Backup snapshot</param>
+            <param name="decryptionCert">The encryption certificate to decrypt the backup package</param>
+            <param name="encryptionKey">The encryption key to decrypt the backup package</param>
+            <returns>The encryptor and the unwrapped key</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.UploadBackupPackageAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.DownloadBackupPackageAsync(System.String,System.String,System.Guid,System.String,System.Security.Cryptography.X509Certificates.X509Certificate2,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetBackupInfo(System.String,System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetBackup(System.Nullable{System.Guid},System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetContemporaneousSyntheticFullBackup(System.String,System.Guid,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.DeleteBackupByContemporaneousBackups(System.DateTime)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.DeleteBackupByRepositoryBackups(System.DateTime,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.PruneBackupStore(System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.RebuildCacheAsync(System.String,System.Boolean,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Async rebuild cache for the external store. If stamp version is provided, only rebuild cache for that version.
+            If repo name is specified, only rebuild cache for the repo. Otherwise, build cache for all backups.
+            </summary>
+            <param name="progressiveStoreName">Refresh the cache of a particular stamp version</param>\
+            <param name="includeLegacyBackups">Rebuild legacy backup cache as well</param>
+            <param name="forceRebuild">Force rebuilding regardless of whether the cache is dirty</param>
+            <param name="cancellationToken">cancellationToken to cancel current operation</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetBackupSnapshots(System.String,System.Nullable{System.Guid})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.TestExternalStoreAccessible(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the external store is accessible
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetLocation">
+            <summary>
+            Gets the location to external store
+            </summary>
+            <returns>location to external store</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.ClearDuplicatedSnapshots(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetLastSnapshotsPerRepo(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.UploadRegistrationJson(System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetSyntheticFullBackupChain(System.String,System.String,System.Guid)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetMostRecentBackupChainLength(System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.IsConfigured">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.SetProgressiveDirtyBit(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.ClearProgressiveDirtyBit(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.ExternalBackupStoreProviderBase">
+            <summary>
+            Backup store provider based on SMB file share
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.ExternalBackupStoreProviderBase.SerializedBackupInfo">
+            <summary>
+            Serilized backup info from external share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.ExternalBackupStoreProviderBase.RefreshSerializedBackupInfoFromProgressiveStore(System.String)">
+            <inheritdoc/>
+        </member>
+    </members>
+</doc>

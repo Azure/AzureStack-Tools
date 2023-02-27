@@ -1,0 +1,212 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IRequestExecutor)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient"/> class.
+            </summary>
+            <param name="RequestExecutor">The request executor.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.DeleteAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.GetFileContentAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.GetItemInfoAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.ListDirectoryAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.SetFileContentAsync(System.Guid,System.Byte[],System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.StartUploadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.UploadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.StartDownloadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.DownloadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.TestConnectionAsync(System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.GetLocationPathAsync(System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.GetLocationInfoAsync(System.Guid,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.PollOperationAsync(System.String,System.Threading.CancellationToken,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.CancelOperation(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.CreateRequest(System.String,Microsoft.AzureStack.Common.Infrastructure.Http.Client.Remoting.Contract.Method)">
+            <summary>
+            Creates the request.
+            </summary>
+            <param name="uriTemplate">The URI template.</param>
+            <param name="method">The method.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.SMB.Common.BtsClient.CreateServiceTypeExecuteRequest(Microsoft.AzureStack.Common.Infrastructure.ServiceDiscovery.Contract.IServiceResolver,System.Guid)">
+            <summary>
+            Creates the service type execute request.
+            </summary>
+            <param name="serviceResolver">The service resolver.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Helpers.IsTerminalState(Microsoft.AzureStack.Common.Infrastructure.ReliableOperations.OperationState)">
+            <summary>Determines whether the state is terminal state.</summary>
+            <param name="state">The state.</param>
+            <returns>
+              <c>true</c> if is terminal state; otherwise, <c>false</c>.
+            </returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IbcRestClient.BackupAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperation,System.Nullable{System.TimeSpan},System.Guid)">
+            <summary>
+            Triggers a backup operation and waits for the operation to complete. Returns the operation
+            (regardless of completion status) after the minimum of the time it takes to complete the backup and the
+            specified max operation time. Check the status of the resulting operation to determine if the backup has
+            completed.
+            </summary>
+            <param name="operation">The backup operation to perform.</param>
+            <param name="maxOperationTime">The maximum time to wait for a backup to complete before returning.
+            Specify 'null' to wait indefinitely, or Timespan.Zero to return without waiting.</param>
+            <returns>The backup operation, whose status must be checked even if a max operation time was specified.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.DeleteAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Deletes the specified path.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="path">The path.</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.GetFileContentAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the content of the file.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="path">The path.</param>
+            <param name="token">The token.</param>
+            <returns>File content</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.GetItemInfoAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the item information.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="path">The path.</param>
+            <param name="token">The token.</param>
+            <returns>File info</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.ListDirectoryAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Lists the directory.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="path">The path.</param>
+            <param name="token">The token.</param>
+            <returns>RemoteItemInfo of child items</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.SetFileContentAsync(System.Guid,System.Byte[],System.String,System.Threading.CancellationToken)">
+            <summary>
+            Sets the content of the file.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="content">The content.</param>
+            <param name="path">The path.</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.StartUploadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Starts uploading file.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="localPath">The local path.</param>
+            <param name="remotePath">The remote path.</param>
+            <param name="token">The token.</param>
+            <returns>Operation URI</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.UploadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Uploads the file asynchronously.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="localPath">The local path.</param>
+            <param name="remotePath">The remote path.</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.StartDownloadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Starts downloading the file.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="remotePath">The remote path.</param>
+            <param name="localPath">The local path.</param>
+            <param name="token">The token.</param>
+            <returns>Operation URI</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.DownloadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Downloads the file asynchronously.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="remotePath">The remote path.</param>
+            <param name="localPath">The local path.</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.TestConnectionAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Test connection.
+            </summary>
+            <param name="locationId">The location</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.GetLocationPathAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Gets the location path asynchronously.
+            </summary>
+            <param name="locationId">The location identifier.</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.GetLocationInfoAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Gets the location information asynchronously.
+            </summary>
+            <param name="locationId">The location identifier.</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.PollOperationAsync(System.String,System.Threading.CancellationToken,System.Threading.CancellationToken)">
+            <summary>
+            Polls the operation asynchronously.
+            </summary>
+            <param name="operationUri">The operation URI.</param>
+            <param name="operationCancellationToken">This token cancels the entire operation.</param>
+            <param name="pollCancellationToken">This token only cancels the polling.</param>
+            <returns>OperationStatus</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.CancelOperation(System.String)">
+            <summary>
+            Sends the operation cancelation request asynchronous.
+            </summary>
+            <param name="operationUri">The operation URI.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient.GetOperationsAsync(System.Nullable{System.Guid})">
+            <summary>
+            Gets the operations asynchronously.
+            </summary>
+            <param name="operationId">The operation identifier.</param>
+        </member>
+    </members>
+</doc>

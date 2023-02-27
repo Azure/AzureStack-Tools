@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.Constants">
+            <summary>
+            DKM container related constants
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer">
+            <summary>
+            repository for DKM container
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.DkmContainerDn">
+            <summary>
+            Gets or sets the distinguished name of DKM container
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.ServiceAccountName">
+            <summary>
+            Gets or sets the service account name assigning DKM container permission
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.Guid,System.String,System.String,System.Guid,System.Guid,Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType,System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the<see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer" /> class.
+            </summary>
+            <param name="componentInfo">component info</param>
+            <param name="repositoryName">repository name</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.DoBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupLocalStore)">
+            <summary>
+            Perform backup of DKM container
+            </summary>
+            <param name="backupLocalStore">backup local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.DoRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRestoreLocalStore)">
+            <summary>
+            Perform restore of DKM container
+            </summary>
+            <param name="restoreLocalStore">restore local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.AddRsatAdTools">
+            <summary>
+            Add RSAT-AD-Tools feature
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.ExportDkmContainer(System.String,System.String)">
+            <summary>
+            Export the DKM container
+            </summary>
+            <param name="dkmDn">dkmDn</param>
+            <param name="dkmExportPath">dkmExportPath</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.ImportDkmContainer(System.String)">
+            <summary>
+            Import the DKM container
+            </summary>
+            <param name="dkmFilePath">dkmFilePath</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.RepositoryDkmContainer.SetDkmPermissions(System.String,System.String)">
+            <summary>
+            Set the DKM container permission
+            </summary>
+            <param name="dkmLdapPath">dkmLdapPath</param>
+            <param name="account">account</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.Utils.IsDomainAdmin">
+            <summary>
+            Check if the current user is domain admin
+            </summary>
+            <returns>True if the current user is domain admin</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryDkmContainer.Utils.StartLdifdeProcess(System.String,System.Int32)">
+            <summary>
+            Starts the ldifde.exe process
+            </summary>
+            <param name="argument">argument</param>
+            <param name="timeOutMs">process time out in milliseconds</param>
+            <exception cref="T:System.InvalidOperationException">Invalid Op exception</exception>
+            <exception cref="T:System.TimeoutException">Time out exception</exception>
+        </member>
+    </members>
+</doc>

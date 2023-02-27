@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.Operation.Contract</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IExternalStoreOperation">
+            <summary>
+            External store operation interface
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IBackupOperation">
+            <summary>
+            backup operation interface
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IBackupOperation.Data">
+            <summary>
+            Gets or sets backup restore operation data.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IBackupServiceOperation">
+            <summary>
+            backup service operation interface
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IBackupServiceOperation.OperationType">
+            <summary>
+            Gets or sets the operation type
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IBackupServiceOperation.IsOperationResumable">
+            <summary>
+            Gets or sets whether the operation is resumable
+            </summary>
+            <remarks>
+            This is different from property CanResume defined in <see cref="T:Microsoft.AzureStack.Common.Infrastructure.ReliableOperations.IOperationResumeBehavior"/>
+            If IsOperationResumable is false, the operation should fail after suspended and resumed
+            While for CanResume, if it is set to false, the operation will not be launched during resume but just left in store
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IBackupServiceOperation.RunOperationAsync(System.Threading.CancellationToken)">
+            <summary>
+            Runs the operation
+            </summary>
+            <param name="cancellationToken">The cancellation token</param>
+            <returns>The Task for the running operation</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IRestoreOperation">
+            <summary>
+            Restore operation interface
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IRestoreOperation.ForceRestore">
+            <summary>
+            Gets or sets force restore flag.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Operation.IRestoreOperation.Data">
+            <summary>
+            Gets or sets backup restore operation data.
+            </summary>
+        </member>
+    </members>
+</doc>

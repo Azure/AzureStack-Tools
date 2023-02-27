@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTable</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTable.RepositoryTable">
+            <summary>
+            repository for table
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTable.RepositoryTable.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.String,System.Security.SecureString,System.String,System.String,System.String,System.String,System.Guid,System.String,System.String,System.Guid,System.Guid,Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType,System.String,System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the<see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTable.RepositoryTable" /> class.
+            </summary>
+            <param name="componentInfo">component info</param>
+            <param name="repositoryName">repository name</param>
+            <param name="accountName">account name</param>
+            <param name="accountKey">account key</param>
+            <param name="tableEndPoint">table end point used for connecting to storage</param>
+            <param name="blobEndPoint">blob end point used for connecting to storage</param>
+            <param name="queueEndPoint">queue end point used for connecting to storage</param>
+            <param name="containerNameFilter">name filter for Azure Stack storage account containers</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTable.RepositoryTable.DoBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupLocalStore)">
+            <summary>
+            Backup all tables for a given storage account
+            </summary>
+            <param name="backupLocalStore">backup local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTable.RepositoryTable.DoRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRestoreLocalStore)">
+            <summary>
+            Restore tables from JSON files for given storage account
+            </summary>
+            <param name="restoreLocalStore">restore local store</param>
+        </member>
+    </members>
+</doc>

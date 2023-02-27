@@ -1,0 +1,2333 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext">
+            <summary>
+            ECE action plan execution context
+            </summary>
+            <remarks>Data contracts are covered fully in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.RoleName">
+            <summary>
+            Repository role name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.FullRepositoryName">
+            <summary>
+            Full repository name to pass to the ECE action
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.ActionExecutionOpertaionId">
+            <summary>
+            The ece execution operation Id if the action's started
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.ActionPlanRolePath">
+            <summary>
+            Role path of action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.BackupType">
+            <summary>
+            Role path of action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.State">
+            <summary>
+            Whether the action plan has been invoked
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.PreviousSnapshotId">
+            <summary>
+            The previous snapshot Id
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext.DependentFullSnapshotId">
+            <summary>
+            The dependent full backup id
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupBrokerCoreIBC">
+            <summary>
+            IBC side backup broker core.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Backup">
+            <summary>
+            backup restore operation base implementation
+            </summary>
+            <remarks>Data contracts are covered fully in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Backup.BackupId">
+            <summary>
+            Gets or sets backup ID.  This is different from operation ID uniquely identifying a given operation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Backup.Backups">
+            <summary>
+            Gets or sets backups
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Backup.BackupInfo">
+            <summary>
+            Gets or sets the backup info such as role status, overall backup status, creation time, and total time taken
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupProvider">
+            <summary>
+            IBC side backup provider information.
+            </summary>
+            <remarks>Exclude from code coverage because backup provider requires real environments.</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupProviderCoreIBC">
+            <summary>
+            Backup provider core IBC model
+            </summary>
+            <remarks>Backup provider cannot be covered in UT</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration">
+            <summary>
+            Infrastructure repository registration info
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.roleName">
+            <summary>
+            The combination of RolName, ComponentName, PartitionId and RepositoryName must be unique.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.EceRolePath">
+            <summary>
+            The ECE action role path of the repository
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.BackupPriority">
+            <summary>
+            Backup priority, P0 represents the highest priority.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.RestorePriority">
+            <summary>
+            Restore priority, P0 represents the highest priority.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.BackupPeriodInMinutes">
+            <summary>
+            Backup period
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.RetentionPeriodInDays">
+            <summary>
+            Retention period
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.ProgressiveBackupType">
+            <summary>
+            Backup type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.EssentialForCloudRecovery">
+            <summary>
+            Inidicates whether the repository is required for cloud recovery
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.RequiredForRestoreActionPlan">
+            <summary>
+            Indicates whether the repository is required during restore action plan
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.LastBackupOperationSucceeded">
+            <summary>
+            Record the last backup operation status to decide the backup type of the next backup
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.DoubleEncryptionRequired">
+            <summary>
+            Inidicates whether the repository is required to be double encrypted
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.PreviousSnapshotId">
+            <summary>
+            The previous snapshot Id
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration.DependentFullSnapshotId">
+            <summary>
+            The dependent full backup id
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary">
+            <summary>
+            Summary of backup progress
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.BackupInfo">
+            <summary>
+            Backup info, contains backup status, size, and failed roles.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.Snapshots">
+            <summary>
+            Backup snapshots.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.IsScheduled">
+            <summary>
+            Is shceduled backup.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.BackupStartTime">
+            <summary>
+            Timestamp of backup started.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.BackupEndTime">
+            <summary>
+            Timestamp of backup ended and upload started.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.UploadEndTime">
+            <summary>
+            Timestamp of upload ended.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.InfraBackupException">
+            <summary>
+            Exception thrown from infra backup.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.AddonRPBackupException">
+            <summary>
+            Exception thrown from Add-on RP backup.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary.IsInternalBackup">
+            <summary>
+            Whether the backup is internal backup, or the backup exported to customer share.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation">
+            <summary>
+            identifier of a backup location
+            </summary>
+            <remarks>BTS location is covered in UT through mocking.</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation.LocationId">
+            <summary>
+            The location identifier
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation.ServiceId">
+            <summary>
+            The service identifier of backup location. This identity which SF service this location is on.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation.#ctor(System.Guid,System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation"/> class.
+            </summary>
+            <param name="ServiceId">The service identifier.</param>
+            <param name="LocationId">The location identifier.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.DataModelHelpers.GetUniqueName(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.String)">
+            <summary>
+            Gets unique name for repository and backup info
+            </summary>
+            <param name="ComponentInfo">component info</param>
+            <param name="RepositoryName">repository name</param>
+            <param name="DefaultRoleName">default role name</param>
+            <returns>the backup local store</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpBackupOperationData">
+            <summary>
+            Data stored for reliable add-on rp backup operation
+            </summary>
+            <remarks>Addon RP opeations cannot be covered in UT</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpBackupOperationData.BackupStatus">
+            <summary>
+            Backup status for add-on rp
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData">
+            <summary>
+            Data stored for reliable add-on rp backup/restore operation
+            </summary>
+            <remarks>Addon RP opeations cannot be covered in UT</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.OperationType">
+            <summary>
+            Operation type: backup or restore
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.OperationId">
+            <summary>
+            Operation ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.RpName">
+            <summary>
+            Add-on rp name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.AddOnRpLastFinishedStep">
+            <summary>
+            Last finished step of add-on rp operation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.StagingContainerName">
+            <summary>
+            Staging container to save backup/restore data
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.RequestUri">
+            <summary>
+            Request uri sent to add-on rp
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.Location">
+            <summary>
+            Location uri responsed from add-on rp
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.AzureAsyncOperation">
+            <summary>
+            Azure-AsyncOperation responsed from add-on rp
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationData.RetryAfterDelta">
+            <summary>
+            Retry-After responsed from add-on rp
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationType">
+            <summary>
+            Operation types of add-on rp operations
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationType.Backup">
+            <summary>
+            Operation type: backup
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationType.Restore">
+            <summary>
+            Operation type: restore
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationStep">
+            <summary>
+            Steps of add-on rp operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationStep.Starting">
+            <summary>
+            Initial step for add-on rp backup operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationStep.StagingContainerCreated">
+            <summary>
+            Staging container is created
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationStep.RequestSent">
+            <summary>
+            Request to add-on rp is sent
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpOperationStep.RequestFinished">
+            <summary>
+            Request to add-on rp finished
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpRestoreOperationData">
+            <summary>
+            Data stored for reliable add-on rp restore operation
+            </summary>
+            <remarks>Addon RP opeations cannot be covered in UT</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.AddOnRpRestoreOperationData.DownloadedSnapshots">
+            <summary>
+            Already downloaded add-on rp snapshots
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData">
+            <summary>
+            Backup operation data
+            </summary>
+            <remarks>Covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.LastFinishedStep">
+            <summary>
+            Last finished operation step
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.BackupSummary">
+            <summary>
+            Summary of backup progress
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.ExportedBackupSnapshots">
+            <summary>
+            Already uploaded backup snapshots
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.AddOnRpBackupOperations">
+            <summary>
+            Operation data for add-on rps to backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.BackupStoreProviderConfigId">
+            <summary>
+            Store provider configuration Id
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.IsScheduledBackup">
+            <summary>
+            Is a scheduled backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData.IsContemporaneousBackup">
+            <summary>
+            Is a contemporaneous backup.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.EceExecutionStep">
+            <summary>
+            Steps of ECE execution operation
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData">
+            <summary>
+            Restore operation data
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.LastFinishedStep">
+            <summary>
+            Last finished operation step
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.RestoreSummary">
+            <summary>
+            Summary of restore progress
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.RestoreActionPlanInstanceId">
+            <summary>
+            Instance ID of restore action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.PollRestoreActionPlanStartTime">
+            <summary>
+            Start time of restore action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.AddOnRpRestoreOperationData">
+            <summary>
+            Operation data for add-on rp to restore
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.DecryptionCertRawDataBase64">
+            <summary>
+            Gets or sets the decryption certificate raw data
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.DecryptionCertPassword">
+            <summary>
+            Gets or sets the decryption certificate password
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.DownloadedBackupSnapshotFullNames">
+            <summary>
+            Already downloaded backup snapshots
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData.DoubleEncryptedSnapshots">
+            <summary>
+            Double encrypted snapshots and corresponding unwrapped keys
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationStep">
+            <summary>
+            Steps of restore operation
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupServiceOperationRecord">
+            <summary>
+            Operation base implementation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupServiceOperationRecord.Id">
+            <summary>
+            Gets or sets the operation ID.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupServiceOperationRecord.OperationType">
+            <summary>
+            Gets or sets operation type
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupServiceOperationRecord.Status">
+            <summary>
+            operation status information such as operation state, start and end time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupServiceOperationRecord.AdditionalOperationDataJson">
+            <summary>
+            Additional data from the operation in json string
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationStep">
+            <summary>
+            Steps of backup operation
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperation">
+            <summary>
+            Client facing backup operation 
+            </summary>
+            <remarks>Covered in BVT cmdlet tests</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData">
+            <summary>
+            backup restore operation base implementation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.RepositoryRegistration">
+            <summary>
+            Repository registrations
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.BackupID">
+            <summary>
+            Gets or sets contemporaneous backup ID. This is different from operation ID uniquely identifying a given 
+            operation. This Id may be empty for non-contemporaneous backups.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.RoleName">
+            <summary>
+            Role name if a single role is to be backed up or restored. RoleName and InfraFullRepositoryNames are
+            mutually exclusive.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.IsSingleAddOnRpOperation">
+            <summary>
+            Add-on RP role backup/restore
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.InfraFullRepositoryNames">
+            <summary>
+            Full repository names to be backed up or restored. RoleName and InfraFullRepositoryNames are mutually
+            exclusive. This parameter is only available on the IBC REST APIs.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.MonitorActionPlanInstanceId">
+            <summary>
+            Instance ID of the monitor action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.ErcsRemediationActionPlanInstanceId">
+            <summary>
+            Instance ID of the ERCS remediation action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.ErcsRemediationActionPlanStartTime">
+            <summary>
+            ERCS remediation action plan start time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.ActionPlanStartTime">
+            <summary>
+            Start time of overrall action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.EceExecutionContexts">
+            <summary>
+            ECE execution contexts
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupRestoreOperationData.BackupProviders">
+            <summary>
+            Backup providers
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperation">
+            <summary>
+            client facing restore operation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperation.ForceRestore">
+            <summary>
+            Gets or sets force restore flag.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreInfo">
+            <summary>
+            restore operation status.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreInfo.RoleStatus">
+            <summary>
+            Gets or sets backup status for roles
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreInfo.Status">
+            <summary>
+            Gets or sets overall backup status
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreInfo.StampVersion">
+            <summary>
+            The stamp version
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.EceActionResultExtensions">
+            <summary>
+            ECE action result extension methods.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.EceActionResultExtensions.ConsolidateOperationStatus(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IOperationStatus,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ActionPlanExecutionContext})">
+            <summary>
+            Helper function to consolidate overall backup status based on role status 
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.EceActionResultExtensions.ConsolidateIsCloudRecoveryReady(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Helper function to consolidate IsCloudRecoveryReady based on actual backup snapshot data.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.EceActionResultExtensions.ThrowIfStatusNotSucceeded(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.Exception)">
+            <summary>
+            Throws backup exception if status is not succeeded
+            </summary>
+            <param name="backupInfo">backup info object</param>
+            <param name="innerException">inner exception</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo">
+            <summary>
+            IBC side backup information.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot">
+            <summary>
+            backup snapshot information.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.BackupDataVersion">
+            <summary>
+            The backup data version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.StampVersion">
+            <summary>
+            The backup data version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.OemVersion">
+            <summary>
+            The OEM version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.DeploymentID">
+            <summary>
+            The deployment ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.IsAutomaticBackup">
+            <summary>
+            Gets or sets whether the backup is an automatic backup.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.IsContemporaneousBackup">
+            <summary>
+            Gets or sets whether the backup is contemporaneous.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.BackupId">
+            <summary>
+            Gets or sets the backup Id of the snapshot
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.ComponentInfo">
+            <summary>
+            Gets or sets information to identify a component partition instance.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.HostVMName">
+            <summary>
+            Host VM name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.RepositoryName">
+            <summary>
+            Gets or sets the name of the repository. If a component service partition has 
+            multiple repositories, each repository will have a BackupSnapshot instance while 
+            all of them should have the same backup ID.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.EncryptedBackupEncryptionKey">
+            <summary>
+            Cert-wrapped encryption key
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.EncryptionCertThumbprint">
+            <summary>
+            Backup encryption thumbprint
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.SnapshotProperties">
+            <summary>
+            Gets or sets backup properties such as type, creation time, status, and size
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.UniqueName">
+            <summary>
+            Gets unique name for this instance of the component.  Note that backup ID is not included.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.SnapshotId">
+            <summary>
+            Gets or sets snapshot Id, which is full repo name + backup Id
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.SnapshotName">
+            <summary>
+            Gets the snapshot name
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.GetRepositoryNameChain(System.String)">
+            <summary>
+            Gets repository name chain
+            </summary>
+            <param name="fullRepositoryName">full repository name</param>
+            <returns>name chain in string array</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.IsRepositoryMatch(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Static function to determine whether two repositories match
+            </summary>
+            <param name="roleName1">first role name</param>
+            <param name="componentName1">first component name</param>
+            <param name="partitionId1">first partition ID</param>
+            <param name="repoName1">first repository name</param>
+            <param name="roleName2">second role name</param>
+            <param name="componentName2">second component name</param>
+            <param name="partitionId2">second partition ID</param>
+            <param name="repoName2">second repository name</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.IsRepositoryMatch(System.String[])">
+            <summary>
+            Determine whether the given repository name chain match this snapshot
+            </summary>
+            <param name="repoNames">repository name chain</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.IsNullOrEmptyOrWildcard(System.String)">
+            <summary>
+            Check whether the name is null or empty or wildcard.
+            </summary>
+            <param name="name">the name</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot.IsNameMatch(System.String,System.String)">
+            <summary>
+            Determine whether the two names match
+            </summary>
+            <param name="name1">first name</param>
+            <param name="name2">second name</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties">
+            <summary>
+            Backup properties such as type, creation time, status, and size
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.BackupType">
+            <summary>
+            Gets or sets the backup type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.PreviousSnapshotId">
+            <summary>
+            The previous snapshot Id of a progressive backup. For full backup this id is empty.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.DependentFullSnapshotId">
+            <summary>
+            The full backup Id that a progressive backup depends on. For full backup this id is empty.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.CreatedDateTime">
+            <summary>
+            Gets or sets backup creation time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.TimeTakenToCreate">
+            <summary>
+            Gets or sets time taken to create the backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.Description">
+            <summary>
+            Gets or sets description
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.BackupStatus">
+            <summary>
+            Gets or sets the backup status
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.BackupSizeInKb">
+            <summary>
+            Gets or sets backup size in KB
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshotProperties.CompressedBackupSizeInKb">
+            <summary>
+            Gets or sets compressed backup file size
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo">
+            <summary>
+            information to identify a component partition instance.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo" /> class.
+            </summary>
+            <param name="roleName">role name</param>
+            <param name="componentName">component name</param>
+            <param name="partitionId">partition ID</param>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.RoleName">
+            <summary>
+            Gets or sets the name of the role this backup is taken for
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.ComponentName">
+            <summary>
+            Gets or sets the name of the component this backup is taken for
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.PartitionId">
+            <summary>
+            Gets or sets the partition ID of a component this backup is taken for
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.GetComponentUniqueName(System.String,System.String,System.String)">
+            <summary>
+            Static function to get the component unique name
+            </summary>
+            <param name="roleName">role name</param>
+            <param name="componentName">component name</param>
+            <param name="partitionId">partition ID</param>
+            <returns>unique name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.GetFullRepositoryName(System.String,System.String,System.String,System.String)">
+            <summary>
+            Static function to get the component unique name
+            </summary>
+            <param name="roleName">role name</param>
+            <param name="componentName">component name</param>
+            <param name="partitionId">partition ID</param>
+            <param name="repositoryName">name of the repository</param>
+            <returns>unique name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.GetNameChain(System.String)">
+            <summary>
+            split the full name into name chain array
+            </summary>
+            <param name="fullName">the full name</param>
+            <returns>name chain array</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.Match(System.String,System.String)">
+            <summary>
+            Static function to determine whether two name match
+            </summary>
+            <param name="name1">first name</param>
+            <param name="name2">second name</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.Match(System.String[],System.String[])">
+            <summary>
+            Static function to determine whether two name chain match
+            </summary>
+            <param name="names1">first name chain</param>
+            <param name="names2">second name chain</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.UniqueName(System.String)">
+            <summary>
+            Gets unique name for this component
+            </summary>
+            <param name="lastExecutedRoleName">Component role name from backup/restore request</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo.IsComponentIncluded(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo)">
+            <summary>
+            determine whether the given component specification is included in this component
+            Note: null or empty name is a wildcard to include everything.
+            </summary>
+            <param name="componentInfo">component info</param>
+            <returns>true or false</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants">
+            <summary>
+            static class holding constants
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.IbcAuthorizationGroup">
+            <summary>
+            The Windows user group that will be used for authorization.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.IbcEncryptionGroup">
+            <summary>
+            The Windows user group that will be used for IBC data encryption.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.EncryptionGroup">
+            <summary>
+            The Windows user group that will be used for BTS data encryption.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.ServiceEndpoint">
+            <summary>
+            Common infra service endpoint name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.FullRepositoryNameCount">
+            <summary>
+            full repository name counts with role, component, partition, and repository name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.NameSeparator">
+            <summary>
+            Separator for full repository name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.NameStar">
+            <summary>
+            Symbol used in full repository name like SRP;-;-;-
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.BackupRestoreOperation">
+            <summary>
+            backup restore operation string
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.BackupDataFileExt">
+            <summary>
+            backup data file extension
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.BackupMetaDataFileExt">
+            <summary>
+            backup meta data file extension
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.BackupSnapshotMetaDataFileSearchPattern">
+            <summary>
+            backup snapshot meta data file search pattern
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.BackupSnapshotMetaDataFileRegexPattern">
+            <summary>
+            backup snapshot meta data file regex search pattern
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.BackupMetaDataFileSearchPattern">
+            <summary>
+            backup meta data file search pattern
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.EnterpriseCloudEngineServiceUri">
+            <summary>
+            Uri for the Enterprise cloud engine service
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.StorageConnectionStringIbcStaging">
+            <summary>
+            Connection string to access the IBC staging storage account
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.AdminArmEndpoint">
+            <summary>
+            The endpoint of the admin ARM
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.AdminArmResourceIdentifierUri">
+            <summary>
+            The resource identifier URI for admin ARM
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.LoginEndpoint">
+            <summary>
+            The endpoint for login and acquiring tokens to access ARM
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.TenantId">
+            <summary>
+            The tenant ID of Azure Stack
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.ServicePrincipalClientId">
+            <summary>
+            The client ID of the service principal which is used to access backup providers
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.ServicePrincipalClientCertificateThumbprint">
+            <summary>
+            The thumbeprint of the client certificate for the service principal which is used to access backup providers
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.ServicePrincipalObjectId">
+            <summary>
+            The object Id of the IBC service principal that is provided to backup providers to allow access to their
+            registered resources.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Constants.EndpointAuthorizationGroup">
+            <summary>
+            The Windows user group that will be used for authorization.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary">
+            <summary>
+            Summary of restore progress
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary.RestoreInfo">
+            <summary>
+            Restore info, contains restore status and failed roles.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary.DownloadStartTime">
+            <summary>
+            Timestamp of download started.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary.RestoreStartTime">
+            <summary>
+            Timestamp of download ended and restore started.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary.RestoreEndTime">
+            <summary>
+            Timestamp of restore ended.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary.Exception">
+            <summary>
+            Exception thrown in backup.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ExternalSmbStore">
+            <summary>
+            IBC side external SMB share model
+            </summary>
+            <remarks>Covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ExternalSmbStore.LastUpdatedDateTime">
+            <summary>
+            Last updated date time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ExternalSmbStore.AutoEnableScheduler">
+            <summary>
+            Whether or not should auto enable scheduler
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential">
+            <summary>
+            Share with credential
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential.#ctor(System.String,System.String,System.Security.SecureString)">
+            <summary>
+            Share resource with credential.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderRegistrationException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase">
+            <summary>
+            Backup exception base
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase.ErrorCode">
+            <summary>
+            Error code for this exception, set as the exception name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase.IsPrecheckError">
+            <summary>
+            Gets or sets a value indicating whether this error represents a precondition failure, or a failure of running the operation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BCDRExceptionBase.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted
+                for serialization. During deserialization, the exception is reconstituted from the
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException">
+            <summary>
+            backup source exception
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupConflictException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException">
+            <summary>
+            Backup operation exception
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException.OperationStatus">
+            <summary>
+            Operation status of backup operation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException.#ctor(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException" /> class.
+            </summary>
+            <param name="operationStatus">operation status</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException.#ctor(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException" /> class.
+            </summary>
+            <param name="operationStatus">operation status</param>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException.#ctor(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException" /> class.
+            </summary>
+            <param name="operationStatus">operation status</param>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupOperationException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException.RolesFailedInBackup">
+            <summary>
+            Roles that failed in backup
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException.#ctor(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException" /> class.
+            </summary>
+            <param name="rolesFailedInBackup">roles failed in backup</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException.#ctor(System.Collections.Generic.IEnumerable{System.String},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException" /> class.
+            </summary>
+            <param name="rolesFailedInBackup">roles failed in backup</param>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException.#ctor(System.Collections.Generic.IEnumerable{System.String},System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException" /> class.
+            </summary>
+            <param name="rolesFailedInBackup">roles failed in backup</param>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupPartiallySucceededException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupProviderNameConflictException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException">
+            <summary>
+            Bad request exception
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException.#ctor(System.Exception)">
+            <summary>
+            Initialize
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException" /> class.
+            </summary>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BadRequestException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted
+                for serialization. During deserialization, the exception is reconstituted from the
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException">
+            <summary>
+            backup source exception
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpArgumentException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BrpMethodNotAllowedException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException">
+            <summary>
+            Ece Client exception
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.ErrorMessage">
+            <summary>
+            Default error message of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException" /> class..
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.#ctor(System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException" /> class.
+            </summary>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.GenerateErrorMessage(System.Exception)">
+            <summary>
+            Generate error message based on inner exception.
+            </summary>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EceClientException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException">
+            <summary>
+            Internal backup store not configured exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupStoreNotConfiguredException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException">
+            <summary>
+            Payload too large exception
+            </summary>
+            <remarks>BTS codes covered in BVTs</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PayloadTooLargeException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted
+                for serialization. During deserialization, the exception is reconstituted from the
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException">
+            <summary>
+            Resource not found exception
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException.#ctor(System.Exception)">
+            <summary>
+            Initialize
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException" /> class.
+            </summary>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ResourceNotFoundException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted
+                for serialization. During deserialization, the exception is reconstituted from the
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.OperationNotResumableException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException">
+            <summary>
+            backup source exception
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException.ExceptionStatusCode">
+            <summary>
+            Default status code for this exception.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.PreconditionFailedException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException">
+            <summary>
+            Restore operation exception
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException.OperationStatus">
+            <summary>
+            Operation status of restore operation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException.#ctor(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException" /> class.
+            </summary>
+            <param name="operationStatus">operation status</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException.#ctor(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException" /> class.
+            </summary>
+            <param name="operationStatus">operation status</param>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException.#ctor(Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus,System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException" /> class.
+            </summary>
+            <param name="operationStatus">operation status</param>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreOperationException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException">
+            <summary>
+            SMB share conflict exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbConnectionConflictException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted
+                for serialization. During deserialization, the exception is reconstituted from the
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException">
+            <summary>
+            SMB share authentication exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException">
+            <summary>
+            SMB share connection exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EncryptionCertNotConfiguredException">
+            <summary>
+            SMB share exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EncryptionCertNotConfiguredException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EncryptionCertNotConfiguredException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EncryptionCertNotConfiguredException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.EncryptionCertNotConfiguredException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException">
+            <summary>
+            SMB share connection exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareIOException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException">
+            <summary>
+            SMB share not accessible exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleExceptionFactory">
+            <summary>
+            SMB share not accessible exception factory
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleExceptionFactory.NativeMethods.AuthenticationIssueErrorCodes">
+            <summary>
+            Authentication issue error codes
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleExceptionFactory.NativeMethods.PathInvalidErrorCodes">
+            <summary>
+            Path invalid error codes
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleExceptionFactory.NativeMethods.ConnectionIssueErrorCodes">
+            <summary>
+            Connection issue error codes
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleExceptionFactory.NativeMethods.ConnectionConflictErrorCodes">
+            <summary>
+            Connection conflict error codes
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleExceptionFactory.CreateException(System.Int32,System.String,System.Exception)">
+            <summary>
+            Create the SmbShareNotAccessibleException according to error code
+            </summary>
+            <param name="errorCode">Error code</param>
+            <param name="message">Message</param>
+            <param name="inner">Inner</param>
+            <returns>The exception object</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException">
+            <summary>
+            SMB share not configured exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.ExternalStoreNotConfiguredException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException">
+            <summary>
+            Uploading internal backup data exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InternalBackupUploadException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException">
+            <summary>
+            Export backup data exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupDataExportException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException">
+            <summary>
+            Infra share out of capacity exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.InfraShareOutOfCapacityException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException">
+            <summary>
+            SMB share out of capacity exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareOutOfCapacityException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException">
+            <summary>
+            SMB share path invalid exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException">
+            <summary>
+            wrong stamp version exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.WrongStampVersionException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException">
+            <summary>
+            restore already done exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.RestoreAlreadyDoneException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException">
+            <summary>
+            SMB share exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException">
+            <summary>
+            backup source exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException.#ctor(System.String,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException" /> class.
+            </summary>
+            <param name="message">exception message</param>
+            <param name="inner">inner exception</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.BackupSourceException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+                GetObjectData sets a SerializationInfo with all the exception object data targeted 
+                for serialization. During deserialization, the exception is reconstituted from the 
+                SerializationInfo transmitted over the stream.
+            </summary>
+            <param name="info">
+                The SerializationInfo that holds the serialized object data about the exception being thrown
+            </param>
+            <param name="context">
+                The StreamingContext that contains contextual information about the source or destination
+            </param>
+        </member>
+    </members>
+</doc>
