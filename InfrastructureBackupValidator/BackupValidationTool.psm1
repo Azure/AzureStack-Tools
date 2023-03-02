@@ -178,10 +178,10 @@ function ConvertDictionariesToCustomObjects
   - Retrieve ARM resources
 
  .Example
-  $resources = Validate-AszBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -TempFolder $tempFolder
-  $resources = Validate-AszBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -SQLServerInstanceName $sqlServerInstanceName -SQLCredential $sqlCredential -TempFolder $tempFolder
+  $resources = Validate-AzsBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -TempFolder $tempFolder
+  $resources = Validate-AzsBackup -BackupStorePath $backupStorePath -BackupStoreCredential $backupStoreCredential -BackupID $backupID -DecryptionCertPath $decryptionCertPath -DecryptionCertPassword $decryptionCertPassword -SQLServerInstanceName $sqlServerInstanceName -SQLCredential $sqlCredential -TempFolder $tempFolder
 #>
-function Validate-AszBackup
+function Validate-AzsBackup
 {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [OutputType([System.Collections.Hashtable])]
@@ -789,4 +789,4 @@ EXEC(@SQL)
     }
 }
 
-Export-ModuleMember -Function Validate-AszBackup
+Export-ModuleMember -Function Validate-AzsBackup

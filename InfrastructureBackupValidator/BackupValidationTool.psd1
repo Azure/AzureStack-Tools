@@ -21,7 +21,7 @@
     PowerShellVersion = '5.1'
     
     # Functions to export from this module
-    FunctionsToExport = 'Validate-AszBackup'
+    FunctionsToExport = 'Validate-AzsBackup'
 
     # Dependencies of this module
     RequiredModules = @(

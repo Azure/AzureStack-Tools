@@ -8,7 +8,7 @@ The purpose of this new backup validator tool is to remove the ASDK dependency a
 2. Available connection to the backup share
 
 ### Syntax
-Validate-AszBackup
+Validate-AzsBackup
 
 ### Description
 Gets Azure Stack backup, reads cloud resources contained within the backup and lists those
@@ -51,7 +51,7 @@ $SQLCredential = Get-Credential
 # This is the temp folder used to validate the Backup.
 $tempfolder = "c:\tempbackup"
 # Validate Backup: A hashtable containing retrieved resources will be returned; An HTML report "BackupValidationReport.htm" will be generated under $tempfolder.
-$results = $results = Validate-AszBackup -BackupStorePath \\10.0.0.2\ashbackup -BackupStoreCredential $ShareCredential `
+$results = $results = Validate-AzsBackup -BackupStorePath \\10.0.0.2\ashbackup -BackupStoreCredential $ShareCredential `
 	-BackupID $BackupID -DecryptionCertPath $DecryptionCertPath -DecryptionCertPassword $Encrypted.Password `
 	-SQLServerInstanceName $SQLServerInstanceName -SQLCredential $SQLCredential -TempFolder $tempfolder
 ```
