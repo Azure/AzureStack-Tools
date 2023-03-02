@@ -167,6 +167,47 @@ function ConvertDictionariesToCustomObjects
     }
 }
 
+function ExpandProperties
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PSCustomObject[]]
+        $Objects,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $ResourceType
+    )
+
+    $ErrorActionPreference = "Stop"
+
+    if ($ResourceType -eq "quota")
+    {
+        $Objects | % {
+            foreach ($p in $_.properties.PSObject.Properties)
+            {
+                $_ | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value
+            }
+
+            $_.PSObject.Properties.Remove('properties')
+        }
+    }
+    elseif ($ResourceType -eq "plan")
+    {
+        $Objects | % {
+            $_.QuotaIds = $_.QuotaIds -join ";;;"
+            $_ | Add-Member -NotePropertyName "AsBasePlanOfOffers" -NotePropertyValue $($_.Offers.Base -join ";;;")
+            $_ | Add-Member -NotePropertyName "AsAddonPlanOfOffers" -NotePropertyValue $($_.Offers.Addon -join ";;;")
+            $_ | Add-Member -NotePropertyName "AsNonePlanOfOffers" -NotePropertyValue $($_.Offers.None -join ";;;")
+            $_.PSObject.Properties.Remove("Offers")
+        }
+    }
+
+    return $Objects
+}
+
 <#
  .Synopsis
   List the ARM resources extracted from the backup.
@@ -763,14 +804,13 @@ EXEC(@SQL)
     $plansObj = ConvertDictionariesToCustomObjects -Dictionaries $plans
 
     # Output results in HTML format to TempFolder
-    $crpQuotaHtml = $crpQuotas | ConvertTo-HTML -As List
-    $nrpQuotaHtml = $nrpQuotas | ConvertTo-HTML -As List
-    $srpQuotaHtml = $srpQuotas | ConvertTo-HTML -As List
+    $crpQuotaHtml = ExpandProperties -Objects $crpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
+    $nrpQuotaHtml = ExpandProperties -Objects $nrpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
+    $srpQuotaHtml = ExpandProperties -Objects $srpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
     $offerHtml = $offersObj | ConvertTo-HTML -As List
     $subscriptionHtml = $subscriptionsObj | ConvertTo-HTML -As List
-    $planHtml = $plansObj | ConvertTo-HTML -As List -Property Id, ResellerSubscriptionId, ResourceGroupName, Tags, Name, DisplayName, `
-        Description, ProvisioningState, RoutingResourceManagerType, @{Expression = {$_.QuotaIds -join ";   "}}, `
-        @{Expression = {$_.Offers.Base -join ";   "}}, @{Expression = {$_.Offers.None -join ";   "}}, @{Expression = {$_.Offers.Addon -join ";   "}}
+    $planHtml = ExpandProperties -Objects $plansObj -ResourceType "plan" | ConvertTo-HTML -As List
+    $planHtml = $planHtml.Replace(";;;", "<br/>")
     ConvertTo-HTML -Body "<h3>$($Strings.HtmlCrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($crpQuotas.Count)</h3> $crpQuotaHtml `
         <h3>$($Strings.HtmlNrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($nrpQuotas.Count)</h3> $nrpQuotaHtml `
         <h3>$($Strings.HtmlSrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($srpQuotas.Count)</h3> $srpQuotaHtml `
