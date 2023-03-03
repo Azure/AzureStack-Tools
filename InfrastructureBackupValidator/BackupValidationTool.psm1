@@ -182,29 +182,35 @@ function ExpandProperties
 
     $ErrorActionPreference = "Stop"
 
+    $returnedObjs = @()
+
     if ($ResourceType -eq "quota")
     {
         $Objects | % {
-            foreach ($p in $_.properties.PSObject.Properties)
+            $obj = $_ | ConvertTo-Json | ConvertFrom-Json
+            foreach ($p in $obj.properties.PSObject.Properties)
             {
-                $_ | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value
+                $obj | Add-Member -NotePropertyName $p.Name -NotePropertyValue $p.Value
             }
 
-            $_.PSObject.Properties.Remove('properties')
+            $obj.PSObject.Properties.Remove('properties')
+            $returnedObjs += $obj
         }
     }
     elseif ($ResourceType -eq "plan")
     {
         $Objects | % {
-            $_.QuotaIds = $_.QuotaIds -join ";;;"
-            $_ | Add-Member -NotePropertyName "AsBasePlanOfOffers" -NotePropertyValue $($_.Offers.Base -join ";;;")
-            $_ | Add-Member -NotePropertyName "AsAddonPlanOfOffers" -NotePropertyValue $($_.Offers.Addon -join ";;;")
-            $_ | Add-Member -NotePropertyName "AsNonePlanOfOffers" -NotePropertyValue $($_.Offers.None -join ";;;")
-            $_.PSObject.Properties.Remove("Offers")
+            $obj = $_ | ConvertTo-Json | ConvertFrom-Json
+            $obj.QuotaIds = $obj.QuotaIds -join ";;;"
+            $obj | Add-Member -NotePropertyName "AsBasePlanOfOffers" -NotePropertyValue $($obj.Offers.Base -join ";;;")
+            $obj | Add-Member -NotePropertyName "AsAddonPlanOfOffers" -NotePropertyValue $($obj.Offers.Addon -join ";;;")
+            $obj | Add-Member -NotePropertyName "AsNonePlanOfOffers" -NotePropertyValue $($obj.Offers.None -join ";;;")
+            $obj.PSObject.Properties.Remove("Offers")
+            $returnedObjs += $obj
         }
     }
 
-    return $Objects
+    return $returnedObjs
 }
 
 <#
