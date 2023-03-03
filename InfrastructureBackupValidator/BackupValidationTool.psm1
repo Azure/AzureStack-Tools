@@ -150,7 +150,6 @@ function ConvertDictionariesToCustomObjects
 {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
         [HashTable]
         $Dictionaries
     )
@@ -804,13 +803,30 @@ EXEC(@SQL)
     $plansObj = ConvertDictionariesToCustomObjects -Dictionaries $plans
 
     # Output results in HTML format to TempFolder
-    $crpQuotaHtml = ExpandProperties -Objects $crpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
-    $nrpQuotaHtml = ExpandProperties -Objects $nrpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
-    $srpQuotaHtml = ExpandProperties -Objects $srpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
+    if ($crpQuotas.Count -gt 0)
+    {
+        $crpQuotaHtml = ExpandProperties -Objects $crpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
+    }
+    
+    if ($nrpQuotas.Count -gt 0)
+    {
+        $nrpQuotaHtml = ExpandProperties -Objects $nrpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
+    }
+
+    if ($srpQuotas.Count -gt 0)
+    {
+        $srpQuotaHtml = ExpandProperties -Objects $srpQuotas -ResourceType "quota" | ConvertTo-HTML -As List
+    }
+
     $offerHtml = $offersObj | ConvertTo-HTML -As List
     $subscriptionHtml = $subscriptionsObj | ConvertTo-HTML -As List
-    $planHtml = ExpandProperties -Objects $plansObj -ResourceType "plan" | ConvertTo-HTML -As List
-    $planHtml = $planHtml.Replace(";;;", "<br/>")
+
+    if ($plansObj.Count -gt 0)
+    {
+        $planHtml = ExpandProperties -Objects $plansObj -ResourceType "plan" | ConvertTo-HTML -As List
+        $planHtml = $planHtml.Replace(";;;", "<br/>")
+    }
+
     ConvertTo-HTML -Body "<h3>$($Strings.HtmlCrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($crpQuotas.Count)</h3> $crpQuotaHtml `
         <h3>$($Strings.HtmlNrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($nrpQuotas.Count)</h3> $nrpQuotaHtml `
         <h3>$($Strings.HtmlSrpQuotaHeader)</h3> <h3>$($Strings.HtmlResourceCount)$($srpQuotas.Count)</h3> $srpQuotaHtml `
