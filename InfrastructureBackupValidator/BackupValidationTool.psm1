@@ -286,7 +286,7 @@ function Validate-AzsBackup
         throw ($Strings.ErrorFailToConnectBackupStore -f $BackupStorePath, $_)
     }
 
-    Install-Module -Name SqlServer -AllowClobber
+    Install-Module -Name SqlServer -AllowClobber -Force -Confirm:$false -MinimumVersion "22.0.59"
     Import-Module SqlServer -DisableNameChecking
     $sqlCommonParams = @{
         ServerInstance = $SQLServerInstanceName
@@ -484,7 +484,7 @@ function Validate-AzsBackup
 
         # STEP 10: Retrieve offers
         $SQLCmd = "SELECT [Id],[SubscriptionId] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ResellerSubscriptions]"
-        $resellerSubTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $resellerSubTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $resellerSubcriptions = @{}
         if ($resellerSubTable.Tables.Count -gt 0 -and $null -ne $resellerSubTable.Tables[0].Rows)
         {
@@ -492,7 +492,7 @@ function Validate-AzsBackup
         }
 
         $SQLCmd = "SELECT [ProvisioningState],[ProvisioningStateName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ProvisioningStates]"
-        $provisionStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $provisionStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $provisioningStates = @{}
         if ($provisionStateTable.Tables.Count -gt 0 -and $null -ne $provisionStateTable.Tables[0].Rows)
         {
@@ -500,7 +500,7 @@ function Validate-AzsBackup
         }
 
         $SQLCmd = "SELECT [ResourceManagerType],[ResourceManagerTypeName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[ResourceManagerTypes]"
-        $resourceMgrTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $resourceMgrTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $resourceManagerTypes = @{}
         if ($resourceMgrTable.Tables.Count -gt 0 -and $null -ne $resourceMgrTable.Tables[0].Rows)
         {
@@ -509,7 +509,7 @@ function Validate-AzsBackup
 
         $SQLCmd = "SELECT [Id],[ResellerSubscriptionId],[ResourceGroupName],[ResourceLocation],[Tags],[Name],[DisplayName],[Description],[MaxSubscriptionsPerAccount]
             ,[ProvisioningState],[RoutingResourceManagerType] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Offers]"
-        $offerTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $offerTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $offers = @{}
         if ($offerTable.Tables.Count -gt 0 -and $null -ne $offerTable.Tables[0].Rows)
         {
@@ -572,7 +572,7 @@ function Validate-AzsBackup
 
         # STEP 11: Retrieve subscriptions
         $SQLCmd = "SELECT [SubscriptionState],[SubscriptionStateName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[SubscriptionStates]"
-        $subStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $subStateTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $subscriptionStates = @{}
         if ($subStateTable.Tables.Count -gt 0 -and $null -ne $subStateTable.Tables[0].Rows)
         {
@@ -580,7 +580,7 @@ function Validate-AzsBackup
         }
 
         $SQLCmd = "SELECT [Id],[ResellerSubscriptionId],[SubscriptionId],[DisplayName],[OfferId],[Owner],[TenantId],[RoutingResourceManagerType],[State],[Tags] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Subscriptions]"
-        $subTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $subTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $subscriptions = @{}
         if ($subTable.Tables.Count -gt 0 -and $null -ne $subTable.Tables[0].Rows)
         {
@@ -652,7 +652,7 @@ function Validate-AzsBackup
 
         # STEP 12: Retrieve plans
         $SQLCmd = "SELECT [PlanId],[ResourceId] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Quotas]"
-        $quotaTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $quotaTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $plan2quota = @{}
         if ($quotaTable.Tables.Count -gt 0 -and $null -ne $quotaTable.Tables[0].Rows)
         {
@@ -672,7 +672,7 @@ function Validate-AzsBackup
         }
 
         $SQLCmd = "SELECT [PlanLinkType],[PlanLinkTypeName] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[PlanLinkTypes]"
-        $planLinkTypeTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $planLinkTypeTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $planLinkTypes = @{}
         if ($planLinkTypeTable.Tables.Count -gt 0 -and $null -ne $planLinkTypeTable.Tables[0].Rows)
         {
@@ -680,7 +680,7 @@ function Validate-AzsBackup
         }
 
         $SQLCmd = "SELECT [OfferId],[PlanId],[PlanLinkType] FROM [$SubscriptionSqlDbName].[subscriptions.internal].[PlanLinks]"
-        $planLinkTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $planLinkTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $plan2offer = @{}
         if ($planLinkTable.Tables.Count -gt 0 -and $null -ne $planLinkTable.Tables[0].Rows)
         {
@@ -719,7 +719,7 @@ function Validate-AzsBackup
         $SQLCmd = "SELECT [Id],[ResellerSubscriptionId],[ResourceGroupName],[Tags],[Name],
             [DisplayName],[Description],[ProvisioningState],[RoutingResourceManagerType]
             FROM [$SubscriptionSqlDbName].[subscriptions.internal].[Plans]"
-        $planTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet @sqlCommonParams
+        $planTable = Invoke-Sqlcmd -Database $SubscriptionSqlDbName -Query $SQLCmd -As DataSet -Encrypt Optional @sqlCommonParams
         $plans = @{}
         if ($planTable.Tables.Count -gt 0 -and $null -ne $planTable.Tables[0].Rows)
         {
@@ -799,8 +799,8 @@ WHERE DBId = DB_ID(@DatabaseName) AND SPId <> @@SPId
 EXEC(@SQL)
 "@
 
-        Invoke-Sqlcmd -Query $disconnectScript @sqlCommonParams -ErrorAction Continue
-        Invoke-Sqlcmd -Query ('Drop database "{0}"' -f $SubscriptionSqlDbName) @sqlCommonParams -ErrorAction Continue
+        Invoke-Sqlcmd -Query $disconnectScript -Encrypt Optional @sqlCommonParams -ErrorAction Continue
+        Invoke-Sqlcmd -Query ('Drop database "{0}"' -f $SubscriptionSqlDbName) -Encrypt Optional @sqlCommonParams -ErrorAction Continue
     }
 
     # Convert offer, subscription and plan into PSCustomObject
