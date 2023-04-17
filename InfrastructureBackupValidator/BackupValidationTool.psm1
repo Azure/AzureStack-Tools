@@ -286,7 +286,7 @@ function Validate-AzsBackup
         throw ($Strings.ErrorFailToConnectBackupStore -f $BackupStorePath, $_)
     }
 
-    Install-Module -Name SqlServer -AllowClobber -Force -Confirm:$false -MinimumVersion "22.0.59"
+    Install-Module -Name SqlServer -AllowClobber -Force -Confirm:$false -RequiredVersion "22.0.59"
     Import-Module SqlServer -DisableNameChecking
     $sqlCommonParams = @{
         ServerInstance = $SQLServerInstanceName
