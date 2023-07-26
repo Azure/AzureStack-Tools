@@ -416,7 +416,6 @@ function Set-AzsRegistration{
             UsageReportingEnabled         = $UsageReportingEnabled
             AgreementNumber               = $AgreementNumber
             MsAssetTag                    = $MsAssetTag
-            TokenVersion                  = Get-RegistrationTokenVersion -AzureContext $AzureContext
         }
         Log-Output "Get-RegistrationToken parameters: $(ConvertTo-Json $getTokenParams)"
         $registrationToken = Get-RegistrationToken @getTokenParams -Session $privilegedEndpointSession -StampInfo $stampInfo
@@ -1227,11 +1226,7 @@ Function Get-RegistrationToken{
 
         [Parameter(Mandatory=$false)]
         [ValidateNotNull()]
-        [string] $MsAssetTag,
-
-        [Parameter(Mandatory=$false)]
-        [ValidateSet('3.0', '4.0')]
-        [string] $TokenVersion = '3.0'
+        [string] $MsAssetTag
     )
 
     if (-not $StampInfo)
@@ -1265,7 +1260,8 @@ Function Get-RegistrationToken{
     }
     $TokenVersionBuild = [Version]"1.2008.0.49"
     if ($StampVersion -ge $TokenVersionBuild) {
-        $regTokenParams += @{ TokenVersion = $TokenVersion }
+        $tokenVersion = Get-RegistrationTokenVersion -StampVersion $StampVersion
+        $regTokenParams += @{ TokenVersion = $tokenVersion }
     }
  
     $currentAttempt = 0
@@ -1963,14 +1959,14 @@ function Get-RegistrationTokenVersion{
 [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$false)]
-        [PSObject] $AzureContext
+        [Version] $StampVersion
     )
-    Validate-AzureContext -AzureContext $AzureContext
-    $AzureEnvironment = $AzureContext.Environment.Name
-    return @{'AzureCloud'='4.0'; 
-            'AzureChinaCloud'='3.0'; 
-            'AzureUSGovernment'='3.0'; 
-            'CustomCloud'='3.0'}[$AzureEnvironment]  
+    $tokenVersion = '4.0'
+    if ($StampVersion -gt [Version]'1.2309.0.4') {
+        $tokenVersion = '6.0'
+    }
+    Log-Output "Using registration token version $tokenVersion"
+    return $tokenVersion
 }
 
 <#
