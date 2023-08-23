@@ -33,14 +33,15 @@ function Initialize-AzEnvironment{
     $fullUri = $CloudARMEndpoint.TrimEnd('/')+"/metadata/endpoints?api-version=2015-01-01"
     $response = Invoke-RestMethod -Uri $fullUri -ErrorAction Stop -UseBasicParsing -TimeoutSec 30 -Verbose
     Write-Verbose -Message "Endpoints: $(ConvertTo-Json $response)" -Verbose
+    $loginEndpoint = $response.authentication.loginEndpoint.TrimEnd('/') + "/"
     $endpoints = @{
-        ActiveDirectoryAuthority                 = $response.authentication.loginEndpoint.TrimEnd('/') + "/"
+        ActiveDirectoryAuthority                 = $loginEndpoint
         ActiveDirectoryServiceEndpointResourceId = $response.authentication.audiences[0]
         ResourceManagerUrl                       = $CloudARMEndpoint
         GalleryUrl                               = $response.galleryEndpoint
         GraphUrl                                 = $response.graphEndpoint
         GraphEndpointResourceId                  = $response.graphEndpoint
-        EnableAdfsAuthentication                 = $true
+        EnableAdfsAuthentication                 = $loginEndpoint.EndsWith('/adfs/', [System.StringComparison]::OrdinalIgnoreCase)
     }
     
     Remove-AzEnvironment -Name $Name -ErrorAction Ignore | Out-Null
