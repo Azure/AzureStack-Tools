@@ -14,6 +14,11 @@
             The cache of serialized registration lists from each progressive store
             </summary>
         </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.serializedRpt">
+            <summary>
+            The cache of serialized recovery point
+            </summary>
+        </member>
         <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.rootContainerPath">
             <summary>
             Root folder that the customer, e.g., \\someShare\someDir
@@ -80,10 +85,10 @@
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.TryGetSerializedBackupInfoRemoteItemFromProgressiveStore(System.String)">
             <inheritdoc/>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackupInfo(System.String,System.Guid,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackupInfo(System.String,System.Guid,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime})">
             <inheritdoc/>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackup(System.Nullable{System.Guid},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.String)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetBackup(System.Nullable{System.Guid},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime},System.String,System.Boolean)">
             <inheritdoc/>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.GetContemporaneousSyntheticFullBackup(System.String,System.Guid,System.String)">
@@ -151,7 +156,7 @@
             <param name="dir">the directory</param>
             <returns>backup info</returns>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteBackupByContemporaneousBackups(System.DateTime,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteBackupByContemporaneousBackups(System.DateTime,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Boolean,System.Nullable{System.DateTime}@)">
             <inheritdoc/>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.DeleteBackupByRepositoryBackups(System.DateTime,System.String)">
@@ -167,7 +172,7 @@
             <param name="backupInfoLocation">backup information location</param>
             <param name="recursive">recursively delete the directory</param>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.RebuildCache(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.String,System.Boolean,System.Boolean)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.RebuildCache(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime},System.String,System.Boolean,System.Boolean)">
             <summary>
             Rebuilds cache from the data stored on backup store
             </summary>
@@ -205,6 +210,9 @@
             </summary>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.UploadBackupLocationRecoveryPoint(System.Nullable{System.DateTime})">
             <inheritdoc/>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStoreImpBase.UploadRegistrationJson(System.String,System.String)">
@@ -288,13 +296,13 @@
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetBackupInfo(System.String,System.Guid)">
             <inheritdoc/>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetBackup(System.Nullable{System.Guid},System.String)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetBackup(System.Nullable{System.Guid},System.String,System.Boolean)">
             <inheritdoc/>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.GetContemporaneousSyntheticFullBackup(System.String,System.Guid,System.String)">
             <inheritdoc/>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.DeleteBackupByContemporaneousBackups(System.DateTime)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.DeleteBackupByContemporaneousBackups(System.DateTime,System.Nullable{System.DateTime}@)">
             <inheritdoc/>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.BackupStoreProviderBase.DeleteBackupByRepositoryBackups(System.DateTime,System.String)">
@@ -365,6 +373,9 @@
             </summary>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.ExternalBackupStoreProviderBase.RefreshSerializedBackupInfoFromProgressiveStore(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BackupStore.ExternalBackupStoreProviderBase.GetBackupLocationEldestRecoveryPoint">
             <inheritdoc/>
         </member>
     </members>

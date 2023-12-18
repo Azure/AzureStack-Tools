@@ -84,6 +84,9 @@
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String)">
             <inheritdoc/>
         </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupLocationRecoveryPoint(System.Nullable{System.DateTime})">
+            <inheritdoc/>
+        </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupPackageAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
             <inheritdoc/>
         </member>

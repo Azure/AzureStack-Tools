@@ -95,6 +95,11 @@
             Backup repository registrations
             </summary>
         </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupLocationEldestRecoveryPoint">
+            <summary>
+            Backup location recovery point
+            </summary>
+        </member>
         <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.StampVersion">
             <summary>
             Stamp version
@@ -280,6 +285,11 @@
             Clear repository registration.
             </summary>
         </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateBackupLocationRecoveryPointAsync(System.Nullable{System.DateTime})">
+            <summary>
+            Update eldest recovery point
+            </summary>
+        </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.RenewBackupStoreProvider(System.Guid,System.Boolean,System.Threading.CancellationToken)">
             <summary>
             Reload RC and return the store provider
@@ -450,6 +460,11 @@
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LoadRepositoryRegistrationsAsync">
             <summary>
             Load repository registrations from the reliable collection
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LoadBackupLocationRecoveryPointAsync">
+            <summary>
+            Load backup location eldest recovery point from the reliable collection
             </summary>
         </member>
         <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ReliableCollectionManager">

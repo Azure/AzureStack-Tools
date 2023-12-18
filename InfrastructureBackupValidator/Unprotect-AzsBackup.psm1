@@ -78,7 +78,13 @@ function Unprotect-AzsBackupWrappedKey {
     $macKeyLength = 32
     [System.Security.Cryptography.RSA] $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($Cert)
     $bytesEncrypted = [System.Convert]::FromBase64String($WrappedKey)
-    $bytesDecrypted = $rsa.Decrypt($bytesEncrypted, [System.Security.Cryptography.RSAEncryptionPadding]::OaepSHA1)
+    try {
+        $bytesDecrypted = $rsa.Decrypt($bytesEncrypted, [System.Security.Cryptography.RSAEncryptionPadding]::OaepSHA256)
+    }
+    catch {
+        # Retry with OaepSHA1 if decryption with OaepSHA256 fails
+        $bytesDecrypted = $rsa.Decrypt($bytesEncrypted, [System.Security.Cryptography.RSAEncryptionPadding]::OaepSHA1)
+    }
     [string] $UnwrappedKey = [System.Text.Encoding]::UTF8.GetString($bytesDecrypted)
     $bytesCompactKey = [System.Convert]::FromBase64String($UnwrappedKey)
     

@@ -32,7 +32,7 @@
             contain synthetic full backups from all repositories due to failed or partially succeeded backups.
             </summary>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ContemporaneousBackup.GetBackupInfo(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ContemporaneousBackup.GetBackupInfo(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime})">
             <summary>
             Get contemporaneous backup info
             </summary>

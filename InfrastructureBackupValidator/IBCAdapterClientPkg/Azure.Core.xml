@@ -67,6 +67,16 @@
             Public cloud location for West US.
             </summary>
         </member>
+        <member name="P:Azure.Core.AzureLocation.WestUS2">
+            <summary>
+            Public cloud location for West US 2.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.AzureLocation.WestUS3">
+            <summary>
+            Public cloud location for West US 3.
+            </summary>
+        </member>
         <member name="P:Azure.Core.AzureLocation.NorthCentralUS">
             <summary>
             Public cloud location for North Central US.
@@ -152,11 +162,6 @@
             Public cloud location for West Central US.
             </summary>
         </member>
-        <member name="P:Azure.Core.AzureLocation.WestUS2">
-            <summary>
-            Public cloud location for West US 2.
-            </summary>
-        </member>
         <member name="P:Azure.Core.AzureLocation.KoreaCentral">
             <summary>
             Public cloud location for Korea Central.
@@ -205,6 +210,11 @@
         <member name="P:Azure.Core.AzureLocation.SouthAfricaWest">
             <summary>
             Public cloud location for South Africa West.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.AzureLocation.SwedenCentral">
+            <summary>
+            Public cloud location for Sweden Central.
             </summary>
         </member>
         <member name="P:Azure.Core.AzureLocation.SwitzerlandNorth">
@@ -270,6 +280,11 @@
         <member name="P:Azure.Core.AzureLocation.ChinaEast2">
             <summary>
             Public cloud location for China East 2.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.AzureLocation.QatarCentral">
+            <summary>
+            Public cloud location for Qatar Central.
             </summary>
         </member>
         <member name="P:Azure.Core.AzureLocation.USDoDCentral">
@@ -419,9 +434,17 @@
             Gets the client retry options.
             </summary>
         </member>
+        <member name="P:Azure.Core.ClientOptions.RetryPolicy">
+            <summary>
+            Gets or sets the policy to use for retries. If a policy is specified, it will be used in place of the <see cref="P:Azure.Core.ClientOptions.Retry" /> property.
+            The <see cref="P:Azure.Core.ClientOptions.RetryPolicy" /> type can be derived from to modify the default behavior without needing to fully implement the retry logic.
+            If <see cref="M:Azure.Core.Pipeline.RetryPolicy.Process(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})" /> is overridden or a custom <see cref="T:Azure.Core.Pipeline.HttpPipelinePolicy" /> is specified,
+            it is the implementer's responsibility to update the <see cref="P:Azure.Core.HttpMessage.ProcessingContext" /> values.
+            </summary>
+        </member>
         <member name="M:Azure.Core.ClientOptions.AddPolicy(Azure.Core.Pipeline.HttpPipelinePolicy,Azure.Core.HttpPipelinePosition)">
             <summary>
-            Adds an <see cref="T:Azure.Core.Pipeline.HttpPipeline" /> policy into the client pipeline. The position of policy in the pipeline is controlled by <paramref name="position" /> parameter.
+            Adds an <see cref="T:Azure.Core.Pipeline.HttpPipeline" /> policy into the client pipeline. The position of policy in the pipeline is controlled by the <paramref name="position" /> parameter.
             If you want the policy to execute once per client request use <see cref="F:Azure.Core.HttpPipelinePosition.PerCall" /> otherwise use <see cref="F:Azure.Core.HttpPipelinePosition.PerRetry" />
             to run the policy for every retry. Note that the same instance of <paramref name="policy" /> would be added to all pipelines of client constructed using this <see cref="T:Azure.Core.ClientOptions" /> object.
             </summary>
@@ -567,6 +590,67 @@
             <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> controlling the request lifetime.</param>
             <returns>The key encryption key corresponding to the specified keyId.</returns>
         </member>
+        <member name="T:Azure.Core.DelayStrategy">
+            <summary>
+            An abstraction to control delay behavior.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.#ctor(System.Nullable{System.TimeSpan},System.Double)">
+            <summary>
+            Constructs a new instance of <see cref="T:Azure.Core.DelayStrategy" />. This constructor can be used by derived classes to customize the jitter factor and max delay.
+            </summary>
+            <param name="maxDelay">The max delay value to apply on an individual delay.</param>
+            <param name="jitterFactor">The jitter factor to apply to each delay. For example, if the delay is 1 second with a jitterFactor of 0.2, the actual
+            delay used will be a random double between 0.8 and 1.2. If set to 0, no jitter will be applied.</param>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.CreateExponentialDelayStrategy(System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan})">
+            <summary>
+            Constructs an exponential delay with jitter.
+            </summary>
+            <param name="initialDelay">The initial delay to use.</param>
+            <param name="maxDelay">The maximum delay to use.</param>
+            <returns>The <see cref="T:Azure.Core.DelayStrategy" /> instance.</returns>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.CreateFixedDelayStrategy(System.Nullable{System.TimeSpan})">
+            <summary>
+            Constructs a fixed delay with jitter.
+            </summary>
+            <param name="delay">The delay to use.</param>
+            <returns>The <see cref="T:Azure.Core.DelayStrategy" /> instance.</returns>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.GetNextDelayCore(Azure.Response,System.Int32)">
+            <summary>
+            Gets the next delay interval. Implement this method to provide custom delay logic.
+            The Max Delay, jitter, and any Retry-After headers will be applied to the value returned from this method.
+            </summary>
+            <param name="response">The response, if any, returned from the service.</param>
+            <param name="retryNumber">The retry number.</param>
+            <returns>A <see cref="T:System.TimeSpan" /> representing the next delay interval.</returns>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.GetNextDelay(Azure.Response,System.Int32)">
+            <summary>
+            Gets the next delay interval taking into account the Max Delay, jitter, and any Retry-After headers.
+            </summary>
+            <param name="response">The response, if any, returned from the service.</param>
+            <param name="retryNumber">The retry number.</param>
+            <returns>A <see cref="T:System.TimeSpan" /> representing the next delay interval.</returns>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.Max(System.TimeSpan,System.TimeSpan)">
+            <summary>
+            Gets the maximum of two <see cref="T:System.TimeSpan" /> values.
+            </summary>
+            <param name="val1">The first value.</param>
+            <param name="val2">The second value.</param>
+            <returns>The maximum of the two <see cref="T:System.TimeSpan" /> values.</returns>
+        </member>
+        <member name="M:Azure.Core.DelayStrategy.Min(System.TimeSpan,System.TimeSpan)">
+            <summary>
+            Gets the minimum of two <see cref="T:System.TimeSpan" /> values.
+            </summary>
+            <param name="val1">The first value.</param>
+            <param name="val2">The second value.</param>
+            <returns>The minimum of the two <see cref="T:System.TimeSpan" /> values.</returns>
+        </member>
         <member name="T:Azure.Core.DelegatedTokenCredential">
             <summary>
             A factory for creating a delegated <see cref="T:Azure.Core.TokenCredential" /> capable of providing an OAuth token.
@@ -662,7 +746,7 @@
         </member>
         <member name="T:Azure.Core.Diagnostics.AzureEventSourceListener">
             <summary>
-            Implementation of <see cref="T:System.Diagnostics.Tracing.EventListener" /> that listens to events produces by Azure SDK Client libraries.
+            Implementation of <see cref="T:System.Diagnostics.Tracing.EventListener" /> that listens to events produced by Azure SDK client libraries.
             </summary>
         </member>
         <member name="F:Azure.Core.Diagnostics.AzureEventSourceListener.TraitName">
@@ -699,6 +783,831 @@
             Creates a new instance of <see cref="T:Azure.Core.Diagnostics.AzureEventSourceListener" /> that forwards events to <see cref="M:System.Diagnostics.Trace.WriteLine(System.Object)" />.
             </summary>
             <param name="level">The level of events to enable.</param>
+        </member>
+        <member name="T:Azure.Core.Serialization.DynamicData">
+             <summary>
+             A dynamic abstraction over content data, such as JSON.
+            
+             This and related types are not intended to be mocked.
+             </summary>
+        </member>
+        <member name="T:Azure.Core.Serialization.DynamicData.ArrayEnumerator">
+            <summary>
+            An enumerable and enumerator for the contents of a mutable JSON array.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ArrayEnumerator.GetEnumerator">
+            <summary> Returns an enumerator that iterates through a collection.</summary>
+            <returns> An <see cref="T:Azure.Core.Serialization.DynamicData.ArrayEnumerator" /> value that can be used to iterate through the array.</returns>
+        </member>
+        <member name="P:Azure.Core.Serialization.DynamicData.ArrayEnumerator.Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ArrayEnumerator.System#Collections#IEnumerable#GetEnumerator">
+            <summary>Returns an enumerator that iterates through a collection.</summary><returns>An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ArrayEnumerator.System#Collections#Generic#IEnumerable{Azure#Core#Serialization#DynamicData}#GetEnumerator">
+            <summary>Returns an enumerator that iterates through the collection.</summary><returns>An enumerator that can be used to iterate through the collection.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ArrayEnumerator.Reset">
+            <summary>Sets the enumerator to its initial position, which is before the first element in the collection.</summary><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="P:Azure.Core.Serialization.DynamicData.ArrayEnumerator.System#Collections#IEnumerator#Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ArrayEnumerator.MoveNext">
+            <summary>Advances the enumerator to the next element of the collection.</summary><returns><see langword="true" /> if the enumerator was successfully advanced to the next element; <see langword="false" /> if the enumerator has passed the end of the collection.</returns><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ArrayEnumerator.Dispose">
+            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ToString">
+            <summary>Returns a string that represents the current object.</summary><returns>A string that represents the current object.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.Dispose">
+            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.Equals(System.Object)">
+            <summary>Determines whether the specified object is equal to the current object.</summary><param name="obj">The object to compare with the current object.</param><returns><see langword="true" /> if the specified object  is equal to the current object; otherwise, <see langword="false" />.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.GetHashCode">
+            <summary>Serves as the default hash function.</summary><returns>A hash code for the current object.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.System#Dynamic#IDynamicMetaObjectProvider#GetMetaObject(System.Linq.Expressions.Expression)">
+            <summary>Returns the <see cref="T:System.Dynamic.DynamicMetaObject" /> responsible for binding operations performed on this object.</summary><param name="parameter">The expression tree representation of the runtime value.</param><returns>The <see cref="T:System.Dynamic.DynamicMetaObject" /> to bind this object.</returns>
+        </member>
+        <member name="T:Azure.Core.Serialization.DynamicData.ObjectEnumerator">
+            <summary>
+            An enumerable and enumerator for the properties of a mutable JSON object.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ObjectEnumerator.GetEnumerator">
+            <summary>
+              Returns an enumerator that iterates the properties of an object.
+            </summary>
+            <returns>
+              An <see cref="T:Azure.Core.Serialization.DynamicData.ObjectEnumerator" /> value that can be used to iterate
+              through the object.
+            </returns>
+            <remarks>
+              The enumerator will enumerate the properties in the order they are
+              declared, and when an object has multiple definitions of a single
+              property they will all individually be returned (each in the order
+              they appear in the content).
+            </remarks>
+        </member>
+        <member name="P:Azure.Core.Serialization.DynamicData.ObjectEnumerator.Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ObjectEnumerator.System#Collections#IEnumerable#GetEnumerator">
+            <summary>Returns an enumerator that iterates through a collection.</summary><returns>An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ObjectEnumerator.System#Collections#Generic#IEnumerable{Azure#Core#Serialization#DynamicDataProperty}#GetEnumerator">
+            <summary>Returns an enumerator that iterates through the collection.</summary><returns>An enumerator that can be used to iterate through the collection.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ObjectEnumerator.Reset">
+            <summary>Sets the enumerator to its initial position, which is before the first element in the collection.</summary><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="P:Azure.Core.Serialization.DynamicData.ObjectEnumerator.System#Collections#IEnumerator#Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ObjectEnumerator.MoveNext">
+            <summary>Advances the enumerator to the next element of the collection.</summary><returns><see langword="true" /> if the enumerator was successfully advanced to the next element; <see langword="false" /> if the enumerator has passed the end of the collection.</returns><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.ObjectEnumerator.Dispose">
+            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Boolean">
+            <summary>
+            Converts the value to a <see cref="T:System.Boolean" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.String">
+            <summary>
+            Converts the value to a <see cref="T:System.String" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Byte">
+            <summary>
+            Converts the value to a <see cref="T:System.Byte" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.SByte">
+            <summary>
+            Converts the value to a <see cref="T:System.SByte" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Int16">
+            <summary>
+            Converts the value to a <see cref="T:System.Int16" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.UInt16">
+            <summary>
+            Converts the value to a <see cref="T:System.UInt16" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Int32">
+            <summary>
+            Converts the value to a <see cref="T:System.Int32" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.UInt32">
+            <summary>
+            Converts the value to a <see cref="T:System.UInt32" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Int64">
+            <summary>
+            Converts the value to a <see cref="T:System.Int64" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.UInt64">
+            <summary>
+            Converts the value to a <see cref="T:System.UInt64" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Single">
+            <summary>
+            Converts the value to a <see cref="T:System.Single" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Double">
+            <summary>
+            Converts the value to a <see cref="T:System.Double" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Implicit(Azure.Core.Serialization.DynamicData)~System.Decimal">
+            <summary>
+            Converts the value to a <see cref="T:System.Decimal" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Explicit(Azure.Core.Serialization.DynamicData)~System.DateTime">
+            <summary>
+            Converts the value to a <see cref="T:System.DateTime" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Explicit(Azure.Core.Serialization.DynamicData)~System.DateTimeOffset">
+            <summary>
+            Converts the value to a <see cref="T:System.DateTimeOffset" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Explicit(Azure.Core.Serialization.DynamicData)~System.Guid">
+            <summary>
+            Converts the value to a <see cref="T:System.Guid" />.
+            </summary>
+            <param name="value">The value to convert.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Equality(Azure.Core.Serialization.DynamicData,System.Object)">
+             <summary>
+             Determines whether the specified <see cref="T:Azure.Core.Serialization.DynamicData" /> and <see cref="T:System.Object" /> have the same value.
+             </summary>
+             <remarks>
+             This operator calls through to <see cref="M:Azure.Core.Serialization.DynamicData.Equals(System.Object)" /> when DynamicData is on the left-hand
+             side of the operation.  <see cref="M:Azure.Core.Serialization.DynamicData.Equals(System.Object)" /> has value semantics when the DynamicData represents
+             a JSON primitive, i.e. string, bool, number, or null, and reference semantics otherwise, i.e. for objects and arrays.
+            
+             Please note that if DynamicData is on the right-hand side of a <c>==</c> operation, this operator will not be invoked.
+             Because of this the result of a <c>==</c> comparison with <c>null</c> on the left and a DynamicData instance on the right will return <c>false</c>.
+             </remarks>
+             <param name="left">The <see cref="T:Azure.Core.Serialization.DynamicData" /> to compare.</param>
+             <param name="right">The <see cref="T:System.Object" /> to compare.</param>
+             <returns><c>true</c> if the value of <paramref name="left" /> is the same as the value of <paramref name="right" />; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicData.op_Inequality(Azure.Core.Serialization.DynamicData,System.Object)">
+            <summary>
+            Determines whether the specified <see cref="T:Azure.Core.Serialization.DynamicData" /> and <see cref="T:System.Object" /> have different values.
+            </summary>
+            <remarks>
+            This operator calls through to <see cref="M:Azure.Core.Serialization.DynamicData.Equals(System.Object)" /> when DynamicData is on the left-hand
+            side of the operation.  <see cref="M:Azure.Core.Serialization.DynamicData.Equals(System.Object)" /> has value semantics when the DynamicData represents
+            a JSON primitive, i.e. string, bool, number, or null, and reference semantics otherwise, i.e. for objects and arrays.
+            </remarks>
+            <param name="left">The <see cref="T:Azure.Core.Serialization.DynamicData" /> to compare.</param>
+            <param name="right">The <see cref="T:System.Object" /> to compare.</param>
+            <returns><c>true</c> if the value of <paramref name="left" /> is different from the value of <paramref name="right" />; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicDataOptions.#ctor(Azure.Core.Serialization.DynamicDataOptions)">
+            <summary>
+            Copy constructor
+            </summary>
+            <param name="options"></param>
+        </member>
+        <member name="T:Azure.Core.Serialization.DynamicDataProperty">
+            <summary>
+            Represents a single property on a dynamic JSON object.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.Serialization.DynamicDataProperty.Name">
+            <summary>
+            Gets the name of this property.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.Serialization.DynamicDataProperty.Value">
+            <summary>
+            Gets the value of this property.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.DynamicDataProperty.System#Dynamic#IDynamicMetaObjectProvider#GetMetaObject(System.Linq.Expressions.Expression)">
+            <summary>Returns the <see cref="T:System.Dynamic.DynamicMetaObject" /> responsible for binding operations performed on this object.</summary><param name="parameter">The expression tree representation of the runtime value.</param><returns>The <see cref="T:System.Dynamic.DynamicMetaObject" /> to bind this object.</returns>
+        </member>
+        <member name="T:Azure.Core.Serialization.IMemberNameConverter">
+            <summary>
+            Converts type member names to serializable member names.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.IMemberNameConverter.ConvertMemberName(System.Reflection.MemberInfo)">
+            <summary>
+            Converts a <see cref="T:System.Reflection.MemberInfo" /> to a serializable member name.
+            </summary>
+            <param name="member">The <see cref="T:System.Reflection.MemberInfo" /> to convert to a serializable member name.</param>
+            <returns>The serializable member name, or null if the member is not defined or ignored by the serializer.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="member" /> is null.</exception>
+        </member>
+        <member name="T:Azure.Core.Serialization.JsonObjectSerializer">
+            <summary>
+            An <see cref="T:Azure.Core.Serialization.ObjectSerializer" /> implementation that uses <see cref="T:System.Text.Json.JsonSerializer" /> for serialization/deserialization.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.Serialization.JsonObjectSerializer.Default">
+            <summary>
+            A shared instance of <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" />, initialized with the default options.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.#ctor">
+            <summary>
+            Initializes new instance of <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" />.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.#ctor(System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Initializes new instance of <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" />.
+            </summary>
+            <param name="options">The <see cref="T:System.Text.Json.JsonSerializerOptions" /> instance to use when serializing/deserializing.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="options" /> is null.</exception>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Serialize(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.SerializeAsync(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Deserialize(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Read the binary representation into a <paramref name="returnType" />.
+            The Stream will be read to completion.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
+            <param name="returnType">The type of the object to convert to and return.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.DeserializeAsync(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Read the binary representation into a <paramref name="returnType" />.
+            The Stream will be read to completion.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
+            <param name="returnType">The type of the object to convert to and return.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Serialize(System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
+            </summary>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.SerializeAsync(System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
+            </summary>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Azure#Core#Serialization#IMemberNameConverter#ConvertMemberName(System.Reflection.MemberInfo)">
+            <summary>
+            Converts a <see cref="T:System.Reflection.MemberInfo" /> to a serializable member name.
+            </summary>
+            <param name="member">The <see cref="T:System.Reflection.MemberInfo" /> to convert to a serializable member name.</param>
+            <returns>The serializable member name, or null if the member is not defined or ignored by the serializer.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="member" /> is null.</exception>
+        </member>
+        <member name="T:Azure.Core.Serialization.JsonPropertyNames">
+            <summary>
+            The format of property names in dynamic and serialized JSON content.
+            </summary>
+        </member>
+        <member name="F:Azure.Core.Serialization.JsonPropertyNames.UseExact">
+            <summary>
+            Exact property name matches will be used with JSON property names.
+            </summary>
+        </member>
+        <member name="F:Azure.Core.Serialization.JsonPropertyNames.CamelCase">
+            <summary>
+            Indicates that the JSON content uses a camel-case format for property names.
+            </summary>
+        </member>
+        <member name="T:Azure.Core.Serialization.ObjectSerializer">
+            <summary>
+            An abstraction for reading typed objects.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Serialization.ObjectSerializer.Serialize(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.ObjectSerializer.SerializeAsync(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.ObjectSerializer.Deserialize(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Read the binary representation into a <paramref name="returnType" />.
+            The Stream will be read to completion.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
+            <param name="returnType">The type of the object to convert to and return.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.ObjectSerializer.DeserializeAsync(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Read the binary representation into a <paramref name="returnType" />.
+            The Stream will be read to completion.
+            </summary>
+            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
+            <param name="returnType">The type of the object to convert to and return.</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
+        </member>
+        <member name="M:Azure.Core.Serialization.ObjectSerializer.Serialize(System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
+            </summary>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
+        </member>
+        <member name="M:Azure.Core.Serialization.ObjectSerializer.SerializeAsync(System.Object,System.Type,System.Threading.CancellationToken)">
+            <summary>
+            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
+            </summary>
+            <param name="value">The value to convert.</param>
+            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
+            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
+            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
+        </member>
+        <member name="T:Azure.Core.Json.MutableJsonDocument">
+            <summary>
+            A mutable representation of a JSON value.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.Json.MutableJsonDocument.RootElement">
+            <summary>
+            Gets the root element of this JSON document.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.WriteTo(System.IO.Stream,System.String)">
+            <summary>
+            Writes the document to the provided stream as a JSON value.
+            </summary>
+            <param name="stream">The stream to which to write the document.</param>
+            <param name="format">A format string indicating the format to use when writing the document.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="stream" /> parameter is <see langword="null" />.</exception>
+            <exception cref="T:System.FormatException">Thrown if an unsupported value is passed for format.</exception>
+            <remarks>The value of <paramref name="format" /> can be default or "J" to write the document as JSON, or "P" to write the changes as JSON Merge Patch.</remarks>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.WriteTo(System.Text.Json.Utf8JsonWriter)">
+            <summary>
+            Writes the document to the provided stream as a JSON value.
+            </summary>
+            <param name="writer">The writer to which to write the document.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="writer" /> parameter is <see langword="null" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.Parse(System.ReadOnlyMemory{System.Byte},System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Parses a UTF-8 encoded string representing a single JSON value into a <see cref="T:Azure.Core.Json.MutableJsonDocument" />.
+            </summary>
+            <param name="utf8Json">A UTF-8 encoded string representing a JSON value.</param>
+            <returns>A <see cref="T:Azure.Core.Json.MutableJsonDocument" /> representation of the value.</returns>
+            <param name="serializerOptions">Serializer options used to serialize and deserialize any changes to the JSON.</param>
+            <exception cref="T:System.Text.Json.JsonException"><paramref name="utf8Json" /> does not represent a valid single JSON value.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.Parse(System.Text.Json.Utf8JsonReader@,System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Parses JSON into a <see cref="T:Azure.Core.Json.MutableJsonDocument" />.
+            </summary>
+            <param name="reader">Reader holding the JSON value.</param>
+            <param name="serializerOptions">Serializer options used to serialize and deserialize any changes to the JSON.</param>
+            <returns>A <see cref="T:Azure.Core.Json.MutableJsonDocument" /> representation of the value.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.Parse(System.BinaryData,System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Parses a UTF-8 encoded string representing a single JSON value into a <see cref="T:Azure.Core.Json.MutableJsonDocument" />.
+            </summary>
+            <param name="utf8Json">A UTF-8 encoded string representing a JSON value.</param>
+            <param name="serializerOptions">Serializer options used to serialize and deserialize any changes to the JSON.</param>
+            <returns>A <see cref="T:Azure.Core.Json.MutableJsonDocument" /> representation of the value.</returns>
+            <exception cref="T:System.Text.Json.JsonException"><paramref name="utf8Json" /> does not represent a valid single JSON value.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.Parse(System.String,System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Parses test representing a single JSON value into a <see cref="T:Azure.Core.Json.MutableJsonDocument" />.
+            </summary>
+            <param name="json">The JSON string.</param>
+            <param name="serializerOptions">Serializer options used to serialize and deserialize any changes to the JSON.</param>
+            <returns>A <see cref="T:Azure.Core.Json.MutableJsonDocument" /> representation of the value.</returns>
+            <exception cref="T:System.Text.Json.JsonException"><paramref name="json" /> does not represent a valid single JSON value.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonDocument.Dispose">
+            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        </member>
+        <member name="T:Azure.Core.Json.MutableJsonElement">
+            <summary>
+            A mutable representation of a JSON element.
+            </summary>
+            <summary>
+            A mutable representation of a JSON element.
+            </summary>
+        </member>
+        <member name="T:Azure.Core.Json.MutableJsonElement.ArrayEnumerator">
+            <summary>
+            An enumerable and enumerator for the contents of a mutable JSON array.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.GetEnumerator">
+            <summary>
+              Returns an enumerator that iterates through a collection.
+            </summary>
+            <returns>
+              An <see cref="T:Azure.Core.Json.MutableJsonElement.ArrayEnumerator" /> value that can be used to iterate
+              through the array.
+            </returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.System#Collections#IEnumerable#GetEnumerator">
+            <summary>Returns an enumerator that iterates through a collection.</summary><returns>An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.System#Collections#Generic#IEnumerable{Azure#Core#Json#MutableJsonElement}#GetEnumerator">
+            <summary>Returns an enumerator that iterates through the collection.</summary><returns>An enumerator that can be used to iterate through the collection.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.Reset">
+            <summary>Sets the enumerator to its initial position, which is before the first element in the collection.</summary><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="P:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.System#Collections#IEnumerator#Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.MoveNext">
+            <summary>Advances the enumerator to the next element of the collection.</summary><returns><see langword="true" /> if the enumerator was successfully advanced to the next element; <see langword="false" /> if the enumerator has passed the end of the collection.</returns><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ArrayEnumerator.Dispose">
+            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        </member>
+        <member name="P:Azure.Core.Json.MutableJsonElement.ValueKind">
+            <summary>
+            Gets the type of the current JSON value.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetProperty(System.String)">
+            <summary>
+            Gets the MutableJsonElement for the value of the property with the specified name.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetProperty(System.ReadOnlySpan{System.Char})">
+            <summary>
+            Gets the MutableJsonElement for the value of the property with the specified name.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.TryGetProperty(System.String,Azure.Core.Json.MutableJsonElement@)">
+            <summary>
+            Looks for a property named propertyName in the current object, returning a value that indicates whether or not such a property exists. When the property exists, its value is assigned to the value argument.
+            </summary>
+            <param name="name"></param>
+            <param name="value">The value to assign to the element.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.TryGetProperty(System.ReadOnlySpan{System.Char},Azure.Core.Json.MutableJsonElement@)">
+            <summary>
+            Looks for a property named propertyName in the current object, returning a value that indicates whether or not such a property exists. When the property exists, its value is assigned to the value argument.
+            </summary>
+            <param name="name"></param>
+            <param name="value">The value to assign to the element.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.TryGetDouble(System.Double@)">
+            <summary>
+            Attempts to represent the current JSON number as a <see cref="T:System.Double" />.
+            </summary>
+            <returns>
+              <see langword="true" /> if the number can be represented as a <see cref="T:System.Double" />,
+              <see langword="false" /> otherwise.
+            </returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetDouble">
+            <summary>
+            Gets the current JSON number as a <see cref="T:System.Double" />.
+            </summary>
+            <returns>The current JSON number as a <see cref="T:System.Double" />.</returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+            <exception cref="T:System.FormatException">The value cannot be represented as a <see cref="T:System.Double" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.TryGetInt32(System.Int32@)">
+            <summary>
+            Attempts to represent the current JSON number as a <see cref="T:System.Int32" />.
+            </summary>
+            <returns>
+              <see langword="true" /> if the number can be represented as a <see cref="T:System.Int32" />,
+              <see langword="false" /> otherwise.
+            </returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetInt32">
+            <summary>
+            Gets the current JSON number as a <see cref="T:System.Int32" />.
+            </summary>
+            <returns>The current JSON number as a <see cref="T:System.Int32" />.</returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+            <exception cref="T:System.FormatException">The value cannot be represented as a <see cref="T:System.Int32" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.TryGetInt64(System.Int64@)">
+            <summary>
+            Attempts to represent the current JSON number as a <see cref="T:System.Int64" />.
+            </summary>
+            <returns>
+              <see langword="true" /> if the number can be represented as a <see cref="T:System.Int64" />,
+              <see langword="false" /> otherwise.
+            </returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetInt64">
+            <summary>
+            Gets the current JSON number as a <see cref="T:System.Int64" />.
+            </summary>
+            <returns>The current JSON number as a <see cref="T:System.Int64" />.</returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+            <exception cref="T:System.FormatException">The value cannot be represented as a <see cref="T:System.Int64" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.TryGetSingle(System.Single@)">
+            <summary>
+            Attempts to represent the current JSON number as a <see cref="T:System.Single" />.
+            </summary>
+            <returns>
+              <see langword="true" /> if the number can be represented as a <see cref="T:System.Single" />,
+              <see langword="false" /> otherwise.
+            </returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetSingle">
+            <summary>
+            Gets the current JSON number as a <see cref="T:System.Single" />.
+            </summary>
+            <returns>The current JSON number as a <see cref="T:System.Single" />.</returns>
+            <exception cref="T:System.InvalidOperationException">This value's <see cref="P:Azure.Core.Json.MutableJsonElement.ValueKind" /> is not <see cref="F:System.Text.Json.JsonValueKind.Number" />.</exception>
+            <exception cref="T:System.FormatException">The value cannot be represented as a <see cref="T:System.Single" />.</exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetString">
+            <summary>
+            Gets the value of the element as a string.
+            </summary>
+            <returns></returns>
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.GetBoolean">
+            <summary>
+            Gets the value of the element as a bool.
+            </summary>
+            <returns></returns>
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.EnumerateArray">
+            <summary>
+            Gets an enumerator to enumerate the values in the JSON array represented by this MutableJsonElement.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.EnumerateObject">
+            <summary>
+            Gets an enumerator to enumerate the properties in the JSON object represented by this JsonElement.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.RemoveProperty(System.String)">
+            <summary>
+            Remove the property with the specified name from the current MutableJsonElement.
+            </summary>
+            <param name="name"></param>
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Double)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Int32)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Int64)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Single)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.String)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Boolean)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Byte)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.SByte)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Int16)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.UInt16)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.UInt32)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.UInt64)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Decimal)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Guid)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.DateTime)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.DateTimeOffset)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.Set(System.Text.Json.JsonElement)">
+            <summary>
+            Sets the value of this element to the passed-in value.
+            </summary>
+            <param name="value">The value to assign to the element.</param>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ToString">
+            <summary>Returns the fully qualified type name of this instance.</summary><returns>The fully qualified type name.</returns>
+        </member>
+        <member name="T:Azure.Core.Json.MutableJsonElement.ObjectEnumerator">
+            <summary>
+              An enumerable and enumerator for the properties of a JSON object.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.GetEnumerator">
+            <summary>
+              Returns an enumerator that iterates the properties of an object.
+            </summary>
+            <returns>
+              An <see cref="T:Azure.Core.Json.MutableJsonElement.ObjectEnumerator" /> value that can be used to iterate
+              through the object.
+            </returns>
+            <remarks>
+              The enumerator will enumerate the properties in the order they are
+              declared, and when an object has multiple definitions of a single
+              property they will all individually be returned (each in the order
+              they appear in the content).
+            </remarks>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.System#Collections#IEnumerable#GetEnumerator">
+            <summary>
+              Returns an enumerator that iterates the properties of an object.
+            </summary>
+            <returns>
+              An <see cref="T:System.Collections.IEnumerator" /> that can be used to iterate
+              through the properties of the object.
+            </returns>
+            <remarks>
+              The enumerator will enumerate the properties in the order they are
+              declared, and when an object has multiple definitions of a single
+              property they will all individually be returned (each in the order
+              they appear in the content).
+            </remarks>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.System#Collections#Generic#IEnumerable{(System#StringName,Azure#Core#Json#MutableJsonElementValue)}#GetEnumerator">
+            <summary>
+              Returns an enumerator that iterates the properties of an object.
+            </summary>
+            <returns>
+              An <see cref="T:System.Collections.Generic.IEnumerator`1" /> over a <see cref="T:System.Tuple`2" />
+              that can be used to iterate through the properties of the object.
+            </returns>
+            <remarks>
+              The enumerator will enumerate the properties in the order they are
+              declared, and when an object has multiple definitions of a single
+              property they will all individually be returned (each in the order
+              they appear in the content).
+            </remarks>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.Dispose">
+            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.Reset">
+            <summary>Sets the enumerator to its initial position, which is before the first element in the collection.</summary><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
+        </member>
+        <member name="P:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.System#Collections#IEnumerator#Current">
+            <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.MoveNext">
+            <summary>Advances the enumerator to the next element of the collection.</summary><returns><see langword="true" /> if the enumerator was successfully advanced to the next element; <see langword="false" /> if the enumerator has passed the end of the collection.</returns><exception cref="T:System.InvalidOperationException">The collection was modified after the enumerator was created.</exception>
         </member>
         <member name="T:Azure.Core.Extensions.IAzureClientBuilder`2">
             <summary>
@@ -1583,6 +2492,11 @@
             Defaults to <c>null</c>.
             </summary>
         </member>
+        <member name="P:Azure.Core.HttpMessage.ProcessingContext">
+            <summary>
+            The processing context for the message.
+            </summary>
+        </member>
         <member name="M:Azure.Core.HttpMessage.TryGetProperty(System.String,System.Object@)">
             <summary>
             Gets a property that modifies the pipeline behavior. Please refer to individual policies documentation on what properties it supports.
@@ -1598,15 +2512,21 @@
             <param name="name">The property name.</param>
             <param name="value">The property value.</param>
         </member>
-        <member name="M:Azure.Core.HttpMessage.TryGetInternalProperty(System.Type,System.Object@)">
+        <member name="M:Azure.Core.HttpMessage.TryGetProperty(System.Type,System.Object@)">
             <summary>
             Gets a property that is stored with this <see cref="T:Azure.Core.HttpMessage" /> instance and can be used for modifying pipeline behavior.
             </summary>
             <param name="type">The property type.</param>
             <param name="value">The property value.</param>
+            <remarks>
+            The key value is of type <c>Type</c> for a couple of reasons. Primarily, it allows values to be stored such that though the accessor methods
+            are public, storing values keyed by internal types make them inaccessible to other assemblies. This protects internal values from being overwritten
+            by external code. See the <see cref="T:Azure.Core.TelemetryDetails" /> and <see cref="T:Azure.Core.Pipeline.UserAgentValueKey" /> types for an example of this usage. Secondly, <c>Type</c>
+            comparisons are faster than string comparisons.
+            </remarks>
             <returns><c>true</c> if property exists, otherwise. <c>false</c>.</returns>
         </member>
-        <member name="M:Azure.Core.HttpMessage.SetInternalProperty(System.Type,System.Object)">
+        <member name="M:Azure.Core.HttpMessage.SetProperty(System.Type,System.Object)">
             <summary>
             Sets a property that is stored with this <see cref="T:Azure.Core.HttpMessage" /> instance and can be used for modifying pipeline behavior.
             Internal properties can be keyed with internal types to prevent external code from overwriting these values.
@@ -1644,6 +2564,36 @@
             <summary>
             The policy would be invoked before the request is sent by the transport.
             </summary>
+        </member>
+        <member name="T:Azure.Core.ArrayBackedPropertyBag`2">
+            <summary>
+            A property bag which is optimized for storage of a small number of items.
+            If the item count is less than 2, there are no allocations. Any additional items are stored in an array which will grow as needed.
+            MUST be passed by ref only.
+            </summary>
+        </member>
+        <member name="T:Azure.Core.Pipeline.GeoRedundantFallbackPolicy">
+            <summary>
+            Internal policy that can be used to support georedundant fallbacks for Azure services. The policy maintains the current healthy host
+            across requests. It falls back only if no response is received from a request, i.e. any response is treated as an indication that the
+            host is healthy.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Pipeline.GeoRedundantFallbackPolicy.#ctor(System.String[],System.String[],System.Nullable{System.TimeSpan})">
+            <summary>
+            Construct a new instance of the GeoRedundantFallbackPolicy.
+            </summary>
+            <param name="readFallbackHosts">The hosts to use as fallbacks for read operations.</param>
+            <param name="writeFallbackHosts">The hosts to use as fallbacks for write operations.</param>
+            <param name="primaryCoolDown">The amount of time to wait before the primary host will be used again after a failure.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.GeoRedundantFallbackPolicy.SetHostAffinity(Azure.Core.HttpMessage,System.Boolean)">
+            <summary>
+            This can be used to indicate that the current host cannot be swapped for a specific request. This is useful when a client method
+            must make multiple requests against the same endpoint.
+            </summary>
+            <param name="message">The message to mark the host affinity for.</param>
+            <param name="hostAffinity">True if the host should not be swapped.</param>
         </member>
         <member name="T:Azure.Core.Pipeline.BearerTokenAuthenticationPolicy">
             <summary>
@@ -2122,6 +3072,14 @@
             </summary>
             <value></value>
         </member>
+        <member name="P:Azure.Core.Pipeline.HttpPipelineTransportOptions.IsClientRedirectEnabled">
+            <summary>
+            Gets or sets a value that indicates whether the redirect policy should follow redirection responses.
+            </summary>
+            <value>
+            <c>true</c> if the redirect policy should follow redirection responses; otherwise <c>false</c>. The default value is <c>false</c>.
+            </value>
+        </member>
         <member name="T:Azure.Core.Pipeline.DefaultRequestFailedDetailsParser">
             <summary>
             The default <see cref="T:Azure.Core.RequestFailedDetailsParser" />.
@@ -2158,6 +3116,135 @@
             <summary>
             Class that serves as the key for <see cref="T:Azure.Core.TelemetryDetails" /> UserAgent strings on <see cref="T:Azure.Core.HttpMessage" />.
             </summary>
+        </member>
+        <member name="T:Azure.Core.Pipeline.RedirectPolicy">
+            <summary>
+            A pipeline policy that detects a redirect response code and resends the request to the
+            location specified by the response.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RedirectPolicy.#ctor(System.Boolean)">
+            <summary>
+            Creates a new instance of the <see cref="T:Azure.Core.Pipeline.RedirectPolicy" /> class.
+            </summary>
+            <param name="allowAutoRedirect">Determinds whether redirects will be handled by this policy. Rather than passing false, consider using the static <see cref="P:Azure.Core.Pipeline.RedirectPolicy.Shared" /> instance instead which defaults to false.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RedirectPolicy.SetAllowAutoRedirect(Azure.Core.HttpMessage,System.Boolean)">
+            <summary>
+            Sets a value that indicates whether redirects will be automatically followed for this message.
+            </summary>
+            <param name="message"></param>
+            <param name="allowAutoRedirect"></param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})">
+            <summary>
+            Applies the policy to the <paramref name="message" />. Implementers are expected to mutate <see cref="P:Azure.Core.HttpMessage.Request" /> before calling <see cref="M:Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNextAsync(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})" /> and observe the <see cref="P:Azure.Core.HttpMessage.Response" /> changes after.
+            </summary>
+            <param name="message">The <see cref="T:Azure.Core.HttpMessage" /> this policy would be applied to.</param>
+            <param name="pipeline">The set of <see cref="T:Azure.Core.Pipeline.HttpPipelinePolicy" /> to execute after current one.</param>
+            <returns>The <see cref="T:System.Threading.Tasks.ValueTask" /> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RedirectPolicy.Process(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})">
+            <summary>
+            Applies the policy to the <paramref name="message" />. Implementers are expected to mutate <see cref="P:Azure.Core.HttpMessage.Request" /> before calling <see cref="M:Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNextAsync(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})" /> and observe the <see cref="P:Azure.Core.HttpMessage.Response" /> changes after.
+            </summary>
+            <param name="message">The <see cref="T:Azure.Core.HttpMessage" /> this policy would be applied to.</param>
+            <param name="pipeline">The set of <see cref="T:Azure.Core.Pipeline.HttpPipelinePolicy" /> to execute after current one.</param>
+        </member>
+        <member name="T:Azure.Core.Pipeline.RetryPolicy">
+            <summary>
+            Represents a policy that can be overriden to customize whether or not a request will be retried and how long to wait before retrying.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.#ctor(System.Int32,Azure.Core.DelayStrategy)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Azure.Core.Pipeline.RetryPolicy" /> class.
+            </summary>
+            <param name="maxRetries">The maximum number of retries to attempt.</param>
+            <param name="delayStrategy">The delay to use for computing the interval between retry attempts.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.ProcessAsync(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})">
+            <summary>
+            This method can be overriden to take full control over the retry policy. If this is overriden and the base method isn't called,
+            it is the implementer's responsibility to populate the <see cref="P:Azure.Core.HttpMessage.ProcessingContext" /> property.
+            This method will only be called for async methods.
+            </summary>
+            <param name="message">The <see cref="T:Azure.Core.HttpMessage" /> this policy would be applied to.</param>
+            <param name="pipeline">The set of <see cref="T:Azure.Core.Pipeline.HttpPipelinePolicy" /> to execute after current one.</param>
+            <returns>The <see cref="T:System.Threading.Tasks.ValueTask" /> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.Process(Azure.Core.HttpMessage,System.ReadOnlyMemory{Azure.Core.Pipeline.HttpPipelinePolicy})">
+            <summary>
+            This method can be overriden to take full control over the retry policy. If this is overriden and the base method isn't called,
+            it is the implementer's responsibility to populate the <see cref="P:Azure.Core.HttpMessage.ProcessingContext" /> property.
+            This method will only be called for sync methods.
+            </summary>
+            <param name="message">The <see cref="T:Azure.Core.HttpMessage" /> this policy would be applied to.</param>
+            <param name="pipeline">The set of <see cref="T:Azure.Core.Pipeline.HttpPipelinePolicy" /> to execute after current one.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.ShouldRetry(Azure.Core.HttpMessage,System.Exception)">
+            <summary>
+            This method can be overriden to control whether a request should be retried. It will be called for any response where
+            <see cref="P:Azure.Response.IsError" /> is true, or if an exception is thrown from any subsequent pipeline policies or the transport.
+            This method will only be called for sync methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+            <param name="exception">The exception that occurred, if any, which can be used to determine if a retry should occur.</param>
+            <returns>Whether or not to retry.</returns>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.ShouldRetryAsync(Azure.Core.HttpMessage,System.Exception)">
+            <summary>
+            This method can be overriden to control whether a request should be retried.  It will be called for any response where
+            <see cref="P:Azure.Response.IsError" /> is true, or if an exception is thrown from any subsequent pipeline policies or the transport.
+            This method will only be called for async methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+            <param name="exception">The exception that occurred, if any, which can be used to determine if a retry should occur.</param>
+            <returns>Whether or not to retry.</returns>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.GetNextDelay(Azure.Core.HttpMessage,System.Nullable{System.TimeSpan})">
+            <summary>
+            This method can be overriden to control how long to delay before retrying. This method will only be called for sync methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+            <param name="retryAfter">The Retry-After header value, if any, returned from the service.</param>
+            <returns>The amount of time to delay before retrying.</returns>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.GetNextDelayAsync(Azure.Core.HttpMessage,System.Nullable{System.TimeSpan})">
+            <summary>
+            This method can be overriden to control how long to delay before retrying. This method will only be called for async methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+            <param name="retryAfter">The Retry-After header value, if any, returned from the service.</param>
+            <returns>The amount of time to delay before retrying.</returns>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.OnSendingRequest(Azure.Core.HttpMessage)">
+            <summary>
+            This method can be overridden to introduce logic before each request attempt is sent. This will run even for the first attempt.
+            This method will only be called for sync methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.OnSendingRequestAsync(Azure.Core.HttpMessage)">
+            <summary>
+            This method can be overriden to introduce logic that runs before the request is sent. This will run even for the first attempt.
+            This method will only be called for async methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.OnRequestSent(Azure.Core.HttpMessage)">
+            <summary>
+            This method can be overridden to introduce logic that runs after the request is sent through the pipeline and control is returned to the retry
+            policy. This method will only be called for sync methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
+        </member>
+        <member name="M:Azure.Core.Pipeline.RetryPolicy.OnRequestSentAsync(Azure.Core.HttpMessage)">
+            <summary>
+            This method can be overridden to introduce logic that runs after the request is sent through the pipeline and control is returned to the retry
+            policy. This method will only be called for async methods.
+            </summary>
+            <param name="message">The message containing the request and response.</param>
         </member>
         <member name="T:Azure.Core.Pipeline.ServerCertificateCustomValidationArgs">
             <summary>
@@ -2213,49 +3300,30 @@
              The default value could change in the future, the flag should be only set to false if suppression for the client
              should never be enabled.</param>
         </member>
-        <member name="M:Azure.Core.Pipeline.ClientDiagnostics.ExtractFailureContent(System.String,Azure.Core.ResponseHeaders,System.Collections.Generic.IDictionary{System.String,System.String}@)">
+        <member name="M:Azure.Core.Pipeline.DiagnosticScope.AddLink(System.String,System.String,System.Collections.Generic.IDictionary{System.String,System.String})">
             <summary>
-            Partial method that can optionally be defined to extract the error
-            message, code, and details in a service specific manner.
+            Adds a link to the scope. This must be called before <see cref="M:Azure.Core.Pipeline.DiagnosticScope.Start" /> has been called for the DiagnosticScope.
             </summary>
-            <param name="content">The error content.</param>
-            <param name="responseHeaders">The response headers.</param>
-            <param name="additionalInfo">Additional error details.</param>
+            <param name="traceparent">The traceparent for the link.</param>
+            <param name="tracestate">The tracestate for the link.</param>
+            <param name="attributes">Optional attributes to associate with the link.</param>
         </member>
-        <member name="T:Azure.Core.Pipeline.DiagnosticScope.ActivityKind">
+        <member name="M:Azure.Core.Pipeline.DiagnosticScope.SetTraceContext(System.String,System.String)">
             <summary>
-            Kind describes the relationship between the Activity, its parents, and its children in a Trace.
+            Sets the trace context for the current scope.
             </summary>
+            <param name="traceparent">The trace parent to set for the current scope.</param>
+            <param name="tracestate">The trace state to set for the current scope.</param>
         </member>
-        <member name="F:Azure.Core.Pipeline.DiagnosticScope.ActivityKind.Internal">
+        <member name="M:Azure.Core.Pipeline.DiagnosticScope.Failed(System.Exception)">
             <summary>
-            Default value.
-            Indicates that the Activity represents an internal operation within an application, as opposed to an operations with remote parents or children.
+            Marks the scope as failed.
             </summary>
-        </member>
-        <member name="F:Azure.Core.Pipeline.DiagnosticScope.ActivityKind.Server">
-            <summary>
-            Server activity represents request incoming from external component.
-            </summary>
-        </member>
-        <member name="F:Azure.Core.Pipeline.DiagnosticScope.ActivityKind.Client">
-            <summary>
-            Client activity represents outgoing request to the external component.
-            </summary>
-        </member>
-        <member name="F:Azure.Core.Pipeline.DiagnosticScope.ActivityKind.Producer">
-            <summary>
-            Producer activity represents output provided to external components.
-            </summary>
-        </member>
-        <member name="F:Azure.Core.Pipeline.DiagnosticScope.ActivityKind.Consumer">
-            <summary>
-            Consumer activity represents output received from an external component.
-            </summary>
+            <param name="exception">The exception to associate with the failed scope.</param>
         </member>
         <member name="T:Azure.Core.Pipeline.ActivityExtensions">
             <summary>
-            Until we can reference the 5.0 of System.Diagnostics.DiagnosticSource
+            Until Activity Source is no longer considered experimental.
             </summary>
         </member>
         <member name="T:Azure.Core.Pipeline.TaskExtensions.Enumerable`1">
@@ -2265,6 +3333,27 @@
             Please don't delete this method and don't make these types private.
             </summary>
             <typeparam name="T"></typeparam>
+        </member>
+        <member name="T:Azure.Core.MessageProcessingContext">
+            <summary>
+            Contains information related to the processing of the <see cref="T:Azure.Core.HttpMessage" /> as it traverses the pipeline.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.MessageProcessingContext.StartTime">
+            <summary>
+            The time that the pipeline processing started for the message.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.MessageProcessingContext.RetryNumber">
+            <summary>
+            The retry number for the request. For the initial request, the value is 0.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.MessageProcessingContext.#ctor(Azure.Core.HttpMessage)">
+            <summary>
+            Initializes a new instance of <see cref="T:Azure.Core.MessageProcessingContext" />.
+            </summary>
+            <param name="message">The message that the context is attached to.</param>
         </member>
         <member name="T:Azure.Core.BufferedReadStream">
             <summary>
@@ -2517,7 +3606,7 @@
             <summary>
             Parses the error details from the provided <see cref="T:Azure.Response" />.
             </summary>
-            <param name="response">The <see cref="T:Azure.Response" /> to parse.</param>
+            <param name="response">The <see cref="T:Azure.Response" /> to parse. The <see cref="P:Azure.Response.ContentStream" /> will already be buffered.</param>
             <param name="error">The <see cref="T:Azure.ResponseError" /> describing the parsed error details.</param>
             <param name="data">Data to be applied to the <see cref="P:System.Exception.Data" /> property.</param>
             <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
@@ -2663,12 +3752,35 @@
             <param name="content">The <see cref="T:System.BinaryData" /> to use.</param>
             <returns>An instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a <see cref="T:System.BinaryData" />.</returns>
         </member>
+        <member name="M:Azure.Core.RequestContent.Create(Azure.Core.Serialization.DynamicData)">
+            <summary>
+            Creates an instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a <see cref="T:Azure.Core.Serialization.DynamicData" />.
+            </summary>
+            <param name="content">The <see cref="T:Azure.Core.Serialization.DynamicData" /> to use.</param>
+            <returns>An instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a <see cref="T:Azure.Core.Serialization.DynamicData" />.</returns>
+        </member>
+        <member name="M:Azure.Core.RequestContent.Create(System.Object)">
+            <summary>
+            Creates an instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a serialized version of an object.
+            </summary>
+            <param name="serializable">The <see cref="T:System.Object" /> to serialize.</param>
+            <returns>An instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a serialized version of the object.</returns>
+        </member>
         <member name="M:Azure.Core.RequestContent.Create(System.Object,Azure.Core.Serialization.ObjectSerializer)">
             <summary>
             Creates an instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a serialized version of an object.
             </summary>
             <param name="serializable">The <see cref="T:System.Object" /> to serialize.</param>
             <param name="serializer">The <see cref="T:Azure.Core.Serialization.ObjectSerializer" /> to use to convert the object to bytes. If not provided, <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" /> is used.</param>
+            <returns>An instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a serialized version of the object.</returns>
+        </member>
+        <member name="M:Azure.Core.RequestContent.Create(System.Object,Azure.Core.Serialization.JsonPropertyNames,System.String)">
+            <summary>
+            Creates an instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a serialized version of an object.
+            </summary>
+            <param name="serializable">The <see cref="T:System.Object" /> to serialize.</param>
+            <param name="propertyNameFormat">The format to use for property names in the serialized content.</param>
+            <param name="dateTimeFormat">The format to use for DateTime and DateTimeOffset values in the serialized content.</param>
             <returns>An instance of <see cref="T:Azure.Core.RequestContent" /> that wraps a serialized version of the object.</returns>
         </member>
         <member name="M:Azure.Core.RequestContent.op_Implicit(System.String)~Azure.Core.RequestContent">
@@ -2682,6 +3794,12 @@
             Creates a RequestContent that wraps a <see cref="T:System.BinaryData" />.
             </summary>
             <param name="content">The <see cref="T:System.BinaryData" /> to use.</param>
+        </member>
+        <member name="M:Azure.Core.RequestContent.op_Implicit(Azure.Core.Serialization.DynamicData)~Azure.Core.RequestContent">
+            <summary>
+            Creates a RequestContent that wraps a <see cref="T:Azure.Core.Serialization.DynamicData" />.
+            </summary>
+            <param name="content">The <see cref="T:Azure.Core.Serialization.DynamicData" /> to use.</param>
         </member>
         <member name="M:Azure.Core.RequestContent.WriteToAsync(System.IO.Stream,System.Threading.CancellationToken)">
             <summary>
@@ -2896,6 +4014,12 @@
             Gets or sets the path to the resource referenced by the URI.
             </summary>
         </member>
+        <member name="P:Azure.Core.RequestUriBuilder.HasPath">
+            <summary> Gets whether or not this instance of <see cref="T:Azure.Core.RequestUriBuilder" /> has a path. </summary>
+        </member>
+        <member name="P:Azure.Core.RequestUriBuilder.HasQuery">
+            <summary> Gets whether or not this instance of <see cref="T:Azure.Core.RequestUriBuilder" /> has a query. </summary>
+        </member>
         <member name="P:Azure.Core.RequestUriBuilder.PathAndQuery">
             <summary>
             Gets the path and query string to the resource referenced by the URI.
@@ -2930,6 +4054,14 @@
             <param name="value">The value of parameter.</param>
             <param name="escapeValue">Whether value should be escaped.</param>
         </member>
+        <member name="M:Azure.Core.RequestUriBuilder.AppendQuery(System.ReadOnlySpan{System.Char},System.ReadOnlySpan{System.Char},System.Boolean)">
+            <summary>
+            Appends a query parameter adding separator if required.
+            </summary>
+            <param name="name">The name of parameter.</param>
+            <param name="value">The value of parameter.</param>
+            <param name="escapeValue">Whether value should be escaped.</param>
+        </member>
         <member name="M:Azure.Core.RequestUriBuilder.AppendPath(System.String)">
             <summary>
             Escapes and appends the <paramref name="value" /> to <see cref="P:Azure.Core.RequestUriBuilder.Path" /> without adding path separator.
@@ -2938,6 +4070,14 @@
             <param name="value">The value to escape and append.</param>
         </member>
         <member name="M:Azure.Core.RequestUriBuilder.AppendPath(System.String,System.Boolean)">
+            <summary>
+            Optionally escapes and appends the <paramref name="value" /> to <see cref="P:Azure.Core.RequestUriBuilder.Path" /> without adding path separator.
+            If <paramref name="escape" /> is true, path segments and any other characters will be escaped, e.g. ":" will be escaped as "%3a".
+            </summary>
+            <param name="value">The value to optionally escape and append.</param>
+            <param name="escape">Whether value should be escaped.</param>
+        </member>
+        <member name="M:Azure.Core.RequestUriBuilder.AppendPath(System.ReadOnlySpan{System.Char},System.Boolean)">
             <summary>
             Optionally escapes and appends the <paramref name="value" /> to <see cref="P:Azure.Core.RequestUriBuilder.Path" /> without adding path separator.
             If <paramref name="escape" /> is true, path segments and any other characters will be escaped, e.g. ":" will be escaped as "%3a".
@@ -3095,6 +4235,28 @@
             <param name="left"> The object on the left side of the operator. </param>
             <param name="right"> The object on the right side of the operator. </param>
             <returns> True if the left object is greater than or equal to the right. </returns>
+        </member>
+        <member name="M:Azure.Core.ResourceIdentifier.Parse(System.String)">
+            <summary>
+            Converts the string representation of a ResourceIdentifier to the equivalent <see cref="T:Azure.Core.ResourceIdentifier" /> structure.
+            </summary>
+            <param name="input"> The id string to convert. </param>
+            <returns> A class that contains the value that was parsed. </returns>
+            <exception cref="T:System.FormatException"> when resourceId is not a valid <see cref="T:Azure.Core.ResourceIdentifier" /> format. </exception>
+            <exception cref="T:System.ArgumentNullException"> when resourceId is null. </exception>
+            <exception cref="T:System.ArgumentException"> when resourceId is empty. </exception>
+        </member>
+        <member name="M:Azure.Core.ResourceIdentifier.TryParse(System.String,Azure.Core.ResourceIdentifier@)">
+            <summary>
+            Converts the string representation of a ResourceIdentifier to the equivalent <see cref="T:Azure.Core.ResourceIdentifier" /> structure.
+            </summary>
+            <param name="input"> The id string to convert. </param>
+            <param name="result">
+            The structure that will contain the parsed value.
+            If the method returns true result contains a valid ResourceIdentifier.
+            If the method returns false, result will be null.
+            </param>
+            <returns> True if the parse operation was successful; otherwise, false. </returns>
         </member>
         <member name="M:Azure.Core.ResourceIdentifier.AppendProviderResource(System.String,System.String,System.String)">
             <summary>
@@ -3255,6 +4417,11 @@
             Gets the parsed value of "Content-Length" header.
             </summary>
         </member>
+        <member name="P:Azure.Core.ResponseHeaders.ContentLengthLong">
+            <summary>
+            Gets the parsed value of "Content-Length" header as a long.
+            </summary>
+        </member>
         <member name="P:Azure.Core.ResponseHeaders.ETag">
             <summary>
             Gets the parsed value of "ETag" header.
@@ -3263,6 +4430,11 @@
         <member name="P:Azure.Core.ResponseHeaders.RequestId">
             <summary>
             Gets the value of "x-ms-request-id" header.
+            </summary>
+        </member>
+        <member name="P:Azure.Core.ResponseHeaders.RetryAfter">
+            <summary>
+            Gets the value of the retry after header, one of "Retry-After", "retry-after-ms", or "x-ms-retry-after-ms".
             </summary>
         </member>
         <member name="M:Azure.Core.ResponseHeaders.GetEnumerator">
@@ -3361,162 +4533,6 @@
             <summary>
             The timeout applied to an individual network operations.
             </summary>
-        </member>
-        <member name="T:Azure.Core.Serialization.IMemberNameConverter">
-            <summary>
-            Converts type member names to serializable member names.
-            </summary>
-        </member>
-        <member name="M:Azure.Core.Serialization.IMemberNameConverter.ConvertMemberName(System.Reflection.MemberInfo)">
-            <summary>
-            Converts a <see cref="T:System.Reflection.MemberInfo" /> to a serializable member name.
-            </summary>
-            <param name="member">The <see cref="T:System.Reflection.MemberInfo" /> to convert to a serializable member name.</param>
-            <returns>The serializable member name, or null if the member is not defined or ignored by the serializer.</returns>
-            <exception cref="T:System.ArgumentNullException"><paramref name="member" /> is null.</exception>
-        </member>
-        <member name="T:Azure.Core.Serialization.JsonObjectSerializer">
-            <summary>
-            An <see cref="T:Azure.Core.Serialization.ObjectSerializer" /> implementation that uses <see cref="T:System.Text.Json.JsonSerializer" /> for serialization/deserialization.
-            </summary>
-        </member>
-        <member name="P:Azure.Core.Serialization.JsonObjectSerializer.Default">
-            <summary>
-            A shared instance of <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" />, initialized with the default options.
-            </summary>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.#ctor">
-            <summary>
-            Initializes new instance of <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" />.
-            </summary>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.#ctor(System.Text.Json.JsonSerializerOptions)">
-            <summary>
-            Initializes new instance of <see cref="T:Azure.Core.Serialization.JsonObjectSerializer" />.
-            </summary>
-            <param name="options">The <see cref="T:System.Text.Json.JsonSerializerOptions" /> instance to use when serializing/deserializing.</param>
-            <exception cref="T:System.ArgumentNullException"><paramref name="options" /> is null.</exception>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Serialize(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.SerializeAsync(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Deserialize(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Read the binary representation into a <paramref name="returnType" />.
-            The Stream will be read to completion.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
-            <param name="returnType">The type of the object to convert to and return.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.DeserializeAsync(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Read the binary representation into a <paramref name="returnType" />.
-            The Stream will be read to completion.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
-            <param name="returnType">The type of the object to convert to and return.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Serialize(System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
-            </summary>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.SerializeAsync(System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
-            </summary>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
-        </member>
-        <member name="M:Azure.Core.Serialization.JsonObjectSerializer.Azure#Core#Serialization#IMemberNameConverter#ConvertMemberName(System.Reflection.MemberInfo)">
-            <summary>
-            Converts a <see cref="T:System.Reflection.MemberInfo" /> to a serializable member name.
-            </summary>
-            <param name="member">The <see cref="T:System.Reflection.MemberInfo" /> to convert to a serializable member name.</param>
-            <returns>The serializable member name, or null if the member is not defined or ignored by the serializer.</returns>
-            <exception cref="T:System.ArgumentNullException"><paramref name="member" /> is null.</exception>
-        </member>
-        <member name="T:Azure.Core.Serialization.ObjectSerializer">
-            <summary>
-            An abstraction for reading typed objects.
-            </summary>
-        </member>
-        <member name="M:Azure.Core.Serialization.ObjectSerializer.Serialize(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.ObjectSerializer.SerializeAsync(System.IO.Stream,System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and write it to <see cref="T:System.IO.Stream" />.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to write to.</param>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type of the <paramref name="value" /> to convert.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.ObjectSerializer.Deserialize(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Read the binary representation into a <paramref name="returnType" />.
-            The Stream will be read to completion.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
-            <param name="returnType">The type of the object to convert to and return.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.ObjectSerializer.DeserializeAsync(System.IO.Stream,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Read the binary representation into a <paramref name="returnType" />.
-            The Stream will be read to completion.
-            </summary>
-            <param name="stream">The <see cref="T:System.IO.Stream" /> to read from.</param>
-            <param name="returnType">The type of the object to convert to and return.</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during deserialization.</param>
-        </member>
-        <member name="M:Azure.Core.Serialization.ObjectSerializer.Serialize(System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
-            </summary>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
-        </member>
-        <member name="M:Azure.Core.Serialization.ObjectSerializer.SerializeAsync(System.Object,System.Type,System.Threading.CancellationToken)">
-            <summary>
-            Convert the provided value to it's binary representation and return it as a <see cref="T:System.BinaryData" /> instance.
-            </summary>
-            <param name="value">The value to convert.</param>
-            <param name="inputType">The type to use when serializing <paramref name="value" />. If omitted, the type will be determined using <see cref="M:System.Object.GetType" />().</param>
-            <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to use during serialization.</param>
-            <returns>The object's binary representation as <see cref="T:System.BinaryData" />.</returns>
         </member>
         <member name="T:Azure.Core.StatusCodeClassifier">
             <summary>
@@ -3837,6 +4853,16 @@
             <param name="claims">Additional claims to be included in the token.</param>
             <param name="tenantId"> The tenantId to be included in the token request. </param>
         </member>
+        <member name="M:Azure.Core.TokenRequestContext.#ctor(System.String[],System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            Creates a new TokenRequest with the specified scopes.
+            </summary>
+            <param name="scopes">The scopes required for the token.</param>
+            <param name="parentRequestId">The <see cref="P:Azure.Core.Request.ClientRequestId" /> of the request requiring a token for authentication, if applicable.</param>
+            <param name="claims">Additional claims to be included in the token.</param>
+            <param name="tenantId"> The tenantId to be included in the token request.</param>
+            <param name="isCaeEnabled">Indicates whether to enable Continuous Access Evaluation (CAE) for the requested token.</param>
+        </member>
         <member name="P:Azure.Core.TokenRequestContext.Scopes">
             <summary>
             The scopes required for the token.
@@ -3856,6 +4882,16 @@
             <summary>
             The tenantId to be included in the token request.
             </summary>
+        </member>
+        <member name="P:Azure.Core.TokenRequestContext.IsCaeEnabled">
+            <summary>
+            Indicates whether to enable Continuous Access Evaluation (CAE) for the requested token.
+            </summary>
+            <remarks>
+            If a resource API implements CAE and your application declares it can handle CAE, your app receives CAE tokens for that resource.
+            For this reason, if you declare your app CAE ready, your application must handle the CAE claim challenge for all resource APIs that accept Microsoft Identity access tokens.
+            If you don't handle CAE responses in these API calls, your app could end up in a loop retrying an API call with a token that is still in the returned lifespan of the token but has been revoked due to CAE.
+            </remarks>
         </member>
         <member name="T:Azure.Core.AppContextSwitchHelper">
             <summary>
@@ -3984,6 +5020,15 @@
             <param name="maximum">The maximum value to compare.</param>
             <param name="name">The name of the parameter.</param>
         </member>
+        <member name="M:Azure.Core.Argument.AssertEnumDefined(System.Type,System.Object,System.String)">
+            <summary>
+            Throws if <paramref name="value" /> is not defined for <paramref name="enumType" />.
+            </summary>
+            <param name="enumType">The type to validate against.</param>
+            <param name="value">The value to validate.</param>
+            <param name="name">The name of the parameter.</param>
+            <exception cref="T:System.ArgumentException"><paramref name="value" /> is not defined for <paramref name="enumType" />.</exception>
+        </member>
         <member name="M:Azure.Core.Argument.CheckNotNull``1(``0,System.String)">
             <summary>
             Throws if <paramref name="value" /> has not been initialized; otherwise, returns <paramref name="value" />.
@@ -4051,12 +5096,14 @@
             The value of <paramref name="headerValue" /> should be passed again to <see cref="M:Azure.Core.AuthorizationChallengeParser.TryGetNextChallenge(System.ReadOnlySpan{System.Char}@,System.ReadOnlySpan{System.Char}@)" /> to attempt to parse any additional challenge schemes if <c>false</c>.
             </returns>
         </member>
-        <member name="M:Azure.Core.AzureKeyCredentialPolicy.#ctor(Azure.AzureKeyCredential,System.String)">
+        <member name="M:Azure.Core.AzureKeyCredentialPolicy.#ctor(Azure.AzureKeyCredential,System.String,System.String)">
             <summary>
             Initializes a new instance of the <see cref="T:Azure.Core.AzureKeyCredentialPolicy" /> class.
             </summary>
             <param name="credential">The <see cref="T:Azure.AzureKeyCredential" /> used to authenticate requests.</param>
             <param name="name">The name of the key header used for the credential.</param>
+            <param name="prefix">The prefix to apply before the credential key. For example, a prefix of "SharedAccessKey" would result in
+            a value of "SharedAccessKey {credential.Key}" being stamped on the request header with header key of <paramref name="name" />.</param>
         </member>
         <member name="M:Azure.Core.AzureKeyCredentialPolicy.OnSendingRequest(Azure.Core.HttpMessage)">
             <summary>
@@ -4095,20 +5142,6 @@
             <summary>Encode a string as a Base64URL encoded string.</summary>
             <param name="value">String input buffer.</param>
             <returns>The UTF8 bytes for the string, encoded as a Base64URL string.</returns>
-        </member>
-        <member name="T:Azure.Core.ConstantDelayStrategy">
-            <summary>
-            Implementation of a <see cref="T:Azure.Core.DelayStrategy" /> with constant polling interval.
-            </summary>
-            <remarks>Polling interval is always equal to the given polling interval.</remarks>
-        </member>
-        <member name="M:Azure.Core.ConstantDelayStrategy.GetNextDelay(Azure.Response,System.Nullable{System.TimeSpan})">
-            <summary>
-            Get the polling interval from the max value of <see cref="F:Azure.Core.ConstantDelayStrategy.DefaultPollingInterval" /> and <paramref name="suggestedInterval" />.
-            </summary>
-            <param name="response">Service response.</param>
-            <param name="suggestedInterval">Suggested pollingInterval.</param>
-            <returns>Max value of <see cref="F:Azure.Core.ConstantDelayStrategy.DefaultPollingInterval" /> and <paramref name="suggestedInterval" />.</returns>
         </member>
         <member name="T:Azure.Core.DictionaryHeaders">
             <summary>
@@ -4169,19 +5202,10 @@
             </summary>
             <returns>The <see cref="T:System.Collections.Generic.IEnumerable`1" /> enumerating <see cref="T:Azure.Core.HttpHeader" /> in the response.</returns>
         </member>
-        <member name="T:Azure.Core.ExponentialDelayStrategy">
+        <member name="T:Azure.Core.FixedDelayWithNoJitterStrategy">
             <summary>
-            Implementation of a <see cref="T:Azure.Core.DelayStrategy" />. Polling interval changes according to
-            the sequence {1, 1, 1, 2, 4, ...32}.
+            A delay strategy that uses a fixed delay with no jitter applied. This is used by data plane LROs.
             </summary>
-            <remarks>Polling interval always follows the given sequence.</remarks>
-        </member>
-        <member name="M:Azure.Core.ExponentialDelayStrategy.GetNextDelay(Azure.Response,System.Nullable{System.TimeSpan})">
-            <summary>
-            Get the polling interval from {1, 1, 1, 2, 4, ...32}.
-            </summary>
-            <param name="response">Service response.</param>
-            <param name="suggestedInterval">Suggested pollingInterval.</param>
         </member>
         <member name="T:Azure.Core.HashCodeBuilder">
             <summary>
@@ -4361,7 +5385,7 @@
             <summary>
             Periodically calls <see cref="M:Azure.Core.OperationInternalBase.UpdateStatusAsync(System.Threading.CancellationToken)" /> until the long-running operation completes.
             After each service call, a retry-after header may be returned to communicate that there is no reason to poll
-            for status change until the specified time has passed.  The maximum of the retry after value and the fallback <see cref="T:Azure.Core.DelayStrategy" />
+            for status change until the specified time has passed.  The maximum of the retry after value and the fallback strategy
             is then used as the wait interval.
             Headers supported are: "Retry-After", "retry-after-ms", and "x-ms-retry-after-ms",
             <example>Usage example:
@@ -4399,7 +5423,7 @@
             <summary>
             Periodically calls <see cref="M:Azure.Core.OperationInternalBase.UpdateStatus(System.Threading.CancellationToken)" /> until the long-running operation completes.
             After each service call, a retry-after header may be returned to communicate that there is no reason to poll
-            for status change until the specified time has passed.  The maximum of the retry after value and the fallback <see cref="T:Azure.Core.DelayStrategy" />
+            for status change until the specified time has passed.  The maximum of the retry after value and the fallback strategy
             is then used as the wait interval.
             Headers supported are: "Retry-After", "retry-after-ms", and "x-ms-retry-after-ms",
             and "x-ms-retry-after-ms".
@@ -4478,30 +5502,30 @@
             <param name="rawResponse">The final value of <see cref="P:Azure.Core.OperationInternalBase.RawResponse" />.</param>
             <param name="operationFailedException">The exception that will be thrown by <c>UpdateStatusAsync</c>.</param>
         </member>
-        <member name="M:Azure.Core.OperationInternal.#ctor(Azure.Core.Pipeline.ClientDiagnostics,Azure.Core.IOperation,Azure.Response,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},Azure.Core.DelayStrategy)">
+        <member name="M:Azure.Core.OperationInternal.#ctor(Azure.Core.IOperation,Azure.Core.Pipeline.ClientDiagnostics,Azure.Response,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},Azure.Core.DelayStrategy)">
             <summary>
             Initializes a new instance of the <see cref="T:Azure.Core.OperationInternal" /> class.
             </summary>
-            <param name="clientDiagnostics">Used for diagnostic scope and exception creation. This is expected to be the instance created during the construction of your main client.</param>
             <param name="operation">The long-running operation making use of this class. Passing "<c>this</c>" is expected.</param>
+            <param name="clientDiagnostics">Used for diagnostic scope and exception creation. This is expected to be the instance created during the construction of your main client.</param>
             <param name="rawResponse">
-            The initial value of <see cref="P:Azure.Core.OperationInternalBase.RawResponse" />. Usually, long-running operation objects can be instantiated in two ways:
-            <list type="bullet">
-              <item>
-              When calling a client's "<c>Start&lt;OperationName&gt;</c>" method, a service call is made to start the operation, and an <see cref="T:Azure.Operation" /> instance is returned.
-              In this case, the response received from this service call can be passed here.
-              </item>
-              <item>
-              When a user instantiates an <see cref="T:Azure.Operation" /> directly using a public constructor, there's no previous service call. In this case, passing <c>null</c> is expected.
-              </item>
-            </list>
+                The initial value of <see cref="P:Azure.Core.OperationInternalBase.RawResponse" />. Usually, long-running operation objects can be instantiated in two ways:
+                <list type="bullet">
+                    <item>
+                        When calling a client's "<c>Start&lt;OperationName&gt;</c>" method, a service call is made to start the operation, and an <see cref="T:Azure.Operation" /> instance is returned.
+                        In this case, the response received from this service call can be passed here.
+                    </item>
+                    <item>
+                        When a user instantiates an <see cref="T:Azure.Operation" /> directly using a public constructor, there's no previous service call. In this case, passing <c>null</c> is expected.
+                    </item>
+                </list>
             </param>
             <param name="operationTypeName">
-            The type name of the long-running operation making use of this class. Used when creating diagnostic scopes. If left <c>null</c>, the type name will be inferred based on the
-            parameter <paramref name="operation" />.
+                The type name of the long-running operation making use of this class. Used when creating diagnostic scopes. If left <c>null</c>, the type name will be inferred based on the
+                parameter <paramref name="operation" />.
             </param>
             <param name="scopeAttributes">The attributes to use during diagnostic scope creation.</param>
-            <param name="fallbackStrategy">The fallback delay strategy when Retry-After header is not present.  When it is present, the longer of the two delays will be used. Default is <see cref="T:Azure.Core.ConstantDelayStrategy" />.</param>
+            <param name="fallbackStrategy"> The delay strategy to use. Default is <see cref="T:Azure.Core.FixedDelayWithNoJitterStrategy" />.</param>
         </member>
         <member name="T:Azure.Core.IOperation">
             <summary>
@@ -4630,30 +5654,31 @@
             <param name="rawResponse">The final value of <see cref="P:Azure.Core.OperationInternalBase.RawResponse" />.</param>
             <param name="operationFailedException">The exception that will be thrown by <c>UpdateStatusAsync</c>.</param>
         </member>
-        <member name="M:Azure.Core.OperationInternal`1.#ctor(Azure.Core.Pipeline.ClientDiagnostics,Azure.Core.IOperation{`0},Azure.Response,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},Azure.Core.DelayStrategy)">
+        <member name="M:Azure.Core.OperationInternal`1.#ctor(Azure.Core.IOperation{`0},Azure.Core.Pipeline.ClientDiagnostics,Azure.Response,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.String}},Azure.Core.DelayStrategy)">
             <summary>
             Initializes a new instance of the <see cref="T:Azure.Core.OperationInternal`1" /> class.
             </summary>
-            <param name="clientDiagnostics">Used for diagnostic scope and exception creation. This is expected to be the instance created during the construction of your main client.</param>
             <param name="operation">The long-running operation making use of this class. Passing "<c>this</c>" is expected.</param>
+            <param name="clientDiagnostics">Used for diagnostic scope and exception creation. This is expected to be the instance created during the construction of your main client.</param>
             <param name="rawResponse">
-            The initial value of <see cref="P:Azure.Core.OperationInternalBase.RawResponse" />. Usually, long-running operation objects can be instantiated in two ways:
-            <list type="bullet">
-              <item>
-              When calling a client's "<c>Start&lt;OperationName&gt;</c>" method, a service call is made to start the operation, and an <see cref="T:Azure.Operation`1" /> instance is returned.
-              In this case, the response received from this service call can be passed here.
-              </item>
-              <item>
-              When a user instantiates an <see cref="T:Azure.Operation`1" /> directly using a public constructor, there's no previous service call. In this case, passing <c>null</c> is expected.
-              </item>
-            </list>
+                The initial value of <see cref="P:Azure.Core.OperationInternalBase.RawResponse" />. Usually, long-running operation objects can be instantiated in two ways:
+                <list type="bullet">
+                    <item>
+                        When calling a client's "<c>Start&lt;OperationName&gt;</c>" method, a service call is made to start the operation, and an <see cref="T:Azure.Operation`1" /> instance is returned.
+                        In this case, the response received from this service call can be passed here.
+                    </item>
+                    <item>
+                        When a user instantiates an <see cref="T:Azure.Operation`1" /> directly using a public constructor, there's no previous service call. In this case, passing <c>null</c> is expected.
+                    </item>
+                </list>
             </param>
             <param name="operationTypeName">
-            The type name of the long-running operation making use of this class. Used when creating diagnostic scopes. If left <c>null</c>, the type name will be inferred based on the
-            parameter <paramref name="operation" />.
+                The type name of the long-running operation making use of this class. Used when creating diagnostic scopes. If left <c>null</c>, the type name will be inferred based on the
+                parameter <paramref name="operation" />.
             </param>
             <param name="scopeAttributes">The attributes to use during diagnostic scope creation.</param>
-            <param name="fallbackStrategy">The fallback delay strategy when Retry-After header is not present.  When it is present, the longer of the two delays will be used. Default is <see cref="T:Azure.Core.ConstantDelayStrategy" />.</param>
+            <param name="fallbackStrategy">The delay strategy when Retry-After header is not present.  When it is present, the longer of the two delays will be used.
+                Default is <see cref="T:Azure.Core.FixedDelayWithNoJitterStrategy" />.</param>
         </member>
         <member name="P:Azure.Core.OperationInternal`1.HasValue">
             <summary>
@@ -4681,8 +5706,7 @@
             <summary>
             Periodically calls <see cref="M:Azure.Core.OperationInternalBase.UpdateStatusAsync(System.Threading.CancellationToken)" /> until the long-running operation completes.
             After each service call, a retry-after header may be returned to communicate that there is no reason to poll
-            for status change until the specified time has passed.  The maximum of the retry after value and the fallback <see cref="T:Azure.Core.DelayStrategy" />
-            is then used as the wait interval.
+            for status change until the specified time has passed.
             Headers supported are: "Retry-After", "retry-after-ms", and "x-ms-retry-after-ms",
             <example>Usage example:
             <code>
@@ -4719,8 +5743,7 @@
             <summary>
             Periodically calls <see cref="M:Azure.Core.OperationInternalBase.UpdateStatus(System.Threading.CancellationToken)" /> until the long-running operation completes.
             After each service call, a retry-after header may be returned to communicate that there is no reason to poll
-            for status change until the specified time has passed.  The maximum of the retry after value and the fallback <see cref="T:Azure.Core.DelayStrategy" />
-            is then use as the wait interval.
+            for status change until the specified time has passed.
             Headers supported are: "Retry-After", "retry-after-ms", and "x-ms-retry-after-ms",
             <example>Usage example:
             <code>
@@ -4736,11 +5759,8 @@
         <member name="M:Azure.Core.OperationInternal`1.WaitForCompletion(System.TimeSpan,System.Threading.CancellationToken)">
             <summary>
             Periodically calls <see cref="M:Azure.Core.OperationInternalBase.UpdateStatus(System.Threading.CancellationToken)" /> until the long-running operation completes. The interval
-            between calls is defined by the property <see cref="F:Azure.Core.ConstantDelayStrategy.DefaultPollingInterval" />, but it can change based on information returned
-            from the server. After each service call, a retry-after header may be returned to communicate that there is no reason to poll
-            for status change until the specified time has passed. In this case, the maximum value between the <see cref="F:Azure.Core.ConstantDelayStrategy.DefaultPollingInterval" />
-            property and the retry-after header is chosen as the wait interval. Headers supported are: "Retry-After", "retry-after-ms",
-            and "x-ms-retry-after-ms".
+            between calls is defined by the <see cref="T:Azure.Core.FixedDelayWithNoJitterStrategy" />, which takes into account any retry-after header that is returned
+            from the server.
             <example>Usage example:
             <code>
               public async ValueTask&lt;Response&lt;T&gt;&gt; WaitForCompletionAsync(CancellationToken cancellationToken) =&gt;
@@ -4833,27 +5853,10 @@
             <returns>A new <see cref="T:Azure.Core.OperationState`1" /> instance.</returns>
             <exception cref="T:System.ArgumentNullException">Thrown if <paramref name="rawResponse" /> is <c>null</c>.</exception>
         </member>
-        <member name="T:Azure.Core.RetryAfterDelayStrategy">
+        <member name="T:Azure.Core.SequentialDelayStrategy">
             <summary>
-            Implementation of a <see cref="T:Azure.Core.DelayStrategy" /> of which the interval is from
-            retry-after header of service response.
+            A delay strategy that uses a fixed sequence of delays with no jitter applied. This is used by management LROs.
             </summary>
-        </member>
-        <member name="M:Azure.Core.RetryAfterDelayStrategy.#ctor(Azure.Core.DelayStrategy)">
-            <summary>
-            Create a <see cref="T:Azure.Core.RetryAfterDelayStrategy" /> with a default retry-after value which normally
-            comes from the initial response of an LRO operation.
-            </summary>
-            <param name="fallbackStrategy"> Fallback strategy if retry after is not present. </param>
-        </member>
-        <member name="M:Azure.Core.RetryAfterDelayStrategy.GetNextDelay(Azure.Response,System.Nullable{System.TimeSpan})">
-            <summary>
-            Get the polling interval from the max value of retry-after header of given service response and <paramref name="suggestedInterval" />.
-            If retry-after header is not found, adopt the value of last retry-after header.
-            </summary>
-            <param name="response">Service response which might carry retry-after header.</param>
-            <param name="suggestedInterval">Suggested pollingInterval.</param>
-            <returns>Max value of retry-after header and <paramref name="suggestedInterval" />.</returns>
         </member>
         <member name="T:Azure.Core.SerializationConstructorAttribute">
             <summary>
@@ -4882,25 +5885,27 @@
             Implementation of LRO polling logic.
             </summary>
         </member>
-        <member name="T:Azure.Core.DelayStrategy">
-            <summary>
-            Strategy to control delay behavior.
-            </summary>
-        </member>
-        <member name="M:Azure.Core.DelayStrategy.GetNextDelay(Azure.Response,System.Nullable{System.TimeSpan})">
-            <summary>
-            Get the interval of next delay iteration.
-            </summary>
-            <remarks> Note that the value could change per call. </remarks>
-            <param name="response"> Server response. </param>
-            <param name="suggestedInterval"> Suggested pollingInterval. It is up to strategy
-            implementation to decide how to deal with this parameter. </param>
-            <returns> Delay interval of next iteration. </returns>
-        </member>
         <member name="T:Azure.Core.TypeReferenceTypeAttribute">
             <summary>
             An attribute class indicating to Autorest a reference type which can replace a type in target SDKs.
             </summary>
+        </member>
+        <member name="M:Azure.Core.TypeReferenceTypeAttribute.#ctor">
+            <summary>
+            Constructs a new instance of <see cref="T:Azure.Core.TypeReferenceTypeAttribute" />.
+            </summary>
+        </member>
+        <member name="M:Azure.Core.TypeReferenceTypeAttribute.#ctor(System.Boolean,System.String[])">
+            <summary>
+            Constructs a new instance of <see cref="T:Azure.Core.TypeReferenceTypeAttribute" />.
+            </summary>
+            <param name="ignoreExtraProperties">Whether to allow replacement to occur when the type to be replaced
+            contains extra properties as compared to the reference type attributed with <see cref="T:Azure.Core.TypeReferenceTypeAttribute" /> that it will
+            be replaced with. Defaults to false.</param>
+            <param name="internalPropertiesToInclude">An array of internal properties to include for the reference type when evaluating whether type
+            replacement should occur. When evaluating a type for replacement with a reference type, all internal properties are considered on the
+            type to be replaced. Thus this parameter can be used to specify internal properties to allow replacement to occur on a type with internal
+            properties.</param>
         </member>
         <member name="T:Azure.AsyncPageable`1">
              <summary>
@@ -5615,6 +6620,37 @@
             not the message can be modified.
             </summary>
         </member>
+        <member name="T:Azure.NullableResponse`1">
+            <summary>
+            Represents a result of Azure operation.
+            </summary>
+            <typeparam name="T">The type of returned value.</typeparam>
+        </member>
+        <member name="P:Azure.NullableResponse`1.HasValue">
+            <summary>
+            Gets a value indicating whether the current instance has a valid value of its underlying type.
+            </summary>
+        </member>
+        <member name="P:Azure.NullableResponse`1.Value">
+            <summary>
+            Gets the value returned by the service. Accessing this property will throw if <see cref="P:Azure.NullableResponse`1.HasValue" /> is false.
+            </summary>
+        </member>
+        <member name="M:Azure.NullableResponse`1.GetRawResponse">
+            <summary>
+            Returns the HTTP response returned by the service.
+            </summary>
+            <returns>The HTTP response returned by the service.</returns>
+        </member>
+        <member name="M:Azure.NullableResponse`1.Equals(System.Object)">
+            <summary>Determines whether the specified object is equal to the current object.</summary><param name="obj">The object to compare with the current object.</param><returns><see langword="true" /> if the specified object  is equal to the current object; otherwise, <see langword="false" />.</returns>
+        </member>
+        <member name="M:Azure.NullableResponse`1.GetHashCode">
+            <summary>Serves as the default hash function.</summary><returns>A hash code for the current object.</returns>
+        </member>
+        <member name="M:Azure.NullableResponse`1.ToString">
+            <summary>Returns a string that represents the current object.</summary><returns>A string that represents the current object.</returns>
+        </member>
         <member name="T:Azure.Operation">
             <summary>
             Represents a long-running operation.
@@ -5686,6 +6722,20 @@
             This method will periodically call UpdateStatusAsync till HasCompleted is true, then return the final response of the operation.
             </remarks>
         </member>
+        <member name="M:Azure.Operation.WaitForCompletionResponseAsync(Azure.Core.DelayStrategy,System.Threading.CancellationToken)">
+            <summary>
+            Periodically calls the server till the long-running operation completes.
+            </summary>
+            <param name="delayStrategy">
+            The strategy to use to determine the delay between status requests to the server. If the server returns retry-after header,
+            the delay used will be the maximum specified by the strategy and the header value.
+            </param>
+            <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> used for the periodical service calls.</param>
+            <returns>The last HTTP response received from the server.</returns>
+            <remarks>
+            This method will periodically call UpdateStatusAsync till HasCompleted is true, then return the final response of the operation.
+            </remarks>
+        </member>
         <member name="M:Azure.Operation.WaitForCompletionResponse(System.Threading.CancellationToken)">
             <summary>
             Periodically calls the server till the long-running operation completes.
@@ -5704,6 +6754,20 @@
             The interval between status requests to the server.
             The interval can change based on information returned from the server.
             For example, the server might communicate to the client that there is not reason to poll for status change sooner than some time.
+            </param>
+            <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> used for the periodical service calls.</param>
+            <returns>The last HTTP response received from the server.</returns>
+            <remarks>
+            This method will periodically call UpdateStatusAsync till HasCompleted is true, then return the final response of the operation.
+            </remarks>
+        </member>
+        <member name="M:Azure.Operation.WaitForCompletionResponse(Azure.Core.DelayStrategy,System.Threading.CancellationToken)">
+            <summary>
+            Periodically calls the server till the long-running operation completes.
+            </summary>
+            <param name="delayStrategy">
+            The strategy to use to determine the delay between status requests to the server. If the server returns retry-after header,
+            the delay used will be the maximum specified by the strategy and the header value.
             </param>
             <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> used for the periodical service calls.</param>
             <returns>The last HTTP response received from the server.</returns>
@@ -5782,6 +6846,34 @@
             The interval between status requests to the server.
             The interval can change based on information returned from the server.
             For example, the server might communicate to the client that there is not reason to poll for status change sooner than some time.
+            </param>
+            <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> used for the periodical service calls.</param>
+            <returns>The last HTTP response received from the server.</returns>
+            <remarks>
+            This method will periodically call UpdateStatusAsync till HasCompleted is true, then return the final result of the operation.
+            </remarks>
+        </member>
+        <member name="M:Azure.Operation`1.WaitForCompletion(Azure.Core.DelayStrategy,System.Threading.CancellationToken)">
+            <summary>
+            Periodically calls the server till the long-running operation completes.
+            </summary>
+            <param name="delayStrategy">
+            The strategy to use to determine the delay between status requests to the server. If the server returns retry-after header,
+            the delay used will be the maximum specified by the strategy and the header value.
+            </param>
+            <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> used for the periodical service calls.</param>
+            <returns>The last HTTP response received from the server.</returns>
+            <remarks>
+            This method will periodically call UpdateStatusAsync till HasCompleted is true, then return the final result of the operation.
+            </remarks>
+        </member>
+        <member name="M:Azure.Operation`1.WaitForCompletionAsync(Azure.Core.DelayStrategy,System.Threading.CancellationToken)">
+            <summary>
+            Periodically calls the server till the long-running operation completes.
+            </summary>
+            <param name="delayStrategy">
+            The strategy to use to determine the delay between status requests to the server. If the server returns retry-after header,
+            the delay used will be the maximum specified by the strategy and the header value.
             </param>
             <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> used for the periodical service calls.</param>
             <returns>The last HTTP response received from the server.</returns>
@@ -6116,14 +7208,21 @@
         </member>
         <member name="M:Azure.RequestFailedException.#ctor(Azure.Response)">
             <summary>Initializes a new instance of the <see cref="T:Azure.RequestFailedException"></see> class
-            with an error message, HTTP status code, error code obtained from the specified response.</summary>
+            with an error message, HTTP status code, and error code obtained from the specified response.</summary>
             <param name="response">The response to obtain error details from.</param>
         </member>
         <member name="M:Azure.RequestFailedException.#ctor(Azure.Response,System.Exception)">
             <summary>Initializes a new instance of the <see cref="T:Azure.RequestFailedException"></see> class
-            with an error message, HTTP status code, error code obtained from the specified response.</summary>
+            with an error message, HTTP status code, and error code obtained from the specified response.</summary>
             <param name="response">The response to obtain error details from.</param>
             <param name="innerException">An inner exception to associate with the new <see cref="T:Azure.RequestFailedException" />.</param>
+        </member>
+        <member name="M:Azure.RequestFailedException.#ctor(Azure.Response,System.Exception,Azure.Core.RequestFailedDetailsParser)">
+            <summary>Initializes a new instance of the <see cref="T:Azure.RequestFailedException"></see> class
+            with an error message, HTTP status code, and error code obtained from the specified response.</summary>
+            <param name="response">The response to obtain error details from.</param>
+            <param name="innerException">An inner exception to associate with the new <see cref="T:Azure.RequestFailedException" />.</param>
+            <param name="detailsParser">The parser to use to parse the response content.</param>
         </member>
         <member name="M:Azure.RequestFailedException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
             <summary>Initializes a new instance of the <see cref="T:System.Exception" /> class with serialized data.</summary><param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> that holds the serialized object data about the exception being thrown.</param><param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> that contains contextual information about the source or destination.</param><exception cref="T:System.ArgumentNullException"><paramref name="info" /> is <see langword="null" />.</exception><exception cref="T:System.Runtime.Serialization.SerializationException">The class name is <see langword="null" /> or <see cref="P:System.Exception.HResult" /> is zero (0).</exception>
@@ -6131,12 +7230,10 @@
         <member name="M:Azure.RequestFailedException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
             <summary>When overridden in a derived class, sets the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> with information about the exception.</summary><param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> that holds the serialized object data about the exception being thrown.</param><param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> that contains contextual information about the source or destination.</param><exception cref="T:System.ArgumentNullException">The <paramref name="info" /> parameter is a null reference (<see langword="Nothing" /> in Visual Basic).</exception>
         </member>
-        <member name="M:Azure.RequestFailedException.ReadContent(Azure.Response)">
+        <member name="M:Azure.RequestFailedException.GetRawResponse">
             <summary>
-            This is intentionally sync-only as it will only be called by the ctor.
+            Gets the response, if any, that led to the exception.
             </summary>
-            <param name="response"></param>
-            <returns></returns>
         </member>
         <member name="T:Azure.Response">
             <summary>
@@ -6306,15 +7403,14 @@
             </summary>
             <typeparam name="T">The type of returned value.</typeparam>
         </member>
-        <member name="M:Azure.Response`1.GetRawResponse">
+        <member name="P:Azure.Response`1.HasValue">
             <summary>
-            Returns the HTTP response returned by the service.
+            Gets a value indicating whether the current instance has a valid value of its underlying type.
             </summary>
-            <returns>The HTTP response returned by the service.</returns>
         </member>
         <member name="P:Azure.Response`1.Value">
             <summary>
-            Gets the value returned by the service.
+            Gets the value returned by the service. Accessing this property will throw if <see cref="P:Azure.NullableResponse`1.HasValue" /> is false.
             </summary>
         </member>
         <member name="M:Azure.Response`1.op_Implicit(Azure.Response{`0})~`0">
@@ -6328,9 +7424,6 @@
         </member>
         <member name="M:Azure.Response`1.GetHashCode">
             <summary>Serves as the default hash function.</summary><returns>A hash code for the current object.</returns>
-        </member>
-        <member name="M:Azure.Response`1.ToString">
-            <summary>Returns a string that represents the current object.</summary><returns>A string that represents the current object.</returns>
         </member>
         <member name="T:Azure.AzureCoreExtensions">
             <summary>
@@ -6373,6 +7466,29 @@
             Otherwise, it returns either an object[] or Dictionary&lt;string, object&gt;.
             Each value in the key value pair or list will also be converted into a primitive or another complex type recursively.
             </returns>
+        </member>
+        <member name="M:Azure.AzureCoreExtensions.ToDynamicFromJson(System.BinaryData)">
+            <summary>
+            Return the content of the BinaryData as a dynamic type.  Please see https://aka.ms/azsdk/net/dynamiccontent for details.
+            </summary>
+        </member>
+        <member name="M:Azure.AzureCoreExtensions.ToDynamicFromJson(System.BinaryData,Azure.Core.Serialization.JsonPropertyNames,System.String)">
+            <summary>
+            Return the content of the BinaryData as a dynamic type.  Please see https://aka.ms/azsdk/net/dynamiccontent for details.
+            <paramref name="propertyNameFormat">The format of property names in the JSON content.
+            This value indicates to the dynamic type that it can convert property names on the returned value to this format in the underlying JSON.
+            Please see https://aka.ms/azsdk/net/dynamiccontent#use-c-naming-conventions for details.
+            </paramref>
+            <paramref name="dateTimeFormat">The standard format specifier to pass when serializing DateTime and DateTimeOffset values in the JSON content.
+            To serialize to unix time, pass the value <code>"x"</code> and
+            see <see href="https://learn.microsoft.com/dotnet/standard/base-types/standard-date-and-time-format-strings">https://learn.microsoft.com/dotnet/standard/base-types/standard-date-and-time-format-strings#table-of-format-specifiers</see> for other well known values.
+            </paramref>
+            </summary>
+        </member>
+        <member name="M:Azure.AzureCoreExtensions.ToDynamicFromJson(System.BinaryData,Azure.Core.Serialization.DynamicDataOptions)">
+            <summary>
+            Return the content of the BinaryData as a dynamic type.
+            </summary>
         </member>
         <member name="T:Azure.SyncAsyncEventArgs">
             <summary>
@@ -6534,6 +7650,364 @@
         <member name="P:System.Diagnostics.CodeAnalysis.DoesNotReturnIfAttribute.ParameterValue">
             <summary>Gets the condition parameter value.</summary>
         </member>
+        <member name="T:System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute">
+            <summary>
+            Indicates that the specified method requires the ability to generate new code at runtime,
+            for example through <see cref="N:System.Reflection" />.
+            </summary>
+            <remarks>
+            This allows tools to understand which methods are unsafe to call when compiling ahead of time.
+            </remarks>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute" /> class
+            with the specified message.
+            </summary>
+            <param name="message">
+            A message that contains information about the usage of dynamic code.
+            </param>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute.Message">
+            <summary>
+            Gets a message that contains information about the usage of dynamic code.
+            </summary>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute.Url">
+            <summary>
+            Gets or sets an optional URL that contains more information about the method,
+            why it requires dynamic code, and what options a consumer has to deal with it.
+            </summary>
+        </member>
+        <member name="T:System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute">
+            <summary>
+            Indicates that the specified method requires dynamic access to code that is not referenced
+            statically, for example through <see cref="N:System.Reflection" />.
+            </summary>
+            <remarks>
+            This allows tools to understand which methods are unsafe to call when removing unreferenced
+            code from an application.
+            </remarks>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute" /> class
+            with the specified message.
+            </summary>
+            <param name="message">
+            A message that contains information about the usage of unreferenced code.
+            </param>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute.Message">
+            <summary>
+            Gets a message that contains information about the usage of unreferenced code.
+            </summary>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute.Url">
+            <summary>
+            Gets or sets an optional URL that contains more information about the method,
+            why it requires unreferenced code, and what options a consumer has to deal with it.
+            </summary>
+        </member>
+        <member name="T:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute">
+            <summary>
+            Suppresses reporting of a specific rule violation, allowing multiple suppressions on a
+            single code artifact.
+            </summary>
+            <remarks>
+            <see cref="T:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute" /> is different than
+            <see cref="T:System.Diagnostics.CodeAnalysis.SuppressMessageAttribute" /> in that it doesn't have a
+            <see cref="T:System.Diagnostics.ConditionalAttribute" />. So it is always preserved in the compiled assembly.
+            </remarks>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute" />
+            class, specifying the category of the tool and the identifier for an analysis rule.
+            </summary>
+            <param name="category">The category for the attribute.</param>
+            <param name="checkId">The identifier of the analysis rule the attribute applies to.</param>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Category">
+            <summary>
+            Gets the category identifying the classification of the attribute.
+            </summary>
+            <remarks>
+            The <see cref="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Category" /> property describes the tool or tool analysis category
+            for which a message suppression attribute applies.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.CheckId">
+            <summary>
+            Gets the identifier of the analysis tool rule to be suppressed.
+            </summary>
+            <remarks>
+            Concatenated together, the <see cref="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Category" /> and <see cref="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.CheckId" />
+            properties form a unique check identifier.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Scope">
+            <summary>
+            Gets or sets the scope of the code that is relevant for the attribute.
+            </summary>
+            <remarks>
+            The Scope property is an optional argument that specifies the metadata scope for which
+            the attribute is relevant.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Target">
+            <summary>
+            Gets or sets a fully qualified path that represents the target of the attribute.
+            </summary>
+            <remarks>
+            The <see cref="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Target" /> property is an optional argument identifying the analysis target
+            of the attribute. An example value is "System.IO.Stream.ctor():System.Void".
+            Because it is fully qualified, it can be long, particularly for targets such as parameters.
+            The analysis tool user interface should be capable of automatically formatting the parameter.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.MessageId">
+            <summary>
+            Gets or sets an optional argument expanding on exclusion criteria.
+            </summary>
+            <remarks>
+            The <see cref="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.MessageId" /> property is an optional argument that specifies additional
+            exclusion where the literal metadata target is not sufficiently precise. For example,
+            the <see cref="T:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute" /> cannot be applied within a method,
+            and it may be desirable to suppress a violation against a statement in the method that will
+            give a rule violation, but not against all statements in the method.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute.Justification">
+            <summary>
+            Gets or sets the justification for suppressing the code analysis message.
+            </summary>
+        </member>
+        <member name="T:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute">
+            <summary>
+            States a dependency that one member has on another.
+            </summary>
+            <remarks>
+            This can be used to inform tooling of a dependency that is otherwise not evident purely from
+            metadata and IL, for example a member relied on via reflection.
+            </remarks>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute" /> class
+            with the specified signature of a member on the same type as the consumer.
+            </summary>
+            <param name="memberSignature">The signature of the member depended on.</param>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.#ctor(System.String,System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute" /> class
+            with the specified signature of a member on a <see cref="T:System.Type" />.
+            </summary>
+            <param name="memberSignature">The signature of the member depended on.</param>
+            <param name="type">The <see cref="T:System.Type" /> containing <paramref name="memberSignature" />.</param>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute" /> class
+            with the specified signature of a member on a type in an assembly.
+            </summary>
+            <param name="memberSignature">The signature of the member depended on.</param>
+            <param name="typeName">The full name of the type containing the specified member.</param>
+            <param name="assemblyName">The assembly name of the type containing the specified member.</param>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.#ctor(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes,System.Type)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute" /> class
+            with the specified types of members on a <see cref="T:System.Type" />.
+            </summary>
+            <param name="memberTypes">The types of members depended on.</param>
+            <param name="type">The <see cref="T:System.Type" /> containing the specified members.</param>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.#ctor(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute" /> class
+            with the specified types of members on a type in an assembly.
+            </summary>
+            <param name="memberTypes">The types of members depended on.</param>
+            <param name="typeName">The full name of the type containing the specified members.</param>
+            <param name="assemblyName">The assembly name of the type containing the specified members.</param>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.MemberSignature">
+            <summary>
+            Gets the signature of the member depended on.
+            </summary>
+            <remarks>
+            Either <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.MemberSignature" /> must be a valid string or <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.MemberTypes" />
+            must not equal <see cref="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.None" />, but not both.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.MemberTypes">
+            <summary>
+            Gets the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes" /> which specifies the type
+            of members depended on.
+            </summary>
+            <remarks>
+            Either <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.MemberSignature" /> must be a valid string or <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.MemberTypes" />
+            must not equal <see cref="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.None" />, but not both.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.Type">
+            <summary>
+            Gets the <see cref="T:System.Type" /> containing the specified member.
+            </summary>
+            <remarks>
+            If neither <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.Type" /> nor <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.TypeName" /> are specified,
+            the type of the consumer is assumed.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.TypeName">
+            <summary>
+            Gets the full name of the type containing the specified member.
+            </summary>
+            <remarks>
+            If neither <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.Type" /> nor <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.TypeName" /> are specified,
+            the type of the consumer is assumed.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.AssemblyName">
+            <summary>
+            Gets the assembly name of the specified type.
+            </summary>
+            <remarks>
+            <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.AssemblyName" /> is only valid when <see cref="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.TypeName" /> is specified.
+            </remarks>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicDependencyAttribute.Condition">
+            <summary>
+            Gets or sets the condition in which the dependency is applicable, e.g. "DEBUG".
+            </summary>
+        </member>
+        <member name="T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute">
+             <summary>
+             Indicates that certain members on a specified <see cref="T:System.Type" /> are accessed dynamically,
+             for example through <see cref="N:System.Reflection" />.
+             </summary>
+             <remarks>
+             This allows tools to understand which members are being accessed during the execution
+             of a program.
+            
+             This attribute is valid on members whose type is <see cref="T:System.Type" /> or <see cref="T:System.String" />.
+            
+             When this attribute is applied to a location of type <see cref="T:System.String" />, the assumption is
+             that the string represents a fully qualified type name.
+            
+             When this attribute is applied to a class, interface, or struct, the members specified
+             can be accessed dynamically on <see cref="T:System.Type" /> instances returned from calling
+             <see cref="M:System.Object.GetType" /> on instances of that class, interface, or struct.
+            
+             If the attribute is applied to a method it's treated as a special case and it implies
+             the attribute should be applied to the "this" parameter of the method. As such the attribute
+             should only be used on instance methods of types assignable to System.Type (or string, but no methods
+             will use it there).
+             </remarks>
+        </member>
+        <member name="M:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute.#ctor(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes)">
+            <summary>
+            Initializes a new instance of the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute" /> class
+            with the specified member types.
+            </summary>
+            <param name="memberTypes">The types of members dynamically accessed.</param>
+        </member>
+        <member name="P:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute.MemberTypes">
+            <summary>
+            Gets the <see cref="T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes" /> which specifies the type
+            of members dynamically accessed.
+            </summary>
+        </member>
+        <member name="T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes">
+             <summary>
+             Specifies the types of members that are dynamically accessed.
+            
+             This enumeration has a <see cref="T:System.FlagsAttribute" /> attribute that allows a
+             bitwise combination of its member values.
+             </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.None">
+            <summary>
+            Specifies no members.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicParameterlessConstructor">
+            <summary>
+            Specifies the default, parameterless public constructor.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors">
+            <summary>
+            Specifies all public constructors.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicConstructors">
+            <summary>
+            Specifies all non-public constructors.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicMethods">
+            <summary>
+            Specifies all public methods.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicMethods">
+            <summary>
+            Specifies all non-public methods.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields">
+            <summary>
+            Specifies all public fields.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicFields">
+            <summary>
+            Specifies all non-public fields.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicNestedTypes">
+            <summary>
+            Specifies all public nested types.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicNestedTypes">
+            <summary>
+            Specifies all non-public nested types.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties">
+            <summary>
+            Specifies all public properties.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicProperties">
+            <summary>
+            Specifies all non-public properties.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicEvents">
+            <summary>
+            Specifies all public events.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.NonPublicEvents">
+            <summary>
+            Specifies all non-public events.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.Interfaces">
+            <summary>
+            Specifies all interfaces implemented by the type.
+            </summary>
+        </member>
+        <member name="F:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All">
+            <summary>
+            Specifies all members.
+            </summary>
+        </member>
         <member name="M:Azure.Pageable`1.System#Collections#IEnumerable#GetEnumerator">
             <summary>Returns an enumerator that iterates through a collection.</summary><returns>An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.</returns>
         </member>
@@ -6563,6 +8037,9 @@
         </member>
         <member name="P:Azure.Core.GeoJson.GeoArray`1.Enumerator.System#Collections#IEnumerator#Current">
             <summary>Gets the element in the collection at the current position of the enumerator.</summary><returns>The element in the collection at the current position of the enumerator.</returns>
+        </member>
+        <member name="M:Azure.Core.Json.MutableJsonElement.ObjectEnumerator.System#Collections#Generic#IEnumerable{(System#StringName@Azure#Core#Json#MutableJsonElementValue)}#GetEnumerator">
+            <summary>Returns an enumerator that iterates through the collection.</summary><returns>An enumerator that can be used to iterate through the collection.</returns>
         </member>
     </members>
 </doc>

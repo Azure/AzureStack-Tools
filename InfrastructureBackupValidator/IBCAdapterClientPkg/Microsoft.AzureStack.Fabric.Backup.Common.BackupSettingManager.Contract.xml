@@ -14,6 +14,11 @@
             Repository registrations
             </summary>
         </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.EldestRecoveryPoint">
+            <summary>
+            Backup location eldest recovery point
+            </summary>
+        </member>
         <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.EncryptionCertBase64">
             <summary>
             Gets or sets the encryption cert
@@ -93,21 +98,23 @@
             <param name="fullRepositoryName">Full repo Name</param>
             <returns>The synthetic backup if found</returns>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.GetBackup(System.Nullable{System.Guid},System.String)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.GetBackup(System.Nullable{System.Guid},System.String,System.Boolean)">
             <summary>
             Returns backups with given backup ID
             If backupID is not provided, return all backups.
             </summary>
             <param name="backupID">backup ID</param>
             <param name="progressiveStoreName">The backup store of the progressive backup</param>
+            <param name="ignoreRpt">Whether to ignore recovery point when get backup</param>
             <returns>list of backup info</returns>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.DeleteBackupByContemporaneousBackups(System.DateTime)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.DeleteBackupByContemporaneousBackups(System.DateTime,System.Nullable{System.DateTime}@)">
             <summary>
             Deletes backup data with recovery point according to contemporaneous backup rule based on current
             contents in the cache.
             </summary>
             <param name="recoveryPoint">Recovery point</param>
+            <param name="actualRpt">Out the actual recovery point calculated by the retention job</param>
             <returns>BackupIds and files failed to be deleted</returns>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider.DeleteBackupByRepositoryBackups(System.DateTime,System.String)">
@@ -226,6 +233,11 @@
             Gets the store type
             </summary>
         </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.SerializedRpt">
+            <summary>
+            Serialized backup location eldest recovery point.
+            </summary>
+        </member>
         <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.BackupBasePath">
             <summary>
             Backup base directory
@@ -247,6 +259,12 @@
             </summary>
             <param name="backupInfo">backup information</param>
             <param name="progressiveStoreName">progressive store to upload backup info to</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.UploadBackupLocationRecoveryPoint(System.Nullable{System.DateTime})">
+            <summary>
+            Upload serialized backup location recovery point json.
+            </summary>
+            <param name="rpt">backup location recovery point</param>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.UploadRegistrationJson(System.String,System.String)">
             <summary>
@@ -291,42 +309,48 @@
             Test if external store is accessible
             </summary>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.RebuildCache(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.String,System.Boolean,System.Boolean)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.RebuildCache(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime},System.String,System.Boolean,System.Boolean)">
             <summary>
             Rebuild cache
             </summary>
             <param name="registrations">Repository registrations to determine if a backup is cloud recovery ready</param>
+            <param name="inprocRpt">Backup location eldest recovery point</param>
             <param name="storeName">Progressive store to rebuild</param>
             <param name="includeLegacyBackups">Rebuild legacy backup cache too</param>
             <param name="forceRebuild">Force rebuild</param>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.GetBackupInfo(System.String,System.Guid,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.GetBackupInfo(System.String,System.Guid,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime})">
             <summary>
             Get progressive backupInfo
             </summary>
             <param name="storeName">The progressive store name</param>
             <param name="backupId">Backup Id</param>
             <param name="regsitrations">Repo registration</param>
+            <param name="rpt">Backup location eldest recovery point</param>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.GetBackup(System.Nullable{System.Guid},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.String)">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.GetBackup(System.Nullable{System.Guid},System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime},System.String,System.Boolean)">
             <summary>
             Get backup
             </summary>
             <param name="backupID">Backup Id</param>
             <param name="registrations">Repo registration</param>
+            <param name="inprocRpt">The eldest recovery point retrieved from RC</param>
             <param name="storeName">The progressive store name</param>
+            <param name="ignoreRpt">Whether to ignore filtering by Rpt</param>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.GetContemporaneousSyntheticFullBackup(System.String,System.Guid,System.String)">
             <summary>
             Return a contemporaneous synthetic full backup
             </summary>
         </member>
-        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.DeleteBackupByContemporaneousBackups(System.DateTime,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.DeleteBackupByContemporaneousBackups(System.DateTime,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Boolean,System.Nullable{System.DateTime}@)">
             <summary>
             Delete backup based on recovery point according to contemporaneous backup rule
             </summary>
             <param name="recoveryPoint">Date time to determine which backups are kept</param>
             <param name="registrations">Backup repo registrations</param>
+            <param name="isInternalStore">Whether is internal store</param>
+            <param name="actualRpt">Out the actual recovery point calculated by the retention job</param>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStore.DeleteBackupByRepositoryBackups(System.DateTime,System.String)">
             <summary>
@@ -394,6 +418,11 @@
             Refresh the serialized backup info of a backup from the progressive store
             </summary>
             <param name="progressiveStoreName">The backup store of the progressive backup</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider.GetBackupLocationEldestRecoveryPoint">
+            <summary>
+            Get eldest recovery point from the backup store or RC
+            </summary>
         </member>
         <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IFileShare">
             <summary>

@@ -128,7 +128,7 @@
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObject``1(``0,System.String)">
             <summary>
-            Serializes an object.
+            Serializes an object into xml file.
             </summary>
             <typeparam name="T">object type</typeparam>
             <param name="serializableObject">object to be serialized</param>
@@ -136,7 +136,23 @@
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObject``1(``0,System.IO.MemoryStream)">
             <summary>
-            Serializes an object.
+            Serializes an object into xml string as memory stream.
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="serializableObject">object to be serialized</param>
+            <param name="memoryStream">the dest memory stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObjectIntoJsonFile``1(``0,System.String)">
+            <summary>
+            Serializes an object into Json file.
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="serializableObject">object to be serialized</param>
+            <param name="fileName">file name to hold the serialized string</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObjectIntoJsonStream``1(``0,System.IO.MemoryStream)">
+            <summary>
+            Serializes an object into Json string as memory stream.
             </summary>
             <typeparam name="T">object type</typeparam>
             <param name="serializableObject">object to be serialized</param>
@@ -148,21 +164,31 @@
             </summary>
             <typeparam name="T">Object type</typeparam>
             <param name="fileName">file name holding content to be deserialized</param>
-            <returns>serialized object</returns>
+            <returns>deserialized object</returns>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeSerializeObject``1(System.IO.MemoryStream)">
             <summary>
-            Deserializes an xml steam into an object list
+            Deserialize stream with the xml deserializer
             </summary>
             <typeparam name="T">Object type</typeparam>
             <param name="stream">memory stream holding content to be deserialized</param>
-            <returns>serialized object</returns>
+            <returns>deserialized object</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeserializeJsonFromFile``1(System.String)">
+            <summary>
+            Deserializes a Json file into an object list
+            </summary>
+            <typeparam name="T">Object type</typeparam>
+            <param name="fileName">file name holding content to be deserialized</param>
+            <returns>deserialized object</returns>
         </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeserializeJsonFromStream``1(System.IO.MemoryStream)">
             <summary>
             Deserialize stream with the Json deserializer
             </summary>
             <typeparam name="T">Type to deserialize</typeparam>
+            <param name="stream">memory stream holding content to be deserialized</param>
+            <returns>deserialized object</returns>
         </member>
         <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.UriHelpers.UriSeparator">
             <summary>

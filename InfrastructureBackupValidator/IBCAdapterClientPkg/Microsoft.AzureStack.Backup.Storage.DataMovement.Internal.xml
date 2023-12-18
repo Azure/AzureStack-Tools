@@ -172,6 +172,14 @@
             </summary>
             <returns>Memory information from /proc/meminfo</returns>
         </member>
+        <member name="T:Microsoft.AzureStack.Backup.Storage.DataMovement.LocalPathEscaper">
+            <summary>
+            Local path escaper to avoid windows reserved file name.
+            Because there're some filename allowed by Azure blob is reserved by windows,
+            we need to avoid using such name in local file system. Insteaded, we add a
+            previx "b_" to every filename and folder name.
+            </summary>
+        </member>
         <member name="M:Microsoft.AzureStack.Backup.Storage.DataMovement.MD5Wrapper.UpdateHash(System.Byte[],System.Int32,System.Int32)">
             <summary>
             Calculates an on-going hash using the input byte array.

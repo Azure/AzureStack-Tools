@@ -194,6 +194,9 @@
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String)">
             <inheritdoc/>
         </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.UploadBackupLocationRecoveryPoint(System.Nullable{System.DateTime})">
+            <inheritdoc/>
+        </member>
         <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential)">
             <summary>
             Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase" /> class, and connects to the share.
