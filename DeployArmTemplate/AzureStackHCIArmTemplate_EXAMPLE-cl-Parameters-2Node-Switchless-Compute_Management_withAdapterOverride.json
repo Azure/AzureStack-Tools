@@ -1,0 +1,231 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deploymentMode": {
+      "value": "Validate"
+    },
+    "keyVaultName": {
+      "value": "EXAMPLE-cl-hcikv"
+    },
+    "softDeleteRetentionDays": {
+      "value": 30
+    },
+    "diagnosticStorageAccountName": {
+      "value": "EXAMPLEdiagsa"
+    },
+    "logsRetentionInDays": {
+      "value": 30
+    },
+    "storageAccountType": {
+      "value": "Standard_LRS"
+    },
+    "secretsLocation": {
+      "value": "https://EXAMPLE-cl-hcikv.vault.azure.net/"
+    },
+    "ClusterWitnessStorageAccountName": {
+      "value": "EXAMPLEcloudwitness"
+    },
+    "clusterName": {
+      "value": "EXAMPLE-cl"
+    },
+    "location": {
+      "value": "[resourceGroup().location]"
+    },
+    "tenantId": {
+      "value": "[subscription().tenantId]"
+    },
+    "localAdminSecretName": {
+      "value": "LocalAdminCredential"
+    },
+    "localAdminSecretValue": {
+      "value": "ENCODEDLOCALADMINSECRETHERE"
+    },
+    "domainAdminSecretName": {
+      "value": "AzureStackLCMUserCredential"
+    },
+    "domainAdminSecretValue": {
+      "value": "ENCODEDDOMAINADMINSECRETHERE"
+    },
+    "arbDeploymentSpnName": {
+      "value": "DefaultARBApplication"
+    },
+    "arbDeploymentSpnValue": {
+      "value": "ENCODEDARBSPNSECRETHERE"
+    },
+    "storageWitnessName": {
+      "value": "WitnessStorageKey"
+    },
+    "storageWitnessValue": {
+      "value": "ENCODEDWITNESSKEYSECRETHERE"
+    },
+    "apiVersion": {
+      "value": "2023-08-01-preview"
+    },
+    "arcNodeResourceIds": {
+      "value": [
+        "/subscriptions/SUBSCRIPTIONGUIDHERE/resourceGroups/EXAMPLE-Resources/providers/Microsoft.HybridCompute/machines/EXAMPLE-SERVER-1",
+        "/subscriptions/SUBSCRIPTIONGUIDHERE/resourceGroups/EXAMPLE-Resources/providers/Microsoft.HybridCompute/machines/EXAMPLE-SERVER-2"
+      ]
+    },
+    "domainFqdn": {
+      "value": "EXAMPLE.lab"
+    },
+    "namingPrefix": {
+      "value": "EXAMPLE"
+    },
+    "adouPath": {
+      "value": "OU=EXAMPLE,DC=EXAMPLE,DC=lab"
+    },
+    "securityLevel": {
+      "value": "Recommended"
+    },
+    "driftControlEnforced": {
+      "value": true
+    },
+    "credentialGuardEnforced": {
+      "value": true
+    },
+    "smbSigningEnforced": {
+      "value": true
+    },
+    "smbClusterEncryption": {
+      "value": null
+    },
+    "bitlockerBootVolume": {
+      "value": true
+    },
+    "bitlockerDataVolumes": {
+      "value": true
+    },
+    "wdacEnforced": {
+      "value": true
+    },
+    "streamingDataClient": {
+      "value": true
+    },
+    "euLocation": {
+      "value": null
+    },
+    "episodicDataUpload": {
+      "value": true
+    },
+    "configurationMode": {
+      "value": "Express"
+    },
+    "subnetMask": {
+      "value": "255.255.255.0"
+    },
+    "defaultGateway": {
+      "value": "100.69.32.1"
+    },
+    "startingIPAddress": {
+      "value": "100.69.32.6"
+    },
+    "endingIPAddress": {
+      "value": "100.69.32.31"
+    },
+    "dnsServers": {
+      "value": [
+        "100.71.45.125"
+      ]
+    },
+    "physicalNodesSettings": {
+      "value": [
+        {
+          "name": "EXAMPLE-SERVER-1",
+          "ipv4Address": "100.69.32.4"
+        },
+        {
+          "name": "EXAMPLE-SERVER-2",
+          "ipv4Address": "100.69.32.5"
+        }
+      ]
+    },
+    "networkingType": {
+      "value": "switchlessMultiServerDeployment"
+    },
+    "networkingPattern": {
+      "value": "convergedManagementCompute"
+    },
+	"intentList": {
+		"value": [
+			{
+				"name": "Compute_Management",
+				"trafficType": [
+					"Management",
+					"Compute"
+				],
+				"adapter": [
+					"Mgmt_Compute1",
+					"Mgmt_Compute2"
+				],
+				"overrideVirtualSwitchConfiguration": false,
+				"virtualSwitchConfigurationOverrides": {
+					"enableIov": "",
+					"loadBalancingAlgorithm": ""
+				},
+				"overrideQosPolicy": false,
+				"qosPolicyOverrides": {
+					"priorityValue8021Action_Cluster": "7",
+					"priorityValue8021Action_SMB": "3",
+					"bandwidthPercentage_SMB": "50"
+				},
+				"overrideAdapterProperty": true,
+				"adapterPropertyOverrides": {
+					"jumboPacket": "",
+					"networkDirect": "Disabled",
+					"networkDirectTechnology": ""
+				}
+			},
+			{
+				"name": "Storage",
+				"trafficType": [
+					"Storage"
+				],
+				"adapter": [
+					"Storage1",
+					"Storage2"
+				],
+				"overrideVirtualSwitchConfiguration": false,
+				"virtualSwitchConfigurationOverrides": {
+					"enableIov": "",
+					"loadBalancingAlgorithm": ""
+				},
+				"overrideQosPolicy": false,
+				"qosPolicyOverrides": {
+					"priorityValue8021Action_Cluster": "7",
+					"priorityValue8021Action_SMB": "3",
+					"bandwidthPercentage_SMB": "50"
+				},
+				"overrideAdapterProperty": false,
+				"adapterPropertyOverrides": {
+					"jumboPacket": "9014",
+					"networkDirect": "Enabled",
+					"networkDirectTechnology": "RoCEv2"
+				}
+			}
+		]
+	},
+    "storageNetworkList": {
+      "value": [
+        {
+          "name": "StorageNetwork1",
+          "networkAdapterName": "Storage1",
+          "vlanId": "711"
+        },
+        {
+          "name": "StorageNetwork2",
+          "networkAdapterName": "Storage2",
+          "vlanId": "712"
+        }
+      ]
+    },
+    "storageConnectivitySwitchless": {
+      "value": true
+    },
+    "customLocation": {
+      "value": "EXAMPLE-clCustomLocation"
+    }
+  }
+}
