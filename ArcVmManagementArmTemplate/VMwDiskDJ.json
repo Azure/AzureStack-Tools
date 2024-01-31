@@ -47,13 +47,13 @@
         "privateIPAddress": {
             "type": "String",
             "metadata": {
-                "description": "The IP address for the network interface."
+                "description": "The IP address for the virtual network interface."
             }
         },
         "subnetId": {
             "type": "String",
             "metadata": {
-                "description": "The ARM ID of the subnet for the network interface."
+                "description": "The ARM ID of the subnet for the virtual network interface."
             }
         },
         "vmSize": {
