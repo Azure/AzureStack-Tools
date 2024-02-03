@@ -1,0 +1,341 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupClient`1">
+            <summary>
+            Backup client model
+            </summary>
+            <typeparam name="TBackupInfoClient">The client model class</typeparam>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901">
+            <summary>
+            BackupInfo client model for API version 2018-09-01
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.BackupDataVersion">
+            <summary>
+            The backup data version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.BackupId">
+            <summary>
+            Gets or sets unique ID for a given backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.RoleStatus">
+            <summary>
+            Gets or sets backup status for roles
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.Status">
+            <summary>
+            Gets or sets overall backup status
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.CreatedDateTime">
+            <summary>
+            Gets or sets backup creation time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.TimeTakenToCreate">
+            <summary>
+            Gets or sets time taken to create the backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.StampVersion">
+            <summary>
+            The stamp version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.OemVersion">
+            <summary>
+            The OEM version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.DeploymentID">
+            <summary>
+            The deployment ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.EncryptionCertThumbprint">
+            <summary>
+            Gets or sets backup encryption cert thumbprint
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.CompletelyUploaded">
+            <summary>
+            Gets or sets whether the backup has been completely uploaded
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.IsAutomaticBackup">
+            <summary>
+            Gets or sets whether the backup is an automatic backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupInfoClient20180901.IsCloudRecoveryReady">
+            <summary>
+            Gets or sets whether the backup can be used for cloud recovery
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupProviderClient`1">
+            <summary>
+            Backup provider client model
+            </summary>
+            <typeparam name="TBackupProviderClient">The BackupProvider client model</typeparam>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupProviderClient20180901">
+            <summary>
+            BackupProvider client model for API version 2018-09-01
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901">
+            <summary>
+            External store client model for API version 2018-09-01
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.Path">
+            <summary>
+            External store path
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.UserName">
+            <summary>
+            Username
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.Password">
+            <summary>
+            Password
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.EncryptionCertBase64">
+            <summary>
+            The thumbprint of the encryption certificate
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.EncryptionCertThumbprint">
+            <summary>
+            The thumbprint of the encryption certificate
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.BackupFrequencyInHours">
+            <summary>
+            Backup frequency in hours
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.AvailableCapacity">
+            <summary>
+            Available capacity of external store
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.IsBackupSchedulerEnabled">
+            <summary>
+            Whether the backup scheduler is enabled
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.NextBackupTime">
+            <summary>
+            The next backup date time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.LastBackupTime">
+            <summary>
+            The last backup date time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.ExternalStoreClient20180901.BackupRetentionPeriodInDays">
+            <summary>
+            Backup retention period in days
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.PruneList">
+            <summary>
+            Prune list
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Client.BackupLocationClient`1">
+            <summary>
+            Backup location client model
+            </summary>
+            <typeparam name="TExternalStoreClient">The ExternalStore client model</typeparam>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupConverter`1">
+            <summary>
+            Converter base to convert between Core model <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup"/> and Client models
+            </summary>
+            <typeparam name="TBackupInfoClient">The BackupInfo client model</typeparam>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupConverter`1.ClientModelType">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupConverter`1.CoreModelToClientModel(Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupConverter`1.ClientModelToCoreModel(System.Object,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupInfoConverter`1">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupInfoConverter`1.CoreModelToClientModel(Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupInfoConverter`1.ClientModelToCoreModel(`0,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupLocationConverter`1">
+            <summary>
+            Converter base to convert between Core model <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation"/> and Client models
+            </summary>
+            <typeparam name="TExternalStoreClient">The externalStore client model</typeparam>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupLocationConverter`1.ClientModelType">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupLocationConverter`1.CoreModelToClientModel(Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupLocationConverter`1.ClientModelToCoreModel(System.Object,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderConverter`1">
+            <inheritdoc/>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderConverter`1.ClientModelType">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderConverter`1.CoreModelToClientModel(Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderConverter`1.ClientModelToCoreModel(System.Object,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderInfoConverter`1">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderInfoConverter`1.CoreModelToClientModel(Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProviderCoreBRP)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.BackupProviderInfoConverter`1.ClientModelToCoreModel(`0,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ExternalStoreConverter`1">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ExternalStoreConverter`1.CoreModelToClientModel(Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.ExternalStore)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ExternalStoreConverter`1.ClientModelToCoreModel(`0,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.IModelConverter`2">
+            <summary>
+            Converter interface to convert between core model <typeparamref name="TCore"/> and client model <typeparamref name="TClient"/>>
+            </summary>
+            <typeparam name="TCore">core model</typeparam>
+            <typeparam name="TClient">client model</typeparam>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.IModelConverter`2.CoreModelToClientModel(`0)">
+            <summary>
+            Converts core model <typeparamref name="TCore"/> to client model <typeparamref name="TClient"/>>
+            </summary>
+            <param name="coreModel">core model object</param>
+            <returns>client model object</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.IModelConverter`2.ClientModelToCoreModel(`1,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <summary>
+            Converts client model <typeparamref name="TClient"/> to core model <typeparamref name="TCore"/>>
+            </summary>
+            <param name="clientModel">client model object</param>
+            <param name="rpId">The resource provider id of the object to convert</param>
+            <returns>core model object</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ResourcePropertiesConverterBase`1">
+            <summary>
+            Converter base to convert between Core model and Client model of resource properties
+            </summary>
+            <typeparam name="TCore">Core model</typeparam>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ResourcePropertiesConverterBase`1.CoreModelType">
+            <summary>
+            Gets core model type
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ResourcePropertiesConverterBase`1.ClientModelType">
+            <summary>
+            Gets client model type
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ResourcePropertiesConverterBase`1.CoreModelToClientModel(`0)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Converters.ResourcePropertiesConverterBase`1.ClientModelToCoreModel(System.Object,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <inheritdoc/>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup.ResourceTypeName">
+            <summary>
+            The name of this resource type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup.Type">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBroker">
+            <summary>
+            This class models a backup broker resource.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBroker.ResourceTypeName">
+            <summary>
+            The name of this resource type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBroker.Type">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBrokerCoreBRP">
+            <summary>
+            Backup broker core BRP model.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupInfo">
+            <summary>
+            backup information.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation">
+            <summary>
+            This class models a backup location resource.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation.ResourceTypeName">
+            <summary>
+            The name of this resource type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation.Type">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider">
+            <summary>
+            This class models a backup provider resource.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider.ResourceTypeName">
+            <summary>
+            The name of this resource type.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider.Type">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProviderCoreBRP">
+            <summary>
+            Backup provider core BRP model.
+            </summary>
+        </member>
+    </members>
+</doc>

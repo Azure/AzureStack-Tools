@@ -1,0 +1,349 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Omu.ValueInjecter</name>
+    </assembly>
+    <members>
+        <member name="T:Omu.ValueInjecter.Flat.PropertyWithComponent">
+            <summary>
+            Unflat target property info
+            </summary>
+        </member>
+        <member name="P:Omu.ValueInjecter.Flat.PropertyWithComponent.Property">
+            <summary>
+            Property that is target of unflatteing path
+            </summary>
+        </member>
+        <member name="P:Omu.ValueInjecter.Flat.PropertyWithComponent.Component">
+            <summary>
+            Object last target of unflattening path
+            </summary>
+        </member>
+        <member name="P:Omu.ValueInjecter.Flat.PropertyWithComponent.Level">
+            <summary>
+            Unflatteing level (a.b.c = level 2)
+            </summary>
+        </member>
+        <member name="T:Omu.ValueInjecter.Flat.TrailFinder">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.TrailFinder.GetTrails(System.String,System.Collections.Generic.IEnumerable{System.Reflection.PropertyInfo},System.Func{System.String,System.Reflection.PropertyInfo,System.Boolean},System.StringComparison,System.Boolean)">
+            <summary>
+            Get all possible trails based on the property name
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupProps">properties to look into</param>
+            <param name="match">match func used for checking the last property in the trail</param>
+            <param name="comparison">StringComparison type used for building the flat trail</param>
+            <param name="forFlattening">getting trails for flattening or unflattening, in the first case we need to make sure the properties are readable in the latter writeable</param>
+            <returns>all possible trails</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.TrailFinder.GetTrails(System.String,System.Object,System.Func{System.String,System.Reflection.PropertyInfo,System.Boolean},System.StringComparison,System.Boolean)">
+            <summary>
+            Get all possible trails based on the property name
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object whose properties to look into</param>
+            <param name="match">match func used for checking the last property in the trail</param>
+            <param name="comparison">StringComparison type used for building the flat trail</param>
+            <param name="forFlattening">getting trails for flattening or unflattening,
+            in the first case we need to make sure the properties are readable in the latter writeable</param>
+            <returns>all possible trails</returns>
+        </member>
+        <member name="T:Omu.ValueInjecter.Flat.Tunnelier">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.Tunnelier.Digg(System.Collections.Generic.IList{System.String},System.Object,System.Func{System.Reflection.PropertyInfo,System.Object,System.Object})">
+            <summary>
+            given the trail (path) get the unflat target property info
+            </summary>
+            <param name="trail">Unflattening path</param>
+            <param name="target">object to digg into</param>
+            <param name="activator">object creator, used to create objects along the way if null is encountered by default Activator.CreateIntance is used</param>
+            <returns>unflat target property info</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.Tunnelier.Find(System.Collections.Generic.IList{System.String},System.Object)">
+            <summary>
+            Get the unflat target info
+            </summary>
+            <param name="trail">unflat path</param>
+            <param name="target">object to look into</param>
+            <returns>unflat target property info</returns>
+        </member>
+        <member name="T:Omu.ValueInjecter.Flat.UberFlatter">
+            <summary>
+            performs flattening and unflattening; 
+            flattening = from a.b.c to abc;
+            unflattening = from abc to a.b.c (if b is null new object is created and assigned);
+            it's possible to have multiple matches abc => [a.b.c, ab.c a.bc], which is why all methods return a collection of targets;
+            first version of this class was made by Vadim Plamadeala ☺
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.UberFlatter.Unflat(System.String,System.Object,System.Func{System.String,System.Reflection.PropertyInfo,System.Boolean},System.StringComparison,System.Func{System.Reflection.PropertyInfo,System.Object,System.Object})">
+            <summary>
+            Get unflat targets for given flatPropertyName, objects will be created if null encountered in the path towards the target, you can set the value from flatProperty into the target(s)
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object to look for targets into</param>
+            <param name="match">match func used for checking the last property in the trail</param>
+            <param name="comparison"></param>
+            <param name="activator">creator func, used to create objects along the way if null is encountered, by default Activator.CreateIntance is used</param>
+            <returns>all matching unflat targets info</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.UberFlatter.Unflat(System.String,System.Object,System.Func{System.String,System.Reflection.PropertyInfo,System.Boolean},System.Func{System.Reflection.PropertyInfo,System.Object,System.Object})">
+            <summary>
+            Get unflat targets for given flatPropertyName, objects will be created if null encountered in the path towards the target, you can set the value from flatProperty into the target(s)
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object to look for targets into</param>
+            <param name="match">match func used for checking the last property in the trail</param>
+            <param name="activator">creator func, used to create objects along the way if null is encountered, by default Activator.CreateIntance is used</param>
+            <returns>all matching unflat targets info</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.UberFlatter.Unflat(System.String,System.Object,System.Func{System.Reflection.PropertyInfo,System.Object,System.Object})">
+            <summary>
+            Get unflat targets for given flatPropertyName, objects will be created if null encountered in the path towards the target, you can set the value from flatProperty into the target(s)
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object to look for targets into</param>
+            <param name="activator">creator func, used to create objects along the way if null is encountered, by default Activator.CreateIntance is used</param>
+            <returns>all matching unflat targets info</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.UberFlatter.Flat(System.String,System.Object,System.Func{System.String,System.Reflection.PropertyInfo,System.Boolean})">
+            <summary>
+            Get unflat targets for given flatPropertyName, you can use the result to get value from and set it into the flat property
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object to look for targets into</param>
+            <param name="match">match func used for checking the last property in the trail</param>
+            <returns>all matching unflat targets info</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.UberFlatter.Flat(System.String,System.Object,System.Func{System.String,System.Reflection.PropertyInfo,System.Boolean},System.StringComparison)">
+            <summary>
+            Get unflat targets for given flatPropertyName, you can use the result to get value from and set it into the flat property
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object to look for targets into</param>
+            <param name="match">match func used for checking the last property in the trail</param>
+            <param name="comparison">StringComparison type used for building the flat trail</param>
+            <returns>all matching unflat targets info</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Flat.UberFlatter.Flat(System.String,System.Object)">
+            <summary>
+            Get unflat targets for given flatPropertyName, you can use the result to get value from and set it into the flat property
+            </summary>
+            <param name="flatPropertyName">flat property name</param>
+            <param name="lookupObject">object to look for targets into</param>
+            <returns>all matching unflat targets info</returns>
+        </member>
+        <member name="T:Omu.ValueInjecter.Injections.FlatLoopInjection">
+            <summary>
+            FlatLoopInjection, matches unflat properties to flat ( a.b.c => abc )
+            override SetValue to control the how the value is set ( do type casting, ignore setting in certain scenarios etc. )
+            override Match to control unflat target checking
+            </summary>
+        </member>
+        <member name="T:Omu.ValueInjecter.Injections.LoopInjection">
+            <summary>
+            LoopInjection, by default will match properties with the same name and type;
+            override MatchTypes to change type matching;
+            override GetTargetProp to change how the target property is determined based on the source property;
+            override SetValue to control the how the value is set ( do type casting, ignore setting in certain scenarios etc. )
+            </summary>
+        </member>
+        <member name="T:Omu.ValueInjecter.Injections.NoSourceInjection">
+            <summary>
+             inject value without source
+            </summary>
+        </member>
+        <member name="T:Omu.ValueInjecter.Injections.UnflatLoopInjection">
+            <summary>
+            UnflatLoopInjection, matches flat properties to unflat ( abc => a.b.c );
+            override SetValue to control the how the value is set ( do type casting, ignore setting in certain scenarios etc. );
+            override Match to control unflat target checking;
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.Injections.UnflatLoopInjection.#ctor(System.Func{System.Reflection.PropertyInfo,System.Object,System.Object})">
+            <summary>
+            Create injection and set the creator func
+            </summary>
+            <param name="activator">creator func, used to create objects along the way if null is encountered, by default Activator.CreateIntance is used</param>
+        </member>
+        <member name="F:Omu.ValueInjecter.Mapper.Instance">
+            <summary>
+            static mapper instance
+            </summary>
+        </member>
+        <member name="P:Omu.ValueInjecter.Mapper.DefaultMap">
+            <summary>
+            Default map used when there's no map specified for the given types
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.Mapper.MapDefault``1(System.Object,System.Object)">
+            <summary>
+            Map using default mapper ( Ignore added maps )
+            </summary>
+            <typeparam name="TResult">Result type</typeparam>
+            <param name="source"> source object</param>
+            <param name="tag">object used to send additional paramaters for the mapping code</param>
+            <returns> mapped object</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Mapper.Map``1(System.Object,System.Object)">
+            <summary>
+            Map source object to result type
+            </summary>
+            <typeparam name="TResult"> Result type</typeparam>
+            <param name="source"> source object</param>
+            <param name="tag">object used to send additional paramaters for the mapping code</param>
+            <returns>mapped object</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Mapper.Map``2(``0,System.Object)">
+            <summary>
+            Map source object to result type, TSource is specified not inferred, useful when source is not of TSource type like with EF proxy object
+            </summary>
+            <typeparam name="TSource">source type</typeparam>
+            <typeparam name="TResult">result type</typeparam>
+            <param name="source">source object</param>
+            <param name="tag">object used to send additional paramaters for the mapping code</param>
+            <returns>mapped object</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Mapper.AddMap``2(System.Func{``0,``1})">
+            <summary>
+            register a function for mapping from source to result
+            </summary>
+            <typeparam name="TSource">source type</typeparam>
+            <typeparam name="TResult">result type</typeparam>
+            <param name="func">function receives source and returns result object</param>
+        </member>
+        <member name="M:Omu.ValueInjecter.Mapper.AddMap``2(System.Func{``0,System.Object,``1})">
+            <summary>
+            register a function for mapping from source to result
+            </summary>
+            <typeparam name="TSource">source type</typeparam>
+            <typeparam name="TResult">result type</typeparam>
+            <param name="func">function receives source, tag object for additional parameters, and returns result object</param>
+        </member>
+        <member name="M:Omu.ValueInjecter.Mapper.Reset">
+            <summary>
+            clear added maps and default map
+            </summary>
+        </member>
+        <member name="F:Omu.ValueInjecter.MapperInstance.Maps">
+            <summary>
+            registered custom maps
+            </summary>
+        </member>
+        <member name="F:Omu.ValueInjecter.MapperInstance.DefaultMap">
+            <summary>
+            Default map used when there's no map specified for the given types
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.MapperInstance.MapDefault``1(System.Object,System.Object)">
+            <summary>
+            Map using default mapper ( Ignore added maps )
+            </summary>
+            <typeparam name="TResult">Result type</typeparam>
+            <param name="source"> source object</param>
+            <param name="tag">object used to send additional paramaters for the mapping code</param>
+            <returns> mapped object</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.MapperInstance.Map``1(System.Object,System.Object)">
+            <summary>
+            Map source object to result type
+            </summary>
+            <typeparam name="TResult"> Result type</typeparam>
+            <param name="source"> source object</param>
+            <param name="tag">object used to send additional paramaters for the mapping code</param>
+            <returns>mapped object</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.MapperInstance.Map``2(``0,System.Object)">
+            <summary>
+            Map source object to result type, TSource is specified not inferred, useful when source is not of TSource type like with EF proxy object
+            </summary>
+            <typeparam name="TSource">source type</typeparam>
+            <typeparam name="TResult">result type</typeparam>
+            <param name="source">source object</param>
+            <param name="tag">object used to send additional paramaters for the mapping code</param>
+            <returns>mapped object</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.MapperInstance.AddMap``2(System.Func{``0,``1})">
+            <summary>
+            register a function for mapping from source to result
+            </summary>
+            <typeparam name="TSource">source type</typeparam>
+            <typeparam name="TResult">result type</typeparam>
+            <param name="func">function receives source and returns result object</param>
+        </member>
+        <member name="M:Omu.ValueInjecter.MapperInstance.AddMap``2(System.Func{``0,System.Object,``1})">
+            <summary>
+            register a function for mapping from source to result
+            </summary>
+            <typeparam name="TSource">source type</typeparam>
+            <typeparam name="TResult">result type</typeparam>
+            <param name="func">function receives source, tag object for additional parameters, and returns result object</param>
+        </member>
+        <member name="M:Omu.ValueInjecter.MapperInstance.Reset">
+            <summary>
+            clear added maps and reset default map to initial value
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.StaticValueInjecter.InjectFrom``1(System.Object,System.Object)">
+            <summary>
+            Injects values from source to target
+            </summary>
+            <typeparam name="T">ValueInjection used</typeparam>
+            <param name="target">target where the value is going to be injected</param>
+            <param name="source">source from where the value is taken</param>
+            <returns>the modified target</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.StaticValueInjecter.InjectFrom(System.Object,Omu.ValueInjecter.Injections.IValueInjection,System.Object)">
+            <summary>
+            Injects values from source to target
+            </summary>
+            <param name="target">target where the value is going to be injected</param>
+            <param name="injection">ValueInjection used</param>
+            <param name="source">source from where the value is taken</param>
+            <returns>the modified target</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.StaticValueInjecter.InjectFrom``1(System.Object)">
+            <summary>
+            Injects values into the target
+            </summary>
+            <typeparam name="T">ValueInjection(INoSourceValueInjection) used for that</typeparam>
+            <param name="target">target where the value is going to be injected</param>
+            <returns>the modified target</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.StaticValueInjecter.InjectFrom(System.Object,Omu.ValueInjecter.Injections.INoSourceInjection)">
+            <summary>
+            Injects value into target without source
+            </summary>
+            <param name="target">the target where the value is going to be injected</param>
+            <param name="injection"> the injection(INoSourceValueInjection) used to inject value</param>
+            <returns>the modified target</returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.StaticValueInjecter.InjectFrom(System.Object,System.Object)">
+            <summary>
+            Inject properties with exact same name and type
+            </summary>
+        </member>
+        <member name="M:Omu.ValueInjecter.Utils.Extensions.GetProps(System.Object)">
+            <summary>
+            Get properties
+            </summary>
+            <param name="o"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Omu.ValueInjecter.Utils.Extensions.GetProps(System.Type)">
+            <summary>
+            Get type properties, including properties of inherited interfaces
+            http://stackoverflow.com/a/2444090/112100
+            </summary>
+            <param name="type"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

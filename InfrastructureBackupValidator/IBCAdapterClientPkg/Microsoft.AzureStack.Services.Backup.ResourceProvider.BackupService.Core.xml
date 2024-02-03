@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerAggregator">
+            <summary>
+            The backup broker aggregator.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerAggregator.GetResult(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <summary>
+            Get a single result.
+            </summary>
+            <param name="rpId">The <see cref="T:Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId"/> of the resource.</param>
+            <param name="resolverContext">ResolverContext that contains Parent resource.</param>
+            <returns>Task containing <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBroker"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerAggregator.GetAllResults(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <summary>
+            Get multiple results.
+            </summary>
+            <param name="resolverContext">ResolverContext that contains Parent resource.</param>
+            <returns>Task containing <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerResourceHandler">
+            <summary>
+            This class is to handle requests related to the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBroker"/> resource.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerResourceHandler.#ctor(Microsoft.AzureStack.Services.Fabric.Common.ResourceCaching.Contract.IResourceResolver{Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupBroker},System.Lazy{Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceProvidersHandler"/> class.
+            </summary>
+            <param name="resolver">The resolver used to resolve T resources.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerResourceHandler.NewInstance">
+            <summary>
+            Creates a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupBrokerResourceHandler"/> class.
+            </summary>
+            <returns>An instance of the handler</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderAggregatorBase">
+            <summary>
+            The BackupProvider aggregator.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderAggregatorBase.GetResult(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <summary>
+            Get a single result.
+            </summary>
+            <param name="rpId">The <see cref="T:Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId"/> of the resource.</param>
+            <param name="resolverContext">ResolverContext that contains Parent resource.</param>
+            <returns>Task containing <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderAggregatorBase.GetAllResults(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <summary>
+            Get multiple results.
+            </summary>
+            <param name="resolverContext">ResolverContext that contains Parent resource.</param>
+            <returns>Task containing <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourcePropertiesMappingHandler">
+            <summary>
+            This class is to handle mapping <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider"/> resource to proper client model.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourcePropertiesMappingHandler">
+            <summary>
+            This class is to handle mapping <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup"/> resource to proper client model.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.VersionedModelResourcePropertiesMappingHandler`1">
+            <summary>
+            Provides methods to map core model objects and their client model representations
+            according to API version and model converter.
+            </summary>
+            <typeparam name="TCore">The core model type.</typeparam>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.VersionedModelResourcePropertiesMappingHandler`1.VersionedModelConverters">
+            <summary>
+            Gets the dictionary storing model converts according to api-versions
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.VersionedModelResourcePropertiesMappingHandler`1.ResourceTypeName">
+            <summary>
+            Gets the resource type name
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.VersionedModelResourcePropertiesMappingHandler`1.GetClientTypeForVersion(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.VersionedModelResourcePropertiesMappingHandler`1.MapCoreModelToClientModel(`0,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.VersionedModelResourcePropertiesMappingHandler`1.MapClientModelToCoreModel(System.Object,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourcePropertiesMappingHandler">
+            <summary>
+            This class is to handle mapping <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation"/> resource to proper client model.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceProvidersHandler">
+            <summary>
+            This class is to handle requests related to the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider"/> resource under the Providers namespace.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceProvidersHandler.#ctor(Microsoft.AzureStack.Services.Fabric.Common.ResourceCaching.Contract.IResourceResolver{Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider},System.Lazy{Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceProvidersHandler"/> class.
+            </summary>
+            <param name="resolver">The resolver used to resolve T resources.</param>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceProvidersHandler.NewInstance">
+            <summary>
+            Creates a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceProvidersHandler"/> class.
+            </summary>
+            <returns>An instance of the handler</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceAdminHandler">
+            <summary>
+            This class is to handle requests related to the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider"/> resource under the Admin namespace.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceAdminHandler.#ctor(Microsoft.AzureStack.Services.Fabric.Common.ResourceCaching.Contract.IResourceResolver{Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupProvider},System.Lazy{Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClient})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceAdminHandler"/> class.
+            </summary>
+            <param name="resolver">The resolver used to resolve T resources.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceAdminHandler.NewInstance">
+            <summary>
+            Creates a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupProviderResourceAdminHandler"/> class.
+            </summary>
+            <returns>An instance of the handler</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants">
+            <summary>
+            This class defines the constants that are common to the resource provider component.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.LocationSettingName">
+            <summary>
+            This field should be the same name as Section name in Settings.xml file.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.MaxRetryCount">
+            <summary>
+            This field should be the same name as Section name in Settings.xml file.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.MaxRetryTimeSpan">
+            <summary>
+            This field should be the same name as Section name in Settings.xml file.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.DefaultDelayTimeSpan">
+            <summary>
+            This field should be the same name as Section name in Settings.xml file.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupResourceProviderAdminNamespace">
+            <summary>
+            The namespace that BRP handles for admin resources.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupResourceProviderProvidersNamespace">
+            <summary>
+            The namespace that BRP handles for providers resources.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BrpAuthorizationGroup">
+            <summary>
+            The Windows user group that will be used for authorization.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupBrokerName">
+            <summary>
+            The backup broker name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.SubscriptionSegment">
+            <summary>
+            Routing segments
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupRegistrationsResourceTypeName">
+            <summary>
+            Backup provider registrations resource type name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupResourceCurrentVersion">
+            <summary>
+            Gets the current API version of Backup resource
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupLocationResourceCurrentVersion">
+            <summary>
+            Gets the current API version of Backup Location resource
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupOperationsMetadataCurrentVersion">
+            <summary>
+            Gets the current API version of Backup Operations Metadata resource
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupProviderResourceCurrentVersion">
+            <summary>
+            Gets the current API version of Backup Provider resource
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupEncryptionKeyCurrentVersion">
+            <summary>
+            Gets the current API version of Backup Encryption Key resource
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.ApiVersion20180901">
+            <summary>
+            Gets the 2018-09-01 version.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.ApiVersion20210901">
+            <summary>
+            Gets the 2021-09-01 version.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BrpConstants.BackupProviderSchemaVersions">
+            <summary>
+            The supported backup provider schema versions
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler">
+            <summary>
+            This class is to handle requests related to the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation"/> resource.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.AddOrUpdateResource(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.BackupLocation)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.GetResource(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.GetAllResources(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.Backup(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <summary>
+            Triggers a backup operation.
+            </summary>
+            <param name="locationRpId">The RpId of the backupLocation.</param>
+            <returns>A task that kicks off the backup operation.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.ClearBackupLocation(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId)">
+            <summary>
+            Clear backup location settings.
+            </summary>
+            <param name="locationRpId">The RpId of the backupLocation.</param>
+            <returns>A task that clears backup location settings.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.SetExternalStore(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.ExternalStore)">
+            <summary>
+            Sets the default external store for backups to use.
+            </summary>
+            <param name="locationRpId">The RpId of the backupLocation.</param>
+            <param name="store">The external store to use.</param>
+            <returns>A task that sets the external store.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupLocationResourceHandler.PruneExternalStore(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.PruneBackupStoreOptions)">
+            <summary>
+            Prune backup backup store store.
+            </summary>
+            <param name="locationRpId">The RpId of the backupLocation.</param>
+            <param name="option">The prune backup option</param>
+            <returns>A task that prunes backup external store.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourceHandler">
+            <summary>
+            This class is to handle requests related to the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup"/> resource.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourceHandler.#ctor(Microsoft.AzureStack.Services.Fabric.Common.ResourceCaching.Contract.IResourceResolver{Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourceHandler"/> class.
+            </summary>
+            <param name="resolver">The resolver used to resolve T resources.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourceHandler.NewInstance">
+            <summary>
+            Creates a new instance of the <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourceHandler"/> class.
+            </summary>
+            <returns>An instance of the handler</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupResourceHandler.Restore(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.RestoreOptions)">
+            <summary>
+            Triggers a restore operation of the backup.
+            </summary>
+            <param name="backupRpId">The RpId of the backup to restore.</param>
+            <returns>A task that kicks off the restore operation.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupAggregator">
+            <summary>
+            The Backup aggregator.
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupAggregator.GetResult(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId,Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <summary>
+            Get a single result.
+            </summary>
+            <param name="rpId">The <see cref="T:Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.RpId"/> of the resource.</param>
+            <param name="resolverContext">ResolverContext that contains Parent resource.</param>
+            <returns>Task containing <see cref="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Models.Core.Backup"/>.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.BackupAggregator.GetAllResults(Microsoft.AzureStack.Services.Fabric.Common.Resource.Models.ResolverContext)">
+            <summary>
+            Get multiple results.
+            </summary>
+            <param name="resolverContext">ResolverContext that contains Parent resource.</param>
+            <returns>Task containing <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Services.Backup.ResourceProvider.BackupService.Core.IbcClientModelMapper">
+            <summary>
+            Convert IBC data models to BRP data models
+            </summary>
+            <remarks>BRP codes are covered in BVTs</remarks>
+        </member>
+    </members>
+</doc>

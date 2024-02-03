@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.BackupProvider.Internal</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager">
+            <summary>
+            A class managing backup provider repositories
+            </summary>
+            <remarks>Backup provider codes are covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager.BackupDataVersion">
+            <summary>
+            The version of backup data
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager.BackupAsync(Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupRequest)">
+            <summary>
+            Backs up all repositories
+            </summary>
+            <param name="backupRequest">The backup request</param>
+            <returns>The status of the backup</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager.ValidateRestoreRequest(Microsoft.AzureStack.Fabric.Backup.BackupProvider.RestoreRequest)">
+            <summary>
+            Validates restore request
+            </summary>
+            <param name="restoreRequest">The restore request</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager.RestoreAsync(Microsoft.AzureStack.Fabric.Backup.BackupProvider.RestoreRequest)">
+            <summary>
+            Restores all repositories
+            </summary>
+            <param name="restoreRequest">The restore request</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager.UploadRestoredResourcesList(Microsoft.AzureStack.Fabric.Backup.BackupProvider.RestoreRequest,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Upload the list of restored resources
+            </summary>
+            <param name="restoreRequest">The restore request</param>
+            <param name="resourcesList">List of restored resources</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryManager.RegisterRepository(Microsoft.AzureStack.Fabric.Backup.BackupProvider.IBackupProviderRepository)">
+            <summary>
+            Registers a repository
+            </summary>
+            <param name="repository">The repository</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase">
+            <summary>
+            The base class of backup provider repository
+            </summary>
+            <remarks>Backup provider codes are covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.ComponentName">
+            <summary>
+            The component name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.PartitionId">
+            <summary>
+            The partition ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.RepositoryName">
+            <summary>
+            The repository name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.ContainerNameFilter">
+            <summary>
+            The containerNameFilter
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.BackupAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer)">
+            <summary>
+            Backs up the repository asynchronously
+            </summary>
+            <param name="stagingAreaContainer">The blob container of backup staging area</param>
+            <returns>The backup snaphot information</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.RestoreAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer,Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot)">
+            <summary>
+            Restores the repository asychronously
+            </summary>
+            <param name="stagingAreaContainer">The blob container of backup staging area</param>
+            <param name="snapshot">The backup snapshot information</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.MatchSnapshot(Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot)">
+            <summary>
+            True, if the given snapshot matches the repository,
+            False, otherwise
+            </summary>
+            <param name="snapshot">The backup snapshot information</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.BackupAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobDirectory)">
+            <summary>
+            Concrete repositories should implement this method to back up data to the given blob directory
+            </summary>
+            <param name="destination">The destination blob directory</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderRepositoryBase.RestoreAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobDirectory)">
+            <summary>
+            Concret repositories should implement this method to restore data from the given blob directory
+            </summary>
+            <param name="destination">The destination blob directory</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot">
+            <summary>
+            Backup snapshot info
+            </summary>
+            <remarks>Backup provider codes are covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot.ComponentName">
+            <summary>
+            The component name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot.PartitionId">
+            <summary>
+            The partition ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot.RepositoryName">
+            <summary>
+            The repository name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot.DirectoryName">
+            <summary>
+            The name of the blob directory to which the backup data are uploaded
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot.CreatedDateTime">
+            <summary>
+            The data time when the backup is started (in ISO 8601 format)
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot.TimeTakenToCreate">
+            <summary>
+            The time taken to create the backup (in ISO8601 format)
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.BackupProvider.IBackupProviderRepository">
+            <summary>
+            The interface of backup provider repository 
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.IBackupProviderRepository.BackupAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer)">
+            <summary>
+            Backs up the repository asynchronously
+            </summary>
+            <param name="stagingAreaContainer">The blob container of backup staging area</param>
+            <returns>The backup snaphot information</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.IBackupProviderRepository.RestoreAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer,Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot)">
+            <summary>
+            Restores the repository asychronously
+            </summary>
+            <param name="stagingAreaContainer">The blob container of backup staging area</param>
+            <param name="snapshot">The backup snapshot information</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupProvider.IBackupProviderRepository.MatchSnapshot(Microsoft.AzureStack.Fabric.Backup.BackupProvider.BackupProviderSnapshot)">
+            <summary>
+            True, if the given snapshot matches the repository,
+            False, otherwise
+            </summary>
+            <param name="snapshot">The backup snapshot information</param>
+        </member>
+    </members>
+</doc>

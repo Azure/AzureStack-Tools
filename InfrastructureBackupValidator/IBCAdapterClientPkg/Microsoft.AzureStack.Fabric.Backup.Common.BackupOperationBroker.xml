@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupOperationBroker</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupOperationBroker.OperationBroker">
+            <summary>
+            Event handlers for IBC operations
+            </summary>
+        </member>
+        <member name="E:Microsoft.AzureStack.Fabric.Backup.Common.BackupOperationBroker.OperationBroker.OnIBCSettingsChagned">
+            <summary>
+            Triggers when any IBC settings changed
+            </summary>
+        </member>
+        <member name="E:Microsoft.AzureStack.Fabric.Backup.Common.BackupOperationBroker.OperationBroker.OnClearSchedulerConfiguration">
+            <summary>
+            Triggers when scheduler configurations are cleared
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClientFactory.CreateInstance(System.String,System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan})">
+            <summary>
+            Create IBC client using static dns resolver.
+            </summary>
+            <returns>IIbcRestClient.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClientFactory.CreateInstanceWithServiceFabricResolver(Microsoft.AzureStack.Common.Infrastructure.ServiceDiscovery.Contract.IServiceResolver,System.Nullable{System.Guid},System.Nullable{System.TimeSpan},System.Int32,System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan})">
+            <summary>
+            Create IBC client using service fabric resolver.
+            This is a method hould be only used for resolve service on ERCS ring.
+            </summary>
+            <returns>IIbcRestClient.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClientFactory.CreateInstanceWithServiceFabricResolver(System.String,System.String,System.String[],System.Nullable{System.TimeSpan},System.Int32,System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan},System.String)">
+            <summary>
+            Create IBC client using service fabric resolver.
+            This is a method hould be only used for resolve service on ERCS ring.
+            </summary>
+            <returns>IIbcRestClient.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClientFactory.CreateInstanceWithServiceFabricResolver(System.Guid,System.String[],System.Nullable{System.TimeSpan},System.Int32,System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan},System.String)">
+            <summary>
+            Create IBC client using service fabric resolver.
+            This is a method hould be only used for resolve service on ERCS ring.
+            </summary>
+            <returns>IIbcRestClient.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.Contract.IIbcRestClientFactory.CreateInstanceWithServiceFabricResolver(System.Collections.Generic.Dictionary{System.Guid,System.String},System.Guid,System.Guid,System.String,System.String,System.Nullable{System.TimeSpan},System.Int32,System.Nullable{System.TimeSpan},System.Nullable{System.TimeSpan})">
+            <summary>
+            Create IBC client using service fabric resolver.
+            This is a method hould be only used for resolve service on ERCS ring.
+            </summary>
+            <returns>IIbcRestClient.</returns>
+        </member>
+    </members>
+</doc>

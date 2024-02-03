@@ -1,0 +1,787 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager</name>
+    </assembly>
+    <members>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.JsonFileExtension">
+            <summary>
+            JSON file extension
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.DevStorageAccountEndPointBlob">
+            <summary>
+            development storage account end point for blob
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.DevStorageAccountEndPointTable">
+            <summary>
+            development storage account end point for table
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.DevStorageAccountEndPointQueue">
+            <summary>
+            development storage account end point for queue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.DevStorageAccount">
+            <summary>
+            development storage account
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.azureStackStorageAccountEndPointBlob">
+            <summary>
+            Azure Stack storage account end point for blob
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.azureStackStorageAccountEndPointTable">
+            <summary>
+            Azure Stack storage account end point for table
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.azureStackStorageAccountEndPointQueue">
+            <summary>
+            Azure Stack storage account end point for queue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.ContainerNameFilter">
+            <summary>
+            Name filter for Azure Stack storage account containers
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.Overwrite">
+            <summary>
+            Whether overwrite destination blob
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.AzureStorageExternalRepositoriesBase.GetConnectionString">
+            <summary>
+            Create connection string for storage account
+            </summary>
+            <returns>connection string</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager">
+            <summary>
+            Backup settings manager
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.IbcConfig">
+            <summary>
+            Configuration dictionary name for IBC settings
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupProvidersConfig">
+            <summary>
+            Configuration dictionary name for backup providers
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.StagingAreaRootFolder">
+            <summary>
+            Staging area root folder key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.InternalBackupPath">
+            <summary>
+            Internal backup path key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LatestBackupId">
+            <summary>
+            Latest backup ID key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupRepositoryRegistrations">
+            <summary>
+            Backup repository registrations
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupLocationEldestRecoveryPoint">
+            <summary>
+            Backup location recovery point
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.StampVersion">
+            <summary>
+            Stamp version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.PrimaryEncryptionKeyBase64">
+            <summary>
+            Primary encryption key
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.SecondaryEncryptionKeyBase64">
+            <summary>
+            Secondary encryption key
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BTSServiceId">
+            <summary>
+            BTS service ID for current configuration
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BTSLocationId">
+            <summary>
+            BTS location ID for current configuration
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupSchedulerFrequency">
+            <summary>
+            Backup scheduler frequency key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.EncryptionCertBase64">
+            <summary>
+            Backup encryption cert raw data base64 string in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupRetentionPeriod">
+            <summary>
+            Backup retention period key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LastUpdatedDateTime">
+            <summary>
+            Last Updated date time key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.RestoreStatus">
+            <summary>
+            Restore complete key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LastUpdatedDateTimeFormat">
+            <summary>
+            Last Updated date time format
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.IsBackupSchedulerEnabled">
+            <summary>
+            Is backup scheduler enabled key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupEncryptionCertBase64ForLiveBackup">
+            <summary>
+            The backup encryption cert base64 string for the live backup operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.AvailableCapacity">
+            <summary>
+            Available capacity key in config dictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupSchedulerFrequencyFormat">
+            <summary>
+            Backup scheduler frequency format provider to convert between string and int
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupRetentionPeriodFormat">
+            <summary>
+            Backup retention period format provider to convert between string and int
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.JsonSerializerSettings">
+            <summary>
+            Json serializer settings
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.stateManager">
+            <summary>
+            state manager for IBC. Staging area root path and external store info are persisted here.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.initLock">
+            <summary>
+            Lock object to access the singleton
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.rcLock">
+            <summary>
+            Lock object to serialize access to reliable collection. Not great, but we hit random issues with reliable collection access.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.backupInfoSemaphore">
+            <summary>
+            Lock object to upload backup info
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.settingsManager">
+            <summary>
+            Singleton instance
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.RestoreStatusNoRestore">
+            <summary>
+            Restore status is not restored
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.RestoreStatusInProgress">
+            <summary>
+            Restore status is in progress
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.RestoreStatusCompleted">
+            <summary>
+            Restore status is completed
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.IbcEncryptionGroupName">
+            <summary>
+            Gets or sets the IBC encryption group name.  external share access password and backup data encryption keys
+            are protected against this group.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.IbcServicePrincipalObjectId">
+            <summary>
+            Gets or sets the IBC service principal object ID.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ManagerCancellationToken">
+            <summary>
+            Cancellation token to cancel the current operation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetInstance">
+            <summary>
+            Gets or creates singleton object
+            </summary>
+            <returns>backup manager</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.Initialize(Microsoft.AzureStack.Common.Infrastructure.ReliableCollections.Contract.IReliableStateManager,System.Threading.CancellationToken)">
+            <summary>
+            Initialize backup manager.
+            </summary>
+            <param name="reliableStateManager">the state manager</param>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupStoreProviderConfigId">
+            <summary>
+            Hard-coded configuration Id for the only backup provider. It would be convenient if we're ever going to
+            support multiple backup providers.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.externalStoreProviders">
+            <summary>
+            External backup provider configuration Id -> External backup provider instance
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.BackupStoreProvider">
+            <summary>
+            Gets or sets backup store providers
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.AddRepositoryRegistrationAsync(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration})">
+            <summary>
+            Add repository registration
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetRepositoryRegistrations(System.String)">
+            <summary>
+            Return all repository registrations
+            </summary>
+            <returns>list of repositories</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ClearRepositoryRegistrationAsync">
+            <summary>
+            Clear repository registration.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateBackupLocationRecoveryPointAsync(System.Nullable{System.DateTime})">
+            <summary>
+            Update eldest recovery point
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.RenewBackupStoreProvider(System.Guid,System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Reload RC and return the store provider
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LoadExternalShareInfoFromReliableCollectionAsync(System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            Load config such as external share, credential, and encryption key from reliable collection.
+            </summary>
+            <param name="refreshConfig">Force refresh configuration from reliable collection</param>
+            <param name="rebuildCache">Force rebuild cache of external store even if the configuration keeps the same</param>
+            <param name="waitRebuidCache">Whether to wait rebuilding cache done</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateEncryptionCertAsync(System.String)">
+            <summary>
+            Updates backup encryption cert info
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateExternalShareWithSecureCredentialAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential,System.Guid)">
+            <summary>
+            Updates the external SMB share with credential
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ReconcileBtsLocationAsync">
+            <summary>
+            Make sure a BTS location stored in IBC exists in BTS. If not, remove the record in IBC.
+            </summary>
+            <returns>False if the BTS location is removed.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateInternalBackupPathAsync(System.String)">
+            <summary>
+            Updates internal backup path
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateLatestBackupIdAsync(System.Guid)">
+            <summary>
+            Updates latest backup ID
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetLatestBackupIdAsync">
+            <summary>
+            Gets latest backup ID
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetInternalBackupRoot">
+            <summary>
+            Load internal backup root path
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.DeleteObsoleteReliableCollectionDictionary``1(System.String)">
+            <summary>
+            Try to load the obsolete class, remove the dictionary if it loads, or ignore the error when it fails to load.
+            </summary>
+            <typeparam name="T">The obsolete class type</typeparam>
+            <param name="configurationName">RC configuration name</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetRestoreStatusAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets restore status
+            </summary>
+            <returns>restore status</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.SetRestoreStatusAsync(System.String)">
+            <summary>
+            Set restore status.
+            </summary>
+            <param name="status">restore status</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.IsExternalStoreConfigurationStale(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider)">
+            <summary>
+            Verify whether external store configuration in memory is stale using lastUpdatedTimeStamp.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ClearSchedulerConfigurations">
+            <summary>
+            Clears all the configuration inside scheduler provider
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ClearExternalShareInfoAsync">
+            <summary>
+            Clear the external share info from the reliable collection
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetBackup(System.Nullable{System.Guid},System.Collections.Generic.IEnumerable{System.Guid})">
+            <summary>
+            Returns backup info with given backup ID.
+            If backupID is not provided, return all completed backups.
+            </summary>
+            <param name="targetBackupID">Backup ID to look for. Specify null to return all backups</param>
+            <param name="runningBackupIDs">Running backup IDs</param>
+            <returns>list of backup info</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateDateTimeStampAsync(System.DateTime)">
+            <summary>
+            DateTime when IBC configuration got updated.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateStampVersionAsync(System.String)">
+            <summary>
+            The current stamp version.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetStampVersionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets stamp version
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateBackupEncryptionCertBase64ForLiveBackupAsync(System.String)">
+            <summary>
+            Update the encryption cert for the live backup operation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetBackupEncryptionCertBase64ForLiveBackupAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets encryption cert for the live backup operation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateBackupFrequencyAsync(System.Int32)">
+            <summary>
+            Updates backup scheduler frequency
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateBackupSchedulerEnabledAsync(System.Boolean)">
+            <summary>
+            Updates backup scheduler is enabled
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.EnsureBackupSchedulerDefaultConfigAsync">
+            <summary>
+            Updates backup scheduler config to default if empty
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ValidateExternalFileShareUpdateAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential)">
+            <summary>
+            Validates the external file share update.
+            </summary>
+            <param name="secureShare">The secure share.</param>
+            <returns>The seriveID need to update. return Guid.Empty if nothing need to update.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetBackupInterval">
+            <summary>
+            Gets backup interval.
+            </summary>
+            <returns>Backup interval for telemetry</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.GetNumberOfBackupsToRetain">
+            <summary>
+            Gets number of backups supposed to be retained on external store
+            </summary>
+            <returns>number of backups to retain</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.UpdateBackupSettingsAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential,System.String,System.Boolean,System.Nullable{System.Int32},System.Nullable{System.Boolean},System.Nullable{System.Int32},System.Guid)">
+            <summary>
+            Updates the backup settings to reliable collection in a single lock
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ImportConfigurtionsAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupControllerConfigurations)">
+            <summary>
+            Import IBC configurations stored in RC
+            </summary>
+            <remarks>IBC service restarted is required for the imported configs to take effect</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.CloseAlertAfterRebuildCacheAsync(System.Threading.Tasks.Task)">
+            <summary>
+            Closes ExternalShareAlmostFullAlert if share has enough free space after cache rebuilt
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LoadRepositoryRegistrationsAsync">
+            <summary>
+            Load repository registrations from the reliable collection
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.LoadBackupLocationRecoveryPointAsync">
+            <summary>
+            Load backup location eldest recovery point from the reliable collection
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.SettingsManager.ReliableCollectionManager">
+            <summary>
+            Non-thread safe RC manager
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.ExternalRepositoryBase">
+            <summary>
+            external repository base implementation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.ExternalRepositoryBase.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.Guid,System.String,System.String,System.Guid,System.Guid,Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType,System.String,System.Security.SecureString,System.String,System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.ExternalRepositoryBase" /> class.
+            </summary>
+            <param name="componentInfo">component information</param>
+            <param name="repositoryName">repository name</param>
+            <param name="accountName">account name</param>
+            <param name="accountKey">account key</param>
+            <remarks>Convered in BVTs. UT covers the base class</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.ExternalRepositoryBase.AccountName">
+            <summary>
+            Gets or sets account name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.ExternalRepositoryBase.AccountKey">
+            <summary>
+            Gets or sets account key
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.BackupLocalStore">
+             <summary>
+             Internal backup local store for backup operation: 
+            
+             RootFolder (Which should be a fixed location on the share)
+                 |_  RepositoryName
+                     |_ (Encrypted Data)
+            
+             </summary>
+             <remarks>Covered in BVT and mocked in UT</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.BackupLocalStore.#ctor(System.Guid,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRepository,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.BackupLocalStore" /> class.
+            </summary>
+            <param name="snapshotId">Snapshot Id</param>
+            <param name="repository">The repository</param>
+            <param name="workingFolderRootName">The working folder of the local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.BackupLocalStore.UploadBackupPackage(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider,System.String)">
+            <summary>
+            Upload backup package
+            </summary>
+            <param name="backupStoreProvider">The backup store provider</param>
+            <param name="encryptionKeyBase64">Encryption key</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.BackupLocalStore.GetDataFolderSizeInKb">
+            <summary>
+            Get data folder size in KB
+            </summary>
+            <returns>the size</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.BackupLocalStore.CompressData">
+            <summary>
+            Compress data
+            </summary>
+            <returns>the zip file name</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore">
+             <summary>
+             Local store for backup and restore operation. The working folder can be customized and not necessarily the same
+             as the internal backup store.
+            
+             A local store is organized as follows:
+             WorkingFolderRoot
+                 |_  SnapshotId
+                     |_ RawDataFolderName
+                     |   |_  (Raw data)
+                     |_ ZipFolderName
+                         |_  (Zipped data)
+            
+             </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.#ctor(System.Guid,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRepository,System.String,System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore" /> class.
+            </summary>
+            <param name="backupId">the snapshot ID</param>
+            <param name="repository">the repository</param>
+            <param name="rawDataFolderName">the raw data folder name</param>
+            <param name="zipFolderName">the zip folder name</param>
+            <param name="workingFolderRootName">the working folder where raw data and zip data are placed</param>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.SnapshotDirectory">
+            <summary>
+            Gets data directory
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.DataDirectory">
+            <summary>
+            Gets data directory
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.CompressDirectory">
+            <summary>
+            Gets compress directory
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.BackupId">
+            <summary>
+            Gets or sets ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.Repository">
+            <summary>
+            Gets or sets repository
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.RawDataFolderName">
+            <summary>
+            Gets or sets raw data folder name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.ZipFolderName">
+            <summary>
+            Gets or sets zip folder name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.WorkingFolderRootName">
+            <summary>
+            Gets or sets working folder root name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.SnapshotName">
+            <summary>
+            Gets or sets snapshot name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.ZipFileName">
+            <summary>
+            Gets zip file name
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.CleanUp">
+            <summary>
+            clean up
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.Dispose">
+            <summary>
+            Dispose the object
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.LocalStore.GetZipFileName">
+            <summary>
+            Get zip file
+            </summary>
+            <returns>zip file name</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RestoreLocalStore">
+            <summary>
+            Local store for restore operation
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RestoreLocalStore.#ctor(System.Guid,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRepository,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RestoreLocalStore" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RestoreLocalStore.DecompressData">
+            <summary>
+            Decompress data
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RestoreLocalStore.DownloadBackupPackage(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider,System.Guid,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase">
+            <summary>
+            Base implementation for repository
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.Guid,System.String,System.String,System.Guid,System.Guid,Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType,System.String,System.String,System.String,System.Boolean,System.String,System.String,System.Nullable{System.DateTime})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.ComponentInfo">
+            <summary>
+            Gets or sets component information
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.RepositoryName">
+            <summary>
+            Gets or sets repository name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.LocalStoreWorkingDir">
+            <summary>
+            Gets or sets working folder root name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.BackupSnapshot">
+            <summary>
+            Gets or sets backup snapshot
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.ImpersonationCredential">
+            <summary>
+            Gets or sets the crential for impersonation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.HostVMName">
+            <summary>
+            Gets or sets the host VM name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.CreatedDateTime">
+            <summary>
+            Gets or sets the created DateTime
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.HasMoreSnapshotsToRestore">
+            <summary>
+            Gets or sets bool to indicate whether there are more snapshots to restore
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.FullRepositoryName">
+            <summary>
+            Gets full repository name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.PreviousSnapshotId">
+            <summary>
+            Gets or sets previous backup ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.DependentFullSnapshotId">
+            <summary>
+            Gets or sets dependent full backup ID
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.CreateBackupLocalStore(System.Guid,System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.CreateRestoreLocalStore(System.Guid,System.String)">
+            <summary>
+            Create local store for restore
+            </summary>
+            <param name="backupId">backup ID</param>
+            <returns>restore local store</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.Backup(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider)">
+            <summary>
+            Launch backup operation
+            </summary>
+            <param name="operationData">operation specification</param>
+            <param name="backupStoreProvider">backup store provider</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.BackupInternal(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.BackupOperationData,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider)">
+            <summary>
+            Launch backup operation internally
+            </summary>
+            <param name="operationData">operation specification</param>
+            <param name="backupStoreProvider">backup store provider</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.Restore(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider)">
+            <summary>
+            Launch restore operation
+            </summary>
+            <param name="operationData">operation specification</param>
+            <param name="backupStoreProvider">backup store provider</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.RestoreInternal(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.Operation.RestoreOperationData,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupStoreProvider)">
+            <summary>
+            Launch restore operation internally
+            </summary>
+            <param name="operationData">operation specification</param>
+            <param name="backupStoreProvider">backup store provider</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.BeforeBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupLocalStore)">
+            <summary>
+            logic before backup
+            </summary>
+            <param name="backupLocalStore">backup local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.DoBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupLocalStore)">
+            <summary>
+            repository specific backup operation
+            </summary>
+            <param name="backupLocalStore">backup local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.AfterBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupLocalStore)">
+            <summary>
+            logic after backup
+            </summary>
+            <param name="backupLocalStore">backup local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.BeforeRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRestoreLocalStore)">
+            <summary>
+            logic before restore
+            </summary>
+            <param name="restoreLocalStore">restore local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.DoRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRestoreLocalStore)">
+            <summary>
+            repository specific restore operation
+            </summary>
+            <param name="restoreLocalStore">restore local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.RepositoryBase.AfterRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRestoreLocalStore)">
+            <summary>
+            logic after restore operation
+            </summary>
+            <param name="restoreLocalStore">restore local store</param>
+        </member>
+    </members>
+</doc>

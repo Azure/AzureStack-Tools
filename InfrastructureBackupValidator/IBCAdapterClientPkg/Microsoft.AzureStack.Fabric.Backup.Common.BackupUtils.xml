@@ -1,0 +1,544 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils</name>
+    </assembly>
+    <members>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.AssembliesResolver.controllerAssembliesTemplate">
+            <summary>
+            Defines the default search pattern for assemblies containing controllers.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.AssembliesResolver.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.AssembliesResolver"/> class. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.AssembliesResolver.GetAssemblies">
+            <summary>
+            Get list of assemblies matching the search pattern
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpers.EncryptStringWithCngDpapi(System.String,System.String)">
+            <summary>
+            Protect the string against the given group using DPAPI NG.
+            </summary>
+            <param name="value">the string to encrypt</param>
+            <param name="protectToGroupName">the user group that the secret will be protected against</param>
+            <returns>encrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpers.EncryptSecretWithCngDpapi(System.Security.SecureString,System.String)">
+            <summary>
+            Protect the secret against the given group using DPAPI NG.
+            </summary>
+            <param name="value">the secret</param>
+            <param name="protectToGroupName">the user group that the secret will be protected against</param>
+            <returns>encrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpers.DecryptStringWithCngDpapi(System.String)">
+            <summary>
+            Decrypt the string protected by DPAPI NG.
+            </summary>
+            <param name="value">the protected value</param>
+            <returns>decrypted string</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpers.DecryptSecretWithCngDpapi(System.String)">
+            <summary>
+            Decrypt the secret protected by DPAPI NG.
+            </summary>
+            <param name="value">the protected value</param>
+            <returns>decrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpersImp.EncryptStringWithCngDpapi(System.String,System.String)">
+            <summary>
+            Protect the string against the given group using DPAPI NG.
+            </summary>
+            <param name="value">the string to encrypt</param>
+            <param name="protectToGroupName">the user group that the secret will be protected against</param>
+            <returns>encrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpersImp.EncryptSecretWithCngDpapi(System.Security.SecureString,System.String)">
+            <summary>
+            Protect the secret against the given group using DPAPI NG.
+            </summary>
+            <param name="value">the secret</param>
+            <param name="protectToGroupName">the user group that the secret will be protected against</param>
+            <returns>encrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpersImp.DecryptStringWithCngDpapi(System.String)">
+            <summary>
+            Decrypt the string protected by DPAPI NG.
+            </summary>
+            <param name="value">the protected value</param>
+            <returns>decrypted string</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.CngDpapiHelpersImp.DecryptSecretWithCngDpapi(System.String)">
+            <summary>
+            Decrypt the secret protected by DPAPI NG.
+            </summary>
+            <param name="value">the protected value</param>
+            <returns>decrypted secret</returns>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.DataRoutingConstants.RouteName">
+            <summary>
+            backup controller route
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.DataRoutingConstants.RoutePrefix">
+            <summary>
+            BCDR prefix
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.DataRoutingConstants.IBCAdapterRoutePrefix">
+            <summary>
+            BCDR Adapter prefix
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.DataRoutingConstants.RequestIdHeaderName">
+            <summary>
+            The request identifier header name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.DataRoutingConstants.RequestIdArgumentName">
+            <summary>
+            The request identifier argument name
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionExtension.IsDueToOutOfCapacity(System.Exception)">
+            <summary>
+            Check if the exception is due to smb share out of capacity
+            </summary>
+            <param name="ex">the Exception</param>
+            <returns>True if the smb share is out of capacity </returns>
+            <remarks>Covered in FVTs</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionExtension.IsIOExceptionDueToOutOfCapacity(System.IO.IOException)">
+            <summary>
+            Check if the IO exception is due to out of capacity
+            </summary>
+            <param name="ex">the IOException</param>
+            <returns>True if the IO exception is due to out of capacity</returns>
+            <remarks>Covered in FVTs</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers">
+            <summary>
+            Helper function to support file copy with cancellation
+            </summary>
+            <remarks>
+            Leverage WinAPI CopyFileEx for file copy. Refer to https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-copyfileexw.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileCallbackAction">
+            <summary>
+            Refer to https://docs.microsoft.com/en-us/windows/win32/api/winbase/nc-winbase-lpprogress_routine#return-value
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileCallbackAction.Continue">
+            <summary>
+            Continue the copy operation.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileCallbackAction.Cancel">
+            <summary>
+            Cancel the copy operation and delete the destination file.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileCallbackAction.Stop">
+            <summary>
+            Stop the copy operation. It can be restarted at a later time.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileCallbackAction.Quiet">
+            <summary>
+            Continue the copy operation, but stop invoking CopyProgressRoutine to report progress.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions">
+            <summary>
+            Flags that specify how the file is to be copied.
+            Refer to https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-copyfileexw#parameters
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions.COPY_FILE_FAIL_IF_EXISTS">
+            <summary>
+            The copy operation fails immediately if the target file already exists.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions.COPY_FILE_RESTARTABLE">
+            <summary>
+            Progress of the copy is tracked in the target file in case the copy fails.
+            The failed copy can be restarted at a later time by specifying the same values
+            for lpExistingFileName and lpNewFileName as those used in the call that failed.
+            This can significantly slow down the copy operation as the new file may be flushed multiple times during the copy operation.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions.COPY_FILE_OPEN_SOURCE_FOR_WRITE">
+            <summary>
+            The file is copied and the original file is opened for write access.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions.COPY_FILE_ALLOW_DECRYPTED_DESTINATION">
+            <summary>
+            An attempt to copy an encrypted file will succeed even if the destination copy cannot be encrypted.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions.COPY_FILE_COPY_SYMLINK">
+            <summary>
+            If the source file is a symbolic link, the destination file is also a symbolic link pointing to the same file that the source symbolic link is pointing to.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyFileOptions.COPY_FILE_NO_BUFFERING">
+            <summary>
+            The copy operation is performed using unbuffered I/O, bypassing system I/O cache resources. Recommended for very large file transfers.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.NativeMethods.CopyProgressRoutine">
+            <summary>
+            Callback function used with CopyFileEx function. Called when a portion of a copy operation is completed
+            Refer to https://docs.microsoft.com/en-us/windows/win32/api/winbase/nc-winbase-lpprogress_routine
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FileCopyHelpers.CopyFile(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Copy file with cancellation support
+            </summary>
+            <param name="source">Source file name</param>
+            <param name="destination">Destination file name</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FvtHelpers.GetFvtBackupRetentionPeriod(System.Int32)">
+            <summary>
+            Gets the reduced backup retention period for FVT
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FvtHelpers.GetFvtBackupJobRepetitionInterval(System.Int32)">
+            <summary>
+            Gets the reduced backup frequency for FVT
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FvtHelpers.FvtDeleteBackupJobRepetitionInterval">
+            <summary>
+            The reduced repetition interval for DeleteBackupJob. Set the internal configs
+            to the same value to properly use this test parameter.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.FvtHelpers.FvtCheckDailyAlertsJobRepetitionInterval">
+            <summary>
+            The reduced repetition interval for CheckDailyAlertsJob
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.IbcAdapaterRoutingHelper.SetIbcAssemblyResolver(System.Web.Http.HttpConfiguration)">
+            <summary>
+            Resolve the assemblies containing Ibc adapter controllers in http configuration
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.IbcAdapaterRoutingHelper.SetIbcAdapterRoute(System.Web.Http.HttpConfiguration,System.Net.Http.HttpMessageHandler)">
+            <summary>
+            Set the Ibc adapter routes
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.IbcAdapaterRoutingHelper.SetupParameterBindingRules(System.Web.Http.ModelBinding.ParameterBindingRulesCollection)">
+            <summary>
+            Sets up the parameter binding rules.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.IbcAdapaterRoutingHelper.SetupFilters(System.Web.Http.Filters.HttpFilterCollection)">
+            <summary>
+            Sets up the filters.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2">
+            <summary>
+            Create a proxy to an object of interface T. All exception thrown by this object would be warpped with exception E.
+            </summary>
+            <typeparam name="T">Interface for wrapping. All methods in T should not contain `out` parameters.</typeparam>
+            <typeparam name="E">Exception used to wrap. E must support constroctor E(Exception innerException).</typeparam>
+            <remarks>UT exceptions are mostly mocked</remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2.GetWrapper(`0)">
+            <summary>
+            Get the wrapper of client.
+            </summary>
+            <param name="t">The client to be wrapped</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2.#ctor(`0)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2" /> class.
+            </summary>
+            <param name="t">The client to be wrapped</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2.WrapTaskWithResult``1(System.Threading.Tasks.Task{``0})">
+            <summary>
+            Wrap exception thrown from <see cref="T:System.Threading.Tasks.Task`1" /> class.
+            </summary>
+            <typeparam name="R">Task result type.</typeparam>
+            <param name="task">The task to be wrapped</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2.WrapTask(System.Threading.Tasks.Task)">
+            <summary>
+            Wrap exception thrown from <see cref="T:System.Threading.Tasks.Task" /> class.
+            </summary>
+            <param name="task">The task to be wrapped</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ExceptionWrapper`2.Invoke(System.Runtime.Remoting.Messaging.IMessage)">
+            <summary>
+            Intercept method call and wrap its exception.
+            </summary>
+            <param name="msg">The method call to be wrapped</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ICngDpapiHelpersImp.EncryptStringWithCngDpapi(System.String,System.String)">
+            <summary>
+            Protect the string against the given group using DPAPI NG.
+            </summary>
+            <param name="value">the string to encrypt</param>
+            <param name="protectToGroupName">the user group that the secret will be protected against</param>
+            <returns>encrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ICngDpapiHelpersImp.EncryptSecretWithCngDpapi(System.Security.SecureString,System.String)">
+            <summary>
+            Protect the secret against the given group using DPAPI NG.
+            </summary>
+            <param name="value">the secret</param>
+            <param name="protectToGroupName">the user group that the secret will be protected against</param>
+            <returns>encrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ICngDpapiHelpersImp.DecryptStringWithCngDpapi(System.String)">
+            <summary>
+            Decrypt the string protected by DPAPI NG.
+            </summary>
+            <param name="value">the protected value</param>
+            <returns>decrypted string</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ICngDpapiHelpersImp.DecryptSecretWithCngDpapi(System.String)">
+            <summary>
+            Decrypt the secret protected by DPAPI NG.
+            </summary>
+            <param name="value">the protected value</param>
+            <returns>decrypted secret</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.OperationStepHelpers.IsOperationStepReached``1(System.String,``0)">
+            <summary>
+            Check whether the step indicated by sub-status message is less than given step
+            In C# 7.3, we would be able to change constraints to "where struct, System.Enum"
+            </summary>
+            <typeparam name="T">type of enum</typeparam>
+            <param name="subStatusMessage"> substatus message</param>
+            <param name="step">step</param>
+            <returns>whether the step indicated by sub-status message is less than given step</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.RequestIdBinding.#ctor(System.Web.Http.Controllers.HttpParameterDescriptor)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.RequestIdBinding"/> class.
+            </summary>
+            <param name="descriptor">An <see cref="T:System.Web.Http.Controllers.HttpParameterDescriptor" /> that describes the parameters.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.RequestIdBinding.ExecuteBindingAsync(System.Web.Http.Metadata.ModelMetadataProvider,System.Web.Http.Controllers.HttpActionContext,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronously executes the binding for the given request.
+            </summary>
+            <param name="metadataProvider">Metadata provider to use for validation.</param>
+            <param name="actionContext">The action context for the binding. The action context contains the parameter dictionary that will get populated with the parameter.</param>
+            <param name="cancellationToken">Cancellation token for cancelling the binding operation.</param>
+            <returns>
+            A task object representing the asynchronous operation.
+            </returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.Resources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.Resources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.Resources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.Resources.InvalidOrMissingRequestIdHeaderMessage">
+            <summary>
+              Looks up a localized string similar to Invalid or missing {0} header..
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupUtils.ValidateRequestIdAttribute.OnActionExecuting(System.Web.Http.Controllers.HttpActionContext)">
+            <summary>
+            Occurs before the action method is invoked.
+            </summary>
+            <param name="actionContext">The action context.</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers">
+            <summary>
+            Common helpers
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.MinEncryptionKeyLength">
+            <summary>
+            Minimum encryption key length. The key contains both encryption and authentication key
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.DirectoryCopyAsync(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Copy directory
+            </summary>
+            <param name="sourceDirName">source directory</param>
+            <param name="destDirName">destination directory</param>
+            <param name="copySubDirs">flag indicating whether to copy sub directory recursively</param>
+            <returns>task doing the copy</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.CleanDirectory(System.String)">
+            <summary>
+            Delete all content in the directory, but leave the directory
+            </summary>
+            <param name="dirName">directory name</param>
+            <returns>True if all cleared</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.ConvertToSecureString(System.String)">
+            <summary>
+            Helper function to convert password string to secure string.
+            </summary>
+            <param name="password">password as string.</param>
+            <returns>returns secure string.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.IsSameSecureString(System.Security.SecureString,System.Security.SecureString)">
+            <summary>
+            Check whether the two secure strings are the same.
+            </summary>
+            <param name="value1">first value</param>
+            <param name="value2">second value</param>
+            <returns>True if the two secure strings are the same</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.IsSecureStringNullOrEmpty(System.Security.SecureString)">
+            <summary>
+            Checks whether the secure string is null or empty
+            </summary>
+            <param name="secureString">secure string</param>
+            <returns>True if null or empty</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.GenerateEncryptionKeyBase64">
+            <summary>
+            Generate a encryption key
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.GetCertificateFromRawDataBase64(System.String,System.String)">
+            <summary>
+            Create a X509 cert from a Base64 raw data string
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.GetDecryptionCertificateFromRawDataBase64(System.String,System.String)">
+            <summary>
+            Create a X509 decrytion cert
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.EncryptBase64StringWithCertificate(System.String,System.Security.Cryptography.X509Certificates.X509Certificate2)">
+            <summary>
+            Encrypt string with certificate
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.DecryptBase64StringWithCertificate(System.String,System.Security.Cryptography.X509Certificates.X509Certificate2)">
+            <summary>
+            Decrypt string with certificate
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.ValidateEncryptionCert(System.String)">
+            <summary>
+            Validate the encryption key
+            </summary>
+            <param name="encryptionCertBase64">The encryption cert raw data as a Base64 string</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.ValidateEncryptionKey(System.String)">
+            <summary>
+            Validate the encryption key
+            </summary>
+            <param name="encryptionKeyBase64">The encryption key</param>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.SizeBufferCapacity">
+            <summary>
+            Capacity of the StringBuilder buffer
+            </summary>
+            <remarks>Max possible length is 26 for "18446744073709551615 bytes" (Actually will not happen)</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.MinEncryptionCertKeyLength">
+            <summary>
+            Minimum required encryption cert key length.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.GetDiskFreeSpace(System.String,System.UInt64@,System.UInt64@)">
+            <summary>
+            Gets free space of disk
+            </summary>
+            <param name="path">directory path</param>
+            <param name="totalBytes">total bytes of disk</param>
+            <param name="freeBytes">free bytes of disk</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.SizeBytesToString(System.UInt64)">
+            <summary>
+            Converts the size in bytes to string
+            </summary>
+            <param name="sizeBytes">size in bytes</param>
+            <returns>size string</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.HttpStatusCodeFromException(System.Exception)">
+            <summary>
+            Get Http status code from an exception.
+            </summary>
+            <param name="e">The exception to return.</param>
+            <returns>The HTTP status code created from the exception.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.IsAzureFileUri(System.String)">
+            <summary>
+            Check whether SMB share is a Azure File.
+            </summary>
+            <param name="uri">Uri of that share.</param>
+            <returns>True for Azure file</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Utils.Helpers.IsActiveActionPlanStatus(Microsoft.AzureStack.Solution.Deploy.EnterpriseCloudEngine.Controllers.Models.ActionPlanExecutionStatus)">
+            <summary>
+            Check whether action plan status is active
+            </summary>
+            <param name="status">Action plan status</param>
+            <returns>True for active action plan status</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Test.KeyVaultManager">
+            <summary>
+            Key Vault Manager
+            </summary>
+            <remarks>Test codes</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.Test.KeyVaultManager.keyVaultClient">
+            <summary>
+            key Vault Client
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Test.KeyVaultManager.#ctor(System.String,System.String,System.String,System.String,System.Net.Http.HttpClientHandler)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.Test.KeyVaultManager"/> class.
+            </summary>
+            <param name="tenantId">tenant Id</param>
+            <param name="applicationId">application Id</param>
+            <param name="certificateThumbprint">certificate thumbprint to authorize the application </param>
+            <param name="keyVaultBaseUrl">key Vault base url</param>
+            <param name="httpLogHandler">optional http logging handler</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Test.KeyVaultManager.GetSecretAsync(System.String,System.Threading.CancellationToken,System.Boolean)">
+            <summary>
+            Get the secret
+            </summary>
+            <param name="secretName">secret name</param>
+            <param name="cancellationToken">cancellation token</param>
+            <param name="throwIfNotExist">whether throw if the secret doesn't exist in the key vault</param>
+            <returns>the value of secret name.
+            When the secret name did not exist, if throwIfNotExist is false, return null</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.Test.KeyVaultManager.FindCertificateByThumbprint(System.String)">
+            <summary>
+            Find Certificate By Thumbprint 
+            </summary>
+            <param name="certificateThumbprint">certificate Thumbprint</param>
+            <returns>instance of X509Certificate2</returns>
+        </member>
+    </members>
+</doc>

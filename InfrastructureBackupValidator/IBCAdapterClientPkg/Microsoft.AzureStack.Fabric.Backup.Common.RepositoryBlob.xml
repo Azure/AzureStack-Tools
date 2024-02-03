@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.RepositoryBlob</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryBlob.RepositoryBlob.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.String,System.Security.SecureString,System.String,System.String,System.String,System.String,System.Guid,System.String,System.String,System.Guid,System.Guid,Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType,System.String,System.String,System.String,System.String)">
+            <summary>
+            Initializes a new instance of the<see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryBlob.RepositoryBlob" /> class.
+            </summary>
+            <param name="componentInfo">component info</param>
+            <param name="repositoryName">repository name</param>
+            <param name="accountName">account name</param>
+            <param name="accountKey">account key</param>
+            <param name="tableEndPoint">table end point used for connecting to storage</param>
+            <param name="blobEndPoint">blob end point used for connecting to storage</param>
+            <param name="queueEndPoint">queue end point used for connecting to storage</param>
+            <param name="containerNameFilter">name filter for Azure Stack storage account containers</param>
+        </member>
+    </members>
+</doc>

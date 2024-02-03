@@ -1,0 +1,349 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.AlertHelpers.CloseAllBackupFailedAlerts">
+            <summary>
+            Closes all backup failed alerts
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.AlertHelpers.OpenBackupFailedAlert(System.Exception,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider)">
+            <summary>
+            Opens backup failed alert according to failure exception
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.AlertHelpers.KeepSingleBackupFailedAlert(Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType)">
+            <summary>
+            Keeps the specified backup failure alert and close all others
+            </summary>
+            <param name="backupFailedAlertToKeep">the backup failure alert that needs to keep</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.AlertHelpers.OpenRegularBackupFailedAlert(System.Exception,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider)">
+            <summary>
+            Opens regular backup failed alert
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.AlertHelpers.OpenInternalBackupFailedAlert(System.Exception)">
+            <summary>
+            Opens internal backup failed alert
+            </summary>
+            <param name="e">failure exception</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase">
+            <summary>
+            Base class of backup alert
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.FaultWriter">
+            <summary>
+            FaultWriter instance
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.faultTypeId">
+            <summary>
+            Fault type ID of alert
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.faultId">
+            <summary>
+            Fault ID of alert
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.Properties">
+            <summary>
+            Alert properties
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the<see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase" /> class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.Open">
+            <summary>
+            Opens alert
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupAlertBase.Close">
+            <summary>
+            Closes alert
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.InternalBackupDeletionFailedAlert">
+            <summary>
+            Internal backup deletion failed
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.InternalBackupFailedGeneralAlert">
+            <summary>
+            Internal backup failure
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupDeletionFailedAlert">
+            <summary>
+            Auto deletion failed on some backups
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupDeletionFailedAlert.Open(System.Collections.Generic.IEnumerable{System.Guid},System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Opens BackupDeletionFailedAlert
+            </summary>
+            <param name="backupIds">backup IDs failed to delete</param>
+            <param name="backupPaths">paths to backups failed to delete</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupSkippedWithFailedOperationAlert">
+            <summary>
+            Scheduled backup skipped due to failed admin operations
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupSkippedWithFailedOperationAlert.Open(System.Collections.Generic.IEnumerable{System.String},System.String)">
+            <summary>
+            Opens BackupSkippedWithFailedOperationAlert
+            </summary>
+            <param name="adminOperations">failed admin operations</param>
+            <param name="nextBackupDateTime">next backup date time</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareConnectionAlert">
+            <summary>
+            Backup failed fault due to share connection issue
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareOutOfCapacityAlert">
+            <summary>
+            Backup failed fault due to share out of capacity
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareOutOfCapacityAlert.Open(System.String)">
+            <summary>
+            Opens BackupFailedShareOutOfCapacityAlert
+            </summary>
+            <param name="externalSharePath">external share path</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareNotAccessibleGeneralAlert">
+            <summary>
+            Backup failed fault due to share path invalid
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupPartialSucceededAlert">
+            <summary>
+            Backup partially succeeded fault
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupPartialSucceededAlert.Open(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Opens BackupPartialSucceededAlert
+            </summary>
+            <param name="rolesFailedInBackup">roles failed in backup</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareUploadDataAlert">
+            <summary>
+            Backup failed fault during uploading data to external share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareUploadDataAlert.Open(System.String)">
+            <summary>
+            Opens BackupFailedShareUploadDataAlert
+            </summary>
+            <param name="externalSharePath">external share path</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareReadWriteAlert">
+            <summary>
+            Backup failed fault due share IO permission issue
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedSharePathInvalidAlert">
+            <summary>
+            Backup failed fault due to share path invalid
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareAuthenticationAlert">
+            <summary>
+            Backup failed fault due to share authentication issue
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedShareAuthenticationAlert.Open(System.String)">
+            <summary>
+            Opens BackupFailedShareAuthenticationAlert
+            </summary>
+            <param name="externalSharePath">external share path</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupFailedGeneralAlert">
+            <summary>
+            Backup failed fault due to unknown issue
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupSchedulerPausedAlert">
+            <summary>
+            Backup scheduler paused fault
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.BackupShareNotConfiguredAlert">
+            <summary>
+            Backup share not configured fault
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.ExternalShareAlmostFullAlert">
+            <summary>
+            External share almost full
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.ExternalShareAlmostFullAlert.CapacityThresholdPercentageFormat">
+            <summary>
+            String format of capacity threshold in percentage
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.ExternalShareAlmostFullAlert.Open(System.String,System.Double)">
+            <summary>
+            Opens ExternalShareAlmostFullAlert
+            </summary>
+            <param name="externalSharePath">external share path</param>
+            <param name="capacityThreshold">next backup date time</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.KeyBasedEncryptionDeprecatedAlert">
+            <summary>
+            Key based encryption deprecated fault
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.PropertylessBackupAlertBase">
+            <summary>
+            Base class of backup alert without property
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Alerts.PropertylessBackupAlertBase.Open">
+            <summary>
+            Opens alert
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupFaultWriter.CloseFault(System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupFaultWriter.OpenFault(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.IBackupFaultWriter.CloseFault(System.String,System.String)">
+            <summary>
+            Closes fault
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.IBackupFaultWriter.OpenFault(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Opens fault
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.General">
+            <summary>
+            unknown issue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.ShareAuthentication">
+            <summary>
+            share authentication issue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.SharePathInvalid">
+            <summary>
+            share path invalid
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.ShareConnection">
+            <summary>
+            share connection issue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.ShareOutOfCapacity">
+            <summary>
+            share out of capacity
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.ShareReadWrite">
+            <summary>
+            share read/write permission issue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.ShareNotAccessibleGeneral">
+            <summary>
+            share not accessible due to some uncategorized issue
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.ShareUploadData">
+            <summary>
+            failure during uploading data to external share
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.PartialSucceeded">
+            <summary>
+            backup partially succeeded
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Models.BackupFailedFaultType.InternalGeneral">
+            <summary>
+            internal backup failure
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupControllerEventSource">
+            <summary>
+            EventSource for IBC alerts
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupControllerEventSource.#cctor">
+            <summary>
+            Initializes a new instance of the<see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupControllerEventSource" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupControllerEventSource.Current">
+            <summary>
+            Gets the event source instance
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupControllerEventSource.WriteFaultEventId">
+            <summary>
+            Event ID of writing IBC fault
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.BackupControllerEventSource.WriteFaultEvent(System.String,System.String)">
+            <summary>
+            Writes the fault event
+            </summary>
+            <param name="version">API version</param>
+            <param name="properties">Alert properties</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource.FailedAdminOperationsSeparator">
+            <summary>
+              Looks up a localized string similar to , .
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource.FailedToDeleteBackupFullPathsSeparator">
+            <summary>
+              Looks up a localized string similar to , .
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource.FailedToDeleteBackupIdsSeparator">
+            <summary>
+              Looks up a localized string similar to , .
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupAlert.Resource.RolesFailedInBackupSeparator">
+            <summary>
+              Looks up a localized string similar to , .
+            </summary>
+        </member>
+    </members>
+</doc>
