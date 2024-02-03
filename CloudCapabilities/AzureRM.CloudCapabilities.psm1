@@ -45,7 +45,7 @@ function Get-AzureRMCloudCapability() {
     $sw = [Diagnostics.Stopwatch]::StartNew()
     Write-Verbose "Getting CloudCapabilities for location: '$location'"
 
-    $rootPath = $env:TEMP
+    $rootPath = [system.io.path]::GetTempPath()
     $fileDir = "ApiProfiles"
     $localDirPath = Join-Path -Path $rootPath -ChildPath $fileDir
     if(Test-Path($localDirPath))
