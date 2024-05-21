@@ -1,0 +1,20 @@
+{
+    "azureCliVersion": "2.59.0",
+    "azureCliExtensions": {
+        "public": {
+            "aksarc": "1.2.20",
+            "connectedmachine": "0.5.1",
+            "customlocation": "0.1.3",
+            "guestconfig": "0.1.1",
+            "k8s-extension": "1.6.1",
+            "k8s-configuration": "1.7.0",
+            "stack-hci-vm": "1.0.1"
+        },
+        "private": {
+            "connectedk8s": "https://winfieldartifacts.blob.core.windows.net/azcli/connectedk8s-1.6.7b1-py2.py3-none-any.whl"
+        }
+    },
+    "helm": "v3.6.3",
+    "kubectl": "v1.30.0",
+    "python": "3.11.9"
+}

@@ -1,0 +1,8 @@
+FROM ubuntu:22.04
+
+RUN mkdir -p /root/downloads
+COPY scripts/* /root/downloads
+COPY WINFIELD_SETUP_README.txt /
+RUN chmod +x /root/downloads/install_tools.sh
+RUN /root/downloads/install_tools.sh
+CMD ["/bin/bash"]
