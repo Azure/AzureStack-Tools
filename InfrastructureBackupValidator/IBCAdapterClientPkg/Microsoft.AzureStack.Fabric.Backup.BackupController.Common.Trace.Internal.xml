@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.Internal</name>
+    </assembly>
+    <members>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.BackupLogger.MicrosoftContextHeaderName">
+            <summary>
+            The microsoft context header name for ASP.NET's Http Context
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.MicrosoftContextHeaderName">
+            <summary>
+            The microsoft context header name for ASP.NET's Http Context
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.SuppressionValue">
+            <summary>
+            Value to log in place of suppressed header values
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.HeadersToSuppress">
+            <summary>
+            Headers that may contain secrets and should be suppressed
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.HttpServerRequestStop(System.Net.Http.HttpRequestMessage,System.Net.Http.HttpResponseMessage,System.String,System.String)">
+            <summary>
+            Traces an HTTP request handled by a server.
+            </summary>
+            <param name="request">The request.</param>
+            <param name="response">The response.</param>
+            <param name="requestBody">The request body.</param>
+            <param name="responseBody">The response body.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.GetCallerAddress(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Gets the caller address from the request property bag.
+            </summary>
+            <param name="request">The HTTP request.</param>
+            <returns>the caller address.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.SuppressHeaderValueIfAppropriate(System.String,System.Object)">
+            <summary>
+            Suppresses a header value if the header is on the suppress list
+            </summary>
+            <param name="headerName">Header name</param>
+            <param name="headerValue">Header value</param>
+            <returns>Returns the original or suppressed header value as appropriate</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.FilterHeaderValues(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Filters request and response header values suppressing those that should not be logged.
+            </summary>
+            <param name="headerName">Request or response header name</param>
+            <param name="headerValues">Header values</param>
+            <returns>Header value to log</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.BackupController.Common.Trace.IBCLogger.FormatRequestHeaders(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Formats the request headers.
+            </summary>
+            <param name="request">The request.</param>
+            <returns>A string containing all the request headers</returns>
+        </member>
+    </members>
+</doc>

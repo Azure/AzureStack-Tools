@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer">
+            <summary>
+            Repository for SQL server
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.DataFileExtension">
+            <summary>
+            data file extension
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.DataLogFileExtension">
+            <summary>
+            log file extension
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.instanceName">
+            <summary>
+            instance name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.sourceDatabaseName">
+            <summary>
+            Source DB name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.targetDatabaseName">
+            <summary>
+            Source DB name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.dataFileName">
+            <summary>
+            data file name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.logFileName">
+            <summary>
+            log file name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.statementTimeoutInSeconds">
+            <summary>
+            timeout of statement execution
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.CompressionEnabled">
+            <summary>
+            Indicates whether SQL backups will be compressed in this repository
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.AccountName">
+            <summary>
+            Gets or sets account name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.AccountKey">
+            <summary>
+            Gets or sets account key
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ComponentInfo,System.String,System.String,System.String,System.Int32,System.Guid,System.String,System.String,System.Guid,System.Guid,Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType,System.String,System.Security.SecureString,System.String,System.String,System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Initializes a new instance of the<see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer" /> class.
+            </summary>
+            <param name="componentInfo">component info</param>
+            <param name="repositoryName">repository name</param>
+            <param name="instanceName">instance name</param>
+            <param name="sourceDatabaseName">source DB name</param>
+            <param name="statementTimeoutInSeconds">timeout of statement execution</param>
+            <param name="userName">user name</param>
+            <param name="password">the password</param>
+            <param name="compressionEnabled">enables compression of SQL backups in this repository</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.DoBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IBackupLocalStore)">
+            <summary>
+            Perform backup of SQL Server database.
+            If recovery model of the database is set to simple then only backup data file otherwise backup both
+            data and log file.
+            </summary>
+            <param name="backupLocalStore">backup local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.DoRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IRestoreLocalStore)">
+            <summary>
+            Perform restore od SQL Server database
+            If recovery model of the database is set to simple then only restore data file otherwise restore both
+            data and log file.
+            </summary>
+            <param name="restoreLocalStore">restore local store</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.ExecuteBackup(Microsoft.SqlServer.Management.Smo.Server,System.String,Microsoft.SqlServer.Management.Smo.BackupActionType,System.Boolean)">
+            <summary>
+            Call SQL Server library to perform backup based on specified backup action type
+            </summary>
+            <param name="sqlServer">SQL server</param>
+            <param name="backupFileName">backup file name</param>
+            <param name="backupActionType">backup action type</param>
+            <param name="requireIncrementalBackup">flag indicating whether incremental backup required</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.PerformRestore(System.String,Microsoft.SqlServer.Management.Smo.Server,Microsoft.SqlServer.Management.Smo.RestoreActionType,System.Boolean,System.Boolean)">
+            <summary>
+            Call SQL Server library to perform restore based on specified restore action type
+            </summary>
+            <param name="restoreFile">restore file</param>
+            <param name="sqlServer">SQL server</param>
+            <param name="restoreActionType">restore action type</param>
+            <param name="noRecovery">flag indicates no recovery needed</param>
+            <param name="replaceDatabase">Indicate whether DB already exists</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositorySQLServer.RepositorySqlServer.Connect">
+            <summary>
+            Connect to the SQL Server instance
+            </summary>
+            <returns>SQL server instance</returns>
+        </member>
+    </members>
+</doc>

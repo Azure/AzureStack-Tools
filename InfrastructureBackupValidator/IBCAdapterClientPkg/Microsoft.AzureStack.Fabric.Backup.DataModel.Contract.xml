@@ -1,0 +1,487 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.DataModel.Contract</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions">
+            <summary>
+            Backup API versions.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.CurrentIbcApiVersion">
+            <summary>
+            The current IBC API version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.CurrentBackupDataVersion">
+            <summary>
+            The current backup data version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.LegacyBackupDataVersion">
+            <summary>
+            The current backup data version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.CurrentBackupOperationVersion">
+            <summary>
+            The current backup operation version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.CurrentRestoreOperationVersion">
+            <summary>
+            The current restore operation version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.CurrentBtsApiVersion">
+            <summary>
+            The current BTS API version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.AllSupportedIbcApiVersions">
+            <summary>
+            All IBC Api versions supported
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.AllSupportedBackupDataVersions">
+            <summary>
+            All backup data versions supported
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupVersions.AllSupportedBtsApiVersions">
+            <summary>
+            All BTS Api versions supported
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase">
+            <summary>
+            Backup information.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.BackupDataVersion">
+            <summary>
+            The backup data version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.BackupId">
+            <summary>
+            Gets or sets unique ID for a given backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.RoleStatus">
+            <summary>
+            Gets or sets backup status for roles
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.Status">
+            <summary>
+            Gets or sets overall backup status
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.CreatedDateTime">
+            <summary>
+            Gets or sets backup creation time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.TimeTakenToCreate">
+            <summary>
+            Gets or sets time taken to create the backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.StampVersion">
+            <summary>
+            The stamp version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.OemVersion">
+            <summary>
+            The OEM version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.DeploymentID">
+            <summary>
+            The deployment ID
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.EncryptedBackupEncryptionKey">
+            <summary>
+            The cert-wrapped encryption key
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.EncryptionCertThumbprint">
+            <summary>
+            Gets or sets backup encryption cert thumbprint
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.BackupSizeInKb">
+            <summary>
+            Gets or sets raw backup size
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.CompressedBackupSizeInKb">
+            <summary>
+            Gets or sets compressed backup size
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.CompletelyUploaded">
+            <summary>
+            Gets or sets whether the backup has been completely uploaded
+            </summary>
+            <remarks>
+            Default value set to true to be compatible with old backups without this field
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.IsAutomaticBackup">
+            <summary>
+            Gets or sets whether the backup is an automatic backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupInfoBase.IsCloudRecoveryReady">
+            <summary>
+            Gets or sets whether the backup can be used for cloud recovery
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType">
+            <summary>
+            operation type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.Unknown">
+            <summary>
+            unknown
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.Backup">
+            <summary>
+            Backup
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.Restore">
+            <summary>
+            for restore
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.ExternalStore">
+            <summary>
+            for setting external store
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.SetBackupProvider">
+            <summary>
+            for setting backup provider
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.EceBackupExecution">
+            <summary>
+            ECE backup action
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.EceRestoreExecution">
+            <summary>
+            ECE restore action
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.ExportBackupData">
+            <summary>
+            Export backup data
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.BtsUpload">
+            <summary>
+            BTS upload operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.BtsDownload">
+            <summary>
+            BTS download operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.BtsDelete">
+            <summary>
+            BTS delete operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.BtsPutLocation">
+            <summary>
+            BTS put configuration operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.BtsTestLocation">
+            <summary>
+            BTS test connection operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.BtsDeleteLocation">
+            <summary>
+            BTS test connection operation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationType.PruneExternalStore">
+            <summary>
+            For pruning external store
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType">
+            <summary>
+            Backup type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType.Full">
+            <summary>
+            Full backup
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupType.Progressive">
+            <summary>
+            Progressive backup
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupRepositoryExternalStoreType">
+            <summary>
+            Backup repository external store type
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus">
+            <summary>
+            operation status
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Creating">
+            <summary>
+            operation Creating
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Queued">
+            <summary>
+            operation queued
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Running">
+            <summary>
+            operation running
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Deleted">
+            <summary>
+            operation deleted
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Failed">
+            <summary>
+            operation failed
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.PartialSucceeded">
+            <summary>
+            operation partially succeeded
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Succeeded">
+            <summary>
+            operation succeeded
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Corrupted">
+            <summary>
+            operation result data corrupted
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.OperationStatus.Skipped">
+            <summary>
+            operation result backup skipped
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupStoreType">
+            <summary>
+            External store type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupStoreType.FileShare">
+            <summary>
+            File share as backup store
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.BackupStoreType.AzureBlob">
+            <summary>
+            Azure blob as backup store
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.TerminalArmProvisioningState">
+            <summary>
+            Represents terminal provisioning states which are permitted by ARM.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.NonTerminalArmProvisioningState">
+            <summary>
+            Represents non-terminal provisioning states
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.PruneBackupStoreOperationType">
+            <summary>
+            Represents backup store pruning operation type
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase">
+            <summary>
+            External Store
+            </summary>
+            <remarks>External store covered in BVTs</remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.Path">
+            <summary>
+            External store path
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.UserName">
+            <summary>
+            Username
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.Password">
+            <summary>
+            Password
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.EncryptionCertBase64">
+            <summary>
+            Encryption cert raw data
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.EncryptionCertThumbprint">
+            <summary>
+            Encryption cert thumbprint
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.BackupFrequencyInHours">
+            <summary>
+            Backup frequency in hours
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.AvailableCapacity">
+            <summary>
+            Available capacity of external store
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.IsBackupSchedulerEnabled">
+            <summary>
+            Whether the backup scheduler is enabled
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.NextBackupTime">
+            <summary>
+            The next backup date time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.LastBackupTime">
+            <summary>
+            The last backup date time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreBase.BackupRetentionPeriodInDays">
+            <summary>
+            Backup retention period in days
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.BackupFrequencyInHoursDefaultValue">
+            <summary>
+            Default value for BackupFrequencyInHours
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.BackupFrequencyInHoursMaxValue">
+            <summary>
+            Max value for BackupFrequencyInHours
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.BackupFrequencyInHoursMinValue">
+            <summary>
+            Min value for BackupFrequencyInHours
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.BackupRetentionPeriodInDaysDefaultValue">
+            <summary>
+            Default value for BackupRetentionPeriodInDays
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.BackupRetentionPeriodInDaysMaxValue">
+            <summary>
+            Max value for BackupRetentionPeriodInDays
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.BackupRetentionPeriodInDaysMinValue">
+            <summary>
+            Min value for BackupRetentionPeriodInDays
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.ExternalStoreConstants.IsBackupSchedulerEnabledDefaultValue">
+            <summary>
+            Default value for IsBackupSchedulerEnabled
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IOperationStatus.RoleStatus">
+            <summary>
+            Gets or sets operation status for roles
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IOperationStatus.Status">
+            <summary>
+            Gets or sets overall backup status
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IBackupInfo.BackupId">
+            <summary>
+            Gets or sets unique ID for a given backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IBackupInfo.CreatedDateTime">
+            <summary>
+            Gets or sets backup creation time
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IBackupInfo.TimeTakenToCreate">
+            <summary>
+            Gets or sets time taken to create the backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.IBackupInfo.EncryptionCertThumbprint">
+            <summary>
+            Gets or sets backup encryption cert thumbprint
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RepositoryOperationStatus">
+            <summary>
+            Backup repository status.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RepositoryOperationStatus.FullRepositoryName">
+            <summary>
+            Gets or sets the repository name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RepositoryOperationStatus.Status">
+            <summary>
+            Gets or sets repository backup status
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RoleOperationStatus">
+            <summary>
+            Backup role status.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RoleOperationStatus.RoleName">
+            <summary>
+            Gets or sets the role name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RoleOperationStatus.RepositoryStatus">
+            <summary>
+            Gets or sets repository status of the role
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.DataModel.Contract.RoleOperationStatus.Status">
+            <summary>
+            Gets or sets role backup status
+            </summary>
+        </member>
+    </members>
+</doc>

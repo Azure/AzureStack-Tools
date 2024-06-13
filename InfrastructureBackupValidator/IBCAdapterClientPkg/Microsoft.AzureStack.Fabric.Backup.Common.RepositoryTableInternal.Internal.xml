@@ -1,0 +1,525 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Internal</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants">
+            <summary>
+            table related constants
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.TimestampFormat">
+            <summary>
+            timestamp format for table entity
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.InvalidJsonDataFormat">
+            <summary>
+            invalid JSON data format
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.TimestampIsInvalid">
+            <summary>
+            timestamp is invalid
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.UnexpectedEntityPropertyType">
+            <summary>
+            unexpected entity property type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.UnexpectedEntityProperty">
+            <summary>
+            Unexpected entity property
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.UnexpectedEntityPropertyTokenType">
+            <summary>
+            Unexpected token type for entity property value
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.ExpectTokenValue">
+            <summary>
+            Expect token value
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.ExpectTokenValueType">
+            <summary>
+            Expect token value type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.EndOfFileEncounterd">
+            <summary>
+            End of file is encountered unexpectedly
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.ExpectTokenType">
+            <summary>
+            Expect token type
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.ExpectEndOfFile">
+            <summary>
+            Expect end of file
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.Constants.SeekNotSupportedException">
+            <summary>
+            The target stream doesn't support Seek operation
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.EntityPropertyUtil">
+            <summary>
+            entity property utility
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.EntityPropertyUtil.Create(System.String,System.String)">
+            <summary>
+            create entity property
+            </summary>
+            <param name="type">the type</param>
+            <param name="value">the value</param>
+            <returns>the entity property</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.EntityPropertyUtil.TryGetTypeAndValue(Microsoft.WindowsAzure.Storage.Table.EntityProperty,System.String@,System.String@)">
+            <summary>
+            Try to get type and value strings according to an instance of <see cref="T:Microsoft.WindowsAzure.Storage.Table.EntityProperty"/>.
+            </summary>
+            <param name="property">The input <see cref="T:Microsoft.WindowsAzure.Storage.Table.EntityProperty"/> object.</param>
+            <param name="type">The string that represents type of the property.</param>
+            <param name="value">The string that represents value of the property.</param>
+            <returns>Whether type and value is get successfully.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase">
+            <summary>
+            file reader base implementation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.BaseStream">
+            <summary>
+            Gets the underlying stream that interfaces with a backing store.
+            </summary>
+            <value>The stream this <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase"/> is reading from.</value>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.ReadStartDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read start document content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start document content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.ReadEndDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read end document content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when end document content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.ReadStartEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read start entity list content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start entity list content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.ReadEndEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read end entity list content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the end entity list content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.ReadEntityAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read a table entity from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>The table entity read from source stream, returns null when there is no more entity.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.Dispose">
+            <summary>
+            Release all resources of this object.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.Dispose(System.Boolean)">
+            <summary>
+            The internal logic to dispose the object.
+            </summary>
+            <param name="disposing">Whether the method is called by Dispose() method.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase.ReadEntityImplAsync(System.Threading.CancellationToken)">
+            <summary>
+            The inner implementation to read a table entity from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>The table entity read from source stream, returns null when there is no more entity.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase">
+            <summary>
+            file writer
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.EndingSize">
+            <summary>
+            Gets size of the file ending.
+            </summary>
+            <value>Size of the file ending.</value>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.BaseStream">
+            <summary>
+            Gets the underlying stream that interfaces with a backing store.
+            </summary>
+            <value>The stream this <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase"/> is writing to.</value>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.Position">
+            <summary>
+            Gets or sets the current position of the underlying stream.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.WriteStartDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write start document content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start document content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.WriteEndDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write end document content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when end document content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.WriteStartEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write start entity list content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start entity list content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.WriteEndEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write end entity list content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when end entity list content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.WriteEntityAsync(Microsoft.WindowsAzure.Storage.Table.DynamicTableEntity,System.Threading.CancellationToken)">
+            <summary>
+            Write a table entity to data file.
+            </summary>
+            <param name="entity">The table entity to write.</param>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the the table entity have been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.FlushAsync(System.Threading.CancellationToken)">
+            <summary>
+            Flushes data in buffer to the target stream.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the flushing has been done.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.Dispose">
+            <summary>
+            Release all resources of this object.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.Dispose(System.Boolean)">
+            <summary>
+            The internal logic to dispose the object.
+            </summary>
+            <param name="disposing">Whether the method is called by Dispose() method.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase.WriteEntityImplAsync(Microsoft.WindowsAzure.Storage.Table.DynamicTableEntity,System.Threading.CancellationToken)">
+            <summary>
+            The inner implementation to write a table entity to data file.
+            </summary>
+            <param name="entity">The table entity to write.</param>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the the table entity have been written to file.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader">
+            <summary>
+            JSON file reader
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.source">
+            <summary>
+            Source stream.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.internalReader">
+            <summary>
+            Internal JSON text reader.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.disposed">
+            <summary>
+            Whether the object has been disposed.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.#ctor(System.IO.Stream)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader"/> class.
+            </summary>
+            <param name="source">Source stream.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader"/> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.BaseStream">
+            <summary>
+            Gets the underlying stream that interfaces with a backing store.
+            </summary>
+            <value>The stream this <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileReaderBase"/> is reading from.</value>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.ReadStartDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read start document content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start document content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.ReadEndDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read end document content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when end document content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.ReadStartEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read start entity list content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start entity list content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.ReadEndEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Read end entity list content from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the end entity list content has been read.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.ReadEntityImplAsync(System.Threading.CancellationToken)">
+            <summary>
+            The inner implementation to read a table entity from data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>The table entity read from source stream, returns null when there is no more entity.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.Dispose(System.Boolean)">
+            <summary>
+            The internal logic to dispose the object.
+            </summary>
+            <param name="disposing">Whether the method is called by Dispose() method.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileReader.ReadAndAssertToken(System.Nullable{Newtonsoft.Json.JsonToken},System.Type,System.Object)">
+            <summary>
+            Read next JSON token and make assertion on this JSON token.
+            </summary>
+            <param name="tokenType">Expected JSON token type.</param>
+            <param name="valueType">Expected token value type.</param>
+            <param name="value">Expected token value.</param>
+            <exception cref="T:System.IO.InvalidDataException">Thrown when there is no more token available or when assertion fails.</exception>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter">
+            <summary>
+            JSON file writer
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.FileEndingSize">
+            <summary>
+            Size of the JSON file ending, including close bracket and close brace.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.baseUri">
+            <summary>
+            Storage base endpoint Uri.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.tableName">
+            <summary>
+            Source table name.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.streamWriter">
+            <summary>
+            Stream writer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.internalWriter">
+            <summary>
+            Internal JSON text writer.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.disposed">
+            <summary>
+            Whether the object has been disposed.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.#ctor(System.Uri,System.String,System.IO.Stream)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter"/> class.
+            </summary>
+            <param name="baseUri">Storage base endpoint Uri.</param>
+            <param name="tableName">Source table name.</param>
+            <param name="target">Target stream.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter"/> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.BaseStream">
+            <summary>
+            Gets the underlying stream that interfaces with a backing store.
+            </summary>
+            <value>The stream this <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.FileWriterBase"/> is writing to.</value>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.Position">
+            <summary>
+            Gets or sets the current position of the underlying stream.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.EndingSize">
+            <summary>
+            Gets size of the file ending.
+            </summary>
+            <value>Size of the file ending.</value>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.WriteStartDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write start document content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start document content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.WriteEndDocumentAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write end document content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when end document content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.WriteStartEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write start entity list content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when start entity list content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.WriteEndEntityListAsync(System.Threading.CancellationToken)">
+            <summary>
+            Write end entity list content to data file.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when end entity list content has been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.FlushAsync(System.Threading.CancellationToken)">
+            <summary>
+            Flushes data in buffer to the target stream.
+            </summary>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the flushing has been done.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.WriteEntityImplAsync(Microsoft.WindowsAzure.Storage.Table.DynamicTableEntity,System.Threading.CancellationToken)">
+            <summary>
+            The inner implementation to write a table entity to data file.
+            </summary>
+            <param name="entity">The table entity to write.</param>
+            <param name="cancellationToken">A cancellation token that should be used to cancel the work.</param>
+            <returns>A task that will complete when the the table entity have been written to file.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.JsonFileWriter.Dispose(System.Boolean)">
+            <summary>
+            The internal logic to dispose the object.
+            </summary>
+            <param name="disposing">Whether the method is called by Dispose() method.</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.ODataConstants">
+            <summary>
+            OData constants
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.ODataConstants.EdmTypePrefix">
+            <summary>
+            Common prefix in a property type definition.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.ODataConstants.JsonValuePropertyName">
+            <summary>
+            Property name of JSON values.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.ODataConstants.JsonTypeSuffix">
+            <summary>
+            Common suffix in key string of a JSON property type definition.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.ODataConstants.JsonMetadataProperty">
+            <summary>
+            Metadata property name in a JSON feed.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.ODataConstants.JsonMetadataFormat">
+            <summary>
+            Format for OData JSON metadata.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableInternal">
+            <summary>
+            Repository for table
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableInternal.BackupAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBackupDestinationStreamFactory,System.Predicate{System.String},Microsoft.WindowsAzure.Storage.Table.TableQuery,System.String)">
+            <summary>
+            Backs up the table
+            </summary>
+            <param name="tableConnectionString">The connection string of the table</param>
+            <param name="backupDestinationStreamFactory">The stream factory for the backup destination</param>
+            <param name="shouldTableBeProcessedDelegate">The delegate that defines if a table with a given name should be processed or not</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableInternal.RestoreAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBackupDestinationStreamFactory,System.Boolean,System.Predicate{System.String})">
+            <summary>
+            Restores the table
+            </summary>
+            <param name="tableConnectionString">The connection string of the table</param>
+            <param name="backupDestinationStreamFactory">The stream factory for the backup destination</param>
+            <param name="Overwrite">Whether overwrite destination table</param>
+            <param name="shouldTableBeProcessedDelegate">The delegate that defines if a table with a given name should be processed or not</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableInternal.ListTablesAsync(Microsoft.WindowsAzure.Storage.Table.CloudTableClient)">
+            <summary>
+            Gets the list of tables for a given storage account
+            </summary>
+            <param name="tableClient">table client</param>
+            <returns>list of cloud table</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableHelper">
+            <summary>
+            table repository helper
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableHelper.CopyCloudTableEntitiesToStreamAsync(Microsoft.WindowsAzure.Storage.CloudStorageAccount,Microsoft.WindowsAzure.Storage.Table.CloudTable,System.IO.Stream,Microsoft.WindowsAzure.Storage.Table.TableQuery)">
+            <summary>
+            Copies the cloud table entities to a stream
+            </summary>
+            <param name="storageAccount">storage account</param>
+            <param name="cloudTable">cloud table</param>
+            <param name="stream">the destination stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.RepositoryTableInternal.RepositoryTableHelper.CopyCloudTableEntitiesFromStreamAsync(Microsoft.WindowsAzure.Storage.Table.CloudTable,System.IO.Stream,System.Boolean)">
+            <summary>
+            Copies the cloud table entities from a stream
+            </summary>
+            <param name="cloudTable">cloud table</param>
+            <param name="stream">the source stream</param>
+            <param name="overwrite">overwrite</param>
+            <returns>the number table entities</returns>
+        </member>
+    </members>
+</doc>
