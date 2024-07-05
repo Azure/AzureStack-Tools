@@ -93,3 +93,4 @@ This page provides a comprehensive overview of the necessary endpoints for deplo
 | 85 |Microsoft Update                 | *.windowsupdate.com                                | 80   | For Microsoft Update, allowing the OS to receive updates.                                                            |
 | 86 |Microsoft Update                 | *.update.microsoft.com                             | 80, 443 | For Microsoft Update, allowing the OS to receive updates.                                                         |
 | 87 |Microsoft Defender               | *.endpoint.security.microsoft.com                  | 443 | Required only if using Microsoft Defender extension (MDE.windows).                                                    |
+| 88 |Azure Stack HCI authentication   | www.office.com                                     | 443 | Used for graph authentication.                                                                                        | 
