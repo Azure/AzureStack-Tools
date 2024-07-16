@@ -2,7 +2,7 @@
 
 This page provides a comprehensive overview of the necessary endpoints for deploying Azure Stack HCI version 23H2 in the Australia East region. It outlines the specific URLs, ports and protocols that must be accessible during the deployment process to ensure successful integration with Azure services. The document serves as a crucial resource for IT professionals and system administrators who are preparing to deploy Azure Stack HCI solutions, offering detailed guidance on network configuration and external connectivity requirements. By adhering to the listed endpoints, users can facilitate a smooth deployment process, ensuring that their Azure Stack HCI environment is properly connected and functional within the Australia East region.
 
-**This list last update is from July 9th, 2024**
+**This list last update is from July 15th, 2024**
 
 | Id | HCI Component                   | Endpoint URL                                       | Port | Notes                                                                                                                |
 |----|---------------------------------|----------------------------------------------------|------|----------------------------------------------------------------------------------------------------------------------|
@@ -87,9 +87,9 @@ This page provides a comprehensive overview of the necessary endpoints for deplo
 | 79 |Azure Stack HCI Updates discovery| redirectiontool.trafficmanager.net                 | 443  | Underlying service that implements usage data tracking for the aka.ms redirection links.                             |
 | 80 |Azure Stack HCI Updates download | fe3.delivery.mp.microsoft.com                      | 443  | For updating Azure Stack HCI, version 23H2.                                                                          |
 | 81 |Azure Stack HCI Updates download | tlu.dl.delivery.mp.microsoft.com                   | 80   | For updating Azure Stack HCI, version 23H2.                                                                          |
-| 82 |Microsoft official web site      | www.microsoft.com                                  | 80   | Microsoft web site.                                                                                                  |
+| 82 |Microsoft official web site      | www.microsoft.com                                  | 80, 443   | Microsoft web site.                      v                                                                      |
 | 83 |Microsoft Update                 | windowsupdate.microsoft.com                        | 80   | For Microsoft Update, allowing the OS to receive updates.                                                            |
-| 84 |Microsoft Update                 | *.download.windowsupdate.com                       | 80   | For Microsoft Update, allowing the OS to receive updates.                                                            |
+| 84 |Microsoft Update                 | *.download.windowsupdate.com                       | 80, 443   | For Microsoft Update, allowing the OS to receive updates.                                                       |
 | 85 |Microsoft Update                 | wustat.windows.com                                 | 80   | For Microsoft Update, allowing the OS to receive updates.                                                            |
 | 86 |Microsoft Update                 | ntservicepack.microsoft.com                        | 80   | For Microsoft Update, allowing the OS to receive updates.                                                            |
 | 87 |Microsoft Update                 | go.microsoft.com                                   | 80   | For Microsoft Update, allowing the OS to receive updates.                                                            |
@@ -99,3 +99,8 @@ This page provides a comprehensive overview of the necessary endpoints for deplo
 | 91 |Microsoft Update                 | *.update.microsoft.com                             | 80, 443 | For Microsoft Update, allowing the OS to receive updates.                                                         |
 | 92 |Microsoft Defender               | *.endpoint.security.microsoft.com                  | 443 | Required only if using Microsoft Defender extension (MDE.windows).                                                    |
 | 93 |Azure Stack HCI authentication   | www.office.com                                     | 443 | Used for graph authentication.                                                                                        |
+| 94 |Azure Stack HCI authentication   | login.microsoft.com                                | 443 | Required to fetch and update Azure Resource Manager tokens.                                                           |
+| 95 |Azure Stack HCI AKS infra        | pythonhosted.org                                   | 443 | Used to download Az CLI and Az CLI extensions.                                                                        |
+| 96 |Azure Stack HCI AKS infra        | *. blob.storage.azure.net                          | 443 | To access blob storage.                                                                                               |
+| 97 |Azure Stack HCI AKS infra        | dl.k8s.io                                          | 443 | To access blob storage.                                                                                               |
+| 98 |Azure Stack HCI AKS infra        | australiaeast.obo.arc.azure.com:8084               | 443 | To access blob storage.                                                                                               |
