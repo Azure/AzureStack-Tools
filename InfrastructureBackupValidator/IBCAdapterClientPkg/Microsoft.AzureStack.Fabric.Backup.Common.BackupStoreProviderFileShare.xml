@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderFileShare</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.DummyShareConnection">
+            <summary>
+            Manages share connection
+            </summary>
+            <remarks>Covered in BVTs</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalFileShareBackupStoreProvider">
+            <summary>
+            External file share backup store provider. This class is required for pruning external backup store.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalFileShareBackupStoreProvider.CreateFileShareBackupStoreProvider(System.String,System.String,System.Security.SecureString,System.Boolean)">
+            <summary>
+            Creates the external SMB share store provider
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalFileShareBackupStoreProvider.TestExternalStoreAccessible(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the share is accessible
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalFileShareBackupStoreProvider.UploadRegistrationJson(System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase">
+            <summary>
+            Backup file share store provider based on internal infrastructure share
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.ShareWithSecureCredential">
+            <summary>
+            Gets or sets the share with credential
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.rootFolder">
+            <summary>
+            Root folder path
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.RebuildCache(System.String,System.Boolean,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.GetLocation">
+            <summary>
+            Gets the location to external store
+            </summary>
+            <returns>location to external store</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.TestExternalStoreAccessible(System.Threading.CancellationToken)">
+            <summary>
+            Checks if the share is accessible
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.CreateShareConnection">
+            <summary>
+            Creates connection to share
+            </summary>
+            <returns>Share connection</returns>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareBackupStoreProviderBase.RootFolder">
+            <summary>
+            Gets or sets the root folder path for internal infrastructure share
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.InternalBackupStoreProvider">
+            <summary>
+            Backup store provider based on internal infrastructure share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.InternalBackupStoreProvider.GetInstance">
+            <summary>
+            Gets <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.InternalBackupStoreProvider"/> instance
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.InternalBackupStoreProvider.CreateShareConnection">
+            <summary>
+            Creates connection to share
+            </summary>
+            <returns>Share connection</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection">
+            <summary>
+            Manages share connection
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential)">
+            <summary>
+            Manages access to a share with credentials.
+            </summary>
+            <exception cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareAuthenticationException">Failed to access share due to authentication issue</exception>
+            <exception cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbSharePathInvalidException">Failed to access share due to share path invalid</exception>
+            <exception cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareConnectionException">Failed to access share due to connection issue</exception>
+            <exception cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupException.SmbShareNotAccessibleException">Failed to access share due to other internal issue</exception>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection.LastError">
+            <summary>
+            The last system error message from network APIs
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection.Connect">
+            <summary>
+            Connect to the share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection.Disconnect">
+            <summary>
+            Disconnect from the share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection.ConnectShare">
+            <summary>
+            Connects to remote resource
+            </summary>
+            <returns>error code</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ExternalSmbShareConnection.DisconnectShare">
+            <summary>
+            Disconnect from the remote resource
+            </summary>
+            <returns>true or false</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore">
+            <summary>
+            File share store to keep backups
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.StoreType">
+            <inheritdoc/>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.ProgressiveBackupRoot">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.EnsureBaseDirectoryIsCreated">
+            <summary>
+            Ensure base directory is created
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.EnsureProgressiveBackupRepoFolder(System.String,System.String)">
+            <summary>
+            Ensure the stamp version dir is created
+            </summary>
+            <returns>Full dir path</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.EnumerateTopLevelItemFullNamesInContainer(System.String,System.String,Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.RemoteItemType)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.ReadItemToStream(System.String,System.IO.MemoryStream)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.ItemExists(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.IsContainer(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.DeleteItem(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.RebuildCachePrerequisites">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.DeleteBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.TestAccessibility(System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.DeleteLegacyBackupDirectory(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation,System.Boolean)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.SetRootFolder(System.String)">
+            <summary>
+            Sets root folder
+            </summary>
+            <param name="rootFolder">root folder</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.GetRootFolder">
+            <summary>
+            Gets root folder
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.UploadBackupPackageAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.DownloadBackupPackageAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.FileShareStore.UploadBackupLocationRecoveryPoint(System.Nullable{System.DateTime})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.ShareWithSecureCredential)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase" /> class, and connects to the share.
+            </summary>
+            <param name="shareWithCredential">Share with secure credential</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase.Connect">
+            <summary>
+            Connect to the share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase.Disconnect">
+            <summary>
+            Disconnect from the share
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.FileShare.ShareConnectionBase.Dispose">
+            <summary>
+            Disposes the instance, and disconnects from the share.
+            </summary>
+        </member>
+    </members>
+</doc>

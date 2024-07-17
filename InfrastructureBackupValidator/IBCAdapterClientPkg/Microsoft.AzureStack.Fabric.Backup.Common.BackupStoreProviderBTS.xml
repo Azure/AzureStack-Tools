@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore">
+            <summary>
+            Wrap class for BTS client to a external store.
+            </summary>
+            <remarks> BTS external store codes covered in BVTs</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.StagingStoreName">
+            <summary>
+            The staging store name for encryption and decryption.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.MASBackupStoreName">
+            <summary>
+            The store name. Use lower case to be friendly to blob.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.BTSClient">
+            <summary>
+            The BTS client.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.LocationId">
+            <summary>
+            The location identifier.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.StoreType">
+            <inheritdoc/>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.ProgressiveBackupRoot">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.Client.IBCAdapterClient.IBtsClient,System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore"/> class.
+            </summary>
+            <param name="btsClient">The BTS client.</param>
+            <param name="locationId">The location identifier.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.DeleteDirectoryIfExists(System.String,System.Boolean)">
+            <summary>
+            Deletes the directory if exists.
+            </summary>
+            <param name="path">The path.</param>
+            <param name="recursive">if set to <c>true</c> [recursive].</param>
+            <returns><c>false</c> is directory is not empty and recursive is false. Otherwise true.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.GetLocation">
+            <summary>
+            Gets the location.
+            </summary>
+            <returns>Location path.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.EnumerateTopLevelItemFullNamesInContainer(System.String,System.String,Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.RemoteItemType)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.ReadItemToStream(System.String,System.IO.MemoryStream)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.ItemExists(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.IsContainer(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.DeleteItem(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.RebuildCachePrerequisites">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.DownloadBackupPackageAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.TestAccessibility(System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupLocationRecoveryPoint(System.Nullable{System.DateTime})">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupPackageAsync(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String,Microsoft.AzureStack.Common.Infrastructure.Encryption.Contract.ISymmetricFileEncryptionProvider,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.GetLocationInfo">
+            <summary>
+            Gets the location information.
+            </summary>
+            <returns>The location information.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.DeleteBackupInfo(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.DownloadBackupPackageAsIsAsync(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Downloads the backup package asynchronously as is.
+            </summary>
+            <param name="snapshotLocation">The snapshot location.</param>
+            <param name="restoreDir">The restore dir.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.UploadBackupPackage(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Uploads the backup package.
+            </summary>
+            <param name="snapshot">The snapshot.</param>
+            <param name="fromFile">Source file full path</param>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore.CreateEncryptionStagingStore">
+            <summary>
+            Creates the encryption staging store.
+            </summary>
+            <returns>Staging area store.</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider">
+            <summary>
+            Adapter class to translate IExternalSmbStoreProvider interface call to BTS
+            </summary>
+            <remarks> BTS store provider codes covered in BVTs</remarks>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.StorePath">
+            <summary>
+            The store path cache.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.LocationId">
+            <summary>
+            Gets the location identifier.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.CreateBTSBackupStoreProvider(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation)">
+            <summary>
+            Creates the BTS backup store provider.
+            </summary>
+            <param name="location">The location.</param>
+            <returns>BTSBackupStoreProvider.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.#ctor(Microsoft.AzureStack.Fabric.Backup.Common.BackupStoreProviderBTS.BTSExternalStore,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BTSLocation)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider"/> class.
+            </summary>
+            <param name="externalStore">The external store.</param>
+            <param name="locationId">The location identifier.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.TestExternalStoreAccessible(System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.UploadRegistrationJson(System.String,System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.GetLocation">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.GetFreeSpace(System.UInt64@,System.UInt64@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupStore.BTS.BTSBackupStoreProvider.RebuildCache(System.String,System.Boolean,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+    </members>
+</doc>

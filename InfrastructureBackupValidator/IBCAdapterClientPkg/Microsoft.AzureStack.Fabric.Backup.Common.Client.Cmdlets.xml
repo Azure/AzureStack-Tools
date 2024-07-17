@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.BtsCmdletBase">
+            <summary>
+            BTS cmdlet base
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.GetBtsLocations">
+            <summary>
+            Get BTS locations
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.ExportIBCConfigurations">
+            <summary>
+            Get IBC configurations
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.GetRepositoryBackupChain">
+            <summary>
+            Build the chain of backup snapshots of the current repo
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.GetBtsOperations">
+            <summary>
+            Get all or one running BTS operations
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.ImportIBCConfigurations">
+            <summary>
+            Get IBC configurations
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.PruneBackupStoreCmdlet">
+            <summary>
+            Clear unrecognized progressive backup store
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.RemoveBtsLocation">
+            <summary>
+            Delete BTS location
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.StopIbcOperation">
+            <summary>
+            Cancel one running IBC operation
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.GetIbcOperations">
+            <summary>
+            Get all or one running IBC operations
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.BackupInfoNotFoundExceptionMsg">
+            <summary>
+              Looks up a localized string similar to Cound not find BackupInfo for backup {0}.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.BackupNotFoundExceptionMsg">
+            <summary>
+              Looks up a localized string similar to Cound not find backups in the external store.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.DecryptionCertFormatExceptionMsg">
+            <summary>
+              Looks up a localized string similar to The decryption cert {0} must be a .pfx certificate.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.DecryptionCerThumbprintMismatchExceptionMsg">
+            <summary>
+              Looks up a localized string similar to The decryption certificate&apos;s thumbprint {0} is inconsistent with the thumbprint in the backup {1}.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.EncryptionCertFormatExceptionMsg">
+            <summary>
+              Looks up a localized string similar to The encryption cert {0} must be a .cer certificate.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.ShareNeitherPassedinNorInIBCErrorMsg">
+            <summary>
+              Looks up a localized string similar to Share is neither passed in nor stored in IBC.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.SharePassedinCredentialNotPassedinErrorMsg">
+            <summary>
+              Looks up a localized string similar to Credential should not be null when share is specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.TestAccessibilitySucceedMsg">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; has read/write permissions to &apos;{1}&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.TestConnectivitySucceedMsg">
+            <summary>
+              Looks up a localized string similar to &apos;{0}&apos; is reachable from &apos;{1}&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.TestingConnectivityFromNodeToBackupStoreMsg">
+            <summary>
+              Looks up a localized string similar to Testing connectivity from &apos;{0}&apos; to &apos;{1}&apos;.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.UseIBCShareAndIBCCredentialMsg">
+            <summary>
+              Looks up a localized string similar to Use share and credential stored in IBC to test.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.UseIBCShareAndPassedinCredentialMsg">
+            <summary>
+              Looks up a localized string similar to Use share stored in IBC and credential passed in to test.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.Resource.UsePassedinShareAndPassedinCredentialMsg">
+            <summary>
+              Looks up a localized string similar to Use passed in share and credential to test.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.ConfirmIbcBackupRestoreInternalOperationCompleted">
+            <summary>
+            Test whether backup or restore operation running
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.TestBtsLocation">
+            <summary>
+            Test BTS location
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.TestSmbShareAccessibilityCmdlet">
+            <summary>
+            Test the credential and I/O permissions on the SMB share
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.Client.Cmdlets.TestSmbShareConnectivityCmdlet">
+            <summary>
+            Test connectivities between the current ERCS node and the SMB share
+            </summary>
+        </member>
+    </members>
+</doc>

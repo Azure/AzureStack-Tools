@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.Internal</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBlobDataMover">
+            <summary>
+            The interface for a blob data mover
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBlobDataMover.CopyFromBlobContainerAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer,Microsoft.AzureStack.Backup.Storage.DataMovement.DirectoryTransferContext)">
+            <summary>
+            Copy a blob directory to the local data source
+            </summary>
+            <param name="sourceBlobContainers">The source blob container</param>
+            <param name="context">The transfer context with the relavent callbacks for the data movement lib</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBlobDataMover.GenerateBlobContainerMetadata(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer,System.Collections.Generic.IEnumerable{Microsoft.WindowsAzure.Storage.Blob.IListBlobItem},Microsoft.AzureStack.Fabric.Backup.Common.RepositoryBlob.Metadata.ContainerMetadata)">
+            <summary>
+            Generate the metadata of all blobs that are backed up
+            </summary>
+            <param name="cloudBlobContainer">The source blob container</param>
+            <param name="blobItems">The blobs in the container. Ideally the list should contain blobs only and not directory.</param>
+            <param name="containerMetadata">The container metadata to be filled</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBlobDataMover.SaveStorageAccountMetadata(System.IO.MemoryStream,System.String)">
+            <summary>
+            Stores the metadata file to the local backup source
+            </summary>
+            <param name="meatadataSourceStream">The stream of the metadata file content</param>
+            <param name="metadataJsonFileName">The metadata file name</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBlobDataMover.LoadStorageAccountMetadata(System.String)">
+            <summary>
+            Read the backed up metadata file
+            </summary>
+            <param name="metadataJsonFileName">The metadata file name</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBlobDataMover.CopyToBlobContainerAsync(Microsoft.WindowsAzure.Storage.Blob.CloudBlobContainer,Microsoft.WindowsAzure.Storage.Blob.BlobType,Microsoft.AzureStack.Backup.Storage.DataMovement.DirectoryTransferContext)">
+            <summary>
+            Copy from the local data source to a blob directory
+            </summary>
+            <param name="destBlobContainer">The target blob container</param>
+            <param name="blobType">Blob type</param>
+            <param name="context">The transfer context with the relavent callbacks for the data movement lib</param>
+            <returns>Task</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBackupDestinationStreamFactory">
+            <summary>
+            The interface for a stream factory for backup destination
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBackupDestinationStreamFactory.CreateWriteStreamAsync(System.String)">
+            <summary>
+            Creates a write stream
+            </summary>
+            <param name="name">the name of the stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBackupDestinationStreamFactory.CreateReadStreamAsync(System.String)">
+            <summary>
+            Creates a read stream
+            </summary>
+            <param name="name">the name of the stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceInternalContract.IBackupDestinationStreamFactory.EnumerateStreamNamesAsync">
+            <summary>
+            Enumerates the names of all the streams
+            </summary>
+        </member>
+    </members>
+</doc>

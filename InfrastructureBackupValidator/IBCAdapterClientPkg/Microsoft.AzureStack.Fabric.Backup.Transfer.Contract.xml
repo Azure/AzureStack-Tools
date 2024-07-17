@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Transfer.Contract</name>
+    </assembly>
+    <members>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse.SuccessRespopnse">
+            <summary>
+            Gets the success respopnse.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse.IsSuccess">
+            <summary>
+            Gets or sets a value indicating whether this instance is sucess.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse.Error">
+            <summary>
+            Gets or sets the error.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse.FromException(System.Exception)">
+            <summary>
+            Froms the exception.
+            </summary>
+            <param name="e">The e.</param>
+            <returns>APIResponse</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse.FromResult``1(``0)">
+            <summary>
+            Froms the result.
+            </summary>
+            <typeparam name="T">Data type.</typeparam>
+            <param name="t">The t.</param>
+            <returns>APIResponse</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse.#ctor">
+            <summary>
+            Protected ctor of <see cref="T:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse"/>. Caller can't new this class;
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse`1.Data">
+            <summary>
+            Gets or sets the data. default(T) make sure it won't fail when deserialize <see cref="T:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse"/> to <see cref="T:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.APIResponse`1"/>
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.GetChildItemAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the child item asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="uri">The URI.</param>
+            <param name="token">The token.</param>
+            <returns>Child items infos</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.GetItemInfoAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the item information asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="uri">The URI.</param>
+            <param name="token">The token.</param>
+            <returns>Item infomation</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.GetFileContentAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the file content asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="uri">The URI.</param>
+            <param name="token">The token.</param>
+            <returns>The file content</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.SetFileContentAsync(System.Guid,System.Byte[],System.String,System.Threading.CancellationToken)">
+            <summary>
+            Sets the file content asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="content">The content.</param>
+            <param name="uri">The URI.</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.DeleteAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Deletes the file asynchronously. If that path is not exist, this function should complete normally.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="uri">The URI.</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.UploadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Uploads the file asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="localPath">The local path.</param>
+            <param name="uri">The URI.</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.DownloadFileAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Downloads the file asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="uri">The URI.</param>
+            <param name="localPath">The local path.</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.TestLocationAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Test location connection asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.GetLocationPathAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get location file path asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.GetLocationInfoAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Gets the location information asynchronously.
+            </summary>
+            <param name="locationId">The location.</param>
+            <param name="token">The token.</param>
+            <returns>SMBLocationInfo</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.IRemoteStore.DeleteLocationAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete the location asynchronously. If that location is not exist, this function should complete normally.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="token">The token.</param>
+            <returns>SMB configuration. Only path is not null.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.ISMBRemoteStore.GetAllLocationAsync(System.Threading.CancellationToken)">
+            <summary>
+            Gets all location asynchronously.
+            </summary>
+            <param name="token">The token.</param>
+            <returns>SMB configurations.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.ISMBRemoteStore.GetLocationAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Gets the configure asynchronously.
+            </summary>
+            <param name="locationId">location</param>
+            <param name="token">The token.</param>
+            <returns>SMB configuration.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.ISMBRemoteStore.SetLocationAsync(Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.SMBLocation,System.Guid,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Sets the configure asynchronously.
+            </summary>
+            <param name="location">The configuration.</param>
+            <param name="locationId">location</param>
+            <param name="referenceLocation">reference location</param>
+            <param name="token">The token.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.ISMBRemoteStore.TestLocationAsync(Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.SMBLocation,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Tests the configure asynchronously.
+            </summary>
+            <param name="location">The configuration.</param>
+            <param name="referenceLocationId">reference location</param>
+            <param name="token">The token.</param>
+            <returns>Task</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.RemoteItemInfo.FromFileInfo(System.IO.FileInfo,System.String)">
+            <summary>
+            Build from FileInfo
+            </summary>
+            <param name="info">File info</param>
+            <param name="path">Full path for file share store and relative Uri for BTS</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Transfer.Contract.RemoteItemInfo.FromDirectoryInfo(System.IO.DirectoryInfo,System.String)">
+            <summary>
+            Build from DirectoryInfo
+            </summary>
+            <param name="info">Directory info</param>
+            <param name="path">Full path for file share store and relative Uri for BTS</param>
+        </member>
+    </members>
+</doc>

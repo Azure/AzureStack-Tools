@@ -1,0 +1,243 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.Internal</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.BcdrFxCop">
+            <summary>
+            IMPORTANT: This class is an exact copy of the common infra FxCop class. It is only supposed to be used for external
+            facing dlls that require strong-name signing, because common infra dlls aren't strong-name signed. All internal
+            dlls should still reference the common infra FxCop to be consistent with the rest of the internal components
+            from other teams.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.BcdrFxCop.SuppressCA2000(System.Action)">
+            <summary>
+            Suppresses the CA2000 warning.
+            </summary>
+            <param name="action">The action.</param>
+            <remarks>
+            The CA2000 rule tries to verify that you dispose IDisposable
+            objects before they leave the scope they were declared in.
+            A particularly tricky scenario is safely transferring the ownership
+            of the disposable object to someone else.  There are a few
+            supported patterns, but the rule has pretty simplistic reasoning
+            and is often difficult.  This workaround leverages the supported
+            pattern of assigning the disposable object to a property of another
+            object (who then becomes the owner).  By using an Action that
+            implicitly captures the disposable object, the disposable object
+            is actually assigned to a field in the generated class, satisfying
+            the CA2000 rule.
+            <p></p>
+            A recommended way to use this suppression is:
+            <code>
+            var disposable = new DisposableThing();
+            try
+            {
+                disposable.DoStuff();
+                FxCop.SuppressCA2000(() => somethingElse.TakeOwnership(disposable));
+            }
+            catch
+            {
+                disposable.Dispose();
+                throw;
+            }
+            </code>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.BcdrFxCop.Disown``1(System.Func{``0})">
+            <summary>
+            Suppresses the CA2000 warning.
+            </summary>
+            <param name="func">The function.</param>
+            <typeparam name="T">The IDisposable derivative class</typeparam>
+            <returns>the captured disposable</returns>
+            <remarks>
+            The CA2000 rule tries to verify that you dispose IDisposable
+            objects before they leave the scope they were declared in.
+            A particularly tricky scenario is safely transferring the ownership
+            of the disposable object to someone else.  There are a few
+            supported patterns, but the rule has pretty simplistic reasoning
+            and is often difficult.  This workaround leverages the supported
+            pattern of assigning the disposable object to a property of another
+            object (who then becomes the owner).  By using an Action that
+            implicitly captures the disposable object, the disposable object
+            is actually assigned to a field in the generated class, satisfying
+            the CA2000 rule.
+            <p></p>
+            A recommended way to use this suppression is:
+            <code>
+            var disposable = new DisposableThing();
+            try
+            {
+                disposable.DoStuff();
+                somethingElse.TakeOwnership(FxCop.Disown(() => disposable));
+            }
+            catch
+            {
+                disposable.Dispose();
+                throw;
+            }
+            </code>
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.BcdrFxCop.SafeDisown``1(System.Linq.Expressions.Expression{System.Func{``0}})">
+            <summary>
+            Safely disowns the object. This method expects a <see cref="T:System.Linq.Expressions.ConstantExpression"/> and
+            will throw otherwise. This method will save the value from invoking the expression and
+            nullify the member variable inside the capture. Then this will return the value. The 
+            net effect will remove any local reference to the disposable object and return the object
+            to the caller for them to handle appropriately. 
+            <p></p>
+            This helps to handle OACR CA2000 warnings. The pattern should be as follows:
+            <code>
+            MyDisposable1 myDisposable1 = null;
+            MyDisposable2 myDisposable2 = null;
+            MyDisposable3 myDisposable3; 
+            try
+            {
+                var myDisposable1 = new MyDisposable1();
+                var myDisposable2 = new MyDisposable2(FxCop.SafeDisown(() => myDisposable1));
+                var myDisposable3 = new MyDisposable3(FxCop.SafeDisown(() => myDisposable2));
+            }
+            catch
+            {
+                FxCop.SaveDispose(myDisposable1)
+                FxCop.SaveDispose(myDisposable2)
+            } 
+            return FxCop.SafeDisown(() => myDisposable3)
+            </code>
+            </summary>
+            <typeparam name="T">The constant to return</typeparam>
+            <param name="func">The function.</param>
+            <returns>The constant</returns>
+            <exception cref="T:System.ArgumentNullException">The func variable was null.</exception>
+            <exception cref="T:System.ArgumentException">Expression was not a constant expression.</exception>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.BcdrFxCop.SafeDispose(System.IDisposable)">
+            <summary>
+            Safely disposes the object by checking that it is not null.
+            </summary>
+            <param name="disposable">The disposable.</param>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper">
+            <summary>
+            serializer helper
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObject``1(``0,System.String)">
+            <summary>
+            Serializes an object into xml file.
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="serializableObject">object to be serialized</param>
+            <param name="fileName">file name to hold the serialized string</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObject``1(``0,System.IO.MemoryStream)">
+            <summary>
+            Serializes an object into xml string as memory stream.
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="serializableObject">object to be serialized</param>
+            <param name="memoryStream">the dest memory stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObjectIntoJsonFile``1(``0,System.String)">
+            <summary>
+            Serializes an object into Json file.
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="serializableObject">object to be serialized</param>
+            <param name="fileName">file name to hold the serialized string</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.SerializeObjectIntoJsonStream``1(``0,System.IO.MemoryStream)">
+            <summary>
+            Serializes an object into Json string as memory stream.
+            </summary>
+            <typeparam name="T">object type</typeparam>
+            <param name="serializableObject">object to be serialized</param>
+            <param name="memoryStream">the dest memory stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeSerializeObject``1(System.String)">
+            <summary>
+            Deserializes an xml file into an object list
+            </summary>
+            <typeparam name="T">Object type</typeparam>
+            <param name="fileName">file name holding content to be deserialized</param>
+            <returns>deserialized object</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeSerializeObject``1(System.IO.MemoryStream)">
+            <summary>
+            Deserialize stream with the xml deserializer
+            </summary>
+            <typeparam name="T">Object type</typeparam>
+            <param name="stream">memory stream holding content to be deserialized</param>
+            <returns>deserialized object</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeserializeJsonFromFile``1(System.String)">
+            <summary>
+            Deserializes a Json file into an object list
+            </summary>
+            <typeparam name="T">Object type</typeparam>
+            <param name="fileName">file name holding content to be deserialized</param>
+            <returns>deserialized object</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.SerializerHelper.DeserializeJsonFromStream``1(System.IO.MemoryStream)">
+            <summary>
+            Deserialize stream with the Json deserializer
+            </summary>
+            <typeparam name="T">Type to deserialize</typeparam>
+            <param name="stream">memory stream holding content to be deserialized</param>
+            <returns>deserialized object</returns>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.UriHelpers.UriSeparator">
+            <summary>
+            The URI separator.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.UriHelpers.UriSeparators">
+            <summary>
+            The URI separators
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.UriHelpers.GetTrimmedSegments(System.Uri)">
+            <summary>
+            Gets segments from uri with '/' trimmed
+            </summary>
+            <param name="uri">uri</param>
+            <returns>trimmed segments</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.UriHelpers.GetTrimmedUriSegments(System.String)">
+            <summary>
+            Gets segments from uri with '/' trimmed
+            </summary>
+            <param name="uriString">uri string</param>
+            <returns>trimmed segments</returns>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.RestHelpers.ApplicationTypeNameHeaderKey">
+            <summary>
+            The application type name header key
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.RestHelpers.ServiceNameTypeHeaderKey">
+            <summary>
+            The service name type header key
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.RestHelpers.GetFullServiceName(System.String,System.String)">
+            <summary>
+            Gets the full name of the service from its application type name and service type name.
+            </summary>
+            <param name="applicationTypeName">Name of the application type.</param>
+            <param name="serviceTypeName">Name of the service type.</param>
+            <returns>The full name.</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.CommonUtils.RestHelpers.GetCallerNameFromHttpRequest(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Gets the caller name from HTTP request header.
+            </summary>
+            <param name="request">The request.</param>
+            <returns>The service name. "Unknown" if header doesn't contain enough information.</returns>
+        </member>
+    </members>
+</doc>

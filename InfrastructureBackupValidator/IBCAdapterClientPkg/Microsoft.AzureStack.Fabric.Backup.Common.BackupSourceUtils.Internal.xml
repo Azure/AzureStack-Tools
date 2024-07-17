@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.Internal</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobDataMoverBase">
+            <summary>
+            The stream factory for blob-based backup destination
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobDataMoverBase.GetDestinationCallbackRestore(System.Object,System.Object)">
+            <summary>
+            Remove .blob extension from the Blob Uri being uploaded to container.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobToBlobDataMover">
+            <summary>
+            The blob to blob data mover
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobToBlobDataMover.ConvertBlockBlobs(Microsoft.WindowsAzure.Storage.Blob.CloudBlobDirectory,Microsoft.WindowsAzure.Storage.Blob.CloudBlobDirectory,Microsoft.WindowsAzure.Storage.Blob.BlobType)">
+            <summary>
+            The blobs stored in the restore local blob container came from the snapshot repository, the assumptions are:
+                1) The data come from a valid backup with the original directory structure
+                2) All blobs in the restore local blob container are BlockBlobs placed under sub-directories with their
+                   actual blob types. For example:
+                   localDir/AppendBlob/someAppendBlob.blob
+                   localDir/BlockBlob/someBlockBlob.blob
+                   localDir/PageBlob/somePageBlob.blob
+            This function uploads all blobs of a particular type (i.e., all blobs under one of the blob type directories)
+            to the destination blob container with their actual blob type and remove the .blob extension.
+            It's recommended to use DatamovementLib functions to transfer BlockBlobs.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobBackupDestinationStreamFactory">
+            <summary>
+            The stream factory for blob-based backup destination
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobBackupDestinationStreamFactory.CreateWriteStreamAsync(System.String)">
+            <summary>
+            Creates a write stream
+            </summary>
+            <param name="name">the name of the stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobBackupDestinationStreamFactory.CreateReadStreamAsync(System.String)">
+            <summary>
+            Creates a read stream
+            </summary>
+            <param name="name">the name of the stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobBackupDestinationStreamFactory.EnumerateStreamNamesAsync">
+            <summary>
+            Enumerates the names of all the streams
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobToFileDataMover">
+            <summary>
+            The blob to file data mover
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.BlobToFileDataMover.GetDestinationCallbackBackup(System.Object,System.Object)">
+            <summary>
+            Add .blob extension to destination blob file name being downloaded from container.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.FileBackupDestinationStreamFactory">
+            <summary>
+            The stream factory for file-based backup destination
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.FileBackupDestinationStreamFactory.CreateWriteStreamAsync(System.String)">
+            <summary>
+            Creates a write stream
+            </summary>
+            <param name="name">the name of the stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.FileBackupDestinationStreamFactory.CreateReadStreamAsync(System.String)">
+            <summary>
+            Creates a read stream
+            </summary>
+            <param name="name">the name of the stream</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSourceUtils.FileBackupDestinationStreamFactory.EnumerateStreamNamesAsync">
+            <summary>
+            Enumerates the names of all the streams
+            </summary>
+        </member>
+    </members>
+</doc>

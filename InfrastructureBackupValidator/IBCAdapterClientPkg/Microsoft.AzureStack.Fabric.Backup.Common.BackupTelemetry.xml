@@ -1,0 +1,405 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant">
+            <summary>
+            Constants of telemetry.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.EventComponent">
+            <summary>
+            Component nane of all event emit for telemetry.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.BackupInfoEventName">
+            <summary>
+            Event name of backup info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.BackupInfoEventVersion">
+            <summary>
+            Event version of backup info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.RestoreInfoEventName">
+            <summary>
+            Event name of restore info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.RestoreInfoEvenVersion">
+            <summary>
+            Event version of restore info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.ConfigInfoEventName">
+            <summary>
+            Event name of config info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.ConfigInfoEvenVersion">
+            <summary>
+            Event version of config info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.DailyInfoEventName">
+            <summary>
+            Event name of config info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.DailyInfoEvenVersion">
+            <summary>
+            Event version of config info.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.MdmAccountName">
+            <summary>
+            MDM account name
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.MdmMetricNamespace">
+            <summary>
+            MDM metric namespace.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConstant.MdmMetricName">
+            <summary>
+            MDM metric name.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupSkippingReason">
+            <summary>
+            Enum of backup skipping reason.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.MdmResultType">
+            <summary>
+            Enum of MDM result type.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupLocationType">
+            <summary>
+            Enum of backup location.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase">
+            <summary>
+            Base class of all event for telemetry.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase.#ctor(System.String,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase.Component">
+            <summary>
+            Event component name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase.Name">
+            <summary>
+            Event name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase.Version">
+            <summary>
+            Event version.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryInfoBase.ExceptionType">
+            <summary>
+            Exception type of failure event.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo">
+            <summary>
+            Backup info event.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.Status">
+            <summary>
+            Bakcup status.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.BackupStart">
+            <summary>
+            Timestamp of backup started.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.BackupEnd">
+            <summary>
+            Timestamp of backup ended and upload started.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.UploadEnd">
+            <summary>
+            Timestamp of upload ended.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.CompressedBackupSize">
+            <summary>
+            Total size of compressed backup file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.FailedRoles">
+            <summary>
+            Failed roles in backup.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.BackupSizeBySnapShot">
+            <summary>
+            Backup size by component
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.IsScheduled">
+            <summary>
+            Is shceduled backup or manual backup
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.IsCloudRecoveryReady">
+            <summary>
+            Gets or sets whether the backup can be used for cloud recovery
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryBackupInfo.IsInternalBackup">
+            <summary>
+            Gets or sets whether the backup is internal backup, or the backup exported to customer share
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo">
+            <summary>
+            Event
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo.Status">
+            <summary>
+            Restore info event.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo.DownloadStart">
+            <summary>
+            Timestamp of download started.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo.RestoreStart">
+            <summary>
+            Timestamp of download ended and restore started.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo.RestoreEnd">
+            <summary>
+            Timestamp of restore ended.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryRestoreInfo.FailedRoles">
+            <summary>
+            Failed roles in restore.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo">
+            <summary>
+            User configuration info event.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo.BackupInterval">
+            <summary>
+            Backup period in hours
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo.Retention">
+            <summary>
+            Backup retention period in days.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo.LocationType">
+            <summary>
+            Type of backup location.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo.IsSucceeded">
+            <summary>
+            Configure succeeded flag.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo.IsFirstTime">
+            <summary>
+            First time configure flag.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus">
+            <summary>
+            User configuration info event.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryConfigInfo" /> class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.BackupInterval">
+            <summary>
+            Backup period in hours
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.Retention">
+            <summary>
+            Backup retention period in days.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.LocationType">
+            <summary>
+            Type of backup location.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.ShareTotalBytes">
+            <summary>
+            ExternalShare total bytes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.ShareFreeBytes">
+            <summary>
+            ExternalShare free bytes.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.BackupCount">
+            <summary>
+            Available backup in external share.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.PackageVersion">
+            <summary>
+            Backup nuget package version
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.TelemetryDailyStatus.EmittedDate">
+            <summary>
+            Telemetry emitted date.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger">
+            <summary>
+            Backup telemetry logger.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.MetricNAPlaceHolder">
+            <summary>
+            Place holder for not available metric dim.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.MetricMaxDimLength">
+            <summary>
+            Place holder for not available metric dim.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.RequestMetric">
+            <summary>
+            Request MDM metric.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.Reporter">
+            <summary>
+            Telemetry reporter.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.LogBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSummary)">
+            <summary>
+            Send backup telemetry.
+            </summary>
+            <param name="summary">Backup summary</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.LogSkippedBackup(System.Boolean,System.Boolean,Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupSkippingReason)">
+            <summary>
+            Send backup skipped telemetry.
+            </summary>
+            <param name="isScheduled">IsScheduled</param>
+            <param name="isInternalBackup">Whether the backup is internal backup or not</param>
+            <param name="reason">Backup skipping reason</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.LogRestore(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.RestoreSummary,System.Boolean)">
+            <summary>
+            Send restore telemetry.
+            </summary>
+            <param name="summary">Restore summary</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.LogConfigChange(System.Boolean,System.Boolean,System.Int32,System.Int32,Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider,System.Exception)">
+            <summary>
+            Send configuration telemetry.
+            </summary>
+            <param name="isSucceeded">Is config succeeded</param>
+            <param name="isFirstTime">Is first time config</param>
+            <param name="backupInverval">Backup interval</param>
+            <param name="backupRetentionPeriodInDays">Retention period</param>
+            <param name="externalStore">External store</param>
+            <param name="exception">Exception raised during config</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.LogDaily(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider,System.Int32,System.Int32)">
+            <summary>
+            Send daily backup status telemetry
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.LogRequest(System.Net.Http.HttpRequestMessage,System.Net.Http.HttpResponseMessage,System.TimeSpan,System.String,System.String,System.Exception)">
+            <summary>
+            Send web request telemetry.
+            </summary>
+            <param name="request">Webapi request</param>
+            <param name="response">Webapi response</param>
+            <param name="latency">Backup manager</param>
+            <param name="caller">Caller</param>
+            <param name="callee">Callee</param>
+            <param name="exception">Exception raised during config</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.SendTelemetry``1(System.Func{``0})">
+            <summary>
+            Log and send telemetry.
+            </summary>
+            <typeparam name="T">the telemetry type</typeparam>
+            <param name="func">function returns telemetry data. If null is returned, telemetry is skipped.</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.GetExceptionTypeDescription(System.Exception)">
+            <summary>
+            Generate string description of excception.
+            </summary>
+            <param name="e">Backup ID</param>
+            <returns>String description</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.GetBackupLocationType(Microsoft.AzureStack.Fabric.Backup.Common.BackupSettingsManager.IExternalBackupStoreProvider)">
+            <summary>
+            Gets backup location type from external store provider.
+            </summary>
+            <param name="storeProvider">External store provider</param>
+            <returns>Backup location type</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.EndpointNameFromRequest(System.Net.Http.HttpRequestMessage)">
+            <summary>
+            Gets endpoint name form request.
+            </summary>
+            <param name="request">Http request</param>
+            <returns>Endpoint name</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupTelemetry.BackupTelemetryLogger.ResultTypeFromResponse(System.Net.Http.HttpResponseMessage)">
+            <summary>
+            Gets MDM result type from response.
+            </summary>
+            <param name="response">Http response</param>
+            <returns>MDM result type</returns>
+        </member>
+    </members>
+</doc>

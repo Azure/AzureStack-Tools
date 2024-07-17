@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation">
+            <summary>
+            Backup info with file location
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation.#ctor(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupInfo)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation" /> class.
+            </summary>
+            <param name="fileName">file name</param>
+            <param name="backupInfo">backup info</param>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation.FileName">
+            <summary>
+            Gets or sets the full name of backup info file
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupInfoLocation.BackupInfo">
+            <summary>
+            Gets or sets backup info
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ContemporaneousBackup">
+            <summary>
+            A collection of synthetic full backups with the same contemporaneous backup Id. ContemporaneousBackup may not
+            contain synthetic full backups from all repositories due to failed or partially succeeded backups.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ContemporaneousBackup.GetBackupInfo(System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupRepositoryRegistration},System.Nullable{System.DateTime})">
+            <summary>
+            Get contemporaneous backup info
+            </summary>
+            <remarks>Contemporaneous backup info is refreshed when a snapshot is added. This is not optimal. Might
+            consider a better way if we have time.</remarks>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation">
+            <summary>
+            backup snapshot with file location
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation.#ctor(System.String,System.String,System.DateTime,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation" /> class.
+            </summary>
+            <param name="dataFileName">data file name</param>
+            <param name="metaDataFileName">meta data file name</param>
+            <param name="timestamp">the timestamp</param>
+            <param name="snapshot">the snapshot</param>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation.DataFileName">
+            <summary>
+            Gets or sets data file name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation.MetaDataFileName">
+            <summary>
+            Gets or sets meta data file name
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation.Timestamp">
+            <summary>
+            Gets or sets timestamp
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation.BackupSnapshot">
+            <summary>
+            Gets or sets backup snapshot
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore">
+            <summary>
+            Progressive store information for a specific stamp version
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore.snapshotsIdsHash">
+            <summary>
+            A hash of all backup snapshots.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore.contemporaneousBackupIds">
+            <summary>
+            All contemporaneous backup ids. Note that some of these IDs might represent partial backups.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore.RepoBackups">
+            <summary>
+            The cache that contains lists of maximum synthetic full backups in reverse chronological order from the
+            head for each repository
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore.Clear">
+            <summary>
+            Clear the progressive store
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore.ClearCacheForRepo(System.String)">
+            <summary>
+            Clear all backup snapshots from a repository
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.ProgressiveStore.AddSyntheticFullBackupsToStore(System.String,System.Collections.Generic.List{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup})">
+            <summary>
+            Add arranged synthetic full backups
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup">
+            <summary>
+            A class that represents a valid synthetic full backups that starts with a full backup with a valid chain of
+            one ore more progressive backups.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.snapshots">
+            <summary>
+            List of backup snapshots in reverse chronological order from the head.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.Id">
+            <summary>
+            Use the full backup Id of the synthetic backup as the synthetic backup Id
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.ValidateSnapshot(System.String,Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot,System.String)">
+            <summary>
+            Validate snapshot
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.ArrangeSyntheticFullBackups(System.String,System.Collections.Generic.IEnumerable{Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation})">
+            <summary>
+            Given a bunch of backup snapshots, arrange them into maximum synthetic full backups
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.AddFullBackupSnapshot(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation)">
+            <summary>
+            Add the full backup to the synthetic full backup.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.AddSnapshotToHead(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation)">
+            <summary>
+            Helper to add a backup snapshot to the head of the list
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetSnapshotsInOrder">
+            <summary>
+            Get snapshots in ascending creation time order
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetIncludedSnapshotIds">
+            <summary>
+            Get all snapshot Ids in this synthetic full backup
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetContemporaneousBackupIds">
+            <summary>
+            Get contemporaneous backup Ids
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetBackupSnapshotCount">
+            <summary>
+            Get the total number of snapshots in this synthetic full backup
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.AddProgressiveBackupSnapshot(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation)">
+            <summary>
+            Add a progressive backup snapshot to the synthetic full backup.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.AddBackupSnapshot(Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.BackupSnapshotLocation)">
+            <summary>
+            Add a snapshot to the synthetic full backup
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.IsBackupIncluded(System.Guid)">
+            <summary>
+            Check if a backup snapshot is included
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetBackupSnapshotById(System.Guid)">
+            <summary>
+            Get backup snapshot
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetContemporaneousBackupSnapshot(System.Guid)">
+            <summary>
+            Get the snapshot with the contemporaneous backup Id.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.BackupSnapshotOrganizer.SyntheticFullBackup.GetContemporaneousSyntheticFullBackup(Microsoft.AzureStack.Fabric.Backup.Common.BackupDataModel.BackupSnapshot)">
+            <summary>
+            Return a synthetic full backup that ends with the specified contemporaneous backup snapshot
+            </summary>
+        </member>
+    </members>
+</doc>

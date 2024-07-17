@@ -1,0 +1,462 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations</name>
+    </assembly>
+    <members>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.SuspendRunningOperationsTimeout">
+            <summary>
+            Timeout for suspend running operation
+            </summary>
+            <remarks>
+            The HostModel itself allows 2 minutes for a service to stop
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.WaitOperationStartedInterval">
+            <summary>
+            The time interval between checking operation started
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.MaxPollOperationInterval">
+            <summary>
+            The max time interval between checking operation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.WaitOperationCancelledInterval">
+            <summary>
+            The time interval between checking operation cancelled
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BTSOperationStatusRecordRetentionTime">
+            <summary>
+            The BTS operation status record retention time.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.MaxNumberOfParallelUploadOperations">
+            <summary>
+            Maxiumn number of parallel upload operations.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.DeleteBackupJobRepetitionInterval">
+            <summary>
+            Repetition interval of delete backup job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.RefreshFileShareCacheJobRepetitionInterval">
+            <summary>
+            Repetition interval of RefreshFileShareCache job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BackupDailyTelemetryJobRepetitionInterval">
+            <summary>
+            Repetition interval of DailyTelemetry job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.CheckDailyAlertsJobRepetitionInterval">
+            <summary>
+            Repetition interval of CheckDailyAlertsJob job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.DeleteInternalBackupJobRepetitionInterval">
+            <summary>
+            Repetition interval of DeleteInternalBackupJob job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.DeleteInternalBackupJobRetentionPeriod">
+            <summary>
+            Retention period of DeleteInternalBackupJob job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.LogModifiedConfigurationsJobRepetitionInterval">
+            <summary>
+            Repetition interval of LogModifiedConfigurations job
+            4 hours is the default timespan of Get-AzureStackLog so we can make sure this log can be collected
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BTSGCJobRepetitionInterval">
+            <summary>
+            Repetition interval of BTSGC job
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.CertExpirationInDaysThreshold">
+            <summary>
+            Threshold to judge whether cert is about to expire
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.SmbShareConnectionMaxRetryCount">
+            <summary>
+            SMB share connection max retries
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.SmbShareConnectRetryInterval">
+            <summary>
+            Retry interval for connecting SMB share
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.SmbShareDisconnectRetryInterval">
+            <summary>
+            Retry interval for disconnecting SMB share
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.DefaultBackupSizeInBytes">
+            <summary>
+            Default backup size for estimating required external store free space
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.SMBIdleTimeout">
+            <summary>
+            SMB Connection Timeout
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BTSMaxPayloadSize">
+            <summary>
+            Maxiumn payload size to BTS, in bytes
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.ReliableCollectionLockTimeout">
+            <summary>
+            Reliable Collection Lock Timeout
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BtsClientRetryTimeout">
+            <summary>
+            BTS Client Retry Timeout
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BtsClientRetryInterval">
+            <summary>
+            BTS Client Retry Interval
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BtsClientRetryCount">
+            <summary>
+            BTS Client Operation Retry Count
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.MaxProgressiveBackupChainLength">
+            <summary>
+            Max progressive backup chain length
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BtsLockTimeout">
+            <summary>
+            BTS Lock timeout
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.WaitTimeToAllowUploadBackupInfo">
+            <summary>
+            Wait time for rebuild cache before allowing to override backup info xmls
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BackupActionPlanExecutionTimeout">
+            <summary>
+            Timeout of backup action plan execution
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BackupUploadTimeout">
+            <summary>
+            Timeout of backup upload operation
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.RestoreActionPlanExecutionTimeout">
+            <summary>
+            Timeout of restore action plan execution
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.EceExecutionPollingInterval">
+            <summary>
+            ECE execution polling interval
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.AddonRPRestoreTimeout">
+            <summary>
+            Timeout of add-on RP restore execution
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.MonitorActionPlanCompleteDelay">
+            <summary>
+            Delay 2 mins to wait monitor action plan complete
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.ActionPlanCancellationTimeout">
+            <summary>
+            Timeout of cancelling existing action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.CancelledEceExecutionOperationCompletionTimeout">
+            <summary>
+            Timeout to wait for ECE execution operations to complete the ECE action is cancelled
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.EceExecutionOperationCancellationTimeout">
+            <summary>
+            Timeout to wait for ECE execution operations to be cancelled
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.MaxBackupEceActionsInParallel">
+            <summary>
+            Maximum backup ECE actions in parallel
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.MaxRestoreEceActionsInParallel">
+            <summary>
+            Maximum restore ECE actions in parallel. Currently fixed to 1 until restore dependency is done.
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.BackupActionRetries">
+            <summary>
+            Retries of backup action
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.RestoreActionRetries">
+            <summary>
+            Retries of restore action
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.ECEActionPlanPollingInverval">
+            <summary>
+            The interval in seconds to poll action plan status from ECE
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.IbcConfigurationActionPlanTimeout">
+            <summary>
+            The expected execution time for the IBC configuration action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.ErcsResourceRemediationActionPlanTimeout">
+            <summary>
+            The expected execution time for the ERCS resource remediation action plan
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.PnuActionPlanName">
+            <summary>
+            Action plan name of PnU
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.PnuRerunActionPlanName">
+            <summary>
+            Action plan name of PnU Rerun
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.SecretRotationActionTypeName">
+            <summary>
+            Action plan name of secret rotation
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.stateManager">
+            <summary>
+            state manager for IBC
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.rcLock">
+            <summary>
+            Lock object to serialize access to reliable collection. Not great, but we hit random issues with reliable
+            collection access.
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.internalConfigurationsDict">
+            <summary>
+            Dictionary of all configuration names and its configuration object
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.IsInitialized">
+            <summary>
+            Gets whether IbcInternalConfigurations has been initialized
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.Initialize(Microsoft.AzureStack.Common.Infrastructure.ReliableCollections.Contract.IReliableStateManager)">
+            <summary>
+            Initializes the IBC internal configurations with reliable state manager
+            </summary>
+            <param name="stateManager">state manager</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.InitializeValues">
+            <summary>
+            Initializes values of the IBC internal configurations by loading from reliable collection
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.List">
+            <summary>
+            Lists all the internal configurations
+            </summary>
+            <returns>All internal configurations</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.UpdateInReliableCollection(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>
+            Updates specified internal configurations
+            </summary>
+            <param name="inputs">Dictionary containing config name as key, and the value to be updated</param>
+            <remarks>
+            Configuration change only happens in Reliable Collection
+            It won't take effect until <see cref="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.InitializeValues"/> is called
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.ResetInReliableCollection(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Resets specified internal configurations to default value
+            </summary>
+            <param name="configNames">Config names to be reset</param>
+            <remarks>
+            Configuration change only happens in Reliable Collection
+            It won't take effect until <see cref="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.InitializeValues"/> is called
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.ResetAllInReliableCollection">
+            <summary>
+            Resets all the configurations to default value
+            </summary>
+            <remarks>
+            Configuration change only happens in Reliable Collection
+            It won't take effect until <see cref="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.InitializeValues"/> is called
+            </remarks>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.TestHookIsFvt">
+            <summary>
+            Test hook for functional tests
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.TestHookSkipConfigPreCheck">
+            <summary>
+            Test hook for skipping precheck in configuration
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IbcInternalConfigurations.TestHookSkipErcsRemediation">
+            <summary>
+            Test hook for skipping the ERCS remediation action plan.
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel">
+            <summary>
+            Interface for InternalConfigurationModel.
+            Used for grouping InternalConfigurationModel of all types in same dictionary.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.ValidateInput(System.String)">
+            <summary>
+            Validates the input for update
+            </summary>
+            <param name="input">The input</param>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.SetInReliableCollection(System.String)">
+            <summary>
+            Sets configuration to the input
+            </summary>
+            <param name="input">The input</param>
+            <remarks>
+            Configuration change only happens in Reliable Collection
+            It won't take effect in <see cref="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationClientModel.Value"/> until <see cref="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.LoadValueFromReliableCollection"/> is called
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.ResetInReliableCollection">
+            <summary>
+            Resets configuration to default value
+            </summary>
+            <remarks>
+            Configuration change only happens in Reliable Collection
+            It won't take effect in <see cref="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationClientModel.Value"/> until <see cref="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.LoadValueFromReliableCollection"/> is called
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.LoadValueFromReliableCollection">
+            <summary>
+            Loads value from reliable collection
+            </summary>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.ToClientModel">
+            <summary>
+            Converts to client model for REST client
+            </summary>
+            <returns>client model</returns>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.ShouldShowConfiguration">
+            <summary>
+            Whether the configuration should be shown
+            </summary>
+            <returns>whether the configuration should be shown</returns>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationClientModel">
+            <summary>
+            Client model of IBC internal configuration
+            Used for REST client as interface cannot be used for deserialization
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationClientModel.Name">
+            <summary>
+            Name of the configuration
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationClientModel.Value">
+            <summary>
+            Current value of configuration
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationClientModel.DefaultValue">
+            <summary>
+            Default value of configuration
+            </summary>
+        </member>
+        <member name="T:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1">
+            <summary>
+            Model of IBC internal configuration
+            </summary>
+            <typeparam name="T">Type of configuration</typeparam>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.#ctor(System.String,`0,System.Func{`0,System.Boolean},System.Boolean)">
+            <summary>
+            Initializes an instance of InternalConfigurationModel
+            </summary>
+            <param name="name">name of configuration</param>
+            <param name="defaultValue">default value of configuration</param>
+            <param name="validator">validator for updating configuration</param>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.name">
+            <summary>
+            Name of the configuration
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.defaultValue">
+            <summary>
+            Default value of configuration
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.validator">
+            <summary>
+            Validator for updating the value
+            </summary>
+        </member>
+        <member name="F:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.hidden">
+            <summary>
+            Whether the configuration should be hidden
+            </summary>
+        </member>
+        <member name="P:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Value">
+            <summary>
+            Value of configuration
+            </summary>
+            <remarks>
+            The value stays in memory and won't sync with Reliable Collection until <see cref="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.IInternalConfigurationModel.LoadValueFromReliableCollection"/> is called
+            The main benefit is that we can properly get value during service stop, and the value won't change halfway during service running
+            </remarks>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Microsoft#AzureStack#Fabric#Backup#Common#IbcInternalConfigurations#IInternalConfigurationModel#ValidateInput(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Microsoft#AzureStack#Fabric#Backup#Common#IbcInternalConfigurations#IInternalConfigurationModel#SetInReliableCollection(System.String)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Microsoft#AzureStack#Fabric#Backup#Common#IbcInternalConfigurations#IInternalConfigurationModel#ResetInReliableCollection">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Microsoft#AzureStack#Fabric#Backup#Common#IbcInternalConfigurations#IInternalConfigurationModel#LoadValueFromReliableCollection">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Microsoft#AzureStack#Fabric#Backup#Common#IbcInternalConfigurations#IInternalConfigurationModel#ToClientModel">
+            <inheritdoc/>
+        </member>
+        <member name="M:Microsoft.AzureStack.Fabric.Backup.Common.IbcInternalConfigurations.InternalConfigurationModel`1.Microsoft#AzureStack#Fabric#Backup#Common#IbcInternalConfigurations#IInternalConfigurationModel#ShouldShowConfiguration">
+            <summary>
+            Whether the configuration should be shown
+            </summary>
+            <returns>whether the configuration should be shown</returns>
+        </member>
+    </members>
+</doc>
