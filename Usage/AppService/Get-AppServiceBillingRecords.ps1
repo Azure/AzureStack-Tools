@@ -12,67 +12,70 @@
         *****To get current subscription data use (-TenantUsage $false) ****
         .\Get-AppServiceBillingRecords.ps1 -StartTime 01/08/2018 -EndTime 01/24/2018 -Granularity Daily -TenantUsage $false
 #>
-    [CmdletBinding()]
-    Param
-    (
-        [Parameter(Mandatory = $true)]
-        [datetime]
-        $StartTime,
+[CmdletBinding()]
+Param
+(
+    [Parameter(Mandatory = $true)]
+    [datetime]
+    $StartTime,
 
-        [Parameter(Mandatory = $true)]
-        [datetime]
-        $EndTime ,
+    [Parameter(Mandatory = $true)]
+    [datetime]
+    $EndTime ,
 
-        [Parameter(Mandatory = $false)]
-        [ValidateSet("Hourly", "Daily")]
-        [String]
-        $Granularity = 'Hourly',
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("Hourly", "Daily")]
+    [String]
+    $Granularity = 'Hourly',
 
-        [Parameter(Mandatory = $false)]
-        [bool]
-        $TenantUsage = $true,
+    [Parameter(Mandatory = $false)]
+    [bool]
+    $TenantUsage = $true,
 
-        [Parameter(Mandatory = $false)]
-        [bool]
-        $ExportToCSV = $false
-    )
+    [Parameter(Mandatory = $false)]
+    [bool]
+    $ExportToCSV = $false
+)
 
-    $VerbosePreference = 'Continue'
+$VerbosePreference = 'Continue'
 
-    # Load common functions
-    . "$PSScriptRoot\Common.ps1"
+# Load common functions
+. "$PSScriptRoot\Common.ps1"
 
-    # Main
-    $CsvFile = "AppServiceUsageSummary.csv"
+# Main
+if ($TenantUsage) {
+    $type = "Tenant"
+}
+else {
+    $type = "Admin"
+}
+$CsvFile = "AppServiceUsageSummary_{0}_{1}.csv" -f $type, (Get-Date).ToString("yyyy-MM-dd_HH-mm-ss")
 
-    $usageSummary  = Get-AppServiceBillingRecords `
-                            -StartTime $StartTime `
-                            -EndTime $EndTime `
-                            -Granularity $Granularity `
-                            -TenantUsage $TenantUsage
+$usageSummary = Get-AppServiceBillingRecords `
+    -StartTime $StartTime `
+    -EndTime $EndTime `
+    -Granularity $Granularity `
+    -TenantUsage $TenantUsage
 
-    if (!$ExportToCSV)
-    {
-        Write-Output $usageSummary | Format-Table -AutoSize
+if (!$ExportToCSV) {
+    Write-Output $usageSummary | Format-Table -AutoSize
 
-        Write-Host "Complete - billing records" $usageSummary.Count
+    Write-Host "Complete - billing records" $usageSummary.Count
 
-        return
-     }
+    return
+}
 
-    #Export to CSV
-    if (Test-Path -Path $CsvFile -ErrorAction SilentlyContinue)
-    {
-       Remove-Item -Path $CsvFile -Force
-    }
+#Export to CSV
+if (Test-Path -Path $CsvFile -ErrorAction SilentlyContinue) {
+    Remove-Item -Path $CsvFile -Force
+}
 
-    New-Item -Path $CsvFile -ItemType File | Out-Null
+New-Item -Path $CsvFile -ItemType File | Out-Null
 
-    $usageSummary | Export-Csv -Path $CsvFile -Append -NoTypeInformation 
+$usageSummary | Export-Csv -Path $CsvFile -Append -NoTypeInformation 
 
-    if ($PSBoundParameters.ContainsKey('Debug'))
-    {
-        $result | Export-Csv -Path "$CsvFile.raw" -Append -NoTypeInformation
-    }
+if ($PSBoundParameters.ContainsKey('Debug')) {
+    $result | Export-Csv -Path "$CsvFile.raw" -Append -NoTypeInformation
+}
 
-    Write-Host "Complete - billing records written to $CsvFile " $usageSummary.Count
+Write-Host "Complete - billing records written to $CsvFile " $usageSummary.Count
