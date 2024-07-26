@@ -2,7 +2,7 @@
 
 This page provides a comprehensive overview of the necessary endpoints for deploying Azure Stack HCI version 23H2 in the West Europe region. It outlines the specific URLs, ports and protocols that must be accessible during the deployment process to ensure successful integration with Azure services. The document serves as a crucial resource for IT professionals and system administrators who are preparing to deploy Azure Stack HCI solutions, offering detailed guidance on network configuration and external connectivity requirements. By adhering to the listed endpoints, users can facilitate a smooth deployment process, ensuring that their Azure Stack HCI environment is properly connected and functional within the West Europe region.
 
-**This list last update is from July 17th, 2024**
+**This list last update is from July 26th, 2024**
 
 | Id | HCI Component                   | Endpoint URL                                       | Port | Notes                                                                                  | Arc gateway support | Required for                 |
 |----|---------------------------------|----------------------------------------------------|------|----------------------------------------------------------------------------------------|---------------------|------------------------------|
