@@ -6,8 +6,7 @@ This page provides a comprehensive overview of the necessary endpoints for deplo
 
 | Id | Azure Local Component       | Endpoint URL                                       | Port | Notes                                                                                  | Arc gateway support               | Required for                 |
 |----|-----------------------------|----------------------------------------------------|------|----------------------------------------------------------------------------------------|-----------------------------------|------------------------------|
-| 1    | Azure Local ARB infra, Arc VM infra, AKS infra |  mcr.microsoft.com                                   |  443       |  Global site used for official Microsoft artifacts such as container images.                 |
-|------|------------------------------------------------|------------------------------------------------------|------------|----------------------------------------------------------------------------------------------|
+|  1    | Azure Local ARB infra, Arc VM infra, AKS infra |  mcr.microsoft.com                                   |  443       |  Global site used for official Microsoft artifacts such as container images.                 |
 |  2   | Azure Local ARB infra, Arc VM infra, AKS infra |  westus.data.mcr.microsoft.com                       |  443       |  West US site used for official Microsoft artifacts such as container images.                |
 |  3   | Azure Local ARB infra, Arc VM infra, AKS infra |  westeurope.data.mcr.microsoft.com                   |  443       |  Western Europe site used for official Microsoft artifacts such as container images.         |
 |  4   | Azure Local ARB infra, Arc VM infra, AKS infra |  australiaeast.data.mcr.microsoft.com                |  443       |  Australia East site used for official Microsoft artifacts such as container images.         |
