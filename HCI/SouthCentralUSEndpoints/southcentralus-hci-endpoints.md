@@ -4,7 +4,7 @@ This page provides a comprehensive overview of the necessary endpoints for deplo
 
 **This list last update is from January 23rd, 2025**
 
-| Id | Azure Local Component           | Endpoint URL                                       | Port | Notes                                                                                  | Arc gateway support               | Required for                 |
+| Id | Azure Local Component           | Endpoint URL                                       | Port | Notes                                                                                  | Arc gateway support               | Required                     |
 |----|---------------------------------|----------------------------------------------------|------|----------------------------------------------------------------------------------------|-----------------------------------|------------------------------|
 | 1  |Azure Local AKS infra            | mcr.microsoft.com                                  | 443  | Global site used for official Microsoft artifacts such as container images.            | Yes. 2408 or later new deployment | Deployment & Post deployment |
 | 2  |Azure Local AKS infra            | westus.data.mcr.microsoft.com                      | 443  | West US site used for official Microsoft artifacts such as container images.           | Yes. 2408 or later new deployment | Deployment & Post deployment |
