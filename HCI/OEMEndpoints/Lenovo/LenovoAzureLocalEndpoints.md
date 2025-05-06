@@ -1,6 +1,6 @@
 # Lenovo required endpoints for Azure Local deployments
 
-This page provides a comprehensive overview of the necessary endpoints for deploying Azure Local using the DataON solution. These URLs are maintained by the OEM hardware vendor. Please contact with your OEM provider if these URLs need to be updated.
+This page provides a comprehensive overview of the necessary endpoints for deploying Azure Local using Lenovo solutions. These URLs are maintained by the OEM hardware vendor. Please contact with your OEM provider if these URLs need to be updated.
 
 Each hardware vendor provided [Solution Builder Extension (SBE)](https://learn.microsoft.com/en-us/azure/azure-local/update/solution-builder-extension) will require some minimal endpoints to allow for discovery and download of [SBE](https://learn.microsoft.com/en-us/azure/azure-local/update/solution-builder-extension) updates for your solution.
 
