@@ -49,7 +49,7 @@ In this configuration, switch QOS is not required or used.  QOS is typically use
 
 ### Compute, Management Intent Networks
 
-In this example the compute and management intents are seperated.  Compute is assigned to a VLAN id of 8 and Managment is assigned to a vlan of 7.  These VLAN id's are used for example purposes and are customized to the customer environment.  These VLAN's are configured as Layer 3 switch virtual interfaces on both TOR1 and TOR2.
+In the image above compute and management intents are separated into VLANs 7 and 8.  These VLAN id's used here are for example purposes.  Its expected that the admin will designate the desired VLAN ids. These VLAN's are configured as Layer 3 Switch Virtual Interfaces (SVI) on both TOR1 and TOR2. MLAG is used to support east-west traffic for the compute and management intents.
 
 
 
