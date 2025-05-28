@@ -51,9 +51,64 @@ In this configuration, switch QOS is not required or used.  QOS is typically use
 
 In the image above compute and management intents are separated into VLANs 7 and 8.  These VLAN id's used here are for example purposes.  Its expected that the admin will designate the desired VLAN ids. These VLAN's are configured as Layer 3 Switch Virtual Interfaces (SVI) on both TOR1 and TOR2. MLAG is used to support east-west traffic for the compute and management intents.
 
-
-
 ## ToR 1 Configuration
+
+```console
+vlan 7
+  name Management_7
+vlan 8
+  name Compuate_8
+!
+interface Vlan7
+  description Management
+  no shutdown
+  mtu 9216
+  no ip redirects
+  ip address 100.101.176.2/24
+  no ipv6 redirects
+  hsrp version 2
+  hsrp 7 
+    priority 150 forwarding-threshold lower 1 upper 150
+    ip 100.101.176.
+!
+interface Vlan8
+  description Compute
+  no shutdown
+  mtu 9216
+  no ip redirects
+  ip address 100.101.177.2/24
+  no ipv6 redirects
+  hsrp version 2
+  hsrp 201 
+    priority 150 forwarding-threshold lower 1 upper 150
+    ip 100.101.177.1
+!
+interface Ethernet1/1
+  description AzLocalNode1
+  no cdp enable
+  switchport
+  switchport mode trunk
+  switchport trunk native vlan 7
+  switchport trunk allowed vlan 7-8
+  spanning-tree port type edge trunk
+  mtu 9216
+  speed 10000
+  no logging event port link-status
+  no shutdown
+!
+interface Ethernet1/2
+  description AzLocalNode2
+  no cdp enable
+  switchport
+  switchport mode trunk
+  switchport trunk native vlan 7
+  switchport trunk allowed vlan 7-8
+  spanning-tree port type edge trunk
+  mtu 9216
+  speed 10000
+  no logging event port link-status
+  no shutdown
+```
 
 ## Reference Documents
 
