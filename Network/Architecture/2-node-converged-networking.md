@@ -69,7 +69,7 @@ interface Vlan7
   hsrp version 2
   hsrp 7 
     priority 150 forwarding-threshold lower 1 upper 150
-    ip 100.101.176.
+    ip 100.101.176.1
 !
 interface Vlan8
   description Compute
