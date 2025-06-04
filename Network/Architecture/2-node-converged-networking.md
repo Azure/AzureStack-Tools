@@ -277,7 +277,7 @@ router bgp 64511
       maximum-prefix 12000 warning-only
 ```
 
-### Example SDN configuration
+## Example SDN configuration
 
 This section of the BGP configuration is tailored to support an Azure local SLBMUX scenario using VLAN8.
 
@@ -286,20 +286,17 @@ A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to
 
 **Peering and Connectivity**:
 
-- update-source loopback0
-
+- `neighbor 10.101.177.0/24`
+  Defines the BGP neighbor as the entire 10.101.177.0/24 subnet, which is associated with VLAN8. This allows any device within that subnet—such as a SLBMUX to establish a BGP session with the switch, provided it matches the remote AS number.
+- `remote-as 65158`  
+  Specifies the remote Autonomous System (AS) number that the switch will allow to form a BGP session. In this case, the remote AS is set to 65158, which should match the AS number configured on the Gateway VM. Only eBGP sessions are supported in this configuration.
+- `update-source loopback0`
   This ensures that BGP traffic originates from the stable loopback interface on the TOR, which helps maintain consistent peering even if physical interfaces change.
-
-- ebgp-multihop 3
-
+- `ebgp-multihop 3`
   Allows the BGP session to traverse up to three hops, accommodating scenarios where the SLBMUX is not directly connected.
-
-- prefix-list DefaultRoute out
-  
+- `prefix-list DefaultRoute out`
   Within the IPv4 unicast address family for this neighbor, the outbound route policy is governed by the DefaultRoute prefix list. This list is designed to advertise only the default route (0.0.0.0/0) to the SLBMUX. This aligns with the design goal of having the SLBMUX receive only the default route from the switch.
-
-- maximum-prefix 12000 warning-only
-
+- `maximum-prefix 12000 warning-only`
   This command serves as a safeguard, issuing warnings if the number of received prefixes approaches a set limit, thereby helping maintain stability in the peer session.
 
 **Cisco Nexus 93180YC-FX Config Snipit:**
@@ -329,11 +326,25 @@ For both methods, the subnet used for the gateway can be much smaller than the e
 
 As mentioned above, BGP provides a dynamic way to add internal networks to the ToR switch routing table. When an administrator adds new networks in the portal, the Layer 3 Gateway advertises these networks to the switch using BGP, allowing the routing table to update automatically.
 
-In the sample configuration below, the BGP neighbor is defined as the entire 10.101.177.0/24 subnet, which is associated with VLAN8. This allows any device within that subnet—such as a Layer 3 Gateway VM—to establish a BGP session with the switch. The remote AS number is set to 65158, and the neighbor is described as TO_L3Forwarder for clarity.
+In the sample configuration below
 
-The `update-source Vlan8` command ensures that BGP peering uses the VLAN8 interface as the source IP, which is important when the gateway VM is not directly connected to the switch. The `ebgp-multihop 5` command allows the BGP session to be established even if the gateway VM is up to five hops away.
+- `neighbor 10.101.177.0/24`  
+  Defines the BGP neighbor as the entire 10.101.177.0/24 subnet, which is associated with VLAN8. This allows any device within that subnet—such as a Layer 3 Gateway VM to establish a BGP session with the switch, provided it matches the remote AS number.
 
-Within the IPv4 unicast address family, the `prefix-list DefaultRoute out` command restricts the switch to only advertise the default route (0.0.0.0/0) to the Layer 3 Gateway. The `maximum-prefix 12000 warning-only` command provides protection by issuing a warning if the number of received prefixes approaches 12,000, helping to prevent routing table overload.
+- `remote-as 65158`  
+  Specifies the remote Autonomous System (AS) number that the switch will allow to form a BGP session. In this case, the remote AS is set to 65158, which should match the AS number configured on the Gateway VM. Only eBGP sessions are supported in this configuration.
+
+- `update-source Vlan8`  
+  Ensures that BGP peering uses the VLAN8 interface as the source IP address. The source IP can be any address assigned to the VLAN8 configuration. Refer to the VLAN section above for more details.
+
+- `ebgp-multihop 5`  
+  Allows the BGP session to be established even if the Gateway VM is up to five hops away from the switch. This is useful in scenarios where the VM is not directly connected.
+
+- `prefix-list DefaultRoute out`  
+  Within the IPv4 unicast address family, this command restricts the switch to only advertise the default route (0.0.0.0/0) to the Layer 3 Gateway. The Gateway VM must receive at least the default route from the ToR switch.
+
+- `maximum-prefix 12000 warning-only`  
+  Sets a safeguard by issuing a warning if the number of received prefixes approaches 12,000. This helps prevent routing table overload and maintains network stability.
 
 This configuration enables the ToR switch to dynamically learn and advertise routes as the network evolves, reducing manual intervention and supporting scalable, automated network operations.
 
@@ -350,7 +361,7 @@ This configuration enables the ToR switch to dynamically learn and advertise rou
         maximum-prefix 12000 warning-only
 ```
 
-### Staic Mode
+### Static Mode
 
 In static routing mode, the network team must plan in advance which subnet will be used by the V-NET and which IP address will serve as the gateway for internal routing. For example, in the configuration below, 10.101.177.226 is designated as the gateway VM. This IP address acts as the Layer 3 peering point with the ToR switch and serves as the gateway to the internal subnet 10.68.239.0/24.
 
