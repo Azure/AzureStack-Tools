@@ -307,8 +307,48 @@ A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to
       maximum-prefix 12000 warning-only
 ```
 
+## Layer 3 Forwarding Gateway
+
+There are two different ways to supporting Layer 3 Forwarding Gateways, BGP and Static routinig.  In a BGP configuration the gateway will establish a BGP session with the TOR and advertise its v-NET into the TOR routing table.  In a static configuration, the Forwarding Gateway will be a member of the VLAN and the TOR will need to have a static route to populate the TOR route table with the required networks.  Static route methods is a manual method of deploying the network configuration, which differs from BGP where the route table will be dynamiclly populated by the gateway once it peers with the TOR.  In a typical configuration the subnet can be much smaller than what is shown here.  The subnet is only required to support minimum number of IP members, this can be as small as a /30 - /28.
+
+### BGP Mode
+
+As mentioned above, BGP provides a dynamic way to add internal networks to the ToR switch routing table. When an administrator adds new networks in the portal, the Layer 3 Gateway advertises these networks to the switch using BGP, allowing the routing table to update automatically.
+
+In the sample configuration below, the BGP neighbor is defined as the entire 10.101.177.0/24 subnet, which is associated with VLAN8. This allows any device within that subnet—such as a Layer 3 Gateway VM—to establish a BGP session with the switch. The remote AS number is set to 65158, and the neighbor is described as TO_L3Forwarder for clarity.
+
+The `update-source Vlan8` command ensures that BGP peering uses the VLAN8 interface as the source IP, which is important when the gateway VM is not directly connected to the switch. The `ebgp-multihop 5` command allows the BGP session to be established even if the gateway VM is up to five hops away.
+
+Within the IPv4 unicast address family, the `prefix-list DefaultRoute out` command restricts the switch to only advertise the default route (0.0.0.0/0) to the Layer 3 Gateway. The `maximum-prefix 12000 warning-only` command provides protection by issuing a warning if the number of received prefixes approaches 12,000, helping to prevent routing table overload.
+
+This configuration enables the ToR switch to dynamically learn and advertise routes as the network evolves, reducing manual intervention and supporting scalable, automated network operations.
+
+```console
+    neighbor 10.101.177.0/24
+      remote-as 65158
+      description TO_L3Forwarder
+      update-source Vlan8
+      ebgp-multihop 5
+      address-family ipv4 unicast
+        prefix-list DefaultRoute out
+        maximum-prefix 12000 warning-only
+```
+
+### Staic Mode
+
+In static routing mode, the network team must plan in advance which subnet will be used by the V-NET and which IP address will serve as the gateway for internal routing. For example, in the configuration below, 10.101.177.226 is designated as the gateway VM. This IP address acts as the Layer 3 peering point with the ToR switch and serves as the gateway to the internal subnet 10.68.239.0/24.
+
+It is recommended to configure the required static routes on the ToR switch before deploying the gateway VM. If additional internal networks are needed in the future, the ToR configuration must be updated to include static routes for those networks prior to their deployment. This ensures that traffic destined for the internal subnet is correctly forwarded to the gateway VM, supporting seamless connectivity within the larger Azure Local environment.
+
+This approach is particularly useful in environments where dynamic routing protocols like BGP are not used, or where a more controlled, manual routing configuration is preferred.
+
+```console
+  ip route 10.101.177.226/32 10.68.239.0/24
+```
+
 ## Reference Documents
 
 - [Network considerations for cloud deployments of Azure Local](https://learn.microsoft.com/en-us/azure/azure-local/plan/cloud-deployment-network-considerations)
 - [Physical network requirements for Azure Local](https://learn.microsoft.com/en-us/azure/azure-local/concepts/physical-network-requirements)
 - [Teaming in Azure Stack HCI](https://techcommunity.microsoft.com/blog/networkingblog/teaming-in-azure-stack-hci/1070642)
+- [Manage Azure Local gateway connections](https://learn.microsoft.com/en-us/azure/azure-local/manage/gateway-connections?view=azloc-2505#create-an-l3-connection)
