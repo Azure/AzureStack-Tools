@@ -13,6 +13,7 @@
 - SET: Switch Embedded Teaming, supporting switch independant teaming.
 - MLAG: (Multi-Chassis Link Aggregation) It's a technique that lets two or more network switches work together as if they were one big switch.
 - Border Router: This is considered an uplink device with the ToR devices, it provides routing capabilities to endpoint external to the Azure Local environment.
+- AS: Autonomous System number used to define as BGP neighbor.
 
 ## Example Device
 
