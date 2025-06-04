@@ -66,6 +66,8 @@ In the image above compute and management intents are separated into VLANs 7 and
 
 In this configuration, VLANs 7 and 8 are utilized to separate management and compute traffic. Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI) where the gateway IP address ends in ".1". The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is only required if Software Defined Networking (SDN) services are enabled. If SDN is not utilized, Azure Local does not require a jumbo frame. Customers should assess their workload requirements to determine if a different MTU value is necessary, as the default is typically 1500 bytes. Hot Standby Router Protocol (HSRP) is configured to provide gateway redundancy in the Multi-Chassis Link Aggregation (MLAG) setup, enabling seamless east-west communication between the compute and management networks. HSRP is set to version 2, with each VLAN assigned an HSRP group number that matches its VLAN ID for consistency and ease of management.
 
+**Cisco Nexus 93180YC-FX Config Snipit:**
+
 ```console
 vlan 7
   name Management_7
@@ -138,6 +140,8 @@ The vPC domain is established to allow the two ToR switches to operate as a sing
 
 **Physical Interface Bundling:**  
 Interfaces Ethernet1/49, Ethernet1/50, and Ethernet1/51 are bundled into Port-Channel 101 using LACP in active mode. These interfaces are configured as trunk ports, with the native VLAN set to 99 and priority flow control enabled. Logging is enabled for link status changes, and CDP is disabled to reduce unnecessary protocol traffic.
+
+**Cisco Nexus 93180YC-FX Config Snipit:**
 
 ```console
 spanning-tree port type edge bpduguard default
@@ -222,6 +226,8 @@ Used when advertising routes to border neighbors, this list prevents the default
 
 Neighbor relationships are then established for three interfaces. Two of these neighbors (with IPs \<Border1-IP\> and \<Border2-IP\>) are external peers in AS 64404—each configured with descriptive labels and both employing the FROM-BORDER and TO-BORDER prefix lists within the IPv4 unicast address family. These peers also have a safeguard with maximum-prefix 12000 warning-only to notify if the count of received prefixes nears a risky threshold. The third neighbor, associated with \<Port-Channel50-IP\>, is an internal (iBGP) peer in AS 64511 and is configured similarly, though without prefix filtering in the outbound direction
 
+**Cisco Nexus 93180YC-FX Config Snipit:**
+
 ```console
 !!! Only advertise the default route
 ip prefix-list DefaultRoute seq 10 permit 0.0.0.0/0 
@@ -296,6 +302,8 @@ A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to
 
   This command serves as a safeguard, issuing warnings if the number of received prefixes approaches a set limit, thereby helping maintain stability in the peer session.
 
+**Cisco Nexus 93180YC-FX Config Snipit:**
+
 ```console
   neighbor 10.101.177.0/24
     remote-as 65158
@@ -329,6 +337,8 @@ Within the IPv4 unicast address family, the `prefix-list DefaultRoute out` comma
 
 This configuration enables the ToR switch to dynamically learn and advertise routes as the network evolves, reducing manual intervention and supporting scalable, automated network operations.
 
+**Cisco Nexus 93180YC-FX Config Snipit:**
+
 ```console
     neighbor 10.101.177.0/24
       remote-as 65158
@@ -347,6 +357,8 @@ In static routing mode, the network team must plan in advance which subnet will 
 It is recommended to configure the required static routes on the ToR switch before deploying the gateway VM. If additional internal networks are needed in the future, the ToR configuration must be updated to include static routes for those networks prior to their deployment. This ensures that traffic destined for the internal subnet is correctly forwarded to the gateway VM, supporting seamless connectivity within the larger Azure Local environment.
 
 This approach is particularly useful in environments where dynamic routing protocols like BGP are not used, or where a more controlled, manual routing configuration is preferred.
+
+**Cisco Nexus 93180YC-FX Config Snipit:**
 
 ```console
   ip route 10.101.177.226/32 10.68.239.0/24
