@@ -17,7 +17,9 @@
 ## Example Device
 
 Make: Cisco
+
 Model: Nexus 98180YC-FX
+
 Firmware: 9.3.(11)
 
 ## Scope
