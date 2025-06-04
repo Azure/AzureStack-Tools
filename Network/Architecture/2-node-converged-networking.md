@@ -208,7 +208,7 @@ interface Ethernet1/51
 
 ### Example Routing
 
-The configuration begins by defining the router’s BGP process under autonomous system 64511, using a static router-id assigned to a loopback interface. This ensures a stable identifier, crucial for consistent BGP operation even if physical interfaces change state. The command bestpath as-path multipath-relax allows the router to consider multiple paths to the same destination—even when AS paths are not identical—thus providing greater flexibility in equal-cost multipath routing. The log-neighbor-changes command ensures that any changes in neighbor status are logged, aiding in operational troubleshooting.
+The configuration begins by defining the router's BGP process under autonomous system 64511, using a static router-id assigned to a loopback interface. This ensures a stable identifier, crucial for consistent BGP operation even if physical interfaces change state. The command bestpath as-path multipath-relax allows the router to consider multiple paths to the same destination—even when AS paths are not identical—thus providing greater flexibility in equal-cost multipath routing. The log-neighbor-changes command ensures that any changes in neighbor status are logged, aiding in operational troubleshooting.
 
 Under the IPv4 unicast address family, several networks are explicitly advertised, including the loopback (used for the router ID), point-to-point links (for border and port channel connectivity), and VLAN-specific subnets (supporting internal segments such as VLAN7 and VLAN8). The use of maximum-paths 8 (for both eBGP and iBGP with the maximum-paths ibgp command) enables the router to handle up to eight equal-cost paths, enhancing load balancing and redundancy within the network.
 
@@ -276,7 +276,7 @@ router bgp 64511
 This section of the BGP configuration is tailored to support an Azure local SLBMUX scenario using VLAN8.
 
 **Dynamic BGP Neighbor Definition**:
-A BGP neighbor is defined for a peer in the 10.101.177.0/24 subnet (the VLAN8 segment reserved for the SLBMUX). Although the SLBMUX can be any IP within that subnet, the configuration uses the subnet as the neighbor identifier. The peer is configured with a remote AS of 65158 and is labeled TO_SDN_SLBMUX to clearly indicate its role.
+A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to VLAN8 and is reserved for the SLBMUX. The SLBMUX can use any IP address within this subnet, so the configuration specifies the entire subnet as the neighbor. The remote AS is set to 65158, and the neighbor is labeled TO_SDN_SLBMUX for clarity. When a subnet is used as the BGP neighbor, the switch operates in passive mode and waits for the SLBMUX to initiate the BGP connection.
 
 **Peering and Connectivity**:
 
@@ -306,10 +306,6 @@ A BGP neighbor is defined for a peer in the 10.101.177.0/24 subnet (the VLAN8 se
       prefix-list DefaultRoute out
       maximum-prefix 12000 warning-only
 ```
-
-## Cable Map
-
-
 
 ## Reference Documents
 
