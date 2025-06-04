@@ -309,7 +309,13 @@ A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to
 
 ## Layer 3 Forwarding Gateway
 
-There are two different ways to supporting Layer 3 Forwarding Gateways, BGP and Static routinig.  In a BGP configuration the gateway will establish a BGP session with the TOR and advertise its v-NET into the TOR routing table.  In a static configuration, the Forwarding Gateway will be a member of the VLAN and the TOR will need to have a static route to populate the TOR route table with the required networks.  Static route methods is a manual method of deploying the network configuration, which differs from BGP where the route table will be dynamiclly populated by the gateway once it peers with the TOR.  In a typical configuration the subnet can be much smaller than what is shown here.  The subnet is only required to support minimum number of IP members, this can be as small as a /30 - /28.
+There are two primary methods for supporting Layer 3 Forwarding Gateways in Azure Local configurations: BGP and static routing.
+
+With BGP, the Layer 3 Gateway establishes a BGP session with the ToR switch and advertises its V-NET routes directly into the ToR routing table. This dynamic approach allows the routing table to be automatically updated as new networks are added or removed, reducing manual intervention and supporting scalable, automated network operations.
+
+In contrast, static routing requires the Forwarding Gateway to be a member of the VLAN, with the ToR switch manually configured with static routes for each required network. This method is more manual and requires the network team to update the ToR configuration whenever new internal networks are introduced. While BGP is recommended for environments that require flexibility and automation, static routing may be preferred in scenarios where a controlled, predictable routing configuration is needed.
+
+For both methods, the subnet used for the gateway can be much smaller than the examples shown—typically as small as a /30 or /28, depending on the number of required IP addresses.
 
 ### BGP Mode
 
