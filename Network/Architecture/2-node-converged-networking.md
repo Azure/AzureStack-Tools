@@ -1,8 +1,8 @@
-# Azure Local Two Node Switchless Storage Configuration
+# Azure Local - Two machines switchless dual link network architecture
 
 **DRAFT**
 
-- [Azure Local Two Node Switchless Storage Configuration](#azure-local-two-node-switchless-storage-configuration)
+- [Azure Local - Two machines switchless dual link network architecture](#azure-local---two-machines-switchless-dual-link-network-architecture)
   - [Terminology](#terminology)
   - [Example Device](#example-device)
   - [Scope](#scope)
