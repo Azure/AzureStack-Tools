@@ -1,4 +1,4 @@
-# Two Node Switchless Storage Configuration
+# Azure Local Two Node Switchless Storage Configuration
 
 **DRAFT**
 
