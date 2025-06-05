@@ -19,6 +19,7 @@
     - [QOS policy](#qos-policy)
     - [Compute, Management Intent Networks](#compute-management-intent-networks)
   - [ToR Configuration](#tor-configuration)
+    - [Required Switch Features](#required-switch-features)
     - [Host Side configuration](#host-side-configuration)
     - [MLAG Connection](#mlag-connection)
     - [Example Routing](#example-routing)
@@ -141,9 +142,32 @@ In the image above compute and management intents are separated into VLANs 7 and
 
 ## ToR Configuration
 
+### Required Switch Features
+
+Within this configuration, several essential Cisco Nexus features are enabled to support Azure Local solutions and ensure robust, scalable networking:
+
+- **BGP (Border Gateway Protocol):** Enables dynamic routing to border devices and is required for Azure Local SDN scenarios, allowing seamless integration with external and internal networks.
+- **interface-vlan:** Allows the creation of Layer 3 interfaces on VLANs, enabling the switch to route traffic between VLANs and participate in IP routing for management and compute networks.
+- **HSRP (Hot Standby Router Protocol):** Provides gateway redundancy in conjunction with MLAG/vPC, ensuring high availability for critical network segments.
+- **LACP (Link Aggregation Control Protocol):** Required for forming port-channels between ToR switches, supporting MLAG/vPC peer links and increasing bandwidth and resiliency.
+- **vPC (Virtual Port Channel):** Facilitates MLAG configurations, allowing two Nexus switches to appear as a single logical switch to connected devices, which enhances redundancy.
+- **LLDP (Link Layer Discovery Protocol):** Used by Azure Local to automatically detect and validate network topology, helping to identify misconfigurations and simplify troubleshooting.
+
+Enable these features with the following commands for a Cisco Nexus 93180YC-FX:
+
+```console
+feature bgp
+feature interface-vlan
+feature hsrp
+feature lacp
+feature vpc
+feature lldp
+```
+
 ### Host Side configuration
 
 In this configuration, VLANs 7 and 8 are utilized to separate management and compute traffic. Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI) where the gateway IP address ends in ".1". The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is only required if Software Defined Networking (SDN) services are enabled. If SDN is not utilized, Azure Local does not require a jumbo frame. Customers should assess their workload requirements to determine if a different MTU value is necessary, as the default is typically 1500 bytes. Hot Standby Router Protocol (HSRP) is configured to provide gateway redundancy in the Multi-Chassis Link Aggregation (MLAG) setup, enabling seamless east-west communication between the compute and management networks. HSRP is set to version 2, with each VLAN assigned an HSRP group number that matches its VLAN ID for consistency and ease of management.
+
 
 **Cisco Nexus 93180YC-FX Config Snipit:**
 
