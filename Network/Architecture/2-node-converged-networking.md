@@ -498,7 +498,7 @@ It is recommended to configure the required static routes on the ToR switch befo
 
 This approach is particularly useful in environments where dynamic routing protocols like BGP are not used, or where a more controlled, manual routing configuration is preferred.
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+**Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
   ip route 10.101.177.226/32 10.68.239.0/24
