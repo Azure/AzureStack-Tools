@@ -35,7 +35,7 @@
 
 ## Terminology
 
-- **ToR**: Top of Rack switch
+- **ToR**: Top of Rack network switch
 - **p-NIC**: Physical Network Card attached to a node.
 - **v-Switch**: Virtual Switch configured on the Azure Local Cluster.
 - **VLAN**: Virtual Local Area Network.
