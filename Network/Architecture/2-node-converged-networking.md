@@ -6,7 +6,7 @@
   - [Terminology](#terminology)
   - [Example Device](#example-device)
   - [Scope](#scope)
-  - [Two Node Switchless environment](#two-node-switchless-environment)
+  - [Two Node Switchless Environment](#two-node-switchless-environment)
   - [Attributes](#attributes)
     - [Nodes](#nodes)
   - [Cable Map](#cable-map)
@@ -16,11 +16,13 @@
     - [TOR 2](#tor-2)
   - [Switches](#switches)
   - [Switch Configuration](#switch-configuration)
-    - [QOS policy](#qos-policy)
+    - [QOS Policy](#qos-policy)
     - [Compute, Management Intent Networks](#compute-management-intent-networks)
   - [ToR Configuration](#tor-configuration)
     - [Required Switch Features](#required-switch-features)
-    - [Host Side configuration](#host-side-configuration)
+    - [VLAN configuration](#vlan-configuration)
+    - [HSRP Configuration](#hsrp-configuration)
+    - [Host Side Configuration](#host-side-configuration)
     - [MLAG Connection](#mlag-connection)
     - [Example Routing](#example-routing)
   - [Example SDN configuration](#example-sdn-configuration)
@@ -35,12 +37,12 @@
 
 - **ToR**: Top of Rack switch
 - **p-NIC**: Physical Network Card attached to a node.
-- **v-Switch**: Virutal Switch configured on the Azure Local Cluster.
-- **VLAN**: Virutal Local Area Network.
-- **SET**: Switch Embedded Teaming, supporting switch independant teaming.
-- **MLAG**: (Multi-Chassis Link Aggregation) It's a technique that lets two or more network switches work together as if they were one big switch.
-- **Border Router**: This is considered an uplink device with the ToR devices, it provides routing capabilities to endpoint external to the Azure Local environment.
-- **AS**: Autonomous System number used to define as BGP neighbor.
+- **v-Switch**: Virtual Switch configured on the Azure Local Cluster.
+- **VLAN**: Virtual Local Area Network.
+- **SET**: Switch Embedded Teaming, supporting switch-independent teaming.
+- **MLAG**: Multi-Chassis Link Aggregation, a technique that lets two or more network switches work together as if they were one logical switch.
+- **Border Router**: Uplink device with the ToR switches, providing routing to endpoints external to the Azure Local environment.
+- **AS**: Autonomous System number used to define a BGP neighbor.
 
 ## Example Device
 
@@ -50,25 +52,25 @@
 
 ## Scope
 
-This document is intended to assist administrators in designing a network architecture that aligns with their cluster configuration requirements. It provides reference architectures for network devices that support cluster deployments, along with sample configurations tailored for these environments. Equipment located on the customer premises—such as switches, firewalls, or routers—is considered out of scope for this document, as it is assumed to be part of the existing customer infrastructure supporting the broader network fabric. The focus of this document is on Node-to-ToR (Top of Rack) and ToR-to-ToR configurations, as well as uplink configurations from the ToR perspective.
+This document assists administrators in designing a network architecture that aligns with Azure Local cluster requirements. It provides reference architectures and sample configurations for network devices supporting cluster deployments. Equipment such as switches, firewalls, or routers located on customer premises is considered out of scope, as it is assumed to be part of the existing infrastructure. The focus is on Node-to-ToR, ToR-to-ToR, and ToR uplink configurations.
 
-## Two Node Switchless environment
+## Two Node Switchless Environment
 
-In this configuration, a two-node environment is deployed using an Azure Local switchless storage architecture. Storage traffic is directly connected between the two nodes, bypassing any network switches to reduce latency and complexity for storage workloads. The Top-of-Rack (ToR) switches in this design are dedicated solely to supporting compute and management traffic. These network intents are able to utilize both ToR devices, providing redundancy and high availability for cluster operations. The physical NICs (p-NICs) responsible for compute and management traffic are configured with Switch Embedded Teaming (SET), enabling switch-independent teaming and allowing seamless communication with the physical network infrastructure.
+This solution deploys a two-node environment using an Azure Local switchless storage architecture. Storage traffic is directly connected between the two nodes, bypassing network switches to reduce latency and complexity for storage workloads. The ToR switches are dedicated to compute and management traffic, providing redundancy and high availability for cluster operations. Compute and management p-NICs are configured with Switch Embedded Teaming (SET), enabling switch-independent teaming and seamless integration with the physical network.
 
-This approach ensures that storage traffic remains isolated and optimized through direct node-to-node connections, while compute and management traffic benefit from the resiliency and scalability provided by dual ToR switches and MLAG/vPC configurations.
+This approach ensures storage traffic is isolated and optimized through direct node-to-node connections, while compute and management traffic benefit from the resiliency and scalability of dual ToR switches and MLAG/vPC configurations.
 
 ## Attributes
 
-The two node converged networking configuration has the following attributes.
+The two-node converged networking configuration has the following attributes:
 
 ### Nodes
 
-1. Each node is equipped with two physical network interface cards, each of the cards has two physical network card interfaces. Each card interface will be labeled as a p-NIC.
-2. p-NIC A,B are responsible for handling both compute and management traffic.
-3. p-NIC A,B are configured as part of a Switch Embedded Teaming (SET) team, where compute and management traffic are transmitted using VLAN tags. These NICs are assigned to a virtual switch (v-Switch) to support multiple network intents.
-4. p-NIC C,D are dedicated to storage traffic and supports RDMA protocol workloads.
-5. p-NIC C,D are directly connected between node 1 and node 2, with traffic transmitted using VLAN tags over this direct connection.
+1. Each node is equipped with two physical network interface cards, each with two physical interfaces (p-NICs).
+2. p-NICs A and B handle both compute and management traffic.
+3. p-NICs A and B are configured as part of a Switch Embedded Teaming (SET) team, transmitting compute and management traffic using VLAN tags. These NICs are assigned to a virtual switch (v-Switch) to support multiple network intents.
+4. p-NICs C and D are dedicated to storage traffic and support RDMA protocol workloads.
+5. p-NICs C and D are directly connected between node 1 and node 2, with traffic transmitted using VLAN tags over this direct connection.
 
 ## Cable Map
 
@@ -96,8 +98,6 @@ The two node converged networking configuration has the following attributes.
 | -------- | ------------ | ---- | ------- | ------------ |
 | **TOR1** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
 | **TOR1** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
-| **TOR1** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
-| **TOR1** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
 | **TOR1** | Ethernet1/41 | <==> | TOR2    | Ethernet1/41 |
 | **TOR1** | Ethernet1/42 | <==> | TOR2    | Ethernet1/42 |
 | **TOR1** | Ethernet1/47 | <==> | Border1 | Ethernet1/x  |
@@ -112,8 +112,6 @@ The two node converged networking configuration has the following attributes.
 | -------- | ------------ | ---- | ------- | ------------ |
 | **TOR2** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
 | **TOR2** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
-| **TOR2** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
-| **TOR2** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
 | **TOR2** | Ethernet1/41 | <==> | TOR1    | Ethernet1/41 |
 | **TOR2** | Ethernet1/42 | <==> | TOR1    | Ethernet1/42 |
 | **TOR2** | Ethernet1/47 | <==> | Border1 | Ethernet1/x  |
@@ -124,36 +122,27 @@ The two node converged networking configuration has the following attributes.
 
 ## Switches
 
-- Two physical switches are utilized in this example design acting as the Top of Rack (ToR) network device Cisco Nexus 93180YC-FX.
-- Management/Compute intent p-NIC's will connect to the ToR devices.
-- Storage intent p-NIC's do not have any links to the ToR devices.
-- The ToR's are in a MLAG configuration to support a redundant swithcing infrastructure.
-- Switch/Router/Firewall is simbolic device acting as a Core device where traffic will be sent to reach an off cluster destinations. This can be Azure or other endpoints on the customers local network. This set of devices can be a router, set of switch/routers and or a firewall. This devices configuration will not be covered in the network design and is considered out of scope.
+- Two physical switches are used as Top of Rack (ToR) devices (Cisco Nexus 93180YC-FX).
+- Management and compute p-NICs connect to the ToR devices.
+- Storage p-NICs do not connect to the ToR devices.
+- The ToRs are configured in MLAG for redundancy.
+- The core network (switch/router/firewall) is considered out of scope.
 
 ## Switch Configuration
 
-### QOS policy
+### QOS Policy
 
-In this configuration, switch QOS is not required or used. QOS is typically used on the storage intent interfaces if they are connected to a switch. For this specific configuration, Node 1 and Node 2 Storage intents are connected back to back. The storage intents do not utilze a switch in a switchless configuration.
+Switch QoS is not required in this configuration, as storage traffic is direct node-to-node. QoS is typically only needed if storage interfaces connect to a switch.
 
 ### Compute, Management Intent Networks
 
-In the image above compute and management intents are separated into VLANs 7 and 8. These VLAN id's used here are for example purposes. Its expected that the admin will designate the desired VLAN ids. These VLAN's are configured as Layer 3 Switch Virtual Interfaces (SVI) on both TOR1 and TOR2. MLAG is used to support east-west traffic for the compute and management intents.
+Compute and management intents are separated into VLANs (e.g., 7 and 8). These VLANs are configured as Layer 3 SVIs on both ToR switches. MLAG is used to support east-west traffic for compute and management.
 
 ## ToR Configuration
 
 ### Required Switch Features
 
-Within this configuration, several essential Cisco Nexus features are enabled to support Azure Local solutions and ensure robust, scalable networking:
-
-- **BGP (Border Gateway Protocol):** Enables dynamic routing to border devices and is required for Azure Local SDN scenarios, allowing seamless integration with external and internal networks.
-- **interface-vlan:** Allows the creation of Layer 3 interfaces on VLANs, enabling the switch to route traffic between VLANs and participate in IP routing for management and compute networks.
-- **HSRP (Hot Standby Router Protocol):** Provides gateway redundancy in conjunction with MLAG/vPC, ensuring high availability for critical network segments.
-- **LACP (Link Aggregation Control Protocol):** Required for forming port-channels between ToR switches, supporting MLAG/vPC peer links and increasing bandwidth and resiliency.
-- **vPC (Virtual Port Channel):** Facilitates MLAG configurations, allowing two Nexus switches to appear as a single logical switch to connected devices, which enhances redundancy.
-- **LLDP (Link Layer Discovery Protocol):** Used by Azure Local to automatically detect and validate network topology, helping to identify misconfigurations and simplify troubleshooting.
-
-Enable these features with the following commands for a Cisco Nexus 93180YC-FX:
+Enable the following features on Cisco Nexus 93180YC-FX to support this example Azure Local environment:
 
 ```console
 feature bgp
@@ -164,18 +153,28 @@ feature vpc
 feature lldp
 ```
 
-### Host Side configuration
+### VLAN configuration
 
-In this configuration, VLANs 7 and 8 are utilized to separate management and compute traffic. Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI) where the gateway IP address ends in ".1". The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is only required if Software Defined Networking (SDN) services are enabled. If SDN is not utilized, Azure Local does not require a jumbo frame. Customers should assess their workload requirements to determine if a different MTU value is necessary, as the default is typically 1500 bytes. Hot Standby Router Protocol (HSRP) is configured to provide gateway redundancy in the Multi-Chassis Link Aggregation (MLAG) setup, enabling seamless east-west communication between the compute and management networks. HSRP is set to version 2, with each VLAN assigned an HSRP group number that matches its VLAN ID for consistency and ease of management.
+In this configuration, VLANs are used to logically separate management and compute traffic within the Azure Local environment:
 
+- **VLAN 7** is designated for management traffic. It is configured as the native VLAN on trunk ports and supports Azure Local backend services, including cluster management and infrastructure communication.
+- **VLAN 8** is assigned for compute traffic, which carries customer or tenant workloads.
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI). The gateway IP address for each VLAN SVI ends in ".1" to provide a consistent and predictable default gateway for devices within each subnet.
+
+### HSRP Configuration
+
+Hot Standby Router Protocol (HSRP) is implemented on both VLAN interfaces to provide gateway redundancy and high availability. HSRP version 2 is used, and each VLAN is assigned an HSRP group number that matches its VLAN ID for maintainablity. The HSRP configuration ensures that if one ToR switch becomes unavailable, the other can immediately take over gateway responsibilities, maintaining uninterrupted network connectivity for both management and compute networks.
+
+The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is required for SDN workloads. If SDN is not used, the default MTU (typically 1500 bytes) is sufficient, and customers should select the MTU size based on their workload requirements.
+
+**Sample Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
 vlan 7
   name Management_7
 vlan 8
-  name Compuate_8
+  name Compute_8
 !
 interface Vlan7
   description Management
@@ -197,10 +196,35 @@ interface Vlan8
   ip address 10.101.177.2/24
   no ipv6 redirects
   hsrp version 2
-  hsrp 201
+  hsrp 8
     priority 150 forwarding-threshold lower 1 upper 150
     ip 100.101.177.1
-!
+```
+
+### Host Side Configuration
+
+The following configuration example demonstrates how to configure the ToR switch interfaces that connect directly to the Azure Local cluster nodes. These interfaces are responsible for carrying both management and compute traffic between the nodes and the network infrastructure.
+
+**Key Configuration Elements:**
+
+- **Interface Assignment:**  
+  `Ethernet1/1` and `Ethernet1/2` are connected to Node 1 and Node 2. Each interface is clearly labeled with a descriptive name.
+
+- **Trunk Mode with VLAN Tagging:**  
+  Both interfaces are configured as trunk ports, allowing them to carry multiple VLANs (VLAN 7 for management and VLAN 8 for compute). The native VLAN is set to 7, which is typically used for management traffic. This setup enables the use of Switch Embedded Teaming (SET) on the host side, supporting multiple network intents over the same physical connection.  Additional compute VLANs tags can be include to support tenant worklods.
+
+- **Spanning Tree and Edge Port Configuration:**  
+  The `spanning-tree port type edge trunk` command is applied to optimize convergence times and protect against accidental loops, as these ports connect directly to servers rather than other switches.
+
+- **Performance Optimization:**  
+  The MTU is set to 9216 bytes to support jumbo frames, which is recommended for Azure Local and SDN workloads to maximize throughput and reduce CPU overhead. The interface speed is explicitly set to 10 Gbps to match the physical NIC capabilities.
+
+- **Operational Enhancements:**  
+  CDP (Cisco Discovery Protocol) is disabled to minimize unnecessary protocol traffic, and link status logging is enabled to monitor and record changes in the status of server-facing ports.
+
+**Sample Cisco Nexus 93180YC-FX Interface Configuration:**
+
+```console
 interface Ethernet1/1
   description AzLocalNode1
   no cdp enable
@@ -211,7 +235,7 @@ interface Ethernet1/1
   spanning-tree port type edge trunk
   mtu 9216
   speed 10000
-  no logging event port link-status
+  logging event port link-status
   no shutdown
 !
 interface Ethernet1/2
@@ -224,7 +248,7 @@ interface Ethernet1/2
   spanning-tree port type edge trunk
   mtu 9216
   speed 10000
-  no logging event port link-status
+  logging event port link-status
   no shutdown
 ```
 
