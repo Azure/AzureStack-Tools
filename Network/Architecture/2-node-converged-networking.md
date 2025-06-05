@@ -20,7 +20,9 @@
     - [Compute, Management Intent Networks](#compute-management-intent-networks)
   - [ToR Configuration](#tor-configuration)
     - [Required Switch Features](#required-switch-features)
-    - [Host Side configuration](#host-side-configuration)
+    - [VLAN configuration](#vlan-configuration)
+    - [HSRP Configuration](#hsrp-configuration)
+    - [Host Side Configuration](#host-side-configuration)
     - [MLAG Connection](#mlag-connection)
     - [Example Routing](#example-routing)
   - [Example SDN configuration](#example-sdn-configuration)
@@ -164,18 +166,28 @@ feature vpc
 feature lldp
 ```
 
-### Host Side configuration
+### VLAN configuration
 
-In this configuration, VLANs 7 and 8 are utilized to separate management and compute traffic. Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI) where the gateway IP address ends in ".1". The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is only required if Software Defined Networking (SDN) services are enabled. If SDN is not utilized, Azure Local does not require a jumbo frame. Customers should assess their workload requirements to determine if a different MTU value is necessary, as the default is typically 1500 bytes. Hot Standby Router Protocol (HSRP) is configured to provide gateway redundancy in the Multi-Chassis Link Aggregation (MLAG) setup, enabling seamless east-west communication between the compute and management networks. HSRP is set to version 2, with each VLAN assigned an HSRP group number that matches its VLAN ID for consistency and ease of management.
+In this configuration, VLANs are used to logically separate management and compute traffic within the Azure Local environment:
 
+- **VLAN 7** is designated for management traffic. It is configured as the native VLAN on trunk ports and supports Azure Local backend services, including cluster management and infrastructure communication.
+- **VLAN 8** is assigned for compute traffic, which carries customer or tenant workloads.
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI). The gateway IP address for each VLAN SVI ends in ".1" to provide a consistent and predictable default gateway for devices within each subnet.
+
+### HSRP Configuration
+
+Hot Standby Router Protocol (HSRP) is implemented on both VLAN interfaces to provide gateway redundancy and high availability. HSRP version 2 is used, and each VLAN is assigned an HSRP group number that matches its VLAN ID for maintainablity. The HSRP configuration ensures that if one ToR switch becomes unavailable, the other can immediately take over gateway responsibilities, maintaining uninterrupted network connectivity for both management and compute networks.
+
+The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is required for SDN workloads. If SDN is not used, the default MTU (typically 1500 bytes) is sufficient, and customers should select the MTU size based on their workload requirements.
+
+**Sample Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
 vlan 7
   name Management_7
 vlan 8
-  name Compuate_8
+  name Compute_8
 !
 interface Vlan7
   description Management
@@ -197,10 +209,35 @@ interface Vlan8
   ip address 10.101.177.2/24
   no ipv6 redirects
   hsrp version 2
-  hsrp 201
+  hsrp 8
     priority 150 forwarding-threshold lower 1 upper 150
     ip 100.101.177.1
-!
+```
+
+### Host Side Configuration
+
+The following configuration example demonstrates how to configure the ToR switch interfaces that connect directly to the Azure Local cluster nodes. These interfaces are responsible for carrying both management and compute traffic between the nodes and the network infrastructure.
+
+**Key Configuration Elements:**
+
+- **Interface Assignment:**  
+  `Ethernet1/1` and `Ethernet1/2` are connected to Node 1 and Node 2. Each interface is clearly labeled with a descriptive name.
+
+- **Trunk Mode with VLAN Tagging:**  
+  Both interfaces are configured as trunk ports, allowing them to carry multiple VLANs (VLAN 7 for management and VLAN 8 for compute). The native VLAN is set to 7, which is typically used for management traffic. This setup enables the use of Switch Embedded Teaming (SET) on the host side, supporting multiple network intents over the same physical connection.  Additional compute VLANs tags can be include to support tenant worklods.
+
+- **Spanning Tree and Edge Port Configuration:**  
+  The `spanning-tree port type edge trunk` command is applied to optimize convergence times and protect against accidental loops, as these ports connect directly to servers rather than other switches.
+
+- **Performance Optimization:**  
+  The MTU is set to 9216 bytes to support jumbo frames, which is recommended for Azure Local and SDN workloads to maximize throughput and reduce CPU overhead. The interface speed is explicitly set to 10 Gbps to match the physical NIC capabilities.
+
+- **Operational Enhancements:**  
+  CDP (Cisco Discovery Protocol) is disabled to minimize unnecessary protocol traffic, and link status logging is enabled to monitor and record changes in the status of server-facing ports.
+
+**Sample Cisco Nexus 93180YC-FX Interface Configuration:**
+
+```console
 interface Ethernet1/1
   description AzLocalNode1
   no cdp enable
@@ -211,7 +248,7 @@ interface Ethernet1/1
   spanning-tree port type edge trunk
   mtu 9216
   speed 10000
-  no logging event port link-status
+  logging event port link-status
   no shutdown
 !
 interface Ethernet1/2
@@ -224,7 +261,7 @@ interface Ethernet1/2
   spanning-tree port type edge trunk
   mtu 9216
   speed 10000
-  no logging event port link-status
+  logging event port link-status
   no shutdown
 ```
 
