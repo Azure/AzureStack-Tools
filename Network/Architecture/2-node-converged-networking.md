@@ -2,24 +2,50 @@
 
 **DRAFT**
 
+- [Azure Local Two Node Switchless Storage Configuration](#azure-local-two-node-switchless-storage-configuration)
+  - [Terminology](#terminology)
+  - [Example Device](#example-device)
+  - [Scope](#scope)
+  - [Two Node Switchless environment](#two-node-switchless-environment)
+  - [Attributes](#attributes)
+    - [Nodes](#nodes)
+  - [Cable Map](#cable-map)
+    - [Node 1](#node-1)
+    - [Node 2](#node-2)
+    - [TOR 1](#tor-1)
+    - [TOR 2](#tor-2)
+  - [Switches](#switches)
+  - [Switch Configuration](#switch-configuration)
+    - [QOS policy](#qos-policy)
+    - [Compute, Management Intent Networks](#compute-management-intent-networks)
+  - [ToR Configuration](#tor-configuration)
+    - [Host Side configuration](#host-side-configuration)
+    - [MLAG Connection](#mlag-connection)
+    - [Example Routing](#example-routing)
+  - [Example SDN configuration](#example-sdn-configuration)
+  - [Layer 3 Forwarding Gateway](#layer-3-forwarding-gateway)
+    - [BGP Mode](#bgp-mode)
+    - [Static Mode](#static-mode)
+  - [Reference Documents](#reference-documents)
+
 ![2 node Switchless with 2 ToR](../images/2node-switchless-two-switch.png)
 
 ## Terminology
 
-- ToR: Top of Rack switch
-- p-NIC: Physical Network Card attached to a node.
-- v-Switch: Virutal Switch configured on the Azure Local Cluster.
-- VLAN: Virutal Local Area Network.
-- SET: Switch Embedded Teaming, supporting switch independant teaming.
-- MLAG: (Multi-Chassis Link Aggregation) It's a technique that lets two or more network switches work together as if they were one big switch.
-- Border Router: This is considered an uplink device with the ToR devices, it provides routing capabilities to endpoint external to the Azure Local environment.
-- AS: Autonomous System number used to define as BGP neighbor.
+- **ToR**: Top of Rack switch
+- **p-NIC**: Physical Network Card attached to a node.
+- **v-Switch**: Virutal Switch configured on the Azure Local Cluster.
+- **VLAN**: Virutal Local Area Network.
+- **SET**: Switch Embedded Teaming, supporting switch independant teaming.
+- **MLAG**: (Multi-Chassis Link Aggregation) It's a technique that lets two or more network switches work together as if they were one big switch.
+- **Border Router**: This is considered an uplink device with the ToR devices, it provides routing capabilities to endpoint external to the Azure Local environment.
+- **AS**: Autonomous System number used to define as BGP neighbor.
 
 ## Example Device
 
-- Make: Cisco
-- Model: Nexus 98180YC-FX
-- Firmware: 10.3(4a)
+- **Make**: Cisco
+- **Model**: Nexus 98180YC-FX
+- **Firmware**: 10.3(4a)
 
 ## Scope
 
@@ -37,36 +63,87 @@ The two node converged networking configuration has the following attributes.
 
 ### Nodes
 
-1. Each node is equipped with two physical network interface cards (p-NICs), referred to as p-NIC A and p-NIC B.
-2. p-NIC A is responsible for handling both compute and management traffic.
-3. p-NIC A is configured as part of a Switch Embedded Teaming (SET) team, where compute and management traffic are transmitted using VLAN tags. These NICs are assigned to a virtual switch (v-Switch) to support multiple network intents.
-4. p-NIC B is dedicated to storage traffic and supports RDMA protocol workloads.
-5. p-NIC B is directly connected between node 1 and node 2, with traffic transmitted using VLAN tags over this direct connection.
+1. Each node is equipped with two physical network interface cards, each of the cards has two physical network card interfaces. Each card interface will be labeled as a p-NIC.
+2. p-NIC A,B are responsible for handling both compute and management traffic.
+3. p-NIC A,B are configured as part of a Switch Embedded Teaming (SET) team, where compute and management traffic are transmitted using VLAN tags. These NICs are assigned to a virtual switch (v-Switch) to support multiple network intents.
+4. p-NIC C,D are dedicated to storage traffic and supports RDMA protocol workloads.
+5. p-NIC C,D are directly connected between node 1 and node 2, with traffic transmitted using VLAN tags over this direct connection.
+
+## Cable Map
+
+### Node 1
+
+| Device    | Interface |      | Device | Interface   |
+| --------- | --------- | ---- | ------ | ----------- |
+| **Node1** | p-NIC A   | <==> | TOR1   | Ethernet1/1 |
+| **Node1** | p-NIC B   | <==> | TOR2   | Ethernet1/1 |
+| **Node1** | p-NIC C   | <==> | Node2  | p-NIC C     |
+| **Node1** | p-NIC D   | <==> | Node2  | p-NIC D     |
+
+### Node 2
+
+| Device    | Interface |      | Device | Interface   |
+| --------- | --------- | ---- | ------ | ----------- |
+| **Node2** | p-NIC A   | <==> | TOR1   | Ethernet1/2 |
+| **Node2** | p-NIC B   | <==> | TOR2   | Ethernet1/2 |
+| **Node2** | p-NIC C   | <==> | Node1  | p-NIC C     |
+| **Node2** | p-NIC D   | <==> | Node1  | p-NIC D     |
+
+### TOR 1
+
+| Device   | Interface    |      | Device  | Interface    |
+| -------- | ------------ | ---- | ------- | ------------ |
+| **TOR1** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
+| **TOR1** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
+| **TOR1** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
+| **TOR1** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
+| **TOR1** | Ethernet1/41 | <==> | TOR2    | Ethernet1/41 |
+| **TOR1** | Ethernet1/42 | <==> | TOR2    | Ethernet1/42 |
+| **TOR1** | Ethernet1/47 | <==> | Border1 | Ethernet1/x  |
+| **TOR1** | Ethernet1/48 | <==> | Border2 | Ethernet1/x  |
+| **TOR1** | Ethernet1/49 | <==> | TOR2    | Ethernet1/49 |
+| **TOR1** | Ethernet1/50 | <==> | TOR2    | Ethernet1/50 |
+| **TOR1** | Ethernet1/51 | <==> | TOR2    | Ethernet1/51 |
+
+### TOR 2
+
+| Device   | Interface    |      | Device  | Interface    |
+| -------- | ------------ | ---- | ------- | ------------ |
+| **TOR2** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
+| **TOR2** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
+| **TOR2** | Ethernet1/1  | <==> | Node1   | p-NIC A      |
+| **TOR2** | Ethernet1/2  | <==> | Node2   | p-NIC B      |
+| **TOR2** | Ethernet1/41 | <==> | TOR1    | Ethernet1/41 |
+| **TOR2** | Ethernet1/42 | <==> | TOR1    | Ethernet1/42 |
+| **TOR2** | Ethernet1/47 | <==> | Border1 | Ethernet1/x  |
+| **TOR2** | Ethernet1/48 | <==> | Border2 | Ethernet1/x  |
+| **TOR2** | Ethernet1/49 | <==> | TOR1    | Ethernet1/49 |
+| **TOR2** | Ethernet1/50 | <==> | TOR1    | Ethernet1/50 |
+| **TOR2** | Ethernet1/51 | <==> | TOR1    | Ethernet1/51 |
 
 ## Switches
 
 - Two physical switches are utilized in this example design acting as the Top of Rack (ToR) network device Cisco Nexus 93180YC-FX.
 - Management/Compute intent p-NIC's will connect to the ToR devices.
-- Storage intent p-NIC's do not have any links to the ToR devices.  
+- Storage intent p-NIC's do not have any links to the ToR devices.
 - The ToR's are in a MLAG configuration to support a redundant swithcing infrastructure.
-- Switch/Router/Firewall is simbolic device acting as a Core device where traffic will be sent to reach an off cluster destinations.  This can be Azure or other endpoints on the customers local network.  This set of devices can be a router, set of switch/routers and or a firewall. This devices configuration will not be covered in the network design and is considered out of scope.
+- Switch/Router/Firewall is simbolic device acting as a Core device where traffic will be sent to reach an off cluster destinations. This can be Azure or other endpoints on the customers local network. This set of devices can be a router, set of switch/routers and or a firewall. This devices configuration will not be covered in the network design and is considered out of scope.
 
 ## Switch Configuration
 
 ### QOS policy
 
-In this configuration, switch QOS is not required or used.  QOS is typically used on the storage intent interfaces if they are connected to a switch. For this specific configuration, Node 1 and Node 2 Storage intents are connected back to back.  The storage intents do not utilze a switch in a switchless configuration.
+In this configuration, switch QOS is not required or used. QOS is typically used on the storage intent interfaces if they are connected to a switch. For this specific configuration, Node 1 and Node 2 Storage intents are connected back to back. The storage intents do not utilze a switch in a switchless configuration.
 
 ### Compute, Management Intent Networks
 
-In the image above compute and management intents are separated into VLANs 7 and 8.  These VLAN id's used here are for example purposes.  Its expected that the admin will designate the desired VLAN ids. These VLAN's are configured as Layer 3 Switch Virtual Interfaces (SVI) on both TOR1 and TOR2. MLAG is used to support east-west traffic for the compute and management intents.
+In the image above compute and management intents are separated into VLANs 7 and 8. These VLAN id's used here are for example purposes. Its expected that the admin will designate the desired VLAN ids. These VLAN's are configured as Layer 3 Switch Virtual Interfaces (SVI) on both TOR1 and TOR2. MLAG is used to support east-west traffic for the compute and management intents.
 
 ## ToR Configuration
 
 ### Host Side configuration
 
 In this configuration, VLANs 7 and 8 are utilized to separate management and compute traffic. Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI) where the gateway IP address ends in ".1". The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is only required if Software Defined Networking (SDN) services are enabled. If SDN is not utilized, Azure Local does not require a jumbo frame. Customers should assess their workload requirements to determine if a different MTU value is necessary, as the default is typically 1500 bytes. Hot Standby Router Protocol (HSRP) is configured to provide gateway redundancy in the Multi-Chassis Link Aggregation (MLAG) setup, enabling seamless east-west communication between the compute and management networks. HSRP is set to version 2, with each VLAN assigned an HSRP group number that matches its VLAN ID for consistency and ease of management.
-
 
 **Cisco Nexus 93180YC-FX Config Snipit:**
 
@@ -84,7 +161,7 @@ interface Vlan7
   ip address 10.101.176.2/24
   no ipv6 redirects
   hsrp version 2
-  hsrp 7 
+  hsrp 7
     priority 150 forwarding-threshold lower 1 upper 150
     ip 100.101.176.1
 !
@@ -96,7 +173,7 @@ interface Vlan8
   ip address 10.101.177.2/24
   no ipv6 redirects
   hsrp version 2
-  hsrp 201 
+  hsrp 201
     priority 150 forwarding-threshold lower 1 upper 150
     ip 100.101.177.1
 !
@@ -232,16 +309,16 @@ Neighbor relationships are then established for three interfaces. Two of these n
 
 ```console
 !!! Only advertise the default route
-ip prefix-list DefaultRoute seq 10 permit 0.0.0.0/0 
+ip prefix-list DefaultRoute seq 10 permit 0.0.0.0/0
 ip prefix-list DefaultRoute seq 50 deny 0.0.0.0/0 le 32
 
 !!! Recieve BGP Advertisements for 0.0.0.0/0, deny all others.
-ip prefix-list FROM-BORDER seq 10 permit 0.0.0.0/0 
+ip prefix-list FROM-BORDER seq 10 permit 0.0.0.0/0
 ip prefix-list FROM-BORDER seq 30 deny 0.0.0.0/0 le 32
 
 !!! Advertise any network except for 0.0.0.0/0
-ip prefix-list TO-BORDER seq 5 deny 0.0.0.0/0 
-ip prefix-list TO-BORDER seq 10 permit 0.0.0.0/0 le 32 
+ip prefix-list TO-BORDER seq 5 deny 0.0.0.0/0
+ip prefix-list TO-BORDER seq 10 permit 0.0.0.0/0 le 32
 
 router bgp 64511
   router-id <Loopback-IP>
@@ -281,7 +358,7 @@ router bgp 64511
 
 ## Example SDN configuration
 
-This section of the BGP configuration is tailored to support an [Azure Local SDN ](https://learn.microsoft.com/en-us/azure/azure-local/manage/load-balancers) scenario using VLAN8.
+This section of the BGP configuration is tailored to support an [Azure Local SDN](https://learn.microsoft.com/en-us/azure/azure-local/manage/load-balancers) scenario using VLAN8.
 
 **Dynamic BGP Neighbor Definition**:
 A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to VLAN8 and is reserved for the SLBMUX. The SLBMUX can use any IP address within this subnet, so the configuration specifies the entire subnet as the neighbor. The remote AS is set to 65158, and the neighbor is labeled TO_SDN_SLBMUX for clarity. When a subnet is used as the BGP neighbor, the switch operates in passive mode and waits for the SLBMUX to initiate the BGP connection.
