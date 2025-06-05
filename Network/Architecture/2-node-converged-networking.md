@@ -1,7 +1,5 @@
 # Azure Local - Two machines switchless dual link network architecture
 
-**DRAFT**
-
 - [Azure Local - Two machines switchless dual link network architecture](#azure-local---two-machines-switchless-dual-link-network-architecture)
   - [Terminology](#terminology)
   - [Example Device](#example-device)
