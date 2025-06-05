@@ -213,7 +213,7 @@ The following configuration example demonstrates how to configure the ToR switch
   `Ethernet1/1` and `Ethernet1/2` are connected to Node 1 and Node 2. Each interface is clearly labeled with a descriptive name.
 
 - **Trunk Mode with VLAN Tagging:**  
-  Both interfaces are configured as trunk ports, allowing them to carry multiple VLANs (VLAN 7 for management and VLAN 8 for compute). The native VLAN is set to 7, which is typically used for management traffic. This setup enables the use of Switch Embedded Teaming (SET) on the host side, supporting multiple network intents over the same physical connection.  Additional compute VLANs tags can be include to support tenant worklods.
+  Both interfaces are configured as trunk ports, allowing them to carry multiple VLANs (VLAN 7 for management and VLAN 8 for compute). The native VLAN is set to 7, which is typically used for management traffic. This setup enables the use of Switch Embedded Teaming (SET) on the host side, supporting multiple network intents over the same physical connection.  Additional compute VLANs tags can be included to support tenant workloads.
 
 - **Spanning Tree and Edge Port Configuration:**  
   The `spanning-tree port type edge trunk` command is applied to optimize convergence times and protect against accidental loops, as these ports connect directly to servers rather than other switches.
@@ -362,7 +362,7 @@ Neighbor relationships are then established for three interfaces. Two of these n
 ip prefix-list DefaultRoute seq 10 permit 0.0.0.0/0
 ip prefix-list DefaultRoute seq 50 deny 0.0.0.0/0 le 32
 
-!!! Recieve BGP Advertisements for 0.0.0.0/0, deny all others.
+!!! Receive BGP Advertisements for 0.0.0.0/0, deny all others.
 ip prefix-list FROM-BORDER seq 10 permit 0.0.0.0/0
 ip prefix-list FROM-BORDER seq 30 deny 0.0.0.0/0 le 32
 
