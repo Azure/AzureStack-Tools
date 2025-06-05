@@ -144,6 +144,8 @@ Compute and management intents are separated into VLANs (e.g., 7 and 8). These V
 
 Enable the following features on Cisco Nexus 93180YC-FX to support this example Azure Local environment:
 
+**Sample Cisco Nexus 93180YC-FX Configuration:**
+
 ```console
 feature bgp
 feature interface-vlan
@@ -268,7 +270,7 @@ The vPC domain is established to allow the two ToR switches to operate as a sing
 **Physical Interface Bundling:**
 Interfaces Ethernet1/49, Ethernet1/50, and Ethernet1/51 are bundled into Port-Channel 101 using LACP in active mode. These interfaces are configured as trunk ports, with the native VLAN set to 99 and priority flow control enabled. Logging is enabled for link status changes, and CDP is disabled to reduce unnecessary protocol traffic.
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+**Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
 spanning-tree port type edge bpduguard default
@@ -353,7 +355,7 @@ Used when advertising routes to border neighbors, this list prevents the default
 
 Neighbor relationships are then established for three interfaces. Two of these neighbors (with IPs \<Border1-IP\> and \<Border2-IP\>) are external peers in AS 64404—each configured with descriptive labels and both employing the FROM-BORDER and TO-BORDER prefix lists within the IPv4 unicast address family. These peers also have a safeguard with maximum-prefix 12000 warning-only to notify if the count of received prefixes nears a risky threshold. The third neighbor, associated with \<Port-Channel50-IP\>, is an internal (iBGP) peer in AS 64511 and is configured similarly, though without prefix filtering in the outbound direction
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+**Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
 !!! Only advertise the default route
@@ -426,7 +428,7 @@ A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to
 - `maximum-prefix 12000 warning-only`
   This command serves as a safeguard, issuing warnings if the number of received prefixes approaches a set limit, thereby helping maintain stability in the peer session.
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+**Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
   neighbor 10.101.177.0/24
@@ -475,7 +477,7 @@ In the sample configuration below
 
 This configuration enables the ToR switch to dynamically learn and advertise routes as the network evolves, reducing manual intervention and supporting scalable, automated network operations.
 
-**Cisco Nexus 93180YC-FX Config Snipit:**
+**Cisco Nexus 93180YC-FX Configuration:**
 
 ```console
     neighbor 10.101.177.0/24
