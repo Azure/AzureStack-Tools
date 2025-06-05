@@ -19,7 +19,7 @@
 
 - Make: Cisco
 - Model: Nexus 98180YC-FX
-- Firmware: 9.3.(11)
+- Firmware: 10.3(4a)
 
 ## Scope
 
@@ -66,6 +66,7 @@ In the image above compute and management intents are separated into VLANs 7 and
 ### Host Side configuration
 
 In this configuration, VLANs 7 and 8 are utilized to separate management and compute traffic. Both VLANs are configured as Layer 2 and Layer 3 interfaces, with each assigned to a Switch Virtual Interface (SVI) where the gateway IP address ends in ".1". The VLAN Maximum Transmission Unit (MTU) is set to 9216 bytes to support jumbo frames, which is only required if Software Defined Networking (SDN) services are enabled. If SDN is not utilized, Azure Local does not require a jumbo frame. Customers should assess their workload requirements to determine if a different MTU value is necessary, as the default is typically 1500 bytes. Hot Standby Router Protocol (HSRP) is configured to provide gateway redundancy in the Multi-Chassis Link Aggregation (MLAG) setup, enabling seamless east-west communication between the compute and management networks. HSRP is set to version 2, with each VLAN assigned an HSRP group number that matches its VLAN ID for consistency and ease of management.
+
 
 **Cisco Nexus 93180YC-FX Config Snipit:**
 
@@ -131,7 +132,7 @@ interface Ethernet1/2
 **Spanning Tree Configuration:**  
 The configuration begins by enabling BPDU Guard on all edge ports to protect against accidental network loops. Multiple Spanning Tree (MST) is used to support multiple VLANs, with specific priorities set for each MST instance to influence root bridge selection. The MST region is defined with a unique name and revision, and VLANs are mapped to specific MST instances for optimal traffic management.
 
-**vPC Domain and Peer Link:**  
+**vPC Domain and Peer Link:**
 The vPC domain is established to allow the two ToR switches to operate as a single logical switch for downstream devices. Key parameters such as role priority, peer-keepalive (for monitoring the health of the vPC peer), and auto-recovery are configured to enhance resiliency. The peer-gateway feature is enabled to allow seamless gateway operations across both switches.
 
 **Port-Channel and Interface Configuration:**
@@ -139,7 +140,7 @@ The vPC domain is established to allow the two ToR switches to operate as a sing
 - Port-Channel 50 is configured as a dedicated Layer 3 link for vPC heartbeat and iBGP communication between the ToR switches, with jumbo frames enabled for high-performance workloads.
 - Port-Channel 101 serves as the vPC peer link, configured as a trunk to carry multiple VLANs, with priority flow control and spanning tree network port settings applied for reliability and performance.
 
-**Physical Interface Bundling:**  
+**Physical Interface Bundling:**
 Interfaces Ethernet1/49, Ethernet1/50, and Ethernet1/51 are bundled into Port-Channel 101 using LACP in active mode. These interfaces are configured as trunk ports, with the native VLAN set to 99 and priority flow control enabled. Logging is enabled for link status changes, and CDP is disabled to reduce unnecessary protocol traffic.
 
 **Cisco Nexus 93180YC-FX Config Snipit:**
