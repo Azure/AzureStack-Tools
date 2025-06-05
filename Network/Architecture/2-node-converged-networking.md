@@ -281,7 +281,7 @@ router bgp 64511
 
 ## Example SDN configuration
 
-This section of the BGP configuration is tailored to support an Azure local SLBMUX scenario using VLAN8.
+This section of the BGP configuration is tailored to support an [Azure local SDN ](https://learn.microsoft.com/en-us/azure/azure-local/manage/load-balancers) scenario using VLAN8.
 
 **Dynamic BGP Neighbor Definition**:
 A BGP neighbor is defined using the 10.101.177.0/24 subnet, which corresponds to VLAN8 and is reserved for the SLBMUX. The SLBMUX can use any IP address within this subnet, so the configuration specifies the entire subnet as the neighbor. The remote AS is set to 65158, and the neighbor is labeled TO_SDN_SLBMUX for clarity. When a subnet is used as the BGP neighbor, the switch operates in passive mode and waits for the SLBMUX to initiate the BGP connection.
