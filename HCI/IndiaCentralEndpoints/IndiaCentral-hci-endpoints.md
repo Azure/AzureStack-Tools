@@ -2,7 +2,7 @@
 
 This page provides a comprehensive overview of the necessary endpoints for deploying Azure Local in the Central India region. It outlines the specific URLs, ports and protocols that must be accessible during the deployment process to ensure successful integration with Azure services. The document serves as a crucial resource for IT professionals and system administrators who are preparing to deploy Azure Local solutions, offering detailed guidance on network configuration and external connectivity requirements. By adhering to the listed endpoints, users can facilitate a smooth deployment process, ensuring that their Azure Local environment is properly connected and functional within the Central India region.
 
- **This list was last updated on September 2nd, 2025**
+ **This list was last updated on September 2nd, 2025** - Review GitHub History and PRs for detailed information.
 
 | Id | Azure Local Component       | Endpoint URL                                       | Port | Notes                                                                                  | Arc gateway support               | Required for                 |
 |----|-----------------------------|----------------------------------------------------|------|----------------------------------------------------------------------------------------|-----------------------------------|------------------------------|
