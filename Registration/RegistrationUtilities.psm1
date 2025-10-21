@@ -74,7 +74,7 @@ function Get-AzureStackActivationRecord{
 
     $currentContext = Get-AzureRmContext
     $contextDetails = @{
-        Account          = $currentContext.Account
+        Account          = $currentContext.Account.Id
         Environment      = $currentContext.Environment
         Subscription     = $currentContext.Subscription
         Tenant           = $currentContext.Tenant
