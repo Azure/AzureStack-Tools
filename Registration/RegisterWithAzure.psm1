@@ -153,7 +153,7 @@ function Get-RegistrationDetailsConnected {
 
     try {
         $azureContextDetails = @{
-            Account          = $AzureContext.Account
+            Account          = $AzureContext.Account.Id
             Environment      = $AzureContext.Environment
             Subscription     = $AzureContext.Subscription
             Tenant           = $AzureContext.Tenant
@@ -1618,7 +1618,7 @@ function Get-AzureAccountInfo{
     Log-Output "Gathering info from current Azure Powershell context..."
 
     $azureContextDetails = @{
-        Account          = $AzureContext.Account
+        Account          = $AzureContext.Account.Id
         Environment      = $AzureContext.Environment
         Subscription     = $AzureContext.Subscription
         Tenant           = $AzureContext.Tenant
