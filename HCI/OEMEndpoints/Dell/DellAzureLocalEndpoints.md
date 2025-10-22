@@ -14,7 +14,7 @@ In addition to [SBE](https://learn.microsoft.com/en-us/azure/azure-local/update/
 |----|---------------------|------------------------------------------------------------------------|------|----------------------------------------------------------|---------------------|------------------------------|
 | 1  | SBE Manifest endpoint    | downloads.dell.com/folderdatastore/apex-cp-azure/prod01/SBE_Discovery_Dell.xml  | 443  | Enables discovery and confirmation of validity for SBE updates from OEM | No                  | Deployment & Post deployment |
 | 2  | SBE Manifest redirection link     | aka.ms/AzureStackSBEUpdate/DellEmc                                   | 443  | Microsoft redirection to the explicit OEM SBE manifest endpoint. | No                 | Deployment & Post deployment |
-| 3  | Digicert Certificate Revocation Status | http://crl3.digicert.com/* | 80 | No | Deployment & Post deployment |
-| 4  | Digicert Certificate Revocation Status | http://crl4.digicert.com/* | 80 | No | Deployment & Post deployment |
+| 3  | Digicert Certificate Revocation Status | http://crl3.digicert.com/* | 80 | Enables Dell SBE Download Catalog Signer Verification | No | Deployment & Post deployment |
+| 4  | Digicert Certificate Revocation Status | http://crl4.digicert.com/* | 80 | Enables Dell SBE Download Catalog Signer Verification | No | Deployment & Post deployment |
 
 
