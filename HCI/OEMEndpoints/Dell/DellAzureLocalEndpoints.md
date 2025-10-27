@@ -18,7 +18,7 @@ In addition to [SBE](https://learn.microsoft.com/en-us/azure/azure-local/update/
 | 4  | SBE bundle download | 	
 downloads.dell.com/filestore/Prod/SbeDownloadCatalog/AX_SBE_Download_Catalog.xml | 443 | Dell SBE Download Catalog endpoint | No | Deployment & Post deployment |
 | 5  | SBE download catalog redirection | aka.ms/DellAzureLocalSBEDownloadCatalog | 443 | Microsoft redirection to the explicit Dell SBE Download Catalog endpoint| No | Deployment & Post deployment |
-| 6  | Digicert Certificate Revocation Status | http://crl4.digicert.com/* | 80 | Enables Dell SBE Download Catalog Signer Verification | No | Deployment & Post deployment |
+| 6  | Digicert Certificate Revocation Status | http://crl3.digicert.com/* | 80 | Enables Dell SBE Download Catalog Signer Verification | No | Deployment & Post deployment |
 | 7  | Digicert Certificate Revocation Status | http://crl4.digicert.com/* | 80 | Enables Dell SBE Download Catalog Signer Verification | No | Deployment & Post deployment |
 
 
