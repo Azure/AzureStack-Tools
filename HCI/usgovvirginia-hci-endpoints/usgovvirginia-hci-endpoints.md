@@ -58,42 +58,43 @@ This page provides a comprehensive overview of the necessary endpoints for deplo
 | 50 | Azure Local benefits | crl3.digicert.com | 80 | Platform attestation service on Azure Local to perform a certificate revocation list. | No | Deployment & Post deployment |
 | 51 | Azure Local benefits | crl4.digicert.com | 80 | Platform attestation service on Azure Local to perform a certificate revocation list. | No | Deployment & Post deployment |
 | 52 | Azure Local CRLs | crl.microsoft.com/pkiinfra | 80 | Azure Local certificate revocation list for mandatory Arc extensions. | No | Deployment & Post deployment |
-| 53 | Azure Local CRLs | ocsp.digicert.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 54 | Azure Local CRLs | ocsp.globalsign.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 55 | Azure Local CRLs | ocsp2.globalsign.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 56 | Azure Local CRLs | oneocsp.microsoft.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 57 | Azure Local CRLs | s.symcd.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 58 | Azure Local CRLs | ts-crl.ws.symantec.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 59 | Azure Local CRLs | ts-ocsp.ws.symantec.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
-| 60 | Azure Local deployment | aka.ms | 443 | For resolving addresses to discover Azure Local | No | Deployment & Post deployment |
-| 61 | Azure Local deployment | azurestackreleases.download.prss.microsoft.com | 443 | For Azure Local Arc extensions deployment. | No | Deployment & Post deployment |
-| 62 | Azure Local deployment | go.microsoft.com | 443 | For Microsoft Update, allowing the OS to receive updates. | No | Deployment & Post deployment |
-| 63 | Azure Local deployment | portal.azure.us | 443 | For Azure Local deployment in Azure Government. | No | Deployment & Post deployment |
-| 64 | Azure Local deployment | settings-win.data.microsoft.com | 443 | For Azure Local deployment | No | Deployment & Post deployment |
-| 65 | Azure Local deployment | www.microsoft.com | 443 | Used to access required Microsoft deployment and update content. | No | Deployment & Post deployment |
-| 66 | Azure Local deployment | www.msftconnecttest.com/connecttest.txt | 80 | Bootstrap Windows outbound connectivity validation | No | Deployment |
-| 67 | Azure Local deployment | www.powershellgallery.com | 443 | To install required PSGallery modules for Arc registration. | No | Deployment & Post deployment |
-| 68 | Azure Local deployment | yourwitnessstorageaccount.blob.core.usgovcloudapi.net | 443 | For multiple Azure Local components. | No | Deployment & Post deployment |
-| 69 | Azure Local diag & billing | azurestackhci.azurefd.net | 443 | Previous URL for Data plane for backwards compatibility. | No | Deployment & Post deployment |
-| 70 | Azure Local diag & billing | billing.platform.edge.azure.us | 443 | For Data plane licensing billing data. Required only for Azure Local. | No | Deployment & Post deployment |
-| 71 | Azure Local diag & billing | dp.azurestackhci.azure.us | 443 | For Data plane diagnostics and billing data. | No | Deployment & Post deployment |
-| 72 | Azure Local diag & billing | licensing.platform.edge.azure.us | 443 | For Data plane licensing billing data. Required only for Azure Local. | No | Deployment & Post deployment |
-| 73 | Azure Local management | arm-fdweb.usdodeast.cloudapp.usgovcloudapi.net | 443 | Used for Azure Resource Manager operations. | No | Deployment & Post deployment |
-| 74 | Azure Local management | management.usgovcloudapi.net | 443 | Initial Azure Local cluster registration, bootstrapping and management operations. | No | Deployment & Post deployment |
-| 75 | Azure Local monitoring | adhs.events.data.microsoft.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 76 | Azure Local monitoring | analysisservice.watson.azure.us | 443 | Used for diagnostics and analysis services. | No | Deployment & Post deployment |
-| 77 | Azure Local monitoring | dc.services.visualstudio.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 78 | Azure Local monitoring | fp1phx.prod.microsoftmetrics.us | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 79 | Azure Local monitoring | gcs.monitoring.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 80 | Azure Local monitoring | global.handler.control.monitor.azure.us | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 81 | Azure Local monitoring | global.prod.microsoftmetrics.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 82 | Azure Local monitoring | prod5.prod.microsoftmetrics.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 83 | Azure Local monitoring | qos.prod.warm.ingest.monitor.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 84 | Azure Local monitoring | usgovarizona-mdm.prod.hot.ingest.monitor.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 85 | Azure Local monitoring | usgovvirginia-shared.prod.warm.ingest.monitor.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment |
-| 86 | Azure Local monitoring | v20.events.data.microsoft.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
-| 87 | Azure Local WAC | *.waconazure.com | 443 | For Windows Admin Center management after deployment. | No | Post deployment |
-| 88 | Microsoft Defender | *.endpoint.security.microsoft.com | 443 | Required only if using Microsoft Defender extension (MDE.windows). | No | Deployment & Post deployment |
-| 89 | Microsoft Update | fe2cr.update.microsoft.com | 443 | Used to download Microsoft Update content. | No | Deployment & Post deployment |
-| 90 | Microsoft Update | slscr.update.microsoft.com | 443 | Used to download Microsoft Update content. | No | Deployment & Post deployment |
-| 91 | Microsoft Update | tsfe.trafficshaping.dsp.mp.microsoft.com | 443 | For Microsoft Update content regulation | No | Deployment & Post deployment |
+| 53 | Azure Local CRLs | http://www.microsoft.com/pkiops | 80 | Certificate Revocation List for Microsoft Code Signing PCA2011. | No | Deployment & Post deployment |
+| 54 | Azure Local CRLs | ocsp.digicert.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 55 | Azure Local CRLs | ocsp.globalsign.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 56 | Azure Local CRLs | ocsp2.globalsign.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 57 | Azure Local CRLs | oneocsp.microsoft.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 58 | Azure Local CRLs | s.symcd.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 59 | Azure Local CRLs | ts-crl.ws.symantec.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 60 | Azure Local CRLs | ts-ocsp.ws.symantec.com | 80 | Required for Public authorities’ certificate revocation list. | No | Deployment & Post deployment |
+| 61 | Azure Local deployment | aka.ms | 443 | For resolving addresses to discover Azure Local | No | Deployment & Post deployment |
+| 62 | Azure Local deployment | azurestackreleases.download.prss.microsoft.com | 443 | For Azure Local Arc extensions deployment. | No | Deployment & Post deployment |
+| 63 | Azure Local deployment | go.microsoft.com | 443 | For Microsoft Update, allowing the OS to receive updates. | No | Deployment & Post deployment |
+| 64 | Azure Local deployment | portal.azure.us | 443 | For Azure Local deployment in Azure Government. | No | Deployment & Post deployment |
+| 65 | Azure Local deployment | settings-win.data.microsoft.com | 443 | For Azure Local deployment | No | Deployment & Post deployment |
+| 66 | Azure Local deployment | www.microsoft.com | 443 | Used to access required Microsoft deployment and update content. | No | Deployment & Post deployment |
+| 67 | Azure Local deployment | www.msftconnecttest.com/connecttest.txt | 80 | Bootstrap Windows outbound connectivity validation | No | Deployment |
+| 68 | Azure Local deployment | www.powershellgallery.com | 443 | To install required PSGallery modules for Arc registration. | No | Deployment & Post deployment |
+| 69 | Azure Local deployment | yourwitnessstorageaccount.blob.core.usgovcloudapi.net | 443 | For multiple Azure Local components. | No | Deployment & Post deployment |
+| 70 | Azure Local diag & billing | azurestackhci.azurefd.net | 443 | Previous URL for Data plane for backwards compatibility. | No | Deployment & Post deployment |
+| 71 | Azure Local diag & billing | billing.platform.edge.azure.us | 443 | For Data plane licensing billing data. Required only for Azure Local. | No | Deployment & Post deployment |
+| 72 | Azure Local diag & billing | dp.azurestackhci.azure.us | 443 | For Data plane diagnostics and billing data. | No | Deployment & Post deployment |
+| 73 | Azure Local diag & billing | licensing.platform.edge.azure.us | 443 | For Data plane licensing billing data. Required only for Azure Local. | No | Deployment & Post deployment |
+| 74 | Azure Local management | arm-fdweb.usdodeast.cloudapp.usgovcloudapi.net | 443 | Used for Azure Resource Manager operations. | No | Deployment & Post deployment |
+| 75 | Azure Local management | management.usgovcloudapi.net | 443 | Initial Azure Local cluster registration, bootstrapping and management operations. | No | Deployment & Post deployment |
+| 76 | Azure Local monitoring | adhs.events.data.microsoft.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 77 | Azure Local monitoring | analysisservice.watson.azure.us | 443 | Used for diagnostics and analysis services. | No | Deployment & Post deployment |
+| 78 | Azure Local monitoring | dc.services.visualstudio.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 79 | Azure Local monitoring | fp1phx.prod.microsoftmetrics.us | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 80 | Azure Local monitoring | gcs.monitoring.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 81 | Azure Local monitoring | global.handler.control.monitor.azure.us | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 82 | Azure Local monitoring | global.prod.microsoftmetrics.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 83 | Azure Local monitoring | prod5.prod.microsoftmetrics.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 84 | Azure Local monitoring | qos.prod.warm.ingest.monitor.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 85 | Azure Local monitoring | usgovarizona-mdm.prod.hot.ingest.monitor.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 86 | Azure Local monitoring | usgovvirginia-shared.prod.warm.ingest.monitor.core.usgovcloudapi.net | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment |
+| 87 | Azure Local monitoring | v20.events.data.microsoft.com | 443 | Used for metrics and monitoring telemetry traffic. | No | Deployment & Post deployment |
+| 88 | Azure Local WAC | *.waconazure.com | 443 | For Windows Admin Center management after deployment. | No | Post deployment |
+| 89 | Microsoft Defender | *.endpoint.security.microsoft.com | 443 | Required only if using Microsoft Defender extension (MDE.windows). | No | Deployment & Post deployment |
+| 90 | Microsoft Update | fe2cr.update.microsoft.com | 443 | Used to download Microsoft Update content. | No | Deployment & Post deployment |
+| 91 | Microsoft Update | slscr.update.microsoft.com | 443 | Used to download Microsoft Update content. | No | Deployment & Post deployment |
+| 92 | Microsoft Update | tsfe.trafficshaping.dsp.mp.microsoft.com | 443 | For Microsoft Update content regulation | No | Deployment & Post deployment |
