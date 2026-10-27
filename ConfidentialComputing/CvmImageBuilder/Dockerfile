@@ -11,6 +11,12 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
+# archive.ubuntu.com is blocked by SFI network policy; repoint apt at security.ubuntu.com (full mirror, not just security pocket)
+RUN find /etc/apt/sources.list /etc/apt/sources.list.d -type f \( -name '*.list' -o -name '*.sources' \) 2>/dev/null \
+    | xargs -r sed -i \
+        -e 's|http://archive\.ubuntu\.com/ubuntu|http://security.ubuntu.com/ubuntu|g' \
+        -e 's|https://archive\.ubuntu\.com/ubuntu|https://security.ubuntu.com/ubuntu|g'
+
 # Install all build dependencies
 RUN apt-get update && apt-get install -y \
     qemu-utils \
