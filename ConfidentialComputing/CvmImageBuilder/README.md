@@ -84,6 +84,14 @@ Since the root filesystem is read-only, writable areas are provided via tmpfs mo
 
 ---
 
+### Network policy hardening. 
+
+Ubuntu typically downloads packages from `archive.ubuntu.com` (or a regional mirror) and `security.ubuntu.com`. The archive provides release packages and updates, while `security.ubuntu.com` publishes security updates for supported releases.
+
+To harden the system, we have modified the Dockerfile and `build-cvm-image.sh` to download packages only from `security.ubuntu.com`. When you build using the Dockerfile, the patch is applied automatically. However, when you run the Bash script directly, package downloads depend on your local configuration.
+
+For optimal security, building with Docker is *recommended*.
+
 ## Getting Started
 
 ### Prerequisites
@@ -479,20 +487,22 @@ Network is configured exclusively via cloud-init metadata. If no cloud-init CD (
 
 To provide network configuration, attach a NoCloud ISO or use the Azure metadata service. Cloud-init processes the `network-config` file from the metadata source.
 
-### Microsoft Insiders-Fast Repository
+### Microsoft Package Repositories
 
-Some Microsoft components (for example, the Confidential Computing evidence
-SDK) are only published to the `packages.microsoft.com` `insiders-fast` apt
-repository. Add `--insiders-fast` to enable that repository inside the chroot
-before packages are installed:
+The Ubuntu 24.04 `packages.microsoft.com` production apt repository is enabled
+by default. The Confidential Computing evidence SDK is available there, so it
+can be installed without `--insiders-fast`:
 
 ```bash
 ./build-cvm-image.sh \
     --username admin \
     --image my-cvm.vhdx \
-    --packages "edge-cc-base-attestation-sdk" \
-    --insiders-fast
+    --packages "edge-cc-base-attestation-sdk"
 ```
+
+The optional `--insiders-fast` flag enables the insiders-fast apt repository
+in addition to production for pre-release packages. It is not required to
+build an image or install the evidence SDK.
 
 ### Verbose Build Output
 

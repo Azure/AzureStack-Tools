@@ -80,7 +80,7 @@ create_ubuntu_rootfs() {
   log_progress "  Running debootstrap for Ubuntu Noble (24.04)..."
   APT_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/cvmos/apt"
   mkdir -p "$APT_CACHE_DIR"
-  sudo debootstrap --verbose --arch=amd64 --cache-dir="$APT_CACHE_DIR" noble "$ROOTFS_DIR" http://archive.ubuntu.com/ubuntu/ >> "$LOGFILE" 2>&1
+  sudo debootstrap --verbose --arch=amd64 --cache-dir="$APT_CACHE_DIR" noble "$ROOTFS_DIR" http://security.ubuntu.com/ubuntu/ >> "$LOGFILE" 2>&1
 
   configure_tmpfs
   install_packages
@@ -139,6 +139,21 @@ gpg --dearmor "$TMPDIR/microsoft-2025.asc"
 cp "$TMPDIR/microsoft-2025.asc.gpg" /etc/apt/trusted.gpg.d/
 mv "$TMPDIR/microsoft-2025.asc.gpg" /usr/share/keyrings/microsoft-prod-2025.gpg
 KEY_EOF
+
+  log_progress "  Adding packages.microsoft.com production repository..."
+  sudo chroot "$ROOTFS_DIR" /bin/bash <<'PROD_EOF' >> "$LOGFILE" 2>&1
+set -euo pipefail
+
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+wget -q https://packages.microsoft.com/config/ubuntu/24.04/prod.list -O "$TMPDIR/prod.list"
+ACTUAL=$(sha256sum "$TMPDIR/prod.list" | awk '{print $1}')
+if [ "b1603241c9619c02611a77a663f55e726608bde079c4f559bcccdf73847a45c8" != "$ACTUAL" ]; then
+  echo "SHA256 mismatch for prod.list!" >&2; exit 1
+fi
+mv "$TMPDIR/prod.list" /etc/apt/sources.list.d/microsoft-prod.list
+PROD_EOF
 
   if [[ "$INSIDER_FAST" == "true" ]]; then
     log_progress "  Enabling packages.microsoft.com insiders-fast repo..."
